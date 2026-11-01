@@ -130,6 +130,24 @@ td.n { white-space:nowrap; font-variant-numeric:tabular-nums; }
 .tc .escolhido { font-size:60px; text-align:center; line-height:1; margin-bottom:4px; }
 #dia-pre { margin-top:12px; } #eu-meta.card { margin-top:12px; }
 .pend-lk { width:100%; text-align:left; border:1px solid #f2d27a; background:#fffbea; border-radius:12px; padding:10px 12px; font:inherit; font-size:13px; cursor:pointer; display:flex; justify-content:space-between; gap:10px; align-items:center; } .pend-lk span { color:var(--accent); font-weight:600; white-space:nowrap; }
+body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fila { display:none !important; }
+.dash { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+.dc { background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:14px; cursor:pointer; position:relative; min-width:0; box-shadow:0 1px 2px rgba(0,0,0,.03); transition:transform .12s, box-shadow .12s; }
+.dc:active { transform:scale(.985); } .dc:hover { box-shadow:0 4px 14px rgba(0,0,0,.07); }
+.dc.full { grid-column:1 / -1; } .dc .dt { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; display:flex; justify-content:space-between; gap:6px; }
+.dc .dt span:last-child { text-transform:none; letter-spacing:0; font-weight:600; color:var(--accent); }
+.dc .big, .dbody .big { font-family:'Source Serif 4',Georgia,serif; font-size:26px; line-height:1.1; margin-top:4px; font-variant-numeric:tabular-nums; } .dc .sm, .dbody .sm { font-size:12px; color:var(--muted); margin-top:2px; }
+.dc .hero { display:flex; gap:14px; align-items:center; margin-top:8px; } .dc .hero .tx { flex:1; min-width:0; }
+.pill { display:inline-block; font-size:11px; font-weight:700; padding:2px 9px; border-radius:999px; margin-top:6px; } .pill.g { background:#e7f3ec; color:#1e7a46; } .pill.y { background:#fbf1e2; color:#a85d00; } .pill.r { background:#fbe9e7; color:#b3261e; } .pill.n { background:var(--accentbg); color:var(--accent); }
+.ring-w { position:relative; flex:none; } .ring-w b { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; }
+.dc .lj { display:flex; align-items:center; gap:10px; margin-top:6px; } .dc .lj .nm { font-weight:700; font-size:14px; white-space:nowrap; } .dc .alrt { position:absolute; top:10px; right:12px; font-size:12px; }
+.dbody .card > b { display:block; margin-bottom:4px; }
+.mini-r { display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12px; } .mini-r .nm { width:74px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .mini-r .tr { flex:1; height:8px; background:var(--line); border-radius:6px; overflow:hidden; } .mini-r .tr i { display:block; height:100%; border-radius:6px; } .mini-r .v { width:38px; text-align:right; font-weight:700; }
+.legenda { display:grid; gap:3px; font-size:12px; margin-top:6px; } .legenda div { display:flex; align-items:center; gap:6px; } .legenda i { width:10px; height:10px; border-radius:3px; flex:none; }
+.funil { display:grid; gap:5px; margin-top:8px; } .funil div { height:22px; border-radius:7px; display:flex; align-items:center; padding:0 8px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap; }
+.tc .dhead { display:flex; justify-content:space-between; align-items:center; max-width:640px; width:100%; margin:0 auto 8px; } .tc .dhead h1 { text-align:left; margin:0; font-size:24px; } .tc .dhead button { border:0; background:var(--panel); border:1px solid var(--line); width:40px; height:40px; border-radius:50%; font-size:20px; cursor:pointer; }
+.tc .dbody { max-width:640px; width:100%; margin:0 auto; } .tc .dbody > * { margin-top:12px; } .tc .dbody h2 { margin-top:16px; }
+.chart { width:100%; overflow-x:auto; } .chart svg { display:block; }
 .pre-it { border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px; background:var(--panel); display:flex; gap:10px; align-items:center; }
 .pre-it .em { font-size:28px; width:40px; text-align:center; flex:none; } .pre-it.lock .em { filter:grayscale(1); opacity:.6; } .pre-it .tx { flex:1; min-width:0; } .pre-it b { display:block; } .pre-it .prog { margin-top:6px; }
 .pre-it.ok { border-color:#f2b01e; background:#fffbea; } .pre-it.ent { opacity:.7; } .pre-st { font-size:12px; font-weight:700; color:var(--accent); margin-top:3px; } .pre-it.ok .pre-st { color:#a16207; }
@@ -445,15 +463,18 @@ body.tab-on .wrap { max-width:none; padding:14px 18px 30px; }
     <div id="v-ini" class="hide">
       <div class="filtros" id="i-filtro-box"><select id="i-per"><option value="mes" selected>Mês atual</option><option value="mes_ant">Mês anterior</option><option value="ano">Ano</option><option value="custom">Personalizado…</option></select><select id="i-loja"></select></div><div class="datas hide" id="i-datas"><label>De <input type="date" id="i-de"></label><label>Até <input type="date" id="i-ate"></label><button class="btn sm pri" id="i-ok">Ver</button></div>
       <div class="sub" id="i-tit" style="margin-top:8px"></div>
+      <div id="i-cards" class="dash"></div>
+      <div id="i-det" class="hide">
       <div id="i-ritmo-box" class="hide"><h2><span>⏱️ Ritmo de hoje</span><span id="i-ritmo-h"></span></h2><div id="i-ritmo"></div></div>
       <div id="i-res"></div>
       <div id="i-topo"></div>
       <div id="i-att-box"><h2><span>Atenções</span><span id="i-att-n"></span></h2><div id="i-att"></div></div>
       <div id="i-lojas-box"><h2><span>Lojas</span></h2>
         <div class="tbl-x"><table><thead><tr><th>Loja</th><th class="n">Vendido</th><th class="n">% meta</th><th class="n">Fecha em</th><th class="n">Conv.</th><th class="n">Pela fila</th><th class="n">Ticket</th><th class="n">Perdas (R$)</th></tr></thead><tbody id="i-lojas"></tbody></table></div></div>
-      <h2><span>Quem precisa de você</span><span id="i-prec-n"></span></h2><div id="i-prec"></div>
-      <h2><span>Por que não vendemos</span></h2><div class="bars" id="i-mot"></div>
+      <div id="i-prec-box"><h2><span>Quem precisa de você</span><span id="i-prec-n"></span></h2><div id="i-prec"></div></div>
+      <div id="i-mot-box"><h2><span>Por que não vendemos</span></h2><div class="bars" id="i-mot"></div></div>
       <details class="nota-d" id="i-nota"><summary>ℹ️ Como os números são calculados</summary><div id="i-nota-t" style="margin-top:4px"></div></details>
+      </div>
     </div>
 
     <div id="v-meta" class="hide">
@@ -730,7 +751,7 @@ function sair(msg) {
 }
 function abrir() {
   $('v-login').classList.add('hide'); $('v-app').classList.remove('hide');
-  $('t-user').textContent = saudacao() + ', ' + primeiroNome(S.nome) + (chefe() ? ' · ' + S.cargo.toLowerCase() : '');
+  cabecalho();
   const fazCaminho = S.cargo !== 'ADMIN' && !S.trocarSenha && !(typeof T !== 'undefined' && T) && caminhoPendente();
   if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else if (!fazCaminho) mostrarGuia(false);
   if (fazCaminho) { google.script.run.withSuccessHandler((o) => { ONTEM = o; }).withFailureHandler(() => { ONTEM = { semDados: true }; })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
@@ -995,6 +1016,10 @@ function coachPerda(m, prod, nome, tablet) {
   o.append(box); $('sheet').classList.remove('hide');
   if (tablet) { clearTimeout(coachPerda.h); coachPerda.h = setTimeout(() => { if (o.contains(box)) fechar(); }, 15000); }
 }
+function cabecalho(loja) {
+  if (!S) { if (loja) $('t-loja').textContent = loja; return; } const l = S.cargo === 'ADMIN' ? 'todas as lojas' : loja || (S.lojas && S.lojas.length === 1 ? S.lojas[0] : '');
+  $('t-loja').textContent = primeiroNome(S.nome); $('t-user').textContent = saudacao() + (l ? ' · ' + l : '') + (chefe() ? ' · ' + S.cargo.toLowerCase() : '');
+}
 const saudacao = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; };
 const primeiroNome = (n) => { const p = String(n || '').trim().split(/\s+/)[0] || ''; return p.charAt(0) + p.slice(1).toLowerCase(); };
 function dicaDoMomento() { const n = Math.floor(Date.now() / (20 * 60000)); return DICAS[(n + (S.usuario || '').length) % DICAS.length]; }
@@ -1130,7 +1155,7 @@ function desenhar(e) {
   tirarSplash();
   E = e; skew = e.agora - Date.now();
   const _p = e.fila.find((x) => x.usuario === S.usuario); const posAnt = desenhar.pos; desenhar.pos = _p ? _p.pos : 0;
-  $('t-loja').textContent = e.loja;
+  cabecalho(e.loja);
   const eu = S.usuario;
   // você
   const naFila = e.fila.find((x) => x.usuario === eu), at = e.atendendo.find((x) => x.usuario === eu), fo = e.fora.find((x) => x.usuario === eu);
@@ -1242,9 +1267,9 @@ function prepararFiltros() {
   g.value = f.value; g.classList.toggle('hide', S.lojas.length < 2); $('m-filtro-box').classList.toggle('um', S.lojas.length < 2);
   const gi = $('i-loja'); gi.replaceChildren(...ops.map((l) => new Option(l === 'TODAS' ? 'Todas as lojas' : l, l)));
   gi.value = f.value; gi.classList.toggle('hide', S.lojas.length < 2); $('i-filtro-box').classList.toggle('um', S.lojas.length < 2);
-  $('tab-ini').classList.toggle('hide', !chefe()); $('tab-dia').classList.toggle('hide', chefe());
+  $('tab-ini').classList.toggle('hide', !chefe()); $('tab-dia').classList.toggle('hide', chefe()); $('tab-fila').classList.toggle('hide', S.cargo === 'ADMIN'); document.body.classList.toggle('adm', S.cargo === 'ADMIN');
   // gerente/admin: os blocos do "Meu dia" ficam no topo do Início
-  if (chefe()) { const v = $('v-ini'); v.insertBefore($('dia-blocos'), $('i-filtro-box').nextSibling); } else $('v-dia').insertBefore($('dia-blocos'), $('dia-fila'));
+  if (chefe()) { const v = $('v-ini'); v.insertBefore($('dia-blocos'), $('i-cards').nextSibling); } else $('v-dia').insertBefore($('dia-blocos'), $('dia-fila'));
   unirInicio(chefe());
   $('tab-prod').classList.toggle('hide', !chefe()); $('tab-gest').classList.toggle('hide', !chefe());
   $('g-loja').replaceChildren(...S.lojas.map((l) => new Option(l, l))); if (S.lojas.indexOf(loja) >= 0) $('g-loja').value = loja;
@@ -1259,10 +1284,9 @@ function unirInicio(on) {
   $('tab-meta').classList.toggle('hide', on); $('m-tit').classList.toggle('hide', on);
   $('m-lojas-box').querySelector('h2 span').textContent = on ? 'Vendas online por loja' : 'Lojas';
   if (on) {
-    const v = $('v-ini'), prec = $('i-prec').previousElementSibling, nota = $('i-nota');
-    v.insertBefore($('m-eu'), $('i-att-box'));
-    ['m-lojas-box', 'm-equipe-box'].forEach((id) => v.insertBefore($(id), prec));
-    ['m-des-box', 'm-pre-box', 'm-med-box', 'm-nota'].forEach((id) => v.insertBefore($(id), nota));
+    const v = $('v-ini'), det = $('i-det');
+    ['m-eu', 'm-lojas-box', 'm-equipe-box', 'm-nota'].forEach((id) => det.append($(id)));
+    ['m-des-box', 'm-pre-box', 'm-med-box'].forEach((id) => v.insertBefore($(id), det));
   } else { const v = $('v-meta'); ids.forEach((id) => v.append($(id))); }
 }
 const LOJAS_TODAS = ['Cerâmica', 'Via Verde', 'Cruzeiro do Sul', 'Via Norte', 'Sumaúma'];
@@ -1566,6 +1590,7 @@ function registrarConv(c, cb) {
 function carregarRitmo() {
   if (!chefe()) return;
   google.script.run.withSuccessHandler((r) => {
+    RIT = r; desenharCards();
     const box = $('i-ritmo'); box.replaceChildren(); $('i-ritmo-box').classList.toggle('hide', !r.lojas.length); $('i-ritmo-h').textContent = 'até ' + r.quando;
     const tx = { ok: 'no ritmo', atencao: 'atenção', atras: 'abaixo do normal', sem: 'pouco histórico' };
     r.lojas.forEach((l) => {
@@ -1577,10 +1602,108 @@ function carregarRitmo() {
     });
   }).withFailureHandler(() => {}).ritmoDia(S.token);
 }
+// ---------- painel em cards (Início de gerente e ADM) ----------
+let INI = null, RIT = null;
+const COR = { g: '#1e7a46', y: '#d08a00', r: '#b3261e', n: '#5b4a7a' };
+const rsK = (v) => (v == null ? '—' : Math.abs(v) >= 10000 ? 'R$ ' + DEC1.format(v / 1000) + ' mil' : rs(v));
+const nivelCor = (fecha, pct) => { const v = fecha != null ? fecha : pct; return v == null ? 'n' : v >= 1 ? 'g' : v >= 0.85 ? 'y' : 'r'; };
+const NS = 'http://www.w3.org/2000/svg';
+const sv = (tag, at) => { const e = document.createElementNS(NS, tag); Object.keys(at || {}).forEach((k) => e.setAttribute(k, at[k])); return e; };
+function ring(pct, size, cor, txt) {
+  const w = el('div', 'ring-w'), r = size / 2 - 7, c = 2 * Math.PI * r, s = sv('svg', { width: size, height: size, viewBox: '0 0 ' + size + ' ' + size });
+  s.append(sv('circle', { cx: size / 2, cy: size / 2, r: r, fill: 'none', stroke: '#ece9e3', 'stroke-width': 9 }));
+  const a = sv('circle', { cx: size / 2, cy: size / 2, r: r, fill: 'none', stroke: cor, 'stroke-width': 9, 'stroke-linecap': 'round', 'stroke-dasharray': c, 'stroke-dashoffset': c * (1 - Math.min(1, Math.max(0, pct || 0))), transform: 'rotate(-90 ' + size / 2 + ' ' + size / 2 + ')' });
+  s.append(a); w.append(s, el('b', '', txt != null ? txt : pc(pct))); w.style.width = size + 'px'; w.style.height = size + 'px'; if (size < 70) w.lastChild.style.fontSize = '12px'; return w;
+}
+function barrasDia(dias, vals, metaDia, alt, comRotulo) {
+  const n = vals.length; if (!n) return el('div', 'sm', 'Sem vendas importadas no período.');
+  const W = Math.max(280, n * (comRotulo ? 18 : 9)), H = alt || 60, top = Math.max(1, ...vals, metaDia || 0) * 1.08, bw = W / n, s = sv('svg', { width: '100%', viewBox: '0 0 ' + W + ' ' + (H + (comRotulo ? 16 : 0)), preserveAspectRatio: 'none' });
+  if (comRotulo) s.setAttribute('height', H + 16);
+  vals.forEach((v, i) => { const h = v / top * H, ok = metaDia && v >= metaDia; s.append(sv('rect', { x: i * bw + bw * 0.15, y: H - h, width: bw * 0.7, height: Math.max(1, h), rx: Math.min(3, bw * 0.2), fill: ok ? '#1e7a46' : '#8c7bb0' })); if (comRotulo && (n <= 16 || i % 2 === 0)) { const t = sv('text', { x: i * bw + bw / 2, y: H + 12, 'text-anchor': 'middle', 'font-size': 9, fill: '#6b6862' }); t.textContent = dias[i].slice(8, 10); s.append(t); } });
+  if (metaDia) { const y = H - metaDia / top * H; s.append(sv('line', { x1: 0, x2: W, y1: y, y2: y, stroke: '#d08a00', 'stroke-width': 1.5, 'stroke-dasharray': '4 3' })); }
+  const w = el('div', 'chart'); w.append(s); return w;
+}
+function donut(itens, size) {
+  const cores = ['#5b4a7a', '#e8738a', '#f2b01e', '#7fb3e6', '#1e7a46', '#b9b3a8'], tot = itens.reduce((a, x) => a + x.n, 0) || 1, r = size / 2 - 10, c = 2 * Math.PI * r, s = sv('svg', { width: size, height: size });
+  let acc = 0; itens.forEach((x, i) => { const f = x.n / tot; s.append(sv('circle', { cx: size / 2, cy: size / 2, r: r, fill: 'none', stroke: cores[i % cores.length], 'stroke-width': 16, 'stroke-dasharray': (c * f) + ' ' + c, 'stroke-dashoffset': -c * acc, transform: 'rotate(-90 ' + size / 2 + ' ' + size / 2 + ')' })); acc += f; });
+  const lg = el('div', 'legenda'); itens.forEach((x, i) => { const d = el('div'), q = el('i'); q.style.background = cores[i % cores.length]; d.append(q, document.createTextNode(x.motivo + ' · ' + pc(x.n / tot))); lg.append(d); });
+  const w = el('div'); w.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:6px'; const sw = el('div'); sw.append(s); w.append(sw, lg); return w;
+}
+function linhasPct(lista, max) {
+  const b = el('div'); lista.slice(0, max || 99).forEach((x) => { const r = el('div', 'mini-r'), t = el('div', 'tr'), i = el('i'), k = nivelCor(x.fechaPct, x.pct); i.style.width = Math.min(100, (x.pct || 0) * 100) + '%'; i.style.background = COR[k]; t.append(i); r.append(el('div', 'nm', x.rot), t, el('div', 'v', pc(x.pct))); b.append(r); }); return b;
+}
+// detalhe em tela cheia: move os blocos já desenhados para dentro e devolve ao fechar
+function abrirDet(titulo, montar) {
+  const w = el('div', 'tc'); w.id = 'det'; const movidos = [];
+  const mover = (id) => { const n = $(id); if (!n) return null; movidos.push([n, n.parentNode, n.nextSibling]); n.classList.remove('hide'); return n; };
+  const h = el('div', 'dhead'), x = el('button', '', '×'); h.append(el('h1', '', titulo), x); const b = el('div', 'dbody'); w.append(h, b); document.body.append(w);
+  const fechaD = () => { movidos.reverse().forEach(([n, p, nx]) => { if (nx && nx.parentNode === p) p.insertBefore(n, nx); else p.append(n); }); w.remove(); };
+  x.addEventListener('click', fechaD); montar(b, mover);
+}
+function desenharCards() {
+  const box = $('i-cards'); if (!box || !INI) return; const r = INI, R = r.rede; box.replaceChildren();
+  const card = (cls, dt, dt2, fn) => { const c = el('div', 'dc ' + (cls || '')), t = el('div', 'dt'); t.append(el('span', '', dt), el('span', '', dt2 || 'ver ›')); c.append(t); if (fn) c.addEventListener('click', fn); box.append(c); return c; };
+  const serieTot = r.serie && r.serie.dias.length ? r.serie.dias.map((_, i) => Object.keys(r.serie.lojas).reduce((a, l) => a + (r.serie.lojas[l][i] || 0), 0)) : [];
+  const metaDiaTot = r.serie ? Object.keys(r.serie.metaDia).reduce((a, l) => a + (r.serie.metaDia[l] || 0), 0) : 0;
+  // 1. resultado do mês
+  const k = nivelCor(R.fechaPct, R.pct), h = card('full', r.multi ? 'Rede no período' : 'Loja no período', 'detalhar ›', () => abrirDet(r.multi ? 'Resultado da rede' : 'Resultado da loja', (b, mv) => {
+    const top = el('div', 'card'), hh = el('div'); hh.style.cssText = 'display:flex;gap:16px;align-items:center';
+    const tx = el('div'); tx.append(el('div', 'sm', 'Vendido'), el('div', 'big', rs(R.vendido)), el('div', 'sm', 'de ' + rs(R.meta) + (R.fecha != null ? ' · no ritmo fecha em ' + rs(R.fecha) : ''))); hh.append(ring(R.pct, 110, COR[k]), tx); top.append(hh); b.append(top);
+    if (serieTot.length) { const c = el('div', 'card'); c.append(el('b', '', '📊 Vendas por dia'), el('div', 'sm', 'barra verde = dia acima da meta diária (linha laranja)'), barrasDia(r.serie.dias, serieTot, metaDiaTot, 140, true)); b.append(c); }
+    mv('i-res'); b.append($('i-res')); [ 'm-lojas-box', 'i-nota'].forEach((id) => { const n = mv(id); if (n) b.append(n); });
+  }));
+  const hr = el('div', 'hero'), tx = el('div', 'tx'); tx.append(el('div', 'big', rs(R.vendido)), el('div', 'sm', 'de ' + rs(R.meta) + ' · faltam ' + rs(Math.max(0, (R.meta || 0) - (R.vendido || 0)))));
+  if (R.fechaPct != null && !r.encerrado) tx.append(el('span', 'pill ' + k, (R.fechaPct >= 1 ? '🚀 ' : k === 'r' ? '⚠️ ' : '') + 'no ritmo fecha em ' + pc(R.fechaPct)));
+  if (R.comp) tx.append(el('div', 'sm', (R.comp.var >= 0 ? '▲ ' : '▼ ') + PCT.format(Math.abs(R.comp.var)) + ' vs mesmo período do mês passado'));
+  hr.append(ring(R.pct, 92, COR[k]), tx); h.append(hr); if (serieTot.length) { const m = barrasDia(r.serie.dias, serieTot, metaDiaTot, 46); m.style.marginTop = '10px'; h.append(m); }
+  // 2. lojas
+  if (r.multi) r.lojas.forEach((l) => {
+    const kl = nivelCor(l.fechaPct, l.pct), c = card('', l.loja, l.nivel ? (l.nivel > 1 ? '🔴' : '🟡') : '🟢', () => detLoja(l));
+    const lj = el('div', 'lj'), t = el('div'); t.append(el('div', 'nm', rsK(l.vendido)), el('div', 'sm', l.fechaPct != null ? 'fecha em ' + pc(l.fechaPct) : 'de ' + rsK(l.meta))); lj.append(ring(l.pct, 54, COR[kl]), t); c.append(lj);
+    if (r.serie && r.serie.lojas[l.loja]) { const m = barrasDia(r.serie.dias, r.serie.lojas[l.loja], r.serie.metaDia[l.loja], 26); m.style.marginTop = '8px'; c.append(m); }
+  });
+  // 3. ritmo de hoje
+  if (RIT && RIT.lojas && RIT.lojas.length) {
+    const c = card(r.multi ? 'meio' : '', '⏱️ Ritmo de hoje', 'até ' + RIT.quando, () => abrirDet('Ritmo de hoje', (b, mv) => b.append(mv('i-ritmo-box'))));
+    RIT.lojas.forEach((l) => { const rr = el('div', 'mini-r'), t = el('div', 'tr'), i = el('i'), cor = { ok: COR.g, atencao: COR.y, atras: COR.r }[l.status] || COR.n; i.style.width = (l.normal ? Math.min(100, l.vendasHoje / l.normal * 100) : 0) + '%'; i.style.background = cor; t.append(i); rr.append(el('div', 'nm', r.multi ? l.loja : 'vendas'), t, el('div', 'v', String(l.vendasHoje))); c.append(rr); });
+  }
+  // 4. fila
+  { const c = card(r.multi ? 'meio' : '', '👥 Fila', '', () => abrirDet('Fila e conversão', (b, mv) => {
+      const f = el('div', 'card'); f.append(el('b', '', 'Do atendimento à venda')); const fu = el('div', 'funil'), a = el('div', '', R.at + ' atendimentos'), v = el('div', '', R.v + ' vendas · ' + pc(R.conv)); a.style.cssText = 'background:#8c7bb0;width:100%'; v.style.cssText = 'background:#1e7a46;width:' + Math.max(25, (R.conv || 0) * 100) + '%'; fu.append(a, v); f.append(fu, el('div', 'sm', 'Vendas do caixa que passaram pela fila: ' + pc(R.pctFila) + ' · perdas estimadas: ' + rs(R.perdasR$))); b.append(f);
+      if (r.multi) { const cc = el('div', 'card'); cc.append(el('b', '', 'Conversão por loja')); cc.append(linhasPct(r.lojas.map((l) => ({ rot: l.loja, pct: l.conv, fechaPct: l.conv != null ? l.conv / 0.5 : null })))); b.append(cc); }
+      const n = mv('i-lojas-box'); if (n && r.multi) b.append(n); const at = mv('i-att-box'); if (at && r.multi) b.append(at);
+    }));
+    c.append(el('div', 'big', pc(R.conv)), el('div', 'sm', 'conversão · ' + R.at + ' atend.'));
+    const fu = el('div', 'funil'), a = el('div', '', 'pela fila ' + pc(R.pctFila)); a.style.cssText = 'background:#8c7bb0;width:' + Math.max(40, Math.min(100, (R.pctFila || 0) * 100)) + '%'; fu.append(a); c.append(fu);
+    if (R.perdasR$) c.append(el('div', 'sm', '~' + rsK(R.perdasR$) + ' em perdas'));
+  }
+  // 5. por que não vendemos
+  if (r.perdasMotivos && r.perdasMotivos.length) { const c = card(r.multi ? 'meio' : '', '💸 Por que não vendemos', '', () => abrirDet('Por que não vendemos', (b, mv) => { b.append(mv('i-mot-box')); if (r.procurados && r.procurados.length) { const p = el('div', 'card'); p.append(el('b', '', '🛍️ O que procuraram e não acharam')); r.procurados.slice(0, 8).forEach((x) => p.append(el('div', 'sm', x.produto + ' · ' + x.n + 'x'))); b.append(p); } })); c.append(donut(r.perdasMotivos.slice(0, 3), 80)); }
+  // 6. equipe
+  if (r.equipe && r.equipe.length) {
+    const eq = r.equipe.filter((x) => x.meta).sort((a, b) => (b.pct || 0) - (a.pct || 0));
+    const c = card(r.multi ? 'meio' : '', '🏅 Equipe', r.precisam.length ? r.precisam.length + ' precisam de você' : '', () => abrirDet('Equipe', (b, mv) => { const cc = el('div', 'card'); cc.append(el('b', '', '% da meta de cada consultora'), el('div', 'sm', 'verde: no ritmo da meta · laranja: perto · vermelho: precisa de ajuda')); cc.append(linhasPct(eq.map((x) => ({ rot: primeiroNome(x.nome) + (r.multi ? ' · ' + x.loja.slice(0, 3) : ''), pct: x.pct, fechaPct: x.fechaPct })))); b.append(cc); ['i-prec-box', 'm-equipe-box'].concat(S.cargo === 'ADMIN' ? [] : ['m-eu']).forEach((id) => { const n = mv(id); if (n) b.append(n); }); }));
+    eq.slice(0, 3).forEach((x, i) => { const rr = el('div', 'mini-r'), t = el('div', 'tr'), ii = el('i'); ii.style.width = Math.min(100, (x.pct || 0) * 100) + '%'; ii.style.background = COR[nivelCor(x.fechaPct, x.pct)]; t.append(ii); rr.append(el('div', 'nm', ['🥇', '🥈', '🥉'][i] + ' ' + primeiroNome(x.nome)), t, el('div', 'v', pc(x.pct))); c.append(rr); });
+  }
+}
+function detLoja(l) {
+  const r = INI; abrirDet(l.loja, (b) => {
+    const kl = nivelCor(l.fechaPct, l.pct), top = el('div', 'card'), hh = el('div'); hh.style.cssText = 'display:flex;gap:16px;align-items:center';
+    const tx = el('div'); tx.append(el('div', 'sm', 'Vendido'), el('div', 'big', rs(l.vendido)), el('div', 'sm', 'de ' + rs(l.meta) + (l.fecha != null ? ' · fecha em ' + rs(l.fecha) : ''))); if (l.fechaPct != null) tx.append(el('span', 'pill ' + kl, 'no ritmo fecha em ' + pc(l.fechaPct))); hh.append(ring(l.pct, 104, COR[kl]), tx); top.append(hh); b.append(top);
+    if (r.serie && r.serie.lojas[l.loja]) { const c = el('div', 'card'); c.append(el('b', '', '📊 Vendas por dia'), barrasDia(r.serie.dias, r.serie.lojas[l.loja], r.serie.metaDia[l.loja], 130, true)); b.append(c); }
+    const kp = el('div', 'kpis'), k2 = (v, t) => { const d = el('div', 'kpi'); d.append(el('div', 'v', v), el('div', 'l', t)); kp.append(d); };
+    k2(pc(l.conv), 'conversão'); k2(pc(l.pctFila), 'pela fila'); k2(rs(l.ticket), 'ticket médio'); k2(String(l.at || 0), 'atendimentos'); k2(String(l.v || 0), 'vendas na fila'); k2(rs(l.perdasR$), 'perdas est.'); b.append(kp);
+    if (l.atencoes.length) { const a = el('div', 'card'); a.append(el('b', '', '⚠️ Atenções')); l.atencoes.forEach((t) => a.append(el('div', 'sm', '• ' + t))); b.append(a); }
+    const eq = (r.equipe || []).filter((x) => x.loja === l.loja && x.meta).sort((a, c) => (c.pct || 0) - (a.pct || 0));
+    if (eq.length) { const c = el('div', 'card'); c.append(el('b', '', '🏅 Equipe · % da meta')); c.append(linhasPct(eq.map((x) => ({ rot: primeiroNome(x.nome), pct: x.pct, fechaPct: x.fechaPct })))); b.append(c); }
+    const rt = RIT && RIT.lojas ? RIT.lojas.find((x) => x.loja === l.loja) : null; if (rt) b.append(el('div', 'card sm', '⏱️ Hoje: ' + rt.vendasHoje + ' vendas na fila até ' + RIT.quando + (rt.esperado != null ? ' · o normal até agora é ' + rt.esperado : '')));
+  });
+}
 function carregarInicio() {
   if (chefe()) { carregarMetas(); carregarRitmo(); }
   $('i-tit').textContent = 'Carregando…';
   rodar('inicio', [S.token, $('i-loja').value].concat(perArgs('i')), (r) => {
+    INI = r; desenharCards();
     const R = r.rede;
     $('i-tit').textContent = textoPeriodo(r);
     desenharResumo(r);
@@ -2314,8 +2437,9 @@ function mostrarSenha(x) {
   o.append(cp, f); $('sheet').classList.remove('hide');
 }
 // --- importação ---
+let STV = null;
 function desenharStatusVendas(r) {
-  const f = $('gi-falta'); f.replaceChildren();
+  STV = r; const f = $('gi-falta'); f.replaceChildren();
   if (r.faltando.length) {
     const c = el('div', 'aviso-meta'); c.append(el('b', '', '⚠️ Dias sem vendas importadas: ' + r.faltando.length), el('div', 'sub', 'Importe o relatório de cada dia. Se a loja não abriu, marque como "sem vendas".'));
     const box = el('div'); r.faltando.slice(-31).forEach((d) => { const ch = el('span', 'chip-dia', isoBR(d)); const b1 = el('button', '', 'importar'); b1.addEventListener('click', () => { $('gi-data').value = d; $('gi-arq').click(); }); const b2 = el('button', '', 'sem vendas'); b2.addEventListener('click', () => escolher('Marcar ' + isoBR(d) + ' sem vendas?', 'Use só se a loja não vendeu nada neste dia.', [['Marcar sem vendas', '', () => { fechar(); rodar('marcarSemVendas', [S.token, $('g-loja').value, d], desenharStatusVendas); }]])); ch.append(b1, b2); box.append(ch); });
@@ -2368,6 +2492,10 @@ function lerPedidosPA(file) {
         if (!minhas.length) { p.append(el('div', 'aviso-meta', '⚠️ Nenhum vendedor da ' + $('g-loja').value + ' neste arquivo. Confira a loja escolhida acima.')); return; }
         const tot = minhas.reduce((s, l) => s + l[2], 0), on = minhas.filter((l) => /\sON(-?LINE)?$/i.test(l[1])).reduce((s, l) => s + l[2], 0);
         p.append(el('div', 'motiva', 'Dia ' + isoBR($('gi-data').value) + ' · ' + $('g-loja').value + ': total ' + rs(tot) + ' (online ' + rs(on) + '). Confira com o total do USE antes de confirmar.'));
+        const dSel = $('gi-data').value, ja = STV && STV.loja === $('g-loja').value ? (STV.ultimos || []).find((x) => x.data === dSel && x.linhas && !/sem vendas/.test(x.arquivo || '')) : null;
+        if (ja) p.append(el('div', 'aviso-meta', '⚠️ O dia ' + isoBR(dSel) + ' já foi importado' + (ja.por ? ' por ' + ja.por : '') + (ja.quando ? ' às ' + String(ja.quando).slice(11, 16) : '') + ' (total ' + rs(ja.total) + '). Ao confirmar, este arquivo SUBSTITUI o anterior — os valores não somam. Use sempre o relatório com o dia inteiro.'));
+        if (dSel === new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10)) p.append(el('div', 'aviso-meta', '🕐 O dia de hoje ainda não terminou: o relatório fica parcial. O ideal é importar amanhã cedo, com o dia completo.'));
+        $('gi-ok').textContent = ja ? 'Substituir a importação de ' + isoBR(dSel).slice(0, 5) : 'Confirmar importação';
         const t = el('table'); const tb = el('tbody'); minhas.forEach((l) => { const tr = el('tr'); [l[1], rs(l[2]), String(l[4]), String(l[5])].forEach((v, i) => tr.append(el('td', i ? 'n' : '', v))); tb.append(tr); });
         const th = el('thead'); const trh = el('tr'); ['Vendedor', 'Valor', 'Vendas', 'Itens'].forEach((x, i) => trh.append(el('th', i ? 'n' : '', x))); th.append(trh); t.append(th, tb); const w = el('div', 'tbl-x'); w.append(t); p.append(w);
         if (outras) p.append(el('div', 'sub', outras + ' linha(s) de outra loja serão ignoradas.'));
