@@ -1472,7 +1472,8 @@ function carregarMetas() {
       k.append(kp(u.tkm == null ? '—' : rs(u.tkm), 'ticket médio'), kp(u.pa == null ? '—' : DEC1.format(u.pa), 'peças por venda'), kp(rs(u.online), 'vendido online'),
         kp(String(minha.fila.at), 'atendimentos na fila'), kp(pc(minha.fila.conv), 'conversão na fila'), kp(rs(minha.fila.porAt), 'R$ por atendimento'));
       k.id = 'm-eu-kpis'; det.append(k);
-    } else if (r.soEu) eu.append(el('div', 'vazio', 'Sem vendas ou meta suas neste período. Se achar que está errado, fale com a gerente para conferir o seu nome no cadastro.'));
+    } else if (!chefe()) { cardsVendedora(eu, { nome: S.nome, venda: 0, meta: null, pct: 0, falta: 0, fila: { at: 0, v: 0, conv: null } }, r); eu.append(el('div', 'sub', 'Ainda sem vendas importadas ou meta sua neste período — os cards enchem assim que a gerente importar as vendas do USE e cadastrar as metas.')); }
+    else if (r.soEu) eu.append(el('div', 'vazio', 'Sem vendas ou meta suas neste período. Se achar que está errado, fale com a gerente para conferir o seu nome no cadastro.'));
     fimMetas(r);
   });
 }
