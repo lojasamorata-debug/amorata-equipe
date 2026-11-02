@@ -147,7 +147,9 @@ body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fila { display:no
 .funil { display:grid; gap:5px; margin-top:8px; } .funil div { height:22px; border-radius:7px; display:flex; align-items:center; padding:0 8px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap; }
 .tc .dhead { display:flex; justify-content:space-between; align-items:center; max-width:640px; width:100%; margin:0 auto 8px; } .tc .dhead h1 { text-align:left; margin:0; font-size:24px; } .tc .dhead button { border:0; background:var(--panel); border:1px solid var(--line); width:40px; height:40px; border-radius:50%; font-size:20px; cursor:pointer; }
 .tc .dbody { max-width:640px; width:100%; margin:0 auto; } .tc .dbody > * { margin-top:12px; } .tc .dbody h2 { margin-top:16px; }
+.tv-eq .mini-r { font-size:16px; margin-top:10px; } .tv-eq .mini-r .nm { width:130px; } .tv-eq .mini-r .tr { height:14px; } .tv-eq .mini-r .v { width:56px; }
 .chart { width:100%; overflow-x:auto; } .chart svg { display:block; }
+@media print { body > *:not(#det) { display:none !important; } #det { position:static !important; overflow:visible !important; background:#fff !important; } #det .dhead button, #det .btn { display:none !important; } #det .card { break-inside:avoid; } }
 .pre-it { border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px; background:var(--panel); display:flex; gap:10px; align-items:center; }
 .pre-it .em { font-size:28px; width:40px; text-align:center; flex:none; } .pre-it.lock .em { filter:grayscale(1); opacity:.6; } .pre-it .tx { flex:1; min-width:0; } .pre-it b { display:block; } .pre-it .prog { margin-top:6px; }
 .pre-it.ok { border-color:#f2b01e; background:#fffbea; } .pre-it.ent { opacity:.7; } .pre-st { font-size:12px; font-weight:700; color:var(--accent); margin-top:3px; } .pre-it.ok .pre-st { color:#a16207; }
@@ -1656,7 +1658,7 @@ function donut(itens, size) {
   const w = el('div'); w.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:6px'; const sw = el('div'); sw.append(s); w.append(sw, lg); return w;
 }
 function linhasPct(lista, max) {
-  const b = el('div'); lista.slice(0, max || 99).forEach((x) => { const r = el('div', 'mini-r'), t = el('div', 'tr'), i = el('i'), k = nivelCor(x.fechaPct, x.pct); i.style.width = Math.min(100, (x.pct || 0) * 100) + '%'; i.style.background = COR[k]; t.append(i); r.append(el('div', 'nm', x.rot), t, el('div', 'v', pc(x.pct))); b.append(r); }); return b;
+  const b = el('div'); lista.slice(0, max || 99).forEach((x) => { const r = el('div', 'mini-r'), t = el('div', 'tr'), i = el('i'), k = x.cor || nivelCor(x.fechaPct, x.pct); i.style.width = Math.min(100, (x.pct || 0) * 100) + '%'; i.style.background = COR[k]; t.append(i); r.append(el('div', 'nm', x.rot), t, el('div', 'v', pc(x.pct))); b.append(r); }); return b;
 }
 // detalhe em tela cheia: move os blocos já desenhados para dentro e devolve ao fechar
 function abrirDet(titulo, montar) {
@@ -1705,12 +1707,60 @@ function desenharCards() {
   }
   // 5. por que não vendemos
   if (r.perdasMotivos && r.perdasMotivos.length) { const c = card(r.multi ? 'meio' : '', '💸 Por que não vendemos', '', () => abrirDet('Por que não vendemos', (b, mv) => { b.append(mv('i-mot-box')); if (r.procurados && r.procurados.length) { const p = el('div', 'card'); p.append(el('b', '', '🛍️ O que procuraram e não acharam')); r.procurados.slice(0, 8).forEach((x) => p.append(el('div', 'sm', x.produto + ' · ' + x.n + 'x'))); b.append(p); } })); c.append(donut(r.perdasMotivos.slice(0, 3), 80)); }
+  // 7. fechamento do mês anterior (primeira semana do mês)
+  if (new Date().getDate() <= 7 && $('i-per').value === 'mes') {
+    const nm = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][(new Date().getMonth() + 11) % 12];
+    const c = card('full', '📅 Fechamento de ' + nm, 'abrir ›', () => abrirFechamento(nm)); c.append(el('div', 'sm', 'O resumo do mês que passou: resultado, ranking das lojas, destaques da equipe. Dá para salvar em PDF e apresentar na reunião.')); box.insertBefore(c, box.children[1]);
+  }
   // 6. equipe
   if (r.equipe && r.equipe.length) {
     const eq = r.equipe.filter((x) => x.meta).sort((a, b) => (b.pct || 0) - (a.pct || 0));
-    const c = card(r.multi ? 'meio' : '', '🏅 Equipe', r.precisam.length ? r.precisam.length + ' precisam de você' : '', () => abrirDet('Equipe', (b, mv) => { const cc = el('div', 'card'); cc.append(el('b', '', '% da meta de cada consultora'), el('div', 'sm', 'verde: no ritmo da meta · laranja: perto · vermelho: precisa de ajuda')); cc.append(linhasPct(eq.map((x) => ({ rot: primeiroNome(x.nome) + (r.multi ? ' · ' + x.loja.slice(0, 3) : ''), pct: x.pct, fechaPct: x.fechaPct })))); b.append(cc); ['i-prec-box', 'm-equipe-box'].concat(S.cargo === 'ADMIN' ? [] : ['m-eu']).forEach((id) => { const n = mv(id); if (n) b.append(n); }); }));
+    const c = card(r.multi ? 'meio' : '', '🏅 Equipe', r.precisam.length ? r.precisam.length + ' precisam de você' : '', () => abrirDet('Equipe', (b, mv) => { const cc = el('div', 'card'); cc.append(el('b', '', '% da meta de cada consultora'), el('div', 'sm', 'verde: no ritmo da meta · laranja: perto · vermelho: precisa de ajuda')); cc.append(linhasPct(eq.map((x) => ({ rot: primeiroNome(x.nome) + (r.multi ? ' · ' + x.loja.slice(0, 3) : ''), pct: x.pct, fechaPct: x.fechaPct })))); b.append(cc); const mp = mapaEquipe(r.equipe); if (mp) b.append(mp); ['i-prec-box', 'm-equipe-box'].concat(S.cargo === 'ADMIN' ? [] : ['m-eu']).forEach((id) => { const n = mv(id); if (n) b.append(n); }); }));
     eq.slice(0, 3).forEach((x, i) => { const rr = el('div', 'mini-r'), t = el('div', 'tr'), ii = el('i'); ii.style.width = Math.min(100, (x.pct || 0) * 100) + '%'; ii.style.background = COR[nivelCor(x.fechaPct, x.pct)]; t.append(ii); rr.append(el('div', 'nm', ['🥇', '🥈', '🥉'][i] + ' ' + primeiroNome(x.nome)), t, el('div', 'v', pc(x.pct))); c.append(rr); });
   }
+}
+// mapa da equipe: conversão na fila (→) × ticket médio (↑); linhas = média do grupo
+function mapaEquipe(lista) {
+  const pts = (lista || []).filter((x) => x.conv != null && x.tkm && x.at >= 5); if (pts.length < 2) return null;
+  const W = 340, H = 260, m = { l: 44, r: 12, t: 14, b: 34 }, xs = pts.map((x) => x.conv), ys = pts.map((x) => x.tkm);
+  const x0 = Math.max(0, Math.min(...xs) - 0.05), x1 = Math.min(1, Math.max(...xs) + 0.05), y0 = Math.min(...ys) * 0.9, y1 = Math.max(...ys) * 1.08;
+  const X = (v) => m.l + (v - x0) / (x1 - x0 || 1) * (W - m.l - m.r), Y = (v) => H - m.b - (v - y0) / (y1 - y0 || 1) * (H - m.t - m.b);
+  const mx = xs.reduce((a, b) => a + b, 0) / xs.length, my = ys.reduce((a, b) => a + b, 0) / ys.length;
+  const s = sv('svg', { viewBox: '0 0 ' + W + ' ' + H, width: '100%' }), tx = (x, y, t, at) => { const e = sv('text', Object.assign({ x: x, y: y, 'font-size': 10, fill: '#6b6862' }, at || {})); e.textContent = t; s.append(e); };
+  [['#e7f3ec', X(mx), m.t, W - m.r - X(mx), Y(my) - m.t], ['#fbe9e7', m.l, Y(my), X(mx) - m.l, H - m.b - Y(my)]].forEach(([c, x, y, w, h]) => s.append(sv('rect', { x: x, y: y, width: Math.max(0, w), height: Math.max(0, h), fill: c, opacity: 0.6 })));
+  s.append(sv('line', { x1: X(mx), x2: X(mx), y1: m.t, y2: H - m.b, stroke: '#b9b3a8', 'stroke-dasharray': '3 3' }), sv('line', { x1: m.l, x2: W - m.r, y1: Y(my), y2: Y(my), stroke: '#b9b3a8', 'stroke-dasharray': '3 3' }));
+  tx(W - m.r, m.t + 10, 'converte e vende alto ⭐', { 'text-anchor': 'end', fill: '#1e7a46' }); tx(m.l + 4, H - m.b - 6, 'precisa de treino', { fill: '#b3261e' });
+  tx(W - m.r, m.t + 22, '', {}); tx(m.l + 4, m.t + 10, 'ticket alto, converte pouco', { fill: '#a85d00' }); tx(W - m.r, H - m.b - 6, 'converte, mas ticket baixo', { 'text-anchor': 'end', fill: '#a85d00' });
+  tx((m.l + W - m.r) / 2, H - 6, 'conversão na fila →', { 'text-anchor': 'middle' }); const yl = sv('text', { x: 12, y: (m.t + H - m.b) / 2, 'font-size': 10, fill: '#6b6862', transform: 'rotate(-90 12 ' + (m.t + H - m.b) / 2 + ')', 'text-anchor': 'middle' }); yl.textContent = 'ticket médio →'; s.append(yl);
+  pts.forEach((p) => { const cx = X(p.conv), cy = Y(p.tkm); s.append(sv('circle', { cx: cx, cy: cy, r: 6, fill: COR[nivelCor(p.fechaPct, p.pct)], stroke: '#fff', 'stroke-width': 1.5 })); tx(cx + 8, cy + 3, primeiroNome(p.nome), { fill: '#2b2a28', 'font-size': 10.5 }); });
+  const c = el('div', 'card'); c.append(el('b', '', '🗺️ Mapa da equipe'), el('div', 'sm', 'Cada bolinha é uma consultora (cor = meta). Direita = converte mais; para cima = ticket maior. Linhas tracejadas = média do grupo.'));
+  const ch = el('div', 'chart'); ch.append(s); c.append(ch); return c;
+}
+function abrirFechamento(nm) {
+  toast('Montando o fechamento…');
+  rodar('inicio', [S.token, $('i-loja').value, 'mes_ant', '', ''], (r) => abrirDet('Fechamento de ' + nm, (b) => {
+    const R = r.rede, k = nivelCor(R.pct, R.pct), top = el('div', 'card'), hh = el('div'); hh.style.cssText = 'display:flex;gap:16px;align-items:center';
+    const tx = el('div'); tx.append(el('div', 'sm', r.multi ? 'Rede Amorata' : r.lojas[0] ? r.lojas[0].loja : ''), el('div', 'big', rs(R.vendido)), el('div', 'sm', 'de ' + rs(R.meta) + ' de meta')); if (R.comp) tx.append(el('span', 'pill ' + (R.comp.var >= 0 ? 'g' : 'r'), (R.comp.var >= 0 ? '▲ ' : '▼ ') + PCT.format(Math.abs(R.comp.var)) + ' vs mês anterior'));
+    hh.append(ring(R.pct, 110, COR[k]), tx); top.append(hh); b.append(top);
+    const tot = r.serie && r.serie.dias.length ? r.serie.dias.map((_, i) => Object.keys(r.serie.lojas).reduce((a, l) => a + (r.serie.lojas[l][i] || 0), 0)) : [];
+    if (tot.length) { const c = el('div', 'card'), md = Object.keys(r.serie.metaDia).reduce((a, l) => a + (r.serie.metaDia[l] || 0), 0); c.append(el('b', '', '📊 Dia a dia'), barrasDia(r.serie.dias, tot, md, 130, true)); const mi = tot.indexOf(Math.max(...tot)); c.append(el('div', 'sm', '🔝 Melhor dia: ' + isoBR(r.serie.dias[mi]) + ' · ' + rs(tot[mi]) + ' · ' + tot.filter((v) => md && v >= md).length + ' dias acima da meta diária')); b.append(c); }
+    if (r.multi) { const c = el('div', 'card'); c.append(el('b', '', '🏬 Lojas · % da meta')); c.append(linhasPct(r.lojas.slice().sort((a, x) => (x.pct || 0) - (a.pct || 0)).map((l) => ({ rot: l.loja, pct: l.pct, fechaPct: l.pct })))); b.append(c); }
+    const eq = (r.equipe || []).filter((x) => x.meta).sort((a, x) => (x.pct || 0) - (a.pct || 0));
+    if (eq.length) {
+      const c = el('div', 'card'); c.append(el('b', '', '🏆 Pódio do mês')); const pod = el('div'); pod.style.cssText = 'display:flex;gap:8px;align-items:flex-end;justify-content:center;margin:10px 0 4px';
+      [1, 0, 2].forEach((i) => { const x = eq[i]; if (!x) return; const col = el('div'); col.style.cssText = 'text-align:center;flex:1;max-width:110px'; const bar = el('div'); bar.style.cssText = 'border-radius:10px 10px 0 0;background:' + ['#f2b01e', '#b9b3a8', '#d08a00'][i] + ';height:' + [90, 64, 48][i] + 'px;display:flex;align-items:center;justify-content:center;font-size:26px'; bar.textContent = ['🥇', '🥈', '🥉'][i]; col.append(el('div', '', primeiroNome(x.nome)), el('div', 'sm', pc(x.pct) + (r.multi ? ' · ' + x.loja : '')), bar); pod.append(col); });
+      c.append(pod); b.append(c);
+      const dest = el('div', 'card'), d = []; dest.append(el('b', '', '✨ Destaques'));
+      const cv = eq.filter((x) => x.conv != null && x.at >= 20).sort((a, x) => x.conv - a.conv)[0]; if (cv) d.push('🎯 Maior conversão na fila: ' + primeiroNome(cv.nome) + ' (' + pc(cv.conv) + ')');
+      const tk = eq.filter((x) => x.tkm).sort((a, x) => x.tkm - a.tkm)[0]; if (tk) d.push('💎 Maior ticket médio: ' + primeiroNome(tk.nome) + ' (' + rs(tk.tkm) + ')');
+      const pa = eq.filter((x) => x.pa).sort((a, x) => x.pa - a.pa)[0]; if (pa) d.push('🛍️ Mais peças por venda: ' + primeiroNome(pa.nome) + ' (' + DEC1.format(pa.pa) + ')');
+      const bat = eq.filter((x) => x.pct >= 1).length; d.push('🏅 ' + bat + ' de ' + eq.length + ' consultoras bateram a meta');
+      d.forEach((t) => dest.append(el('div', 'sm', t))); b.append(dest);
+      const mp = mapaEquipe(r.equipe); if (mp) b.append(mp);
+    }
+    if (r.perdasMotivos && r.perdasMotivos.length) { const c = el('div', 'card'); c.append(el('b', '', '💸 Por que não vendemos'), donut(r.perdasMotivos.slice(0, 4), 96)); b.append(c); }
+    const pr = el('button', 'btn pri big', '🖨️ Salvar em PDF / imprimir'); pr.addEventListener('click', () => window.print()); b.append(pr);
+  }));
 }
 function detLoja(l) {
   const r = INI; abrirDet(l.loja, (b) => {
@@ -1722,6 +1772,7 @@ function detLoja(l) {
     if (l.atencoes.length) { const a = el('div', 'card'); a.append(el('b', '', '⚠️ Atenções')); l.atencoes.forEach((t) => a.append(el('div', 'sm', '• ' + t))); b.append(a); }
     const eq = (r.equipe || []).filter((x) => x.loja === l.loja && x.meta).sort((a, c) => (c.pct || 0) - (a.pct || 0));
     if (eq.length) { const c = el('div', 'card'); c.append(el('b', '', '🏅 Equipe · % da meta')); c.append(linhasPct(eq.map((x) => ({ rot: primeiroNome(x.nome), pct: x.pct, fechaPct: x.fechaPct })))); b.append(c); }
+    { const mp = mapaEquipe((r.equipe || []).filter((x) => x.loja === l.loja)); if (mp) b.append(mp); }
     const rt = RIT && RIT.lojas ? RIT.lojas.find((x) => x.loja === l.loja) : null; if (rt) b.append(el('div', 'card sm', '⏱️ Hoje: ' + rt.vendasHoje + ' vendas na fila até ' + RIT.quando + (rt.esperado != null ? ' · o normal até agora é ' + rt.esperado : '')));
   });
 }
@@ -3031,6 +3082,7 @@ function tDesenharX(x) {
   if (x.meta && x.meta.meta) {
     cartaoMeta.restam = x.meta.restam; cartaoMeta.encerrado = false;
     const k = cartaoMeta(x.meta, 'Meta da loja · ' + (x.titulo || 'mês atual')); k.classList.add('tmeta'); k.style.marginTop = '0';
+    { const hr = el('div'); hr.style.cssText = 'display:flex;justify-content:center;margin:6px 0 10px'; hr.append(ring(x.meta.pct, 150, COR[x.meta.fechaPct != null ? nivelCor(x.meta.fechaPct, x.meta.pct) : x.meta.pct >= 1 ? 'g' : 'n'])); hr.querySelector('b').style.fontSize = '30px'; k.insertBefore(hr, k.children[1]); }
     if (x.meta.metaOnline) { const d = el('div', 'sub', '🛍️ Online: ' + rs(x.meta.online) + ' de ' + rs(x.meta.metaOnline) + ' (' + pc(x.meta.online / x.meta.metaOnline) + ')'); d.style.marginTop = '8px'; k.append(d); }
     tDesenharX.md = x.meta.falta > 0 && x.meta.porDia ? x.meta.porDia : null; const dd = el('div'); dd.id = 'tb-dia'; dd.style.marginTop = '8px'; k.append(dd);
     const n = el('div', 'nota', 'Vendas do USE até ontem · ' + x.quando); k.append(n); setTimeout(tMetaDia, 0);
@@ -3038,7 +3090,7 @@ function tDesenharX(x) {
   } else { const k = el('div', 'card'); k.append(el('div', 'sub', 'Meta da loja'), el('div', 'vazio', 'Meta do mês ainda não cadastrada.')); mb.append(k); }
   const eq = $('tb-eq'); eq.replaceChildren();
   if (!x.equipe.length) eq.append(el('div', 'vazio', 'Sem metas individuais no mês.'));
-  x.equipe.forEach((c) => { const l = el('div', 'l'); const s = el('span', '', primeiroNome(c.nome)); l.append(s, el('b', '', pc(c.pct) + (c.pct >= 1 ? ' 🏆' : ''))); eq.append(l); });
+  if (x.equipe.length) { const lp = linhasPct(x.equipe.slice().sort((a, b) => (b.pct || 0) - (a.pct || 0)).map((c, i) => ({ rot: (['🥇', '🥈', '🥉'][i] || '') + ' ' + primeiroNome(c.nome) + (c.pct >= 1 ? ' 🏆' : ''), pct: c.pct, cor: c.pct >= 1 ? 'g' : 'n' }))); lp.classList.add('tv-eq'); eq.append(lp); }
   const ds = $('tb-des'); ds.replaceChildren();
   x.desafios.forEach((d) => { const b = el('div', 'tmini'); b.style.marginTop = '12px'; b.append(el('div', 'sub', '🎯 Desafio: ' + d.titulo + ' · até ' + d.fim));
     d.ranking.forEach((r, i) => { const l = el('div', 'l'); l.append(el('span', '', ['🥇', '🥈', '🥉'][i] + ' ' + primeiroNome(r.nome)), el('b', '', r.qtd + ' / ' + d.alvo + ' ' + d.unidade)); b.append(l); }); ds.append(b); });
