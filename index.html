@@ -2275,7 +2275,7 @@ function passosInstalar() {
 }
 // ---------- Meu RH ----------
 let RH = null, RH_SEL = '';
-const RH_IC = { 'Holerite': '💵', 'Folha de ponto': '🕘', 'Férias': '🏖️', 'Contrato': '📝', 'Atestado': '🩺', 'Comunicado': '📢', 'Outro': '📄' };
+const RH_IC = { 'Holerite': '💵', 'Folha de ponto': '🕘', 'Férias': '🏖️', 'Contrato': '📝', 'Atestado': '🩺', 'Documento pessoal': '🪪', 'Comunicado': '📢', 'Outro': '📄' };
 function carregarRHBadge() { if (!S || S.cargo === 'ADMIN') return; google.script.run.withSuccessHandler((r) => { RH = r; const n = $('rh-n'); n.textContent = r.novos; n.classList.toggle('hide', !r.novos); }).withFailureHandler(() => {}).rhLista(S.token, ''); }
 function abrirMeuRH() {
   const ant = $('rh'); if (ant) ant.remove();
@@ -2287,20 +2287,52 @@ function abrirMeuRH() {
 function carregarRHBadgeLocal(r) { const n = $('rh-n'); if (n) { n.textContent = r.novos; n.classList.toggle('hide', !r.novos); } }
 function desenharRH(b, r, adm) {
   b.replaceChildren();
-  if (!adm) { b.append(el('div', 'sub', 'Seus documentos da empresa: holerite, folha de ponto, férias e outros. Só você e a administração veem.')); b.firstChild.style.margin = '0 0 12px'; }
-  if (!r.docs.length) { b.append(el('div', 'vazio', adm ? 'Nenhum documento enviado para esta pessoa.' : 'Ainda não há documentos aqui. Quando a administração enviar, você recebe um aviso. 📄')); return; }
+  if (!adm) {
+    b.append(el('div', 'sub', 'Seus documentos da empresa: holerite, folha de ponto, férias e outros. Só você e a administração veem.')); b.firstChild.style.margin = '0 0 10px';
+    const up = el('button', 'btn pri', '📎 Enviar documento (atestado…)'); up.style.cssText = 'width:100%;margin-bottom:12px'; up.addEventListener('click', () => enviarMeuRH(b, r, up)); b.append(up);
+  }
+  if (!r.docs.length) { b.append(el('div', 'vazio', adm ? 'Nenhum documento para esta pessoa ainda.' : 'Ainda não há documentos aqui. Quando a administração enviar, você recebe um aviso. 📄')); return; }
+  const pend = r.docs.filter((d) => d.assinatura === 'pendente');
+  if (pend.length && !adm) { const h0 = el('h2'); h0.append(el('span', '', '✍️ Para assinar'), el('span', '', String(pend.length))); b.append(h0); pend.forEach((d) => b.append(itemRH(d, r, b, adm))); }
   const grupos = {}; r.docs.forEach((d) => { (grupos[d.tipo] = grupos[d.tipo] || []).push(d); });
   r.tipos.concat(Object.keys(grupos).filter((t) => r.tipos.indexOf(t) < 0)).forEach((t) => {
     if (!grupos[t]) return; const h2 = el('h2'); h2.append(el('span', '', (RH_IC[t] || '📄') + ' ' + t), el('span', '', String(grupos[t].length))); b.append(h2);
-    grupos[t].forEach((d) => {
-      const c = el('div', 'rh-doc'); c.append(el('div', 'ic', d.mime && d.mime.indexOf('image') === 0 ? '🖼️' : (RH_IC[t] || '📄')));
-      const tx = el('div', 'tx'); tx.append(el('b', '', (d.competencia ? d.competencia + ' · ' : '') + (d.titulo || d.tipo)), el('span', '', 'Enviado em ' + d.quando.slice(0, 10) + (adm ? (d.visto ? ' · 👀 aberto em ' + d.visto : ' · ainda não abriu') : ''))); c.append(tx);
-      if (!adm && !d.visto) c.append(el('span', 'nv', 'novo'));
-      c.addEventListener('click', () => abrirDocRH(d, () => { if (!adm && !d.visto) { d.visto = 'agora'; r.novos = Math.max(0, r.novos - 1); carregarRHBadgeLocal(r); desenharRH(b, r, adm); } }));
-      if (adm) { const ap = el('button', 'btn sm', 'Apagar'); ap.addEventListener('click', (ev) => { ev.stopPropagation(); escolher('Apagar este documento?', 'Ele sai do Meu RH de ' + primeiroNome(nomeRH(r.usuario)) + ' e vai para a lixeira do Drive.', [['Apagar', 'bad', () => { fechar(); rodar('rhApagar', [S.token, d.id], desenharRHAdm); }]]); }); c.append(ap); }
-      b.append(c);
-    });
+    grupos[t].forEach((d) => { if (!adm && d.assinatura === 'pendente') return; b.append(itemRH(d, r, b, adm)); });
   });
+}
+function itemRH(d, r, b, adm) {
+  const t = d.tipo, c = el('div', 'rh-doc'); c.append(el('div', 'ic', d.mime && d.mime.indexOf('image') === 0 ? '🖼️' : (RH_IC[t] || '📄')));
+  const st = d.assinatura === 'pendente' ? ' · ✍️ aguardando assinatura' : /^assinado/.test(d.assinatura) ? ' · ✅ assinado' : '';
+  const info = (d.porEla ? (adm ? 'Enviado por ela em ' : 'Você enviou em ') : 'Enviado em ') + d.quando.slice(0, 10) + st + (adm && !d.porEla && d.assinatura !== 'pendente' ? (d.visto ? ' · 👀 aberto em ' + d.visto : ' · ainda não abriu') : '');
+  const tx = el('div', 'tx'); tx.append(el('b', '', (d.competencia ? d.competencia + ' · ' : '') + (d.titulo || d.tipo)), el('span', '', info)); c.append(tx);
+  if (!adm && d.assinatura === 'pendente' && d.signUrl) {
+    const as = el('button', 'btn pri sm', '✍️ Assinar'); as.style.color = '#fff'; as.addEventListener('click', (ev) => { ev.stopPropagation(); window.open(d.signUrl, '_blank', 'noopener'); toast('Depois de assinar, volte aqui: o documento assinado aparece no Meu RH em alguns minutos.'); }); c.append(as);
+    c.addEventListener('click', () => window.open(d.signUrl, '_blank', 'noopener'));
+  } else {
+    if (!adm && !d.visto && !d.porEla) c.append(el('span', 'nv', 'novo'));
+    if (d.temArquivo) c.addEventListener('click', () => abrirDocRH(d, () => { if (!adm && !d.visto) { d.visto = 'agora'; r.novos = Math.max(0, r.novos - 1); carregarRHBadgeLocal(r); desenharRH(b, r, adm); } }));
+  }
+  if (adm) { const ap = el('button', 'btn sm', 'Tirar do app'); ap.addEventListener('click', (ev) => { ev.stopPropagation(); escolher('Tirar este documento do app?', 'Ele some do Meu RH de ' + primeiroNome(nomeRH(r.usuario)) + '. O arquivo continua na pasta dela no Drive.', [['Tirar do app', 'bad', () => { fechar(); rodar('rhApagar', [S.token, d.id], desenharRHAdm); }]]); }); c.append(ap); }
+  return c;
+}
+function enviarMeuRH(b, r, up) {
+  const o = el('div', 'card'); o.style.marginBottom = '12px'; o.append(el('b', '', '📎 Enviar documento'), el('div', 'sub', 'Vai direto para a administração. Pode ser foto do atestado.')); o.lastChild.style.margin = '2px 0 8px';
+  up.replaceWith(o);
+  const tp = el('select'); (r.tiposFunc || ['Atestado', 'Documento pessoal', 'Outro']).forEach((t) => tp.append(new Option((RH_IC[t] || '') + ' ' + t, t)));
+  const ti = el('input'); ti.placeholder = 'Descrição (opcional) — ex.: atestado de 2 dias'; ti.maxLength = 80;
+  const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf,image/*'; fi.multiple = true;
+  const ok = el('button', 'btn pri big', 'Enviar');
+  [tp, ti, fi].forEach((x) => { x.style.cssText = 'width:100%;box-sizing:border-box;margin-bottom:8px'; });
+  ok.addEventListener('click', async () => {
+    if (!fi.files.length) { toast('Escolha o arquivo ou tire a foto.'); return; }
+    const fs = [...fi.files]; if (fs.some((f) => f.size > 10 * 1024 * 1024)) { toast('Cada arquivo pode ter até 10 MB.'); return; }
+    ok.disabled = true; ok.textContent = 'Enviando…';
+    const lerArq = (f) => new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res({ nome: f.name, dataUrl: rd.result }); rd.onerror = rej; rd.readAsDataURL(f); });
+    try { const arqs = await Promise.all(fs.map(lerArq)); rodar('rhEnviarMeu', [S.token, tp.value, ti.value, arqs], (r2) => { toast('Enviado para a administração ✅'); RH = r2; desenharRH(b, r2, false); }, () => { ok.disabled = false; ok.textContent = 'Enviar'; }); }
+    catch (e) { toast('Não consegui ler o arquivo.'); ok.disabled = false; ok.textContent = 'Enviar'; }
+  });
+  const cc = el('button', 'btn sm', 'Cancelar'); cc.style.cssText = 'display:block;margin:8px auto 0;border:0;background:none;color:var(--muted)'; cc.addEventListener('click', () => o.replaceWith(up));
+  o.append(tp, ti, fi, ok, cc);
 }
 let PDFJS = null;
 function carregarPdfJs() {
@@ -2332,7 +2364,7 @@ function desenharRHAdm(r) {
   RH = r; const g = $('g-rh'); g.replaceChildren();
   const card = el('div', 'card'); card.style.marginTop = '12px'; card.append(el('b', '', '📁 Enviar documento para o Meu RH'));
   const pes = el('select'); pes.append(new Option('Escolha a funcionária…', '')); let lj = null, og = null;
-  (r.pessoas || []).forEach((p) => { if (p.loja !== lj) { lj = p.loja; og = document.createElement('optgroup'); og.label = lj || 'Sem loja'; pes.append(og); } og.append(new Option(p.nome, p.usuario)); });
+  (r.pessoas || []).forEach((p) => { if (p.loja !== lj) { lj = p.loja; og = document.createElement('optgroup'); og.label = lj || 'Sem loja'; pes.append(og); } og.append(new Option(p.nome + (p.pasta ? '' : ' (sem pasta)'), p.usuario)); });
   pes.value = RH_SEL || ''; pes.addEventListener('change', () => { RH_SEL = pes.value; rodar('rhLista', [S.token, RH_SEL], desenharRHAdm); });
   const tp = el('select'); r.tipos.forEach((t) => tp.append(new Option((RH_IC[t] || '') + ' ' + t, t)));
   const mes = el('input'); mes.type = 'month'; const d0 = new Date(); d0.setDate(1); d0.setMonth(d0.getMonth() - 1); mes.value = d0.toISOString().slice(0, 7);
@@ -2340,8 +2372,14 @@ function desenharRHAdm(r) {
   const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf,image/*'; fi.multiple = true;
   const env = el('button', 'btn pri', 'Enviar');
   const lin = (rot, c) => { const w = el('label', 'campo'); w.style.cssText = 'display:block;margin-top:8px'; const s2 = el('div', 'sub', rot); s2.style.marginBottom = '3px'; w.append(s2, c); c.style.width = '100%'; c.style.boxSizing = 'border-box'; return w; };
-  card.append(lin('Funcionária', pes), lin('Tipo', tp), lin('Mês de referência', mes), lin('Descrição', ti), lin('Arquivo (PDF ou foto, até 10 MB — pode escolher vários)', fi));
-  env.style.marginTop = '10px'; card.append(env, el('div', 'sub', 'Ela recebe um aviso no celular e vê o documento em 📁 Meu RH. Você acompanha aqui quando ela abriu.'));
+  card.append(lin('Funcionária', pes));
+  if (RH_SEL) { // pasta do Drive da funcionária
+    const pb = el('div', 'sub'); pb.style.cssText = 'margin-top:6px;padding:8px 10px;border-radius:10px;background:' + (r.pasta ? 'var(--accentbg)' : '#fff4ec');
+    pb.append(document.createTextNode(r.pasta ? '📂 Pasta no Drive: ' + r.pasta.nome + ' ' : '⚠️ Esta funcionária ainda não tem pasta do Drive vinculada. '));
+    const tr = el('a', '', r.pasta ? 'trocar' : 'vincular pasta'); tr.href = '#'; tr.addEventListener('click', (ev) => { ev.preventDefault(); const lk = prompt('Cole o link da pasta dela no Google Drive:'); if (lk) rodar('rhVincularPasta', [S.token, RH_SEL, lk], (r2) => { toast('Pasta vinculada 📂'); desenharRHAdm(r2); }); }); pb.append(tr); card.append(pb);
+  }
+  card.append(lin('Tipo', tp), lin('Mês de referência', mes), lin('Descrição', ti), lin('Arquivo (PDF ou foto, até 10 MB — pode escolher vários)', fi));
+  env.style.marginTop = '10px'; card.append(env, el('div', 'sub', 'O arquivo vai para a pasta dela no Drive (na subpasta do tipo, ex.: HOLERITE, PONTO). Ela recebe um aviso no celular e vê em 📁 Meu RH. Você acompanha aqui quando ela abriu.'));
   card.lastChild.style.marginTop = '6px';
   env.addEventListener('click', async () => {
     if (!pes.value) { toast('Escolha a funcionária.'); return; } if (!fi.files.length) { toast('Escolha o arquivo.'); return; }
@@ -2352,6 +2390,23 @@ function desenharRHAdm(r) {
     catch (e) { toast('Não consegui ler o arquivo.'); env.disabled = false; env.textContent = 'Enviar'; }
   });
   g.append(card);
+  // ZapSign: uma conta por loja
+  if (r.zs) {
+    const zc = el('details', 'card dob'); zc.style.marginTop = '12px'; const sm = el('summary'); sm.append(el('b', '', '✍️ ZapSign — documentos para assinar'), el('span', 'sub', ' · ' + r.zs.filter((z) => z.ok).length + ' de ' + r.zs.length + ' lojas conectadas')); zc.append(sm);
+    zc.append(el('div', 'sub', 'Cole o token da API da ZapSign de cada loja (ZapSign › Configurações › Integrações › API ZapSign). A cada 10 minutos o app busca os documentos enviados para assinatura: eles aparecem no Meu RH da funcionária com o botão ✍️ Assinar e, depois de assinados, o PDF assinado vai para a pasta dela no Drive.'));
+    zc.lastChild.style.margin = '8px 0';
+    r.zs.forEach((z) => {
+      const ln = el('div'); ln.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0;padding-top:8px;border-top:1px solid var(--line)';
+      const nm = el('div'); nm.style.cssText = 'flex:1 1 140px'; nm.append(el('b', '', z.loja), el('div', 'sub', z.ok ? '🟢 conectada' + (z.ult ? ' · última busca ' + z.ult : '') : '⚪ não conectada'));
+      const inp = el('input'); inp.type = 'password'; inp.autocomplete = 'off'; inp.placeholder = z.ok ? 'trocar token…' : 'token da API'; inp.style.cssText = 'flex:1 1 160px';
+      const sv = el('button', 'btn sm pri', z.ok ? 'Trocar' : 'Conectar'); sv.addEventListener('click', () => { if (!inp.value.trim()) { toast('Cole o token.'); return; } sv.disabled = true; rodar('zsSalvarToken', [S.token, z.loja, inp.value.trim()], (r2) => { toast('ZapSign conectada: ' + z.loja + ' ✅'); desenharRHAdm(r2); }, () => { sv.disabled = false; }); });
+      ln.append(nm, inp, sv);
+      if (z.ok) { const dc = el('button', 'btn sm', 'Desconectar'); dc.addEventListener('click', () => escolher('Desconectar a ZapSign de ' + z.loja + '?', 'O app para de buscar os documentos desta loja.', [['Desconectar', 'bad', () => { fechar(); rodar('zsSalvarToken', [S.token, z.loja, ''], desenharRHAdm); }]])); ln.append(dc); }
+      zc.append(ln);
+    });
+    if (r.zs.some((z) => z.ok)) { const sy = el('button', 'btn sm', '🔄 Buscar agora'); sy.addEventListener('click', () => { sy.disabled = true; rodar('zsSincronizarAgora', [S.token], (r2) => { toast(r2.sinc ? 'ZapSign: ' + r2.sinc : 'Busca feita'); desenharRHAdm(r2); }, () => { sy.disabled = false; }); }); zc.append(sy); }
+    g.append(zc);
+  }
   if (RH_SEL) { const lb = el('div'); lb.style.marginTop = '14px'; g.append(lb); desenharRH(lb, r, true); const h = el('h2'); h.append(el('span', '', 'Documentos de ' + primeiroNome(nomeRH(RH_SEL))), el('span', '', String(r.docs.length))); lb.prepend(h); }
 }
 // ---------- termo de uso ----------
@@ -3360,7 +3415,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide');
 }));
