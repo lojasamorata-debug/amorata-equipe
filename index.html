@@ -3045,10 +3045,20 @@ function comemorar(novas) {
   const m = novas[0], f = el('div'); f.id = 'festa';
   const cores = ['#5b4a7a', '#f2b01e', '#e8738a', '#1e7a46', '#7fb3e6', '#ff9f43'];
   for (let i = 0; i < 40; i++) { const c = el('i', 'cf'); c.style.left = Math.random() * 100 + '%'; c.style.background = cores[i % cores.length]; c.style.animationDuration = 2 + Math.random() * 2.5 + 's'; c.style.animationDelay = Math.random() * 0.8 + 's'; f.append(c); }
-  const fc = el('div', 'fc'); fc.append(el('div', 'em', m.emoji), el('div', 'mini', novas.length > 1 ? novas.length + ' novas conquistas!' : 'Nova conquista!'), el('h3', '', m.nome), el('p', '', m.desc + (novas.length > 1 ? ' · E mais: ' + novas.slice(1).map((x) => x.emoji + ' ' + x.nome).join(', ') : '') + '. Já apareceu no mural para toda a rede 🎉'));
-  const ok = el('button', 'btn pri big', 'Uhuu! 🎉'), ver = el('button', 'btn big', 'Ver minhas medalhas');
-  const sai = () => f.remove(); ok.addEventListener('click', sai); ver.addEventListener('click', () => { sai(); mudarAba('mural'); abaMural('con'); }); f.addEventListener('click', (ev) => { if (ev.target === f) sai(); });
-  ver.style.marginTop = '8px'; fc.append(ok, ver); f.append(fc); document.body.append(f);
+  const fc = el('div', 'fc'); fc.append(el('div', 'em', m.emoji), el('div', 'mini', novas.length > 1 ? novas.length + ' novas conquistas!' : 'Nova conquista!'), el('h3', '', m.nome), el('p', '', m.desc + (novas.length > 1 ? ' · E mais: ' + novas.slice(1).map((x) => x.emoji + ' ' + x.nome).join(', ') : '') + '.'));
+  const sai = () => f.remove(); f.addEventListener('click', (ev) => { if (ev.target === f) sai(); });
+  const bts = el('div'); bts.style.cssText = 'display:flex;flex-direction:column;gap:8px';
+  const comp = el('button', 'btn pri big', '📣 Compartilhar com a equipe'), ok = el('button', 'btn big', 'Agora não'), ver = el('button', 'btn sm', 'Ver minhas medalhas');
+  ver.style.cssText = 'margin:2px auto 0;border:0;background:none;color:var(--muted)';
+  ok.addEventListener('click', sai); ver.addEventListener('click', () => { sai(); mudarAba('mural'); abaMural('con'); });
+  comp.addEventListener('click', () => {
+    bts.replaceChildren(); const tx = el('textarea'); tx.rows = 2; tx.maxLength = 300; tx.placeholder = 'Quer deixar um recado para a equipe? (opcional)'; tx.style.cssText = 'width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:none';
+    const pub = el('button', 'btn pri big', 'Publicar no mural 🎉'), volta = el('button', 'btn sm', 'Cancelar'); volta.style.cssText = 'margin:0 auto;border:0;background:none;color:var(--muted)';
+    volta.addEventListener('click', sai);
+    pub.addEventListener('click', () => { sai(); toast('Compartilhado com a equipe 🎉'); rodar('compartilharConquista', [S.token, novas.map((x) => ({ emoji: x.emoji, nome: x.nome, premio: !!x.premio })), tx.value], () => { if (aba === 'mural') { try { carregarMural(); } catch (e) {} } }); });
+    bts.append(tx, pub, volta); setTimeout(() => tx.focus(), 50);
+  });
+  bts.append(comp, ok, ver); fc.append(bts); f.append(fc); document.body.append(f);
 }
 function checarMedalhas(cb) {
   if (!S) return;
@@ -3141,7 +3151,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide');
 }));
