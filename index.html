@@ -449,11 +449,11 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
     <div class="tabs"><button class="tab hide" id="tab-ini">Início</button><button class="tab hide" id="tab-dia">Meu dia</button><button class="tab on" id="tab-fila">Fila</button><button class="tab" id="tab-meta">Metas</button><button class="tab" id="tab-mural">Mural</button><button class="tab" id="tab-apr">Aprender</button><button class="tab hide" id="tab-gest">Gestão</button><button class="tab" id="tab-prod">Produtos</button><button class="tab" id="tab-rel">Relatórios</button></div>
     <div class="pend hide" id="pend"></div>
     <div id="cmn-top"></div>
+    <div class="card reu-c hide" id="push-card"></div>
     <div id="mood-fila"></div>
     <div id="v-dia" class="hide">
     <div id="dia-blocos">
     <div class="ban-fer hide" id="ban-fer"></div>
-    <div class="card reu-c hide" id="push-card"></div>
     <div class="card reu-c hide" id="reu-card"></div>
     <div class="card metahoje hide" id="eu-meta"></div>
     <div class="card pla-c hide" id="plano-card"></div>
@@ -1347,7 +1347,7 @@ setInterval(() => { document.querySelectorAll('.timer[data-ini]').forEach((t) =>
 $('lbtn').addEventListener('click', entrar);
 $('ls').addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
 $('b-sair').addEventListener('click', () => sair(''));
-$('b-ajuda').addEventListener('click', () => escolher('❓ Ajuda', 'Conheça o app', [['🧭 Tour pelo app', 'pri', () => { fechar(); iniciarTour(); }], ['📖 Guia rápido', '', () => { fechar(); mostrarGuia(true); }], ['📜 Termo de uso', '', () => { fechar(); mostrarTermo(null); }]]));
+$('b-ajuda').addEventListener('click', () => escolher('❓ Ajuda', 'Conheça o app', [['🧭 Tour pelo app', 'pri', () => { fechar(); iniciarTour(); }], ['📖 Guia rápido', '', () => { fechar(); mostrarGuia(true); }], ['🔔 Notificações', '', () => { fechar(); verNotificacoes(); }], ['📜 Termo de uso', '', () => { fechar(); mostrarTermo(null); }]]));
 $('sel-loja').addEventListener('change', (e) => { loja = e.target.value; salvar(); E = null; atualizar(); carregarCk(); });
 $('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') fechar(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) atualizar(); });
@@ -2406,6 +2406,14 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && $(
 const URL_SITE = 'https://lojasamorata-debug.github.io/amorata-equipe/';
 const ehIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent), instalado = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const b64u8 = (s) => { const p = '='.repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, (c) => c.charCodeAt(0)); };
+async function verNotificacoes() {
+  try { localStorage.removeItem('amorata_push_x'); } catch (e) {}
+  if (S && S.cargo !== 'ADMIN' && ehCelular() && HOSPEDADO) { const st = await situacaoApp(); if (st !== 'ok') { exigirApp(false); return; } }
+  await desenharPush(); const pc = $('push-card');
+  if (pc && !pc.classList.contains('hide')) { window.scrollTo({ top: 0, behavior: 'smooth' }); pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  else if ('Notification' in window && Notification.permission === 'granted') toast('✅ As notificações já estão ativas neste aparelho.');
+  else toast('Este navegador não aceita notificações. Use o app instalado no celular.');
+}
 async function desenharPush() {
   const b = $('push-card'); if (!b || !S) return; b.replaceChildren(); b.classList.add('hide');
   let fechado = false; try { fechado = localStorage.getItem('amorata_push_x') === S.usuario; } catch (e) {}
@@ -2416,7 +2424,10 @@ async function desenharPush() {
     if (ehIOS() && !instalado()) { b.append(x, el('b', '', '📲 Receba os avisos no iPhone'), el('div', 'sub', 'Toque em Compartilhar ⬆️ › "Adicionar à Tela de Início" e abra o app pelo ícone. Depois volte aqui para ativar.')); b.classList.remove('hide'); }
     return;
   }
-  if (Notification.permission === 'denied') return;
+  if (Notification.permission === 'denied') {
+    b.append(x, el('b', '', '🔕 As notificações estão bloqueadas'), el('div', 'sub', ehIOS() ? 'Abra os Ajustes do iPhone › Notificações › Amorata Equipe e ligue "Permitir Notificações". Depois volte aqui.' : ehCelular() ? 'Toque no ícone ⚙️/🔒 ao lado do endereço (ou segure o ícone do app › ⓘ) › Notificações › Permitir. Depois volte aqui.' : 'Clique no cadeado 🔒 ao lado do endereço › Notificações › Permitir. Depois recarregue a página.'));
+    b.classList.remove('hide'); return;
+  }
   try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); if (sub && Notification.permission === 'granted') return; } catch (e) { return; }
   b.append(x, el('b', '', '🔔 Ative os avisos no celular'), el('div', 'sub', 'Receba na hora: cliente para retornar, peça que chegou, prêmio desbloqueado, recado da equipe — mesmo com o app fechado.'));
   const ok = el('button', 'btn pri', 'Ativar notificações'); ok.style.marginTop = '8px';
