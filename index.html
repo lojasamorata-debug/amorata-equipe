@@ -2564,7 +2564,7 @@ function desenharStatusVendas(r) {
   STV = r; const f = $('gi-falta'); f.replaceChildren();
   if (r.faltando.length) {
     const c = el('div', 'aviso-meta'); c.append(el('b', '', '⚠️ Dias sem vendas importadas: ' + r.faltando.length), el('div', 'sub', 'Importe o relatório de cada dia. Se a loja não abriu, marque como "sem vendas".'));
-    const box = el('div'); r.faltando.slice(-31).forEach((d) => { const ch = el('span', 'chip-dia', isoBR(d)); const b1 = el('button', '', 'importar'); b1.addEventListener('click', () => { $('gi-data').value = d; $('gi-arq').click(); }); const b2 = el('button', '', 'sem vendas'); b2.addEventListener('click', () => escolher('Marcar ' + isoBR(d) + ' sem vendas?', 'Use só se a loja não vendeu nada neste dia.', [['Marcar sem vendas', '', () => { fechar(); rodar('marcarSemVendas', [S.token, $('g-loja').value, d], desenharStatusVendas); }]])); ch.append(b1, b2); box.append(ch); });
+    const box = el('div'); r.faltando.slice(-31).forEach((d) => { const ch = el('span', 'chip-dia', isoBR(d)); const b1 = el('button', '', 'importar'); b1.addEventListener('click', () => { $('gi-data').value = d; $('gi-arq').click(); }); const b2 = el('button', '', 'sem vendas'); b2.addEventListener('click', () => escolher('Marcar ' + isoBR(d) + ' sem vendas?', 'Use só se a loja não vendeu nada neste dia.', [['Marcar sem vendas', '', () => { fechar(); rodar('marcarSemVendas', [S.token, $('g-loja').value, d], (r) => { desenharStatusVendas(r); carregarPendencias(); }); }]])); ch.append(b1, b2); box.append(ch); });
     c.append(box); f.append(c);
   } else if (!(r.parciais || []).length) f.append(el('div', 'motiva', '✅ Todos os dias até ontem estão importados.'));
   if ((r.parciais || []).length) {
@@ -2658,7 +2658,7 @@ function importarGI(modo, gi, d, loja) {
       box.append(c);
     }
     $('gi-prev').replaceChildren(box);
-    toast(mz ? 'Vendas atualizadas! 🔄' : 'Vendas importadas! 📥'); desenharStatusVendas(r);
+    toast(mz ? 'Vendas atualizadas! 🔄' : 'Vendas importadas! 📥'); desenharStatusVendas(r); carregarPendencias();
   }, () => { $('gi-ok').disabled = false; });
 }
 $('gi-ok').addEventListener('click', () => {
@@ -2733,7 +2733,7 @@ $('gm-ok').addEventListener('click', () => {
   const ls = linhasMeta().filter((l) => l.part && l.nome).map((l) => ({ nome: l.nome, meta: l.meta, metaOn: l.metaOn, metaDes: l.metaDes }));
   if (!ls.length) { toast('Nenhuma consultora marcada.'); return; }
   $('gm-ok').disabled = true;
-  rodar('salvarMetas', [S.token, $('g-loja').value, $('gm-mes').value, ls, numBR($('gm-tl').value), numBR($('gm-to').value), numBR($('gm-td').value)], (r) => { $('gm-ok').disabled = false; desenharMetasEd(r); toast('Metas salvas 🎯'); }, () => { $('gm-ok').disabled = false; });
+  rodar('salvarMetas', [S.token, $('g-loja').value, $('gm-mes').value, ls, numBR($('gm-tl').value), numBR($('gm-to').value), numBR($('gm-td').value)], (r) => { $('gm-ok').disabled = false; carregarPendencias(); desenharMetasEd(r); toast('Metas salvas 🎯'); }, () => { $('gm-ok').disabled = false; });
 });
 // --- escala ---
 const DS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
