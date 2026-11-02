@@ -24,7 +24,10 @@ h2 { font-size:13px; font-weight:600; color:var(--muted); text-transform:upperca
 .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; }
 .top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
 select, input { font:inherit; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; width:100%; }
-.btn { border:1px solid var(--line); background:var(--panel); color:var(--fg); border-radius:10px; padding:10px 14px; font:inherit; font-weight:500; cursor:pointer; }
+button.carregando, .btn.carregando { opacity:.7; pointer-events:none; }
+button, .btn, .tab, .ck-it, .chip { touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.btn:active, .tab:active, .ck-it:active { transform:scale(.96); filter:brightness(.94); }
+.btn { transition:transform .08s ease; border:1px solid var(--line); background:var(--panel); color:var(--fg); border-radius:10px; padding:10px 14px; font:inherit; font-weight:500; cursor:pointer; }
 .btn.sm { padding:6px 10px; font-size:13px; }
 .btn.pri { background:var(--accent); border-color:var(--accent); color:#fff; }
 .btn.ok { background:var(--ok); border-color:var(--ok); color:#fff; }
@@ -804,7 +807,11 @@ function desenharCk(r) {
   CK = r; const t = CK_T || turnoAgora(), tu = r.turnos.find((x) => x.turno === t), f = tu.itens.filter((x) => x.feito).length;
   $('ck').classList.remove('hide'); $('ck-tit').textContent = (t === 'ABERTURA' ? '☀️ Checklist de abertura' : '🌙 Checklist de fechamento');
   const n = $('ck-n'); n.textContent = f + '/' + tu.itens.length; n.classList.toggle('ok', f === tu.itens.length);
-  listaCk($('ck-box'), r, t, (turno, item, feito) => { CK_T = turno; rodar('marcarCheck', [S.token, loja, turno, item, feito], desenharCk); });
+  listaCk($('ck-box'), r, t, (turno, item, feito) => {
+    CK_T = turno; const tu2 = CK.turnos.find((y) => y.turno === turno), it = tu2 && tu2.itens.find((y) => y.texto === item), ant = it ? it.feito : null;
+    if (it) { const d = new Date(); it.feito = feito ? { nome: primeiroNome(S.nome), hora: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') } : null; desenharCk(CK); }
+    rodar('marcarCheck', [S.token, loja, turno, item, feito], desenharCk, () => { if (it) { it.feito = ant; desenharCk(CK); } });
+  });
 }
 // ---------- atualizar o app ----------
 let URL_APP = '';
@@ -972,8 +979,9 @@ function desenharMetaHoje() {
 // resposta imediata nos botões das pendências: trava o item, mostra "salvando" e confirma na hora
 function pendClique(x, q, fn, args, okTxt) {
   if (x.classList.contains('enviando')) return;
-  x.classList.add('enviando'); q.classList.add('sel'); const ant = q.textContent; q.replaceChildren(el('span', 'spin'), document.createTextNode('Salvando'));
-  rodar(fn, args, () => { x.classList.remove('enviando'); x.classList.add('feito'); x.replaceChildren(el('div', '', '✓ ' + okTxt)); toast(okTxt); setTimeout(carregarPendencias, 900); }, () => { x.classList.remove('enviando'); q.classList.remove('sel'); q.textContent = ant; });
+  // resposta na hora: já marca como feito; se o servidor recusar, volta como estava
+  x.classList.add('enviando'); const orig = [...x.childNodes]; x.classList.add('feito'); x.replaceChildren(el('div', '', '✓ ' + okTxt)); toast(okTxt);
+  rodar(fn, args, () => { x.classList.remove('enviando'); setTimeout(carregarPendencias, 900); }, () => { x.classList.remove('enviando', 'feito'); x.replaceChildren(...orig); });
 }
 function carregarPendencias() {
   if (!S || !chefe()) { $('pend').classList.add('hide'); return; }
@@ -1003,9 +1011,13 @@ function carregarPendencias() {
 function atualizar() { if (!S || ocupado) return; rodar('estado', [S.token, loja], desenhar); }
 
 // ---------- ações ----------
+// botão tocado por último: mostra "carregando" nele na hora, enquanto o servidor responde
+let ULT_BT = null, ULT_BT_T = 0;
+document.addEventListener('pointerdown', (e) => { const b = e.target && e.target.closest && e.target.closest('button, .btn'); if (b) { ULT_BT = b; ULT_BT_T = Date.now(); } }, true);
+function marcarCarregando() { const b = Date.now() - ULT_BT_T < 1500 ? ULT_BT : null; if (!b || !b.isConnected || b.classList.contains('carregando')) return () => {}; b.classList.add('carregando'); const sp = el('span', 'spin'); b.prepend(sp); return () => { b.classList.remove('carregando'); sp.remove(); }; }
 function fazer(tipo, alvo, dados, msg) {
-  ocupado = true; fechar();
-  rodar('acao', [S.token, loja, tipo, alvo, dados || {}], (e) => { ocupado = false; desenhar(e); if (msg && alvo === S.usuario) { const t = typeof msg === 'function' ? msg(e) : msg; if (t) toast(t); } });
+  const fim = marcarCarregando(); ocupado = true; fechar();
+  rodar('acao', [S.token, loja, tipo, alvo, dados || {}], (e) => { fim(); ocupado = false; desenhar(e); if (msg && alvo === S.usuario) { const t = typeof msg === 'function' ? msg(e) : msg; if (t) toast(t); } }, fim);
 }
 // ---------- mensagens, dicas e guia ----------
 const DICAS = [
@@ -1978,7 +1990,10 @@ function desenharMural(r) {
     const cbox = el('div', 'coms'); const desenharComs = (lst) => { cbox.replaceChildren(); lst.forEach((x) => { const d = el('div', 'com'); const t = el('div'); t.append(el('b', '', primeiroNome(x.nome)), comMencoes(x.texto)); d.append(avatar(x.avatar, x.nome), t); cbox.append(d); }); const f = el('div', 'envia'); const inp = el('input'); inp.placeholder = 'Comentar… (@ marca uma colega)'; inp.maxLength = 300; ativarMencao(inp); const b = el('button', 'btn sm pri', 'Enviar'); const go = () => { const v = inp.value.trim(); if (!v) return; b.disabled = true; rodar('comentar', [S.token, p.id, v, mencoesDe(inp)], (l) => { p.comentarios = l; desenharComs(l); cb.textContent = '💬 ' + l.length; }, () => { b.disabled = false; }); }; b.addEventListener('click', go); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }); f.append(inp, b); cbox.append(f); };
     desenharComs(p.comentarios || []); if (!(p.comentarios || []).length) cbox.classList.add('hide');
     const cb = el('button', 'btn sm', '💬 ' + (p.comentarios || []).length); cb.addEventListener('click', () => { cbox.classList.toggle('hide'); const i = cbox.querySelector('input'); if (i && !cbox.classList.contains('hide')) i.focus(); });
-    like.addEventListener('click', () => rodar('curtir', [S.token, p.id], (x) => { like.textContent = (x.curti ? '❤️ ' : '🤍 ') + x.curtidas; }));
+    like.addEventListener('click', () => { // resposta na hora; o servidor confirma em segundo plano
+      p.curti = !p.curti; p.curtidas = Math.max(0, (p.curtidas || 0) + (p.curti ? 1 : -1)); like.textContent = (p.curti ? '❤️ ' : '🤍 ') + p.curtidas;
+      rodar('curtir', [S.token, p.id], (x) => { p.curti = x.curti; p.curtidas = x.curtidas; like.textContent = (x.curti ? '❤️ ' : '🤍 ') + x.curtidas; }, () => { p.curti = !p.curti; p.curtidas = Math.max(0, p.curtidas + (p.curti ? 1 : -1)); like.textContent = (p.curti ? '❤️ ' : '🤍 ') + p.curtidas; });
+    });
     const esq = el('div'); esq.style.cssText = 'display:flex;gap:6px'; esq.append(like, cb); ac.append(esq);
     if (p.podeApagar) { const ap = el('button', 'btn sm', 'Apagar'); ap.addEventListener('click', () => escolher('Apagar publicação?', 'Ela sai do mural para todas.', [['Apagar', 'bad', () => { fechar(); rodar('apagarPost', [S.token, p.id], desenharMural); }]])); ac.append(ap); }
     c.append(ac, cbox); box.append(c);
@@ -3056,7 +3071,7 @@ let CMN = [];
 function carregarCmn() { if (S) google.script.run.withSuccessHandler(desenharCmn).withFailureHandler(() => {}).comunicados(S.token); }
 function cartaoCmn(c, completo) {
   const d = el('div', 'cmn' + (c.lido ? ' lido' : '')); d.append(el('b', '', '📢 Comunicado · ' + c.autor + (c.loja === 'TODAS' ? ' · todas as lojas' : S.lojas.length > 1 ? ' · ' + c.loja : '')), el('p', '', c.texto), el('div', 'sub', c.quando));
-  if (!c.lido) { const ok = el('button', 'btn ok sm', '✅ Li e entendi'); ok.style.marginTop = '8px'; ok.addEventListener('click', () => { ok.disabled = true; rodar('lerComunicado', [S.token, c.id], (l) => { toast('Leitura confirmada ✅'); desenharCmn(l); }); }); d.append(ok); }
+  if (!c.lido) { const ok = el('button', 'btn ok sm', '✅ Li e entendi'); ok.style.marginTop = '8px'; ok.addEventListener('click', () => { const lb = el('div', 'sub', '✅ Leitura confirmada'); lb.style.marginTop = '8px'; ok.replaceWith(lb); toast('Leitura confirmada ✅'); rodar('lerComunicado', [S.token, c.id], (l) => desenharCmn(l), () => lb.replaceWith(ok)); }); d.append(ok); }
   if (completo && c.leram) {
     const lt = el('div', 'leit'); lt.append(el('span', 'ok', '✅ Leram (' + c.leram.length + '): ' + (c.leram.join(', ') || '—')), el('br'), el('span', 'no', '⏳ Faltam (' + c.faltam.length + '): ' + (c.faltam.join(', ') || 'ninguém 🎉'))); d.append(lt);
     if (c.podeEncerrar) { const en = el('button', 'btn sm', 'Encerrar comunicado'); en.style.marginTop = '8px'; en.addEventListener('click', () => rodar('encerrarComunicado', [S.token, c.id], (l) => { toast('Comunicado encerrado'); desenharCmn(l); })); d.append(en); }
