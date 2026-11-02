@@ -148,6 +148,11 @@ body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fila { display:no
 .tc .dhead { display:flex; justify-content:space-between; align-items:center; max-width:640px; width:100%; margin:0 auto 8px; } .tc .dhead h1 { text-align:left; margin:0; font-size:24px; } .tc .dhead button { border:0; background:var(--panel); border:1px solid var(--line); width:40px; height:40px; border-radius:50%; font-size:20px; cursor:pointer; }
 .tc .dbody { max-width:640px; width:100%; margin:0 auto; } .tc .dbody > * { margin-top:12px; } .tc .dbody h2 { margin-top:16px; }
 .tv-eq .mini-r { font-size:16px; margin-top:10px; } .tv-eq .mini-r .nm { width:130px; } .tv-eq .mini-r .tr { height:14px; } .tv-eq .mini-r .v { width:56px; }
+#tour { position:fixed; inset:0; z-index:9500; }
+#tour .hole { position:fixed; border-radius:14px; box-shadow:0 0 0 9999px rgba(20,14,30,.62); transition:all .3s ease; pointer-events:none; outline:3px solid #fff; }
+#tour .tip { position:fixed; left:16px; right:16px; max-width:460px; margin:0 auto; background:var(--panel); border-radius:18px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); transition:top .3s ease, bottom .3s ease; }
+#tour .tip h3 { margin:0 0 6px; font-family:'Source Serif 4',Georgia,serif; font-weight:500; font-size:21px; } #tour .tip p { margin:0; line-height:1.4; }
+#tour .tip .nav { display:flex; gap:8px; margin-top:12px; align-items:center; } #tour .tip .nav span { flex:1; font-size:12px; color:var(--muted); }
 .chart { width:100%; overflow-x:auto; } .chart svg { display:block; }
 @media print { body > *:not(#det) { display:none !important; } #det { position:static !important; overflow:visible !important; background:#fff !important; } #det .dhead button, #det .btn { display:none !important; } #det .card { break-inside:avoid; } }
 .pre-it { border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px; background:var(--panel); display:flex; gap:10px; align-items:center; }
@@ -1072,7 +1077,7 @@ function mostrarGuia(forcar) {
 let SENHA_TMP = '';
 function trocarSenhaUI(atual, forcado) {
   $('sh-t').textContent = forcado ? 'Crie a sua senha' : 'Trocar minha senha';
-  $('sh-s').textContent = forcado ? 'Você entrou com uma senha provisória. Escolha uma senha só sua (mínimo 4 caracteres).' : 'Mínimo 4 caracteres.';
+  $('sh-s').textContent = forcado ? 'Você entrou com uma senha provisória. Escolha uma senha só sua (mínimo 8 caracteres).' : 'Mínimo 8 caracteres.';
   const o = $('sh-o'); o.replaceChildren();
   const a = el('input'); a.type = 'password'; a.placeholder = 'Senha atual'; a.autocomplete = 'current-password'; if (atual) { a.value = atual; a.classList.add('hide'); }
   const n1 = el('input'); n1.type = 'password'; n1.placeholder = 'Nova senha'; n1.autocomplete = 'new-password';
@@ -1080,11 +1085,12 @@ function trocarSenhaUI(atual, forcado) {
   [a, n1, n2].forEach((x) => { x.style.marginBottom = '8px'; });
   const ok = el('button', 'btn pri big', 'Salvar senha');
   ok.addEventListener('click', () => {
-    if (n1.value.length < 4) { toast('A senha precisa de pelo menos 4 caracteres.'); return; }
+    if (n1.value.length < 8) { toast('A senha precisa de pelo menos 8 caracteres.'); return; }
     if (n1.value !== n2.value) { toast('As duas senhas não estão iguais.'); return; }
     ok.disabled = true;
-    rodar('trocarMinhaSenha', [S.token, a.value, n1.value], () => { SENHA_TMP = ''; S.trocarSenha = false; salvar(); fechar(); toast('Senha alterada 🔑'); if (forcado) setTimeout(() => mostrarGuia(false), 400); }, () => { ok.disabled = false; });
+    rodar('trocarMinhaSenha', [S.token, a.value, n1.value], () => { SENHA_TMP = ''; S.trocarSenha = false; salvar(); fechar(); toast('Senha alterada 🔑'); if (forcado) { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc && !pc.classList.contains('hide')) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); else iniciarTour(); }, 600); } }, () => { ok.disabled = false; });
   });
+  if (forcado) o.append(passosInstalar());
   o.append(a, n1, n2, ok);
   const c = el('button', 'btn big', forcado ? 'Depois' : 'Cancelar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide'); setTimeout(() => (atual ? n1 : a).focus(), 60);
@@ -1256,7 +1262,7 @@ setInterval(() => { document.querySelectorAll('.timer[data-ini]').forEach((t) =>
 $('lbtn').addEventListener('click', entrar);
 $('ls').addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
 $('b-sair').addEventListener('click', () => sair(''));
-$('b-ajuda').addEventListener('click', () => mostrarGuia(true));
+$('b-ajuda').addEventListener('click', () => escolher('❓ Ajuda', 'Conheça o app', [['🧭 Tour pelo app', 'pri', () => { fechar(); iniciarTour(); }], ['📖 Guia rápido', '', () => { fechar(); mostrarGuia(true); }]]));
 $('sel-loja').addEventListener('change', (e) => { loja = e.target.value; salvar(); E = null; atualizar(); carregarCk(); });
 $('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') fechar(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) atualizar(); });
@@ -2093,6 +2099,75 @@ function cardMetaLoja(o) {
 function telaGerenteFim(c, r, fim, o) {
   c.append(cardMetaLoja(o));
   const go = el('button', 'btn pri big', '👉 Começar o dia'); go.addEventListener('click', fim); r.append(go);
+}
+// ---------- tour guiado: destaca cada parte do app com uma explicação ----------
+function passosTour() {
+  const topo = () => $('t-loja').parentElement.parentElement;
+  const comum1 = [
+    { el: topo, t: '👋 Bem-vinda ao Amorata Equipe', x: 'Aqui ficam o seu nome, a sua loja e quantas medalhas você já tem. Toque na sua foto para trocar.' },
+    { el: 'b-sino', t: '🔔 Avisos', x: 'Recados, medalhas, clientes para retornar e peças que chegaram aparecem aqui — e no celular, se você ativar as notificações.' },
+  ];
+  const fim = [
+    { el: 'tab-mural', t: '💜 Mural', x: 'Conquistas, moods e recados da equipe. Curta, comente e marque as colegas com @.' },
+    { el: 'tab-apr', t: '📚 Aprender', x: 'Dicas de venda passo a passo e o quiz para treinar (e ganhar medalha!).' },
+    { el: 'b-ajuda', t: '❓ Ajuda', x: 'Quer ver este tour de novo? É só tocar aqui. Bom trabalho! 💪' },
+  ];
+  if (!chefe()) return comum1.concat([
+    { el: 'tab-dia', aba: 'dia', t: '☀️ Meu dia', x: 'Comece o dia por aqui: seu mood, um recado para a equipe, a sua meta de hoje e as clientes para chamar no WhatsApp.' },
+    { el: 'cart', aba: 'dia', t: '📞 Minhas clientes', x: 'Clientes para retornar, peças que ela pediu para avisar quando chegar e a busca pela ficha da cliente.' },
+    { el: 'tab-fila', aba: 'fila', t: '👥 Fila da vez', x: 'Chegou na loja? Entre na fila. Quando for a sua vez o celular avisa: toque em Atender e, no fim, diga se vendeu. Não vendeu? Conte o motivo — isso ajuda a loja a vender mais.' },
+    { el: 'tab-meta', aba: 'meta', t: '🎯 Metas', x: 'Os seus resultados em cards: meta do mês, conversão na fila, ticket e peças por venda. Toque num card para ver o detalhe.' },
+    { el: 'm-med-box', aba: 'meta', t: '🏅 Medalhas e prêmios', x: 'Bata a meta, converta bem e cuide das clientes para ganhar medalhas. Elas destravam prêmios como vale cinema e cabeleireiro!' },
+  ], fim);
+  const ger = S.cargo !== 'ADMIN';
+  return comum1.concat([
+    { el: 'pend', aba: 'ini', t: '📌 Pendências', x: 'O que precisa da sua atenção hoje: vendas para importar, trocas de folga, feriados, escala, metas. Some sozinho quando você resolve.' },
+    { el: 'i-cards', aba: 'ini', t: '📊 Início', x: (ger ? 'Os resultados da sua loja' : 'Os resultados de todas as lojas') + ' em cards: meta com previsão de fechamento, ritmo de hoje, fila, motivos de perda, equipe e a conferência com o USE. Toque em qualquer card para detalhar.' },
+  ], ger ? [{ el: 'tab-fila', aba: 'fila', t: '👥 Fila da vez', x: 'Acompanhe a fila ao vivo. Você pode mudar a ordem (com motivo) e incluir quem está de folga.' }] : [], [
+    { el: 'tab-gest', aba: 'gest', t: '🛠️ Gestão', x: 'Importe as vendas do USE, cadastre metas, escala e checklist, cuide da equipe e dos planos individuais' + (ger ? '.' : ' e defina os prêmios.') },
+    { el: 'tab-rel', aba: 'rel', t: '📈 Relatórios', x: 'Conversão, motivos de perda, horários de pico, retornos e avaliações das clientes.' },
+  ], fim);
+}
+function iniciarTour() {
+  if (!S) return; fechar(); const ant = $('tour'); if (ant) ant.remove();
+  const passos = passosTour(); let i = 0;
+  const w = el('div'); w.id = 'tour'; const hole = el('div', 'hole'), tip = el('div', 'tip'); w.append(hole, tip); document.body.append(w);
+  const alvo = (p) => { const e = typeof p.el === 'function' ? p.el() : $(p.el); return e && e.offsetParent !== null && e.getBoundingClientRect().height > 0 ? e : null; };
+  const fim = () => { w.remove(); try { localStorage.setItem('amorata_tour_' + S.usuario, '1'); } catch (e) {} };
+  const ir = (dir) => {
+    i += dir; if (i < 0) i = 0; if (i >= passos.length) { fim(); return; }
+    const p = passos[i]; if (p.aba) { try { mudarAba(p.aba); } catch (e) {} }
+    setTimeout(() => {
+      const e = alvo(p); if (!e) { ir(dir || 1); return; }
+      e.scrollIntoView({ block: 'center', behavior: 'instant' });
+      setTimeout(() => {
+        const r = e.getBoundingClientRect(), pad = 6, H = window.innerHeight;
+        const top = Math.max(4, r.top - pad), alt = Math.min(r.height + pad * 2, H * 0.55);
+        hole.style.cssText = 'left:' + Math.max(4, r.left - pad) + 'px;top:' + top + 'px;width:' + Math.min(window.innerWidth - 8, r.width + pad * 2) + 'px;height:' + alt + 'px';
+        tip.replaceChildren(el('h3', '', p.t), el('p', '', p.x));
+        const nav = el('div', 'nav'); nav.append(el('span', '', (i + 1) + ' de ' + passos.length));
+        const pu = el('button', 'btn sm', 'Sair'); pu.addEventListener('click', fim); nav.append(pu);
+        if (i > 0) { const v = el('button', 'btn sm', 'Voltar'); v.addEventListener('click', () => ir(-1)); nav.append(v); }
+        const n = el('button', 'btn sm pri', i < passos.length - 1 ? 'Próximo ›' : 'Começar 💪'); n.addEventListener('click', () => ir(1)); nav.append(n);
+        tip.append(nav);
+        if (top + alt + 200 < H) { tip.style.top = (top + alt + 12) + 'px'; tip.style.bottom = 'auto'; } else { tip.style.top = 'auto'; tip.style.bottom = (H - top + 12) + 'px'; }
+      }, 120);
+    }, p.aba ? 350 : 0);
+  };
+  ir(0);
+}
+// passo a passo de instalação (aparece no primeiro acesso, enquanto a senha for a padrão)
+function passosInstalar() {
+  const b = el('div', 'aviso-meta'); b.style.cssText = 'margin-bottom:12px;text-align:left';
+  b.append(el('b', '', '📲 Antes de tudo: deixe o app no seu celular'));
+  const passos = [];
+  if (!HOSPEDADO) passos.push('Abra o app pelo endereço oficial: ' + URL_SITE);
+  if (!instalado()) { passos.push('iPhone (Safari): toque em Compartilhar ⬆️ (embaixo da tela) › "Adicionar à Tela de Início" › Adicionar.'); passos.push('Android (Chrome): toque em ⋮ (canto de cima) › "Instalar app" ou "Adicionar à tela inicial".'); }
+  passos.push('Abra o Amorata Equipe pelo ícone na tela do celular.');
+  passos.push('Toque em 🔔 "Ativar notificações" e permita: o celular avisa quando for a sua vez na fila, quando chegar a peça da sua cliente e muito mais.');
+  const ol = el('ol'); ol.style.cssText = 'margin:6px 0 0;padding-left:18px'; passos.forEach((t) => ol.append(el('li', '', t))); b.append(ol);
+  if (!HOSPEDADO) { const w = el('div'); w.style.marginTop = '10px'; const a = el('a', 'btn sm pri', 'Abrir o app oficial'); a.href = URL_SITE; a.target = '_blank'; w.append(a); b.append(w); }
+  return b;
 }
 // ---------- notificações no celular (Web Push; só no app instalado pelo endereço próprio) ----------
 const URL_SITE = 'https://lojasamorata-debug.github.io/amorata-equipe/';
