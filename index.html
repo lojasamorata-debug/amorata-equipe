@@ -1998,7 +1998,8 @@ function caminho() {
         const ul = el('div', 'cpts'); pts.slice(0, 3).forEach(([e, t2]) => { const x = el('div'); x.append(el('i', '', e), el('span', '', t2)); ul.append(x); }); q.append(el('div', 'sub', 'Para melhorar hoje:'), ul); c.append(q);
       } else c.append(el('p', 'lead', 'Ainda não tenho seu último dia na fila. Bora começar com tudo! 💪'));
       const mq = el('div', 'card cdia cmeta');
-      if (MH && MH.batida) mq.append(el('b', '', '🏆 Meta do mês batida!'), el('div', 'sub', 'Agora é rumo à meta desafio.'));
+      if (MH && MH.folga) mq.append(el('b', '', '🌴 Hoje é sua folga'), el('div', 'sub', 'Bom descanso! Você está com ' + pc(MH.pct) + ' da meta do mês. A meta do dia volta no seu próximo dia de trabalho.'));
+      else if (MH && MH.batida) mq.append(el('b', '', '🏆 Meta do mês batida!'), el('div', 'sub', 'Agora é rumo à meta desafio.'));
       else if (MH && MH.restam && MH.porDia) { const n = MH.tkm ? Math.ceil(MH.porDia / MH.tkm) : null; mq.append(el('div', 'sub', '🎯 Sua meta de hoje'), el('div', 'big', rs(MH.porDia)), el('div', 'sub', (n && n <= 30 ? 'cerca de ' + n + (n === 1 ? ' venda' : ' vendas') + ' no seu ticket médio · ' : '') + pc(MH.pct) + ' da meta do mês')); }
       else mq.append(el('b', '', '🎯 Meta do mês ainda não cadastrada'), el('div', 'sub', 'Assim que a gerente cadastrar, ela aparece aqui.'));
       c.append(mq);
