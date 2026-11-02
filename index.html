@@ -1659,9 +1659,14 @@ function desenharAval(a) {
 }
 function boletim() {
   const per = $('f-per').value, lj = $('f-loja').value, de = per === 'custom' ? $('f-de').value : '', ate = per === 'custom' ? $('f-ate').value : '';
-  const w = window.open('', '_blank'); if (!w) { toast('Permita pop-ups para abrir o boletim.'); return; }
-  w.document.write('<p style="font-family:Arial,sans-serif;padding:30px;color:#555">Montando o boletim…</p>');
-  rodar('relatorio', [S.token, per, lj, de, ate], (r) => rodar('metas', [S.token, lj, per, de, ate], (m) => { w.document.open(); w.document.write(htmlBoletim(r, m)); w.document.close(); }, () => w.close()), () => w.close());
+  // abre dentro do próprio app (no app instalado não existe "voltar" de uma janela nova)
+  const ant = $('bol'); if (ant) ant.remove();
+  const ov = el('div'); ov.id = 'bol'; ov.style.cssText = 'position:fixed;inset:0;z-index:9300;background:#fff;display:flex;flex-direction:column';
+  const fr = el('iframe'); fr.style.cssText = 'flex:1;width:100%;border:0;background:#fff'; fr.title = 'Boletim';
+  fr.srcdoc = '<p style="font-family:Arial,sans-serif;padding:30px;color:#555">Montando o boletim…</p><button onclick="parent.postMessage(\'fechar-boletim\',\'*\')" style="margin-left:30px;padding:10px 16px;border-radius:8px;border:1px solid #ccc;background:#fff;font-size:15px">✕ Fechar</button>';
+  ov.append(fr); document.body.append(ov);
+  const fecha = () => ov.remove();
+  rodar('relatorio', [S.token, per, lj, de, ate], (r) => rodar('metas', [S.token, lj, per, de, ate], (m) => { if (ov.isConnected) fr.srcdoc = htmlBoletim(r, m); }, fecha), fecha);
 }
 function htmlBoletim(r, m) {
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -1698,9 +1703,10 @@ function htmlBoletim(r, m) {
     });
   });
   const css = '@page{size:A4;margin:14mm}body{font-family:Inter,Arial,sans-serif;color:#1f1e1d;margin:0}section{page-break-after:always;padding:4px 2px}section:last-of-type{page-break-after:auto}.cab{display:flex;gap:14px;align-items:center;border-bottom:2px solid #5b4a7a;padding-bottom:10px;margin-bottom:14px}.cab img{width:56px;height:56px}.mini{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#5b4a7a}h1{font-family:Georgia,serif;font-weight:400;font-size:26px;margin:2px 0}.sub{color:#6b6862;font-size:13px}h2{font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:#5b4a7a;margin:18px 0 8px}.ks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k{border:1px solid #e4e1da;border-radius:10px;padding:10px}.k .t{font-size:11px;color:#6b6862}.k .v{font-size:20px;font-weight:600;margin-top:2px}.k .s{font-size:11px;color:#6b6862;margin-top:2px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #e4e1da}th{font-size:11px;color:#6b6862;text-transform:uppercase}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}li{margin-bottom:6px;font-size:14px}.ass{display:flex;gap:40px;margin-top:60px}.ass div{flex:1;border-top:1px solid #999;padding-top:6px;font-size:12px;color:#6b6862;text-align:center}.barra{position:sticky;top:0;background:#5b4a7a;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-size:14px}.barra button{background:#fff;color:#5b4a7a;border:0;border-radius:8px;padding:8px 14px;font-weight:600;font-size:14px}@media print{.barra{display:none}}';
-  return '<!doctype html><html><head><meta charset="utf-8"><title>Boletim · ' + esc(per) + '</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + css + '</style></head><body><div class="barra"><span>Boletim pronto. Para PDF: Imprimir → Salvar como PDF.</span><button onclick="print()">Imprimir / PDF</button></div>' + html + '<p class="sub" style="text-align:center">Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' · Amorata Equipe</p></body></html>';
+  return '<!doctype html><html><head><meta charset="utf-8"><title>Boletim · ' + esc(per) + '</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + css + '</style></head><body><div class="barra"><button onclick="parent.postMessage(\'fechar-boletim\',\'*\')">✕ Fechar</button><span style="flex:1;margin:0 10px;font-size:13px">Para PDF: Imprimir › Salvar como PDF</span><button onclick="print()">Imprimir / PDF</button></div>' + html + '<p class="sub" style="text-align:center">Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' · Amorata Equipe</p></body></html>';
 }
 $('r-bol').addEventListener('click', boletim);
+window.addEventListener('message', (ev) => { if (ev.data === 'fechar-boletim') { const b = $('bol'); if (b) b.remove(); } });
 $('r-av-qr').addEventListener('click', () => {
   const lj = $('f-loja').value === 'TODAS' ? S.lojas[0] : $('f-loja').value;
   rodar('linkAvaliacao', [S.token, lj], (r) => {
