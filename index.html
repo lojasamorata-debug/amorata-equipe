@@ -552,7 +552,7 @@ body.tab-on .wrap { max-width:none; padding:14px 18px 30px; }
       <div id="g-imp">
         <div class="card" style="margin-top:12px">
           <b>Importar o relatório do dia</b>
-          <div class="sub" style="margin-top:4px">No USE: Relatório de Análise de Vendedor (Pedidos/PA) → período de UM dia → XLS. Suba o arquivo aqui. Se importar o mesmo dia de novo, ele substitui (não soma).</div>
+          <div class="sub" style="margin-top:4px">No USE: Relatório de Análise de Vendedor (Pedidos/PA) → período de UM dia → XLS. Suba o arquivo aqui. Pode importar o mesmo dia mais de uma vez: o app junta os arquivos e fica com o valor mais completo de cada vendedora (não soma em dobro).</div>
           <input type="file" id="gi-arq" accept=".xls,.xlsx,.csv" style="margin-top:10px">
           <label class="sub" style="display:block;margin-top:8px">Dia das vendas <input type="date" id="gi-data"></label>
           <div id="gi-prev" style="margin-top:8px"></div>
@@ -1423,6 +1423,30 @@ function textoPeriodo(r) {
   return r.titulo + ' · ' + (r.restam === 1 ? 'último dia' : 'faltam ' + r.restam + ' dias (contando hoje)');
 }
 function avisoSemMeta(box, r) { if (r.semMeta && r.semMeta.length) box.append(el('div', 'aviso-meta', chefe() ? '⚠️ Sem meta cadastrada: ' + r.semMeta.join(', ') + '. Cadastre em Gestão › Metas.' : '⚠️ A meta deste período ainda não foi cadastrada pela gerente.')); }
+// painel em cards da consultora (mesmo modelo do Início da gerência)
+function cardsVendedora(box, u, r) {
+  const g = el('div', 'dash'); box.append(g);
+  const card = (cls, dt, dt2, fn) => { const c = el('div', 'dc ' + (cls || '')), t = el('div', 'dt'); t.append(el('span', '', dt), el('span', '', dt2 || 'ver ›')); c.append(t); if (fn) c.addEventListener('click', fn); g.append(c); return c; };
+  const k = nivelCor(u.fechaPct, u.pct), restam = u.restam != null ? u.restam : r.restam;
+  // meta
+  const h = card('full', '🎯 Sua meta', 'detalhar ›', () => abrirDet('Sua meta', (b) => { const d = $('m-eu-det'); if (d) [...d.children].forEach((n) => b.append(n.cloneNode(true))); }));
+  const hr = el('div', 'hero'), tx = el('div', 'tx'); tx.append(el('div', 'big', rs(u.venda)), el('div', 'sm', u.meta ? 'de ' + rs(u.meta) + (u.falta > 0 ? ' · faltam ' + rs(u.falta) : ' · meta batida! 🏆') : 'sem meta cadastrada'));
+  if (u.falta > 0 && u.porDia && !r.encerrado) tx.append(el('span', 'pill n', '≈ ' + rs(u.porDia) + ' por dia' + (restam ? ' · ' + restam + ' dias' : '')));
+  if (u.fechaPct != null && !r.encerrado) tx.append(el('div', 'sm', (u.fechaPct >= 1 ? '🚀 ' : '') + 'no seu ritmo, fecha em ' + pc(u.fechaPct)));
+  hr.append(ring(u.pct, 92, COR[k]), tx); h.append(hr);
+  // fila
+  const f = u.fila || {}; { const c = card('', '👥 Fila', '', () => abrirDet('Sua fila', (b) => { const cc = el('div', 'card'); cc.append(el('b', '', 'Do atendimento à venda')); const fu = el('div', 'funil'), a = el('div', '', (f.at || 0) + ' atendimentos'), v = el('div', '', (f.v || 0) + ' vendas · ' + pc(f.conv)); a.style.cssText = 'background:#8c7bb0;width:100%'; v.style.cssText = 'background:#1e7a46;width:' + Math.max(25, (f.conv || 0) * 100) + '%'; fu.append(a, v); cc.append(fu, el('div', 'sm', 'Cada atendimento vale em média ' + rs(f.porAt) + ' em venda.')); b.append(cc); }));
+    c.append(el('div', 'big', pc(f.conv)), el('div', 'sm', 'conversão · ' + (f.at || 0) + ' atend.'));
+    const fu = el('div', 'funil'), a = el('div', '', (f.v || 0) + ' vendas'); a.style.cssText = 'background:#1e7a46;width:' + Math.max(40, Math.min(100, (f.conv || 0) * 100)) + '%'; fu.append(a); c.append(fu); }
+  // ticket e PA
+  { const c = card('', '🛒 Cada venda', '', () => abrirDet('Seus números', (b) => { const n = $('m-eu-kpis'); if (n) b.append(n.cloneNode(true)); }));
+    c.append(el('div', 'big', u.tkm == null ? '—' : rsK(u.tkm)), el('div', 'sm', 'ticket médio'), el('div', 'big', u.pa == null ? '—' : DEC1.format(u.pa)), el('div', 'sm', 'peças por venda')); c.lastChild.previousSibling.style.fontSize = '20px'; }
+  // online
+  if (u.metaOnline || u.online) { const c = card('', '🛍️ Online', ' ', null); const lj = el('div', 'lj'), t = el('div'); t.append(el('div', 'nm', rsK(u.online || 0)), el('div', 'sm', u.metaOnline ? 'de ' + rsK(u.metaOnline) : 'vendido online')); lj.append(ring(u.metaOnline ? (u.online || 0) / u.metaOnline : 0, 54, COR[u.metaOnline && u.online >= u.metaOnline ? 'g' : 'n']), t); c.append(lj); c.style.cursor = 'default'; }
+  // loja
+  const l = (r.lojas || [])[0]; if (l && l.meta) { const kl = nivelCor(l.fechaPct, l.pct), c = card('', '🏬 ' + l.loja, 'ver ›', () => abrirDet(l.loja, (b) => { b.append(cartaoMeta(l, l.loja + ' · loja')); if (l.metaOnline) b.append(cartaoOnline(l, '🛍️ ' + l.loja + ' · online')); b.append(el('div', 'motiva', 'A loja é um time: cada venda sua ajuda todo mundo a chegar lá 💜')); }));
+    const lj = el('div', 'lj'), t = el('div'); t.append(el('div', 'nm', rsK(l.vendido)), el('div', 'sm', 'de ' + rsK(l.meta))); lj.append(ring(l.pct, 54, COR[kl]), t); c.append(lj); }
+}
 function carregarMetas() {
   carregarDesafios(); carregarMedalhas();
   $('m-tit').textContent = 'Carregando…';
@@ -1433,22 +1457,24 @@ function carregarMetas() {
     const eu = $('m-eu'); eu.replaceChildren(); if (!chefe()) avisoSemMeta(eu, r);
     const minha = r.consultoras.find((c) => c.eu);
     if (minha) {
-      eu.append(cartaoMeta(minha, 'Sua meta'));
-      if (chefe()) return fimMetas(r);
-      eu.append(cartaoOnline(minha, '🛍️ Sua meta online'));
-      eu.append(el('div', 'motiva', r.encerrado ? (minha.pct >= 1 ? 'Meta batida no período, ' + primeiroNome(minha.nome) + '! 🏆' : 'Período encerrado com ' + pc(minha.pct) + ' da meta. Bora com tudo no próximo! 💪') : fraseMeta(minha, minha.restam != null ? minha.restam : r.restam)));
+      if (chefe()) { eu.append(cartaoMeta(minha, 'Sua meta')); return fimMetas(r); }
+      cardsVendedora(eu, minha, r);
+      const det = el('div', 'hide'); det.id = 'm-eu-det'; eu.append(det);
+      det.append(cartaoMeta(minha, 'Sua meta'));
+      det.append(cartaoOnline(minha, '🛍️ Sua meta online'));
+      det.append(el('div', 'motiva', r.encerrado ? (minha.pct >= 1 ? 'Meta batida no período, ' + primeiroNome(minha.nome) + '! 🏆' : 'Período encerrado com ' + pc(minha.pct) + ' da meta. Bora com tudo no próximo! 💪') : fraseMeta(minha, minha.restam != null ? minha.restam : r.restam)));
       const k = el('div', 'kpis6'); k.style.marginTop = '8px';
       const kp = (v, l) => { const d = el('div', 'kpi'); d.append(el('div', 'v', v), el('div', 'l', l)); return d; };
       const u = minha;
       k.append(kp(u.tkm == null ? '—' : rs(u.tkm), 'ticket médio'), kp(u.pa == null ? '—' : DEC1.format(u.pa), 'peças por venda'), kp(rs(u.online), 'vendido online'),
         kp(String(minha.fila.at), 'atendimentos na fila'), kp(pc(minha.fila.conv), 'conversão na fila'), kp(rs(minha.fila.porAt), 'R$ por atendimento'));
-      eu.append(k);
+      k.id = 'm-eu-kpis'; det.append(k);
     } else if (r.soEu) eu.append(el('div', 'vazio', 'Sem vendas ou meta suas neste período. Se achar que está errado, fale com a gerente para conferir o seu nome no cadastro.'));
     fimMetas(r);
   });
 }
 function fimMetas(r) {
-    $('m-lojas-box').classList.toggle('hide', r.soEu || !r.lojas.length);
+    $('m-lojas-box').classList.toggle('hide', r.soEu || !r.lojas.length || !chefe());
     const ml = $('m-lojas'); ml.replaceChildren(); r.lojas.forEach((l) => { if (!chefe()) ml.append(cartaoMeta(l, l.loja + ' · loja')); if (l.metaOnline) ml.append(cartaoOnline(l, '🛍️ ' + l.loja + ' · online')); });
     if (chefe() && !ml.childElementCount) $('m-lojas-box').classList.add('hide');
     $('m-nota').classList.toggle('hide', chefe());
@@ -2444,9 +2470,14 @@ function desenharStatusVendas(r) {
     const c = el('div', 'aviso-meta'); c.append(el('b', '', '⚠️ Dias sem vendas importadas: ' + r.faltando.length), el('div', 'sub', 'Importe o relatório de cada dia. Se a loja não abriu, marque como "sem vendas".'));
     const box = el('div'); r.faltando.slice(-31).forEach((d) => { const ch = el('span', 'chip-dia', isoBR(d)); const b1 = el('button', '', 'importar'); b1.addEventListener('click', () => { $('gi-data').value = d; $('gi-arq').click(); }); const b2 = el('button', '', 'sem vendas'); b2.addEventListener('click', () => escolher('Marcar ' + isoBR(d) + ' sem vendas?', 'Use só se a loja não vendeu nada neste dia.', [['Marcar sem vendas', '', () => { fechar(); rodar('marcarSemVendas', [S.token, $('g-loja').value, d], desenharStatusVendas); }]])); ch.append(b1, b2); box.append(ch); });
     c.append(box); f.append(c);
-  } else f.append(el('div', 'motiva', '✅ Todos os dias até ontem estão importados.'));
+  } else if (!(r.parciais || []).length) f.append(el('div', 'motiva', '✅ Todos os dias até ontem estão importados.'));
+  if ((r.parciais || []).length) {
+    const c = el('div', 'aviso-meta'); c.append(el('b', '', '⏳ Dias importados antes de acabar: ' + r.parciais.length), el('div', 'sub', 'O relatório foi gerado com a loja ainda aberta, então pode faltar venda. Importe de novo o dia completo — o app junta com o que já está lá.'));
+    const box = el('div'); r.parciais.forEach((x) => { const ch = el('span', 'chip-dia', isoBR(x.data) + ' · ' + String(x.quando || '').slice(11, 16)); const b1 = el('button', '', 'importar de novo'); b1.addEventListener('click', () => { $('gi-data').value = x.data; $('gi-arq').click(); }); ch.append(b1); box.append(ch); });
+    c.append(box); f.append(c);
+  }
   const tb = $('gi-ult'); tb.replaceChildren();
-  r.ultimos.forEach((x) => { const tr = el('tr'); [isoBR(x.data), rs(x.total), rs(x.online), String(x.linhas), (x.por || '') + ' ' + String(x.quando || '').slice(0, 16)].forEach((v, i) => tr.append(el('td', i && i < 4 ? 'n' : '', v))); tb.append(tr); });
+  r.ultimos.forEach((x) => { const tr = el('tr'); [isoBR(x.data) + (x.parcial ? ' ⏳' : ''), rs(x.total), rs(x.online), String(x.linhas), (x.por || '') + ' ' + String(x.quando || '').slice(0, 16)].forEach((v, i) => tr.append(el('td', i && i < 4 ? 'n' : '', v))); tb.append(tr); });
 }
 function lerPedidosPA(file) {
   $('gi-prev').textContent = 'Lendo o arquivo…'; $('gi-ok').classList.add('hide'); GI = null;
@@ -2493,9 +2524,9 @@ function lerPedidosPA(file) {
         const tot = minhas.reduce((s, l) => s + l[2], 0), on = minhas.filter((l) => /\sON(-?LINE)?$/i.test(l[1])).reduce((s, l) => s + l[2], 0);
         p.append(el('div', 'motiva', 'Dia ' + isoBR($('gi-data').value) + ' · ' + $('g-loja').value + ': total ' + rs(tot) + ' (online ' + rs(on) + '). Confira com o total do USE antes de confirmar.'));
         const dSel = $('gi-data').value, ja = STV && STV.loja === $('g-loja').value ? (STV.ultimos || []).find((x) => x.data === dSel && x.linhas && !/sem vendas/.test(x.arquivo || '')) : null;
-        if (ja) p.append(el('div', 'aviso-meta', '⚠️ O dia ' + isoBR(dSel) + ' já foi importado' + (ja.por ? ' por ' + ja.por : '') + (ja.quando ? ' às ' + String(ja.quando).slice(11, 16) : '') + ' (total ' + rs(ja.total) + '). Ao confirmar, este arquivo SUBSTITUI o anterior — os valores não somam. Use sempre o relatório com o dia inteiro.'));
-        if (dSel === new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10)) p.append(el('div', 'aviso-meta', '🕐 O dia de hoje ainda não terminou: o relatório fica parcial. O ideal é importar amanhã cedo, com o dia completo.'));
-        $('gi-ok').textContent = ja ? 'Substituir a importação de ' + isoBR(dSel).slice(0, 5) : 'Confirmar importação';
+        if (ja) p.append(el('div', 'aviso-meta', '🔄 O dia ' + isoBR(dSel) + ' já tem importação' + (ja.por ? ' de ' + ja.por : '') + (ja.quando ? ' às ' + String(ja.quando).slice(11, 16) : '') + ' (total ' + rs(ja.total) + '). O app vai juntar os dois arquivos sem somar em dobro: de cada vendedora fica o valor do relatório mais completo (o maior).'));
+        if (dSel === new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10)) p.append(el('div', 'aviso-meta', '🕐 O dia de hoje ainda não terminou: o relatório fica parcial. Pode importar agora — amanhã o app vai lembrar de importar o dia completo, e junta os dois.'));
+        $('gi-ok').textContent = ja ? 'Atualizar as vendas de ' + isoBR(dSel).slice(0, 5) : 'Confirmar importação';
         const t = el('table'); const tb = el('tbody'); minhas.forEach((l) => { const tr = el('tr'); [l[1], rs(l[2]), String(l[4]), String(l[5])].forEach((v, i) => tr.append(el('td', i ? 'n' : '', v))); tb.append(tr); });
         const th = el('thead'); const trh = el('tr'); ['Vendedor', 'Valor', 'Vendas', 'Itens'].forEach((x, i) => trh.append(el('th', i ? 'n' : '', x))); th.append(trh); t.append(th, tb); const w = el('div', 'tbl-x'); w.append(t); p.append(w);
         if (outras) p.append(el('div', 'sub', outras + ' linha(s) de outra loja serão ignoradas.'));
@@ -2508,14 +2539,35 @@ function lerPedidosPA(file) {
 }
 $('gi-arq').addEventListener('change', (e) => { if (e.target.files[0]) lerPedidosPA(e.target.files[0]); });
 $('gi-data').addEventListener('change', () => { const f = $('gi-arq').files[0]; if (f && GI) lerPedidosPA(f); });
+function importarGI(modo, gi, d, loja) {
+  $('gi-ok').disabled = true;
+  rodar('importarVendasUSE', [S.token, loja, d, gi.linhas, gi.nome, modo || ''], (r) => {
+    $('gi-ok').disabled = false; $('gi-ok').classList.add('hide'); $('gi-arq').value = ''; GI = null;
+    const im = r.importado, mz = im.mesclagem, box = el('div');
+    box.append(el('div', 'motiva', '✅ ' + isoBR(im.data) + ' ' + (mz ? 'atualizado' : 'importado') + ': ' + rs(im.total) + ' (online ' + rs(im.online) + ').'));
+    if (mz) {
+      const c = el('div', 'aviso-meta'), pts = [];
+      if (mz.atualizadas) pts.push(mz.atualizadas + ' vendedora(s) com valor maior no arquivo novo: atualizadas');
+      if (mz.novas) pts.push(mz.novas + ' vendedora(s) que não estavam antes: incluídas');
+      if (mz.mantidas.length) pts.push('não vieram no arquivo novo, mantive do anterior: ' + mz.mantidas.map(primeiroNome).join(', '));
+      if (mz.menores.length) pts.push('no arquivo novo estavam MENORES, mantive o valor anterior: ' + mz.menores.map(primeiroNome).join(', ') + ' (se houve troca/cancelamento, use o botão abaixo)');
+      if (!pts.length) pts.push('os dois arquivos tinham os mesmos valores');
+      c.append(el('b', '', '🔄 Juntei com a importação anterior (antes: ' + rs(mz.antes) + ')'));
+      pts.forEach((t) => c.append(el('div', 'sub', '• ' + t)));
+      if (mz.mantidas.length || mz.menores.length) {
+        const b = el('button', 'btn', 'Usar só este arquivo para ' + isoBR(im.data).slice(0, 5)); b.style.marginTop = '8px';
+        b.addEventListener('click', () => { if (confirm('Apagar a importação anterior de ' + isoBR(im.data) + ' e ficar só com este arquivo?')) importarGI('substituir', gi, d, loja); });
+        c.append(b);
+      }
+      box.append(c);
+    }
+    $('gi-prev').replaceChildren(box);
+    toast(mz ? 'Vendas atualizadas! 🔄' : 'Vendas importadas! 📥'); desenharStatusVendas(r);
+  }, () => { $('gi-ok').disabled = false; });
+}
 $('gi-ok').addEventListener('click', () => {
   if (!GI) return; const d = $('gi-data').value; if (!d) { toast('Informe o dia das vendas.'); return; }
-  $('gi-ok').disabled = true;
-  rodar('importarVendasUSE', [S.token, $('g-loja').value, d, GI.linhas, GI.nome], (r) => {
-    $('gi-ok').disabled = false; $('gi-ok').classList.add('hide'); $('gi-arq').value = ''; GI = null;
-    $('gi-prev').replaceChildren(el('div', 'motiva', '✅ ' + isoBR(r.importado.data) + ' importado: ' + rs(r.importado.total) + ' (online ' + rs(r.importado.online) + ').'));
-    toast('Vendas importadas! 📥'); desenharStatusVendas(r);
-  }, () => { $('gi-ok').disabled = false; });
+  importarGI('', GI, d, $('g-loja').value);
 });
 // --- metas ---
 function prepMeses() {
