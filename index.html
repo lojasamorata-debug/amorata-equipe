@@ -231,7 +231,7 @@ textarea { font:inherit; width:100%; min-height:70px; padding:10px 12px; border:
 .bolha { max-width:80%; padding:8px 11px; border-radius:14px; background:var(--panel); border:1px solid var(--line); font-size:14px; white-space:pre-wrap; }
 .bolha.eu { align-self:flex-end; background:var(--accent); color:#fff; border-color:var(--accent); }
 .bolha small { display:block; font-size:10px; opacity:.7; margin-top:2px; }
-.aviso { padding:10px 12px; border-bottom:1px solid var(--line); cursor:pointer; } .aviso.novo { background:var(--accentbg); }
+.aviso { padding:10px 12px; border-bottom:1px solid var(--line); cursor:pointer; white-space:pre-line; } .aviso.novo { background:var(--accentbg); }
 .aviso span { display:block; font-size:12px; color:var(--muted); }
 .guia li { margin:8px 0; line-height:1.35; }
 .sync { font-size:11px; color:var(--muted); text-align:center; margin-top:18px; }
@@ -803,10 +803,25 @@ function resumoDia(m) {
 let CART = null;
 function carregarCart() { if (S && S.cargo !== 'ADMIN') google.script.run.withSuccessHandler(desenharCart).withFailureHandler(() => {}).meusRetornos(S.token); }
 function msgWa(c) { if (c.motivo === 'Pós-venda') return 'Oi, ' + primeiroNome(c.nome) + '! Aqui é a ' + CART.nomeEu + ', da Amorata' + (CART.loja && CART.loja !== 'TODAS' ? ' ' + CART.loja : '') + '. ' + (c.interesse ? 'Como ficou ' + c.interesse + '? ' : 'Gostou das peças? ') + 'Foi um prazer te atender! 💜'; return 'Oi, ' + primeiroNome(c.nome) + '! Aqui é a ' + CART.nomeEu + ', da Amorata' + (CART.loja && CART.loja !== 'TODAS' ? ' ' + CART.loja : '') + '. ' + (c.interesse ? 'Lembrei de você: ' + c.interesse + '. ' : '') + 'Posso te mandar umas fotos?'; }
+function abrirFicha(q) {
+  rodar('fichaCliente', [S.token, q], (lst) => abrirDet('Ficha da cliente', (b) => {
+    if (!lst.length) { b.append(el('div', 'card', 'Nenhuma cliente encontrada com "' + q + '". Ela ainda não foi anotada no app.')); return; }
+    lst.forEach((g) => {
+      const c = el('div', 'card'), hd = el('div'); hd.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:center';
+      const nm = el('div'); nm.append(el('b', '', g.nome), el('div', 'sm', g.whatsapp + ' · ' + g.registros.length + (g.registros.length === 1 ? ' registro' : ' registros') + (g.compras ? ' · comprou ' + g.compras + 'x' : '')));
+      hd.append(nm);
+      const fone = String(g.whatsapp || '').replace(/\D/g, ''); if (fone.length >= 10) { const wa = el('button', 'btn ok', '💬 WhatsApp'); wa.addEventListener('click', () => window.open('https://wa.me/55' + fone.replace(/^55/, '') + '?text=' + encodeURIComponent('Oi, ' + primeiroNome(g.nome) + '! Tudo bem? Aqui é a ' + primeiroNome(S.nome) + ' da Amorata 💜'), '_blank')); hd.append(wa); }
+      c.append(hd);
+      g.registros.forEach((x) => { const it = el('div'); it.style.cssText = 'margin-top:8px;border-top:1px solid var(--line);padding-top:6px'; it.append(el('div', 'sm', isoBR(x.quando) + ' · ' + x.loja + ' · com ' + x.quem), el('div', '', x.tipo + (x.texto ? ': ' + x.texto : '')), el('div', 'sm', x.status ? 'Situação: ' + x.status.toLowerCase() : '')); c.append(it); });
+      b.append(c);
+    });
+  }));
+}
 function desenharCart(r) {
   CART = r; const box = $('cart-box'), card = $('cart'); card.classList.remove('hide'); box.replaceChildren();
   const n = $('cart-n'); n.textContent = r.chegaram ? '🛍️ ' + r.chegaram + ' chegou' : r.paraHoje ? r.paraHoje + ' hoje' : (r.abertos.length ? String(r.abertos.length) : ''); n.classList.toggle('ok', !r.paraHoje && !r.chegaram);
   if ((r.paraHoje || r.chegaram) && !desenharCart.aberto) { card.open = true; desenharCart.aberto = true; }
+  { const bs = el('div'); bs.style.cssText = 'display:flex;gap:6px;margin:4px 0 10px'; const bi = el('input'); bi.placeholder = '🔎 Buscar cliente (nome ou WhatsApp)'; bi.style.flex = '1'; const bb = el('button', 'btn', 'Ver ficha'); const go = () => { if (bi.value.trim()) abrirFicha(bi.value.trim()); }; bb.addEventListener('click', go); bi.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }); bs.append(bi, bb); box.append(bs); }
   desenharDesejos(r, box); if ((r.desejos || []).length && r.abertos.length) box.append(el('div', 'des-tit', '📞 Retornos'));
   if (!r.abertos.length && !(r.desejos || []).length) box.append(el('div', 'sub', 'Cliente saiu sem comprar e vai voltar? Anote o contato: o app te lembra no dia certo e você chama no WhatsApp.'));
   r.abertos.slice(0, desenharCart.tudo ? 15 : 3).forEach((c) => {
@@ -2896,7 +2911,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide');
 }));
