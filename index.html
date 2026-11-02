@@ -1707,6 +1707,8 @@ function desenharCards() {
     const fu = el('div', 'funil'), a = el('div', '', 'pela fila ' + pc(R.pctFila)); a.style.cssText = 'background:#8c7bb0;width:' + Math.max(40, Math.min(100, (R.pctFila || 0) * 100)) + '%'; fu.append(a); c.append(fu);
     if (R.perdasR$) c.append(el('div', 'sm', '~' + rsK(R.perdasR$) + ' em perdas'));
   }
+  // 4b. conferência fila × USE
+  { const c = card(r.multi ? 'meio' : '', '🔎 Conferência', 'abrir ›', abrirConferencia); c.append(el('div', 'sm', 'Vendas do USE (loja física) × "Vendeu" marcado na fila, por vendedora.'), el('div', 'big', '🧾 × 👥')); c.lastChild.style.fontSize = '22px'; }
   // 5. por que não vendemos
   if (r.perdasMotivos && r.perdasMotivos.length) { const c = card(r.multi ? 'meio' : '', '💸 Por que não vendemos', '', () => abrirDet('Por que não vendemos', (b, mv) => { b.append(mv('i-mot-box')); if (r.procurados && r.procurados.length) { const p = el('div', 'card'); p.append(el('b', '', '🛍️ O que procuraram e não acharam')); r.procurados.slice(0, 8).forEach((x) => p.append(el('div', 'sm', x.produto + ' · ' + x.n + 'x'))); b.append(p); } })); c.append(donut(r.perdasMotivos.slice(0, 3), 80)); }
   // 7. fechamento do mês anterior (primeira semana do mês)
@@ -1762,6 +1764,31 @@ function abrirFechamento(nm) {
     }
     if (r.perdasMotivos && r.perdasMotivos.length) { const c = el('div', 'card'); c.append(el('b', '', '💸 Por que não vendemos'), donut(r.perdasMotivos.slice(0, 4), 96)); b.append(c); }
     const pr = el('button', 'btn pri big', '🖨️ Salvar em PDF / imprimir'); pr.addEventListener('click', () => window.print()); b.append(pr);
+  }));
+}
+function abrirConferencia() {
+  toast('Conferindo com o USE…');
+  rodar('conferenciaFila', [S.token, $('i-loja').value].concat(perArgs('i')), (r) => abrirDet('Conferência fila × USE', (b) => {
+    b.append(el('div', 'sm', 'Compara as vendas da loja física no USE (sem online) com os "Vendeu" marcados na fila, só nos dias com vendas importadas e com a fila em uso. ' + r.titulo + '.'));
+    r.lojas.forEach((L) => {
+      const c = el('div', 'card'); b.append(c);
+      if (!L.dias.length) { c.append(el('b', '', '🏬 ' + L.loja), el('div', 'sm', 'Ainda sem dias para conferir (precisa ter vendas do USE importadas em dias em que a fila foi usada).')); return; }
+      const hh = el('div'); hh.style.cssText = 'display:flex;gap:14px;align-items:center';
+      const tx = el('div'); tx.append(el('b', '', '🏬 ' + L.loja), el('div', 'sm', L.naFila + ' de ' + L.use + ' vendas do USE passaram pela fila'), el('div', 'sm', L.dias.length + (L.dias.length === 1 ? ' dia conferido: ' : ' dias conferidos: ') + L.dias.map((d) => d.slice(8, 10) + '/' + d.slice(5, 7)).join(', ')));
+      hh.append(ring(L.pct, 74, COR[L.pct == null ? 'n' : L.pct >= 0.9 ? 'g' : L.pct >= 0.7 ? 'y' : 'r']), tx); c.append(hh);
+      const mx = Math.max(1, ...L.pessoas.map((p) => Math.max(p.use, p.fila)));
+      L.pessoas.forEach((p) => {
+        const row = el('div'); row.style.cssText = 'margin-top:12px;border-top:1px solid var(--line);padding-top:8px';
+        const top = el('div'); top.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:center';
+        const tag = p.dif > 0 ? el('span', 'pill r', p.dif + (p.dif === 1 ? ' venda fora da fila' : ' vendas fora da fila')) : p.dif < 0 ? el('span', 'pill y', (-p.dif) + ' a mais na fila que no USE') : el('span', 'pill g', '✓ confere');
+        top.append(el('b', '', primeiroNome(p.nome)), tag); row.append(top);
+        [['🧾 USE', p.use, '#5b4a7a'], ['👥 Fila', p.fila, '#1e7a46']].forEach(([lb, v, cor]) => { const r2 = el('div', 'mini-r'), t = el('div', 'tr'), i = el('i'); i.style.width = (v / mx * 100) + '%'; i.style.background = cor; t.append(i); r2.append(el('div', 'nm', lb), t, el('div', 'v', String(v))); row.append(r2); });
+        if (p.dias.length) row.append(el('div', 'sm', 'Dias com diferença: ' + p.dias.map((d) => d.dia.slice(8, 10) + '/' + d.dia.slice(5, 7) + ' (USE ' + d.use + ' · fila ' + d.fila + ')').join(' · ')));
+        if (!p.at && p.use) row.append(el('div', 'sm', 'Não usou a fila nesses dias (ou o nome no USE é diferente do cadastro do app).'));
+        c.append(row);
+      });
+    });
+    b.append(el('div', 'sm', '💡 "Fora da fila" = venda registrada no caixa que não foi marcada como Vendeu na fila. "A mais na fila" costuma ser venda marcada no nome de outra pessoa no caixa, ou troca/cancelamento.'));
   }));
 }
 function detLoja(l) {
