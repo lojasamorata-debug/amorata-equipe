@@ -2478,7 +2478,7 @@ async function assinarPush() {
   const perm = await Notification.requestPermission(); if (perm !== 'granted') throw new Error(perm === 'denied' ? 'bloqueado' : 'Permissão não concedida. Toque de novo e escolha Permitir.');
   const chave = await new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej).pushChave(S.token));
   const reg = await navigator.serviceWorker.ready; let sub = await reg.pushManager.getSubscription(); if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(chave) });
-  await new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej).salvarPush(S.token, JSON.parse(JSON.stringify(sub)), ehIOS() ? 'iPhone' : 'Android'));
+  await new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej).salvarPush(S.token, JSON.parse(JSON.stringify(sub)), ehIOS() ? 'iPhone' : /android/i.test(navigator.userAgent) ? 'Android' : 'Computador'));
 }
 async function exigirApp(tourDepois) {
   if (tourDepois) GATE_TOUR = true;
@@ -3417,8 +3417,23 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
   lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
-  $('sheet').classList.remove('hide');
+  $('sheet').classList.remove('hide'); blocoNotif(o);
 }));
+// dentro do sininho: situação das notificações deste aparelho + botão para ativar
+async function blocoNotif(o) {
+  const box = el('div', 'card'); box.style.cssText = 'margin:0 0 10px;padding:12px'; o.prepend(box);
+  const st = HOSPEDADO ? await pushSit() : 'oficial';
+  box.replaceChildren();
+  if (st === 'ok') { box.style.background = '#e9f6ee'; box.append(el('div', 'sub', '🔔 Notificações ativas neste aparelho ✅')); return; }
+  box.style.background = '#fff4ec';
+  if (st === 'oficial') { box.append(el('b', '', '🔕 Notificações desligadas'), el('div', 'sub', 'Abra o app pelo endereço oficial para receber os avisos no celular: ' + URL_SITE)); return; }
+  if (st === 'sem') { box.append(el('b', '', '🔕 Notificações desligadas'), el('div', 'sub', ehIOS() && !instalado() ? 'No iPhone, primeiro coloque o app na tela inicial: Compartilhar ⬆️ › "Adicionar à Tela de Início". Depois abra pelo ícone e ative aqui.' : 'Este navegador não recebe notificações. Use o app instalado no celular.')); return; }
+  if (st === 'bloqueado') { box.append(el('b', '', '🔕 Notificações bloqueadas'), el('div', 'sub', ehIOS() ? 'Abra os Ajustes do iPhone › Notificações › Amorata Equipe e ligue "Permitir Notificações".' : ehCelular() ? 'Toque no ícone ⚙️/🔒 ao lado do endereço (ou segure o ícone do app › ⓘ) › Notificações › Permitir.' : 'Clique no cadeado 🔒 ao lado do endereço › Notificações › Permitir.')); }
+  else box.append(el('b', '', '🔕 Você ainda não recebe os avisos no celular'), el('div', 'sub', 'Ative para saber na hora quando for a sua vez na fila, quando chegar a peça da sua cliente e os recados da equipe.'));
+  const bt = el('button', 'btn pri', st === 'bloqueado' ? 'Já liberei' : '🔔 Ativar notificações'); bt.style.cssText = 'margin-top:8px;width:100%';
+  bt.addEventListener('click', async () => { bt.disabled = true; bt.textContent = 'Ativando…'; try { await assinarPush(); toast('Notificações ativadas 🔔'); try { desenharPush(); } catch (e) {} } catch (e) { toast(e.message === 'bloqueado' ? 'As notificações estão bloqueadas. Siga o passo acima.' : (e.message || 'Não consegui ativar.')); } box.remove(); blocoNotif(o); });
+  box.append(bt);
+}
 ativarMencao($('mu-txt'));
 $('mu-ok').addEventListener('click', () => {
   const tx = $('mu-txt').value.trim(); if (!tx && !MU_FOTO) { toast('Escreva algo ou escolha uma foto 🙂'); return; }
