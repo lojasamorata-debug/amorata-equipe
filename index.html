@@ -376,6 +376,8 @@ body.tab-on .wrap { max-width:none; padding:14px 18px 30px; }
 #gate .lead { text-align:center; color:var(--muted); margin:0 0 16px; }
 #gate .et { display:flex; gap:10px; align-items:flex-start; background:var(--panel); border-radius:16px; padding:14px; margin-bottom:10px; box-shadow:0 2px 10px rgba(0,0,0,.05); }
 #gate .et.ok { opacity:.6; } #gate .et .n { flex:none; width:28px; height:28px; border-radius:50%; background:var(--accentbg); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:600; }
+#termo .tx { background:var(--panel); border-radius:16px; padding:16px; font-size:14px; line-height:1.5; box-shadow:0 2px 10px rgba(0,0,0,.05); } #termo .tx h3 { font-size:15px; margin:14px 0 4px; } #termo .tx h3:first-child { margin-top:0; } #termo .tx p { margin:0; }
+#termo .ac { display:flex; gap:10px; align-items:flex-start; margin:14px 0 10px; font-size:14px; } #termo .ac input { width:22px; height:22px; flex:none; margin-top:1px; }
 #gate .et.ok .n { background:#e3f4e8; color:#2e7d4f; } #gate .et ol { margin:6px 0 0; padding-left:18px; } #gate .et li { margin:3px 0; }
 /* confidencialidade: marca d'água, tela borrada fora do app, sem copiar, valores ocultos para gerência */
 #marca { display:none; position:fixed; inset:0; pointer-events:none; z-index:9600; background-repeat:repeat; opacity:.05; }
@@ -776,7 +778,7 @@ function abrir() {
   $('v-login').classList.add('hide'); $('v-app').classList.remove('hide');
   cabecalho(); protecao(true);
   const fazCaminho = S.cargo !== 'ADMIN' && !S.trocarSenha && !(typeof T !== 'undefined' && T) && caminhoPendente();
-  if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirApp(false), 500); }
+  if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirTermo(() => exigirApp(false)), 500); }
   if (fazCaminho) { google.script.run.withSuccessHandler((o) => { ONTEM = o; }).withFailureHandler(() => { ONTEM = { semDados: true }; })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
   setTimeout(checarAvisos, 1500);
@@ -1128,7 +1130,7 @@ function trocarSenhaUI(atual, forcado) {
     if (n1.value.length < 8) { toast('A senha precisa de pelo menos 8 caracteres.'); return; }
     if (n1.value !== n2.value) { toast('As duas senhas não estão iguais.'); return; }
     ok.disabled = true;
-    rodar('trocarMinhaSenha', [S.token, a.value, n1.value], () => { SENHA_TMP = ''; S.trocarSenha = false; salvar(); fechar(); toast('Senha alterada 🔑'); if (forcado) { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} setTimeout(() => exigirApp(true), 500); } }, () => { ok.disabled = false; });
+    rodar('trocarMinhaSenha', [S.token, a.value, n1.value], () => { SENHA_TMP = ''; S.trocarSenha = false; salvar(); fechar(); toast('Senha alterada 🔑'); if (forcado) { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} setTimeout(() => exigirTermo(() => exigirApp(true)), 500); } }, () => { ok.disabled = false; });
   });
   if (forcado) o.append(passosInstalar());
   o.append(a, n1, n2, ok);
@@ -1302,7 +1304,7 @@ setInterval(() => { document.querySelectorAll('.timer[data-ini]').forEach((t) =>
 $('lbtn').addEventListener('click', entrar);
 $('ls').addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
 $('b-sair').addEventListener('click', () => sair(''));
-$('b-ajuda').addEventListener('click', () => escolher('❓ Ajuda', 'Conheça o app', [['🧭 Tour pelo app', 'pri', () => { fechar(); iniciarTour(); }], ['📖 Guia rápido', '', () => { fechar(); mostrarGuia(true); }]]));
+$('b-ajuda').addEventListener('click', () => escolher('❓ Ajuda', 'Conheça o app', [['🧭 Tour pelo app', 'pri', () => { fechar(); iniciarTour(); }], ['📖 Guia rápido', '', () => { fechar(); mostrarGuia(true); }], ['📜 Termo de uso', '', () => { fechar(); mostrarTermo(null); }]]));
 $('sel-loja').addEventListener('change', (e) => { loja = e.target.value; salvar(); E = null; atualizar(); carregarCk(); });
 $('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') fechar(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) atualizar(); });
@@ -2209,6 +2211,36 @@ function passosInstalar() {
   if (!HOSPEDADO) { const w = el('div'); w.style.marginTop = '10px'; const a = el('a', 'btn sm pri', 'Abrir o app oficial'); a.href = URL_SITE; a.target = '_blank'; w.append(a); b.append(w); }
   return b;
 }
+// ---------- termo de uso ----------
+const TERMO = [
+  ['1. Para que serve o app', 'O Amorata Equipe é uma ferramenta de trabalho das Lojas Amorata para organizar a fila da vez, acompanhar metas e resultados, cuidar das clientes, registrar escala e checklist, e falar com a equipe.'],
+  ['2. Acesso pessoal', 'Seu usuário e sua senha são pessoais e intransferíveis. Não empreste, não conte a senha para ninguém e não deixe outra pessoa usar o app no seu nome. Tudo o que for feito com o seu acesso fica registrado como feito por você.'],
+  ['3. Informações confidenciais', 'Vendas, metas, resultados, relatórios, preços, estoque, estratégias e dados das clientes são confidenciais. É proibido tirar print, fotografar, copiar, gravar, encaminhar ou mostrar essas informações a pessoas de fora da empresa, a outras lojas ou a concorrentes — durante o contrato de trabalho e também depois dele.'],
+  ['4. Dados das clientes (LGPD)', 'Nome, telefone, preferências e histórico das clientes só podem ser usados para o atendimento em nome da Amorata. Não use esses dados para fins pessoais, não salve os contatos para outros fins e não leve os dados com você se sair da empresa.'],
+  ['5. Registros verdadeiros', 'Registre na fila e no app apenas informações verdadeiras: atendimentos, vendas, motivos de não venda, retornos e checklist. Registrar informação falsa, atender fora da vez sem motivo ou tentar burlar o sistema pode gerar medida disciplinar.'],
+  ['6. Respeito na comunicação', 'No mural, nos comentários e nos recados, trate todas com respeito. Não é permitido conteúdo ofensivo, discriminatório, de assédio, político-partidário ou que exponha colegas ou clientes.'],
+  ['7. Seus dados no app', 'O app registra seu nome, loja, cargo, foto (se você colocar), atendimentos, vendas, horários de uso, escala e desempenho, e o aparelho cadastrado para receber notificações. Esses dados são usados para a gestão da loja, metas, premiações e escala, e ficam disponíveis apenas para a gerência e a direção. O app não acessa suas fotos, contatos, localização nem outros apps do celular.'],
+  ['8. App no celular e notificações', 'Para funcionar, o app precisa estar na tela inicial do celular com as notificações ligadas. As notificações servem para o trabalho na loja; você não é obrigada a responder ou usar o app fora do seu horário de trabalho.'],
+  ['9. Descumprimento', 'O descumprimento deste termo pode gerar advertência e outras medidas previstas na CLT e no regulamento interno, além de responsabilização civil e criminal quando houver vazamento de informações ou uso indevido de dados.'],
+  ['10. Atualizações e aceite', 'Este termo pode ser atualizado; quando isso acontecer, o app pedirá um novo aceite. O seu aceite fica registrado com seu usuário, data, hora e aparelho, e vale como concordância com as regras acima.'],
+];
+function mostrarTermo(aoAceitar) {
+  const ant = $('termo'); if (ant) ant.remove();
+  const g = el('div'); g.id = 'termo'; g.className = ''; g.style.cssText = 'position:fixed;inset:0;z-index:9750;background:linear-gradient(160deg,#fff5fb,#f3f0ff 60%,#eef6ff);overflow:auto;padding:24px 16px 30px;';
+  const c = el('div'); c.style.cssText = 'max-width:560px;margin:0 auto'; g.append(c);
+  const ic = el('div', '', '📜'); ic.style.cssText = 'text-align:center;font-size:40px'; c.append(ic);
+  const h = el('h1', '', 'Termo de uso e confidencialidade'); h.style.cssText = "font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:25px;line-height:1.15;margin:6px 0 4px;text-align:center"; c.append(h);
+  const l = el('p', 'sub', 'Amorata Equipe · versão ' + (S && S.termoVersao || '1')); l.style.cssText = 'text-align:center;margin:0 0 14px'; c.append(l);
+  const tx = el('div', 'tx'); TERMO.forEach(([t, p]) => tx.append(el('h3', '', t), el('p', '', p))); c.append(tx);
+  if (!aoAceitar) { const f = el('button', 'btn pri big', 'Fechar'); f.style.cssText = 'display:block;width:100%;margin-top:14px'; f.addEventListener('click', () => g.remove()); c.append(f); document.body.append(g); return; }
+  const ac = el('label', 'ac'), cb = el('input'); cb.type = 'checkbox'; ac.append(cb, el('span', '', 'Li e concordo com o Termo de uso e confidencialidade do Amorata Equipe.')); c.append(ac);
+  const ok = el('button', 'btn pri big', 'Aceitar e continuar'); ok.style.cssText = 'display:block;width:100%'; ok.disabled = true; cb.addEventListener('change', () => { ok.disabled = !cb.checked; }); c.append(ok);
+  const nao = el('button', 'btn sm', 'Não aceito'); nao.style.cssText = 'display:block;margin:12px auto 0'; c.append(nao);
+  nao.addEventListener('click', () => { g.remove(); sair('Para usar o Amorata Equipe é preciso aceitar o termo de uso.'); });
+  ok.addEventListener('click', () => { if (!cb.checked) return; ok.disabled = true; ok.textContent = 'Registrando…'; rodar('aceitarTermo', [S.token, S.termoVersao || '1', navigator.userAgent], () => { S.termoPend = false; salvar(); g.remove(); toast('Termo aceito ✅'); aoAceitar(); }, () => { ok.disabled = false; ok.textContent = 'Aceitar e continuar'; }); });
+  document.body.append(g);
+}
+function exigirTermo(depois) { if (S && S.termoPend && !telaLoja()) mostrarTermo(depois); else depois(); }
 // ---------- obrigatório no celular: app na tela inicial + notificações ativas ----------
 let PROMPT_INST = null;
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); PROMPT_INST = e; if ($('gate')) exigirApp(); });
