@@ -726,7 +726,7 @@ window.addEventListener('error', (ev) => logErro('js', (ev.message || '') + ' @'
 window.addEventListener('unhandledrejection', (ev) => logErro('promise', (ev.reason && (ev.reason.message || ev.reason)) || ''));
 function rodar(fn, args, ok, erro) {
   prog(1);
-  google.script.run.withSuccessHandler((r) => { prog(-1); if (ok) ok(r); }).withFailureHandler((e) => {
+  google.script.run.withSuccessHandler((r) => { prog(-1); if (ok) ok(r); if (/^(salvarEscala|salvarExcecao|decidirFeriado|marcarCheck|salvarChecklist|responderTroca|aprovarTroca|salvarMetas|importarVendasUSE|marcarSemVendas)$/.test(fn) && typeof carregarPendencias === 'function') setTimeout(carregarPendencias, 300); }).withFailureHandler((e) => {
     prog(-1);
     const m = (e && e.message) || String(e);
     if (/SESSAO_EXPIRADA/.test(m)) { sair('Sua sessão expirou. Entre de novo.'); return; }
