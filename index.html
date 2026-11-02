@@ -370,6 +370,13 @@ body.tab-on .wrap { max-width:none; padding:14px 18px 30px; }
 .pess.eq .ops { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; } .pess.inativa { opacity:.55; }
 .senha-box { background:var(--accentbg); border-radius:14px; padding:14px; text-align:center; margin-bottom:10px; } .senha-box div { font-size:14px; color:var(--muted); } .senha-box b { font-size:24px; letter-spacing:2px; display:block; margin:2px 0 8px; font-variant-numeric:tabular-nums; }
 .tchip { display:inline-block; font-size:12px; background:var(--accentbg); color:var(--accent); border-radius:999px; padding:3px 10px; margin-left:8px; vertical-align:middle; }
+#gate { position:fixed; inset:0; z-index:9700; background:linear-gradient(160deg,#fff5fb,#f3f0ff 60%,#eef6ff); overflow:auto; padding:28px 18px; display:flex; flex-direction:column; align-items:center; }
+#gate .gc { max-width:440px; width:100%; }
+#gate h1 { font-family:'Source Serif 4',Georgia,serif; font-weight:500; font-size:27px; line-height:1.15; margin:8px 0 6px; text-align:center; }
+#gate .lead { text-align:center; color:var(--muted); margin:0 0 16px; }
+#gate .et { display:flex; gap:10px; align-items:flex-start; background:var(--panel); border-radius:16px; padding:14px; margin-bottom:10px; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+#gate .et.ok { opacity:.6; } #gate .et .n { flex:none; width:28px; height:28px; border-radius:50%; background:var(--accentbg); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:600; }
+#gate .et.ok .n { background:#e3f4e8; color:#2e7d4f; } #gate .et ol { margin:6px 0 0; padding-left:18px; } #gate .et li { margin:3px 0; }
 /* confidencialidade: marca d'água, tela borrada fora do app, sem copiar, valores ocultos para gerência */
 #marca { display:none; position:fixed; inset:0; pointer-events:none; z-index:9600; background-repeat:repeat; opacity:.05; }
 body[data-aba=ini] #marca, body[data-aba=meta] #marca, body[data-aba=rel] #marca, body[data-aba=prod] #marca, body:has(#det) #marca, body.fora #marca { display:block; }
@@ -769,7 +776,7 @@ function abrir() {
   $('v-login').classList.add('hide'); $('v-app').classList.remove('hide');
   cabecalho(); protecao(true);
   const fazCaminho = S.cargo !== 'ADMIN' && !S.trocarSenha && !(typeof T !== 'undefined' && T) && caminhoPendente();
-  if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else if (!fazCaminho) mostrarGuia(false);
+  if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirApp(false), 500); }
   if (fazCaminho) { google.script.run.withSuccessHandler((o) => { ONTEM = o; }).withFailureHandler(() => { ONTEM = { semDados: true }; })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
   setTimeout(checarAvisos, 1500);
@@ -1121,7 +1128,7 @@ function trocarSenhaUI(atual, forcado) {
     if (n1.value.length < 8) { toast('A senha precisa de pelo menos 8 caracteres.'); return; }
     if (n1.value !== n2.value) { toast('As duas senhas não estão iguais.'); return; }
     ok.disabled = true;
-    rodar('trocarMinhaSenha', [S.token, a.value, n1.value], () => { SENHA_TMP = ''; S.trocarSenha = false; salvar(); fechar(); toast('Senha alterada 🔑'); if (forcado) { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc && !pc.classList.contains('hide')) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); else iniciarTour(); }, 600); } }, () => { ok.disabled = false; });
+    rodar('trocarMinhaSenha', [S.token, a.value, n1.value], () => { SENHA_TMP = ''; S.trocarSenha = false; salvar(); fechar(); toast('Senha alterada 🔑'); if (forcado) { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} setTimeout(() => exigirApp(true), 500); } }, () => { ok.disabled = false; });
   });
   if (forcado) o.append(passosInstalar());
   o.append(a, n1, n2, ok);
@@ -2202,6 +2209,69 @@ function passosInstalar() {
   if (!HOSPEDADO) { const w = el('div'); w.style.marginTop = '10px'; const a = el('a', 'btn sm pri', 'Abrir o app oficial'); a.href = URL_SITE; a.target = '_blank'; w.append(a); b.append(w); }
   return b;
 }
+// ---------- obrigatório no celular: app na tela inicial + notificações ativas ----------
+let PROMPT_INST = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); PROMPT_INST = e; if ($('gate')) exigirApp(); });
+window.addEventListener('appinstalled', () => { if ($('gate')) exigirApp(); });
+const ehCelular = () => ehIOS() || /android/i.test(navigator.userAgent);
+let GATE_TOUR = false;
+async function situacaoApp() {
+  if (!HOSPEDADO) return 'oficial';
+  if (!instalado()) return 'instalar';
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'ok'; // celular antigo sem suporte: não trava
+  if (Notification.permission === 'denied') return 'bloqueado';
+  if (Notification.permission !== 'granted') return 'ativar';
+  try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); if (!sub) return 'ativar'; } catch (e) { return 'ok'; }
+  return 'ok';
+}
+async function assinarPush() {
+  const perm = await Notification.requestPermission(); if (perm !== 'granted') throw new Error(perm === 'denied' ? 'bloqueado' : 'Permissão não concedida. Toque de novo e escolha Permitir.');
+  const chave = await new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej).pushChave(S.token));
+  const reg = await navigator.serviceWorker.ready; let sub = await reg.pushManager.getSubscription(); if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(chave) });
+  await new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej).salvarPush(S.token, JSON.parse(JSON.stringify(sub)), ehIOS() ? 'iPhone' : 'Android'));
+}
+async function exigirApp(tourDepois) {
+  if (tourDepois) GATE_TOUR = true;
+  const liberar = () => { const g = $('gate'); if (g) g.remove(); const pc = $('push-card'); if (pc) desenharPush(); let viu = false; try { viu = localStorage.getItem('amorata_tour_' + S.usuario) === '1'; } catch (e) {} if (GATE_TOUR && !viu) { GATE_TOUR = false; setTimeout(iniciarTour, 400); } };
+  if (!S || S.cargo === 'ADMIN' || telaLoja() || !ehCelular()) { if (S) liberar(); return; }
+  const st = await situacaoApp(); if (!S) return;
+  if (st === 'ok') { liberar(); return; }
+  GATE_TOUR = true;
+  let g = $('gate'); if (!g) { g = el('div'); g.id = 'gate'; document.body.append(g); }
+  const c = el('div', 'gc'); g.replaceChildren(c);
+  c.append(el('div', '', '')); c.lastChild.style.cssText = 'text-align:center;font-size:44px'; c.lastChild.textContent = '📲';
+  c.append(el('h1', '', 'Falta pouco, ' + primeiroNome(S.nome) + '!'), el('p', 'lead', 'Para usar o Amorata Equipe, o app precisa estar na tela inicial do seu celular e com as notificações ligadas — é assim que ele avisa quando for a sua vez na fila.'));
+  const etapa = (n, feito, tit, corpo) => { const d = el('div', 'et' + (feito ? ' ok' : '')); const b = el('div'); b.style.flex = '1'; b.append(el('b', '', tit)); if (corpo) b.append(corpo); d.append(el('div', 'n', feito ? '✓' : String(n)), b); c.append(d); return b; };
+  const lista = (itens) => { const ol = el('ol'); itens.forEach((t) => ol.append(el('li', '', t))); return ol; };
+  const instOk = st === 'ativar' || st === 'bloqueado';
+  if (st === 'oficial') {
+    const b = etapa(1, false, 'Abra o app pelo endereço oficial', el('div', 'sub', 'Este endereço é antigo. Toque no botão abaixo, entre com seu usuário e senha e siga os passos.'));
+    const a = el('a', 'btn pri', 'Abrir o app oficial'); a.href = URL_SITE; a.target = '_blank'; a.rel = 'noopener'; a.style.cssText = 'margin-top:8px;display:inline-block'; b.append(a);
+    etapa(2, false, 'Coloque na tela inicial e ative as notificações'); return;
+  }
+  const b1 = etapa(1, instOk, 'Coloque o app na tela inicial');
+  if (!instOk) {
+    if (ehIOS()) b1.append(lista(['Abra este link no Safari (a bússola 🧭).', 'Toque em Compartilhar ⬆️ (embaixo da tela).', 'Role e toque em "Adicionar à Tela de Início" › Adicionar.', 'Feche o Safari e abra o Amorata Equipe pelo ícone novo na tela.', 'Entre de novo com seu usuário e a sua senha nova.']));
+    else {
+      if (PROMPT_INST) { const ib = el('button', 'btn pri', 'Instalar o app'); ib.style.marginTop = '8px'; ib.addEventListener('click', async () => { try { PROMPT_INST.prompt(); const r = await PROMPT_INST.userChoice; PROMPT_INST = null; if (r && r.outcome === 'accepted') toast('Pronto! Agora abra pelo ícone na tela do celular.'); } catch (e) {} exigirApp(); }); b1.append(ib); }
+      b1.append(lista([(PROMPT_INST ? 'Ou, no Chrome, ' : 'No Chrome, ') + 'toque em ⋮ (canto de cima) › "Instalar app" ou "Adicionar à tela inicial".', 'Abra o Amorata Equipe pelo ícone novo na tela do celular.', 'Entre de novo com seu usuário e a sua senha nova.']));
+    }
+    b1.append(el('div', 'sub', 'Por aqui pelo navegador o app não continua — só pelo ícone.'));
+  }
+  const b2 = etapa(2, false, 'Ative as notificações');
+  if (!instOk) b2.append(el('div', 'sub', 'Você faz isso depois de abrir o app pelo ícone.'));
+  else if (st === 'bloqueado') {
+    b2.append(el('div', 'sub', 'As notificações foram bloqueadas. Libere assim:'), lista(ehIOS() ? ['Abra os Ajustes do iPhone › Notificações.', 'Toque em "Amorata Equipe" e ligue "Permitir Notificações".', 'Volte aqui e toque em "Já liberei".'] : ['Segure o dedo no ícone do Amorata Equipe › ⓘ Informações do app.', 'Toque em Notificações e ligue.', 'Volte aqui e toque em "Já liberei".']));
+    const v = el('button', 'btn pri', 'Já liberei'); v.style.marginTop = '8px'; v.addEventListener('click', async () => { v.disabled = true; try { await assinarPush(); toast('Notificações ativadas 🔔'); } catch (e) { toast(e.message === 'bloqueado' ? 'Ainda está bloqueado. Confira os passos acima.' : 'Não consegui ativar: ' + (e.message || e)); } v.disabled = false; exigirApp(); }); b2.append(v);
+  } else {
+    b2.append(el('div', 'sub', 'Toque no botão e escolha Permitir.'));
+    const v = el('button', 'btn pri big', '🔔 Ativar notificações'); v.style.marginTop = '8px';
+    v.addEventListener('click', async () => { v.disabled = true; v.textContent = 'Ativando…'; try { await assinarPush(); toast('Notificações ativadas 🔔'); } catch (e) { if (e.message !== 'bloqueado') toast(e.message || 'Não consegui ativar.'); } exigirApp(); }); b2.append(v);
+  }
+  const rodape = el('div', 'sub', 'Precisa de ajuda? Chame a sua gerente.'); rodape.style.cssText = 'text-align:center;margin-top:12px'; c.append(rodape);
+  const sairB = el('button', 'btn sm', 'Sair'); sairB.style.cssText = 'display:block;margin:10px auto 0'; sairB.addEventListener('click', () => { const gg = $('gate'); if (gg) gg.remove(); sair(''); }); c.append(sairB);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && $('gate')) exigirApp(); });
 // ---------- notificações no celular (Web Push; só no app instalado pelo endereço próprio) ----------
 const URL_SITE = 'https://lojasamorata-debug.github.io/amorata-equipe/';
 const ehIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent), instalado = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
