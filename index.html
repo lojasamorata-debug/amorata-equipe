@@ -2450,7 +2450,7 @@ async function pushSit() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'sem';
   if (Notification.permission === 'denied') return 'bloqueado';
   if (Notification.permission !== 'granted') return 'ativar';
-  try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); return sub ? 'ok' : 'ativar'; } catch (e) { return 'ok'; }
+  try { const reg = await Promise.race([navigator.serviceWorker.ready, new Promise((_, rj) => setTimeout(() => rj(new Error('sw')), 4000))]), sub = await reg.pushManager.getSubscription(); return sub ? 'ok' : 'ativar'; } catch (e) { return 'ativar'; }
 }
 // Android: o app conta como instalado se está aberto pelo ícone, se o Chrome avisou a instalação ou se ele já aparece instalado
 async function instaladoAndroid() {
@@ -3421,7 +3421,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
 }));
 // dentro do sininho: situação das notificações deste aparelho + botão para ativar
 async function blocoNotif(o) {
-  const box = el('div', 'card'); box.style.cssText = 'margin:0 0 10px;padding:12px'; o.prepend(box);
+  const box = el('div', 'card'); box.style.cssText = 'margin:0 0 10px;padding:12px'; box.append(el('div', 'sub', '🔔 Verificando as notificações deste aparelho…')); o.prepend(box);
   const st = HOSPEDADO ? await pushSit() : 'oficial';
   box.replaceChildren();
   if (st === 'ok') { box.style.background = '#e9f6ee'; box.append(el('div', 'sub', '🔔 Notificações ativas neste aparelho ✅')); return; }
