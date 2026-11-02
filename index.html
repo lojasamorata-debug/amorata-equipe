@@ -2572,6 +2572,7 @@ async function desenharPush() {
   const x = el('button', 'x', '×'); x.title = 'Fechar'; x.style.cssText = 'float:right;border:0;background:none;font-size:20px;cursor:pointer;color:var(--muted)'; x.addEventListener('click', () => { try { localStorage.setItem('amorata_push_x', S.usuario); } catch (e) {} b.classList.add('hide'); });
   if (!HOSPEDADO) { b.append(x, el('b', '', '📲 Receba os avisos no celular'), el('div', 'sub', 'Use o app pelo endereço novo e instale na tela de início: ' + URL_SITE)); const a = el('a', 'btn sm pri', 'Abrir o app novo'); a.href = URL_SITE; a.target = '_blank'; a.rel = 'noopener'; a.style.marginTop = '8px'; a.style.display = 'inline-block'; b.append(a); b.classList.remove('hide'); return; }
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    if (ehIOS() && instalado()) { b.append(x, el('b', '', '🔕 Este iPhone precisa de atualização'), el('div', 'sub', msgIOSVelho())); b.classList.remove('hide'); return; }
     if (ehIOS() && !instalado()) { b.append(x, el('b', '', '📲 Receba os avisos no iPhone'), el('div', 'sub', 'Toque em Compartilhar ⬆️ › "Adicionar à Tela de Início" e abra o app pelo ícone. Depois volte aqui para ativar.')); b.classList.remove('hide'); }
     return;
   }
@@ -3420,6 +3421,8 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sheet').classList.remove('hide'); blocoNotif(o);
 }));
 // dentro do sininho: situação das notificações deste aparelho + botão para ativar
+const iosVer = () => { const m = navigator.userAgent.match(/OS (\d+)[_.](\d+)/); return m ? m[1] + '.' + m[2] : ''; };
+const msgIOSVelho = () => 'O iPhone só recebe notificações de app a partir do iOS 16.4' + (iosVer() ? ' (este está no iOS ' + iosVer() + ')' : '') + '. Atualize em Ajustes › Geral › Atualização de Software e depois abra o app de novo para ativar.';
 async function blocoNotif(o) {
   const box = el('div', 'card'); box.style.cssText = 'margin:0 0 10px;padding:12px'; box.append(el('div', 'sub', '🔔 Verificando as notificações deste aparelho…')); o.prepend(box);
   const st = HOSPEDADO ? await pushSit() : 'oficial';
@@ -3427,6 +3430,7 @@ async function blocoNotif(o) {
   if (st === 'ok') { box.style.background = '#e9f6ee'; box.append(el('div', 'sub', '🔔 Notificações ativas neste aparelho ✅')); return; }
   box.style.background = '#fff4ec';
   if (st === 'oficial') { box.append(el('b', '', '🔕 Notificações desligadas'), el('div', 'sub', 'Abra o app pelo endereço oficial para receber os avisos no celular: ' + URL_SITE)); return; }
+  if (st === 'sem' && ehIOS() && instalado()) { box.append(el('b', '', '🔕 Este iPhone precisa de atualização'), el('div', 'sub', msgIOSVelho())); return; }
   if (st === 'sem') { box.append(el('b', '', '🔕 Notificações desligadas'), el('div', 'sub', ehIOS() && !instalado() ? 'No iPhone, primeiro coloque o app na tela inicial: Compartilhar ⬆️ › "Adicionar à Tela de Início". Depois abra pelo ícone e ative aqui.' : 'Este navegador não recebe notificações. Use o app instalado no celular.')); return; }
   if (st === 'bloqueado') { box.append(el('b', '', '🔕 Notificações bloqueadas'), el('div', 'sub', ehIOS() ? 'Abra os Ajustes do iPhone › Notificações › Amorata Equipe e ligue "Permitir Notificações".' : ehCelular() ? 'Toque no ícone ⚙️/🔒 ao lado do endereço (ou segure o ícone do app › ⓘ) › Notificações › Permitir.' : 'Clique no cadeado 🔒 ao lado do endereço › Notificações › Permitir.')); }
   else box.append(el('b', '', '🔕 Você ainda não recebe os avisos no celular'), el('div', 'sub', 'Ative para saber na hora quando for a sua vez na fila, quando chegar a peça da sua cliente e os recados da equipe.'));
