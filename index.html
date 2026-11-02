@@ -2251,7 +2251,7 @@ function passosInstalar() {
   b.append(el('b', '', '📲 Antes de tudo: deixe o app no seu celular'));
   const passos = [];
   if (!HOSPEDADO) passos.push('Abra o app pelo endereço oficial: ' + URL_SITE);
-  if (!instalado()) { passos.push('iPhone (Safari): toque em Compartilhar ⬆️ (embaixo da tela) › "Adicionar à Tela de Início" › Adicionar.'); passos.push('Android (Chrome): toque em ⋮ (canto de cima) › "Instalar app" ou "Adicionar à tela inicial".'); }
+  if (!instalado()) { passos.push('iPhone (Safari): toque em Compartilhar ⬆️ (embaixo da tela) › "Adicionar à Tela de Início" › Adicionar.'); passos.push('Android: depois de criar a senha, é só tocar em "Ativar notificações" e em "Instalar o app" — tudo aqui mesmo.'); }
   passos.push('Abra o Amorata Equipe pelo ícone na tela do celular.');
   passos.push('Toque em 🔔 "Ativar notificações" e permita: o celular avisa quando for a sua vez na fila, quando chegar a peça da sua cliente e muito mais.');
   const ol = el('ol'); ol.style.cssText = 'margin:6px 0 0;padding-left:18px'; passos.forEach((t) => ol.append(el('li', '', t))); b.append(ol);
@@ -2291,11 +2291,31 @@ function exigirTermo(depois) { if (S && S.termoPend && !telaLoja()) mostrarTermo
 // ---------- obrigatório no celular: app na tela inicial + notificações ativas ----------
 let PROMPT_INST = null;
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); PROMPT_INST = e; if ($('gate')) exigirApp(); });
-window.addEventListener('appinstalled', () => { if ($('gate')) exigirApp(); });
+window.addEventListener('appinstalled', () => { try { localStorage.setItem('amorata_inst', '1'); } catch (e) {} if ($('gate')) exigirApp(); });
+const ehAndroid = () => /android/i.test(navigator.userAgent);
+const ehWebview = () => /; wv\)|FBAN|FBAV|Instagram|WhatsApp|Line\//i.test(navigator.userAgent);
+const marcouInst = () => { try { return localStorage.getItem('amorata_inst') === '1'; } catch (e) { return false; } };
+async function pushSit() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'sem';
+  if (Notification.permission === 'denied') return 'bloqueado';
+  if (Notification.permission !== 'granted') return 'ativar';
+  try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); return sub ? 'ok' : 'ativar'; } catch (e) { return 'ok'; }
+}
+// Android: o app conta como instalado se está aberto pelo ícone, se o Chrome avisou a instalação ou se ele já aparece instalado
+async function instaladoAndroid() {
+  if (instalado() || marcouInst()) return true;
+  try { if (navigator.getInstalledRelatedApps) { const l = await navigator.getInstalledRelatedApps(); if (l && l.length) { try { localStorage.setItem('amorata_inst', '1'); } catch (e) {} return true; } } } catch (e) {}
+  return false;
+}
 const ehCelular = () => ehIOS() || /android/i.test(navigator.userAgent);
 let GATE_TOUR = false;
 async function situacaoApp() {
   if (!HOSPEDADO) return 'oficial';
+  if (ehAndroid()) { // Android: tudo pelo próprio app — ativar aqui mesmo e instalar com um toque
+    if (ehWebview()) return 'webview';
+    const ps = await pushSit(), inst = await instaladoAndroid();
+    return inst && (ps === 'ok' || ps === 'sem') ? 'ok' : 'android';
+  }
   if (!instalado()) return 'instalar';
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'ok'; // celular antigo sem suporte: não trava
   if (Notification.permission === 'denied') return 'bloqueado';
@@ -2322,6 +2342,37 @@ async function exigirApp(tourDepois) {
   c.append(el('h1', '', 'Falta pouco, ' + primeiroNome(S.nome) + '!'), el('p', 'lead', 'Para usar o Amorata Equipe, o app precisa estar na tela inicial do seu celular e com as notificações ligadas — é assim que ele avisa quando for a sua vez na fila.'));
   const etapa = (n, feito, tit, corpo) => { const d = el('div', 'et' + (feito ? ' ok' : '')); const b = el('div'); b.style.flex = '1'; b.append(el('b', '', tit)); if (corpo) b.append(corpo); d.append(el('div', 'n', feito ? '✓' : String(n)), b); c.append(d); return b; };
   const lista = (itens) => { const ol = el('ol'); itens.forEach((t) => ol.append(el('li', '', t))); return ol; };
+  if (st === 'webview') {
+    const b = etapa(1, false, 'Abra no Chrome', el('div', 'sub', 'O link abriu dentro de outro app (WhatsApp, Instagram…). Toque no botão para continuar no Chrome.'));
+    const a = el('a', 'btn pri big', 'Abrir no Chrome'); a.href = 'intent://' + URL_SITE.replace(/^https:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end'; a.style.cssText = 'margin-top:8px;display:block;text-align:center;text-decoration:none'; b.append(a);
+    etapa(2, false, 'Ative as notificações e instale o app'); return;
+  }
+  if (st === 'android') {
+    const ps = await pushSit(), inst = await instaladoAndroid(); if (!$('gate')) return;
+    const okP = ps === 'ok' || ps === 'sem';
+    const b1 = etapa(1, okP, 'Ative as notificações');
+    if (ps === 'ativar') {
+      const v = el('button', 'btn pri big', '🔔 Ativar notificações'); v.style.cssText = 'margin-top:8px;width:100%';
+      v.addEventListener('click', async () => { v.disabled = true; v.textContent = 'Ativando…'; try { await assinarPush(); toast('Notificações ativadas 🔔'); } catch (e) { if (e.message !== 'bloqueado') toast(e.message || 'Não consegui ativar.'); } exigirApp(); }); b1.append(v);
+    } else if (ps === 'bloqueado') {
+      b1.append(el('div', 'sub', 'As notificações estão bloqueadas. Libere assim:'), lista(['Toque no ícone ⚙️/🔒 ao lado do endereço, lá em cima no Chrome.', 'Toque em Permissões › Notificações › Permitir.', 'Volte aqui e toque em "Já liberei".']));
+      const v = el('button', 'btn pri', 'Já liberei'); v.style.marginTop = '8px'; v.addEventListener('click', async () => { v.disabled = true; try { await assinarPush(); toast('Notificações ativadas 🔔'); } catch (e) { toast(e.message === 'bloqueado' ? 'Ainda está bloqueado. Confira os passos acima.' : 'Não consegui ativar: ' + (e.message || e)); } exigirApp(); }); b1.append(v);
+    }
+    const b2 = etapa(2, inst, 'Instale o app no celular');
+    if (!inst) {
+      if (PROMPT_INST) {
+        const ib = el('button', 'btn pri big', '📲 Instalar o app'); ib.style.cssText = 'margin-top:8px;width:100%';
+        ib.addEventListener('click', async () => { try { PROMPT_INST.prompt(); const r = await PROMPT_INST.userChoice; PROMPT_INST = null; if (r && r.outcome === 'accepted') { try { localStorage.setItem('amorata_inst', '1'); } catch (e) {} toast('App instalado! O ícone já está na tela do celular 💜'); } } catch (e) {} exigirApp(); });
+        b2.append(el('div', 'sub', 'Um toque e o ícone do Amorata Equipe aparece na tela do celular.'), ib);
+      } else {
+        b2.append(el('div', 'sub', 'Preparando o botão de instalar…'));
+        b2.append(lista(['Se o botão não aparecer, toque em ⋮ (canto de cima do Chrome) › "Instalar app".']));
+        const j = el('button', 'btn sm', 'Já instalei'); j.style.marginTop = '8px'; j.addEventListener('click', () => { try { localStorage.setItem('amorata_inst', '1'); } catch (e) {} exigirApp(); }); b2.append(j);
+      }
+    }
+    const rodapeA = el('div', 'sub', 'Precisa de ajuda? Chame a sua gerente.'); rodapeA.style.cssText = 'text-align:center;margin-top:12px'; c.append(rodapeA);
+    return;
+  }
   const instOk = st === 'ativar' || st === 'bloqueado';
   if (st === 'oficial') {
     const b = etapa(1, false, 'Abra o app pelo endereço oficial', el('div', 'sub', 'Este endereço é antigo. Toque no botão abaixo, entre com seu usuário e senha e siga os passos.'));
