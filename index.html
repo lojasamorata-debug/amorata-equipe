@@ -2773,11 +2773,29 @@ function desenharEquipe(r) {
   g.append(el('div', 'sub', 'Quem entra no app. A senha provisória aparece uma vez: passe para a pessoa. No primeiro acesso ela cria a própria senha.'));
   g.firstChild.style.marginTop = '12px';
   const nv = el('button', 'btn pri', '+ Nova pessoa'); nv.style.marginTop = '10px'; nv.addEventListener('click', () => editarPessoa(null)); g.append(nv);
+  // notificações: quem ainda não ativou
+  const at = r.pessoas.filter((p) => p.ativo && !p.eu), sem = at.filter((p) => !p.push);
+  if (at.length) {
+    const nc = el('div', 'card'); nc.style.marginTop = '12px';
+    nc.append(el('b', '', '🔔 Notificações ativas: ' + (at.length - sem.length) + ' de ' + at.length));
+    if (!sem.length) nc.append(el('div', 'sub', 'Todas da equipe recebem os avisos no celular. 🎉'));
+    else {
+      const nunca = sem.filter((p) => !p.entrou), entrou = sem.filter((p) => p.entrou);
+      if (entrou.length) nc.append(el('div', 'sub', 'Já entraram no app, mas sem notificação: ' + entrou.map((p) => primeiroNome(p.nome)).join(', ')));
+      if (nunca.length) nc.append(el('div', 'sub', 'Ainda não entraram no app novo: ' + nunca.map((p) => primeiroNome(p.nome)).join(', ')));
+      [...nc.querySelectorAll('.sub')].forEach((x) => { x.style.marginTop = '4px'; });
+      const lb = el('button', 'btn pri sm', '📣 Enviar lembrete para ' + (sem.length === 1 ? primeiroNome(sem[0].nome) : 'as ' + sem.length)); lb.style.marginTop = '8px';
+      lb.addEventListener('click', () => { lb.disabled = true; rodar('lembrarNotificacoes', [S.token, $('g-loja').value], (x) => { lb.textContent = '✓ Lembrete enviado para ' + x.enviados; toast('Lembrete enviado 🔔'); }, () => { lb.disabled = false; }); });
+      nc.append(lb, el('div', 'sub', 'O lembrete aparece no 🔔 do app. Quem ainda não entrou no app novo só vê ao entrar — mande o link pelo WhatsApp também.'));
+      nc.lastChild.style.marginTop = '6px';
+    }
+    g.append(nc);
+  }
   const b = el('div'); b.style.marginTop = '10px'; g.append(b);
   if (!r.pessoas.length) b.append(el('div', 'vazio', 'Ninguém cadastrado nesta loja.'));
   r.pessoas.forEach((p) => {
     const d = el('div', 'pess eq' + (p.ativo ? '' : ' inativa')), x = el('div');
-    x.append(el('b', '', p.nome), el('span', '', p.usuario + ' · ' + cargoTxt(p.cargo) + ' · ' + (p.loja === 'TODAS' ? 'todas as lojas' : p.loja || 'sem loja') + (p.ativo ? '' : ' · inativa') + (p.trocar ? ' · senha provisória' : '')));
+    x.append(el('b', '', p.nome), el('span', '', p.usuario + ' · ' + cargoTxt(p.cargo) + ' · ' + (p.loja === 'TODAS' ? 'todas as lojas' : p.loja || 'sem loja') + (p.ativo ? '' : ' · inativa') + (p.trocar ? ' · senha provisória' : '') + (p.ativo && !p.eu ? (p.push ? ' · 🔔 ' + p.push : ' · 🔕 sem notificação') : '')));
     const ops = el('div', 'ops');
     if (p.pode) {
       const e1 = el('button', 'btn sm', 'Editar'); e1.addEventListener('click', () => editarPessoa(p));
@@ -3183,7 +3201,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide');
 }));
