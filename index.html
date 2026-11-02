@@ -386,6 +386,12 @@ body.tab-on .wrap { max-width:none; padding:14px 18px 30px; }
 #rede-fila .rf { background:var(--panel); border:2px solid transparent; border-radius:14px; padding:10px 12px; cursor:pointer; box-shadow:0 1px 6px rgba(0,0,0,.05); text-align:left; font:inherit; color:inherit; }
 #rede-fila .rf.on { border-color:var(--accent); } #rede-fila .rf b { display:block; font-size:14px; margin-bottom:4px; } #rede-fila .rf .l { font-size:12.5px; line-height:1.45; } #rede-fila .rf .s { font-size:11.5px; color:var(--muted); margin-top:3px; }
 #rede-fila .rf.alerta { background:#fff4ec; } #rede-fila .rf.off { opacity:.55; }
+.rh-doc { display:flex; gap:12px; align-items:center; background:var(--panel); border-radius:14px; padding:12px; margin-bottom:8px; box-shadow:0 1px 6px rgba(0,0,0,.05); cursor:pointer; }
+.rh-doc .ic { font-size:26px; } .rh-doc .tx { flex:1; min-width:0; } .rh-doc .tx b { display:block; } .rh-doc .tx span { font-size:12.5px; color:var(--muted); } .rh-doc .nv { background:var(--accent); color:#fff; border-radius:999px; font-size:11px; padding:2px 8px; }
+#rhv { position:fixed; inset:0; z-index:9650; background:#3a3540; display:flex; flex-direction:column; }
+#rhv .bar { display:flex; gap:8px; align-items:center; padding:10px 12px; padding-top:max(10px, env(safe-area-inset-top)); background:#2b2730; color:#fff; } #rhv .bar span { flex:1; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#rhv .bar button { background:#fff; color:#2b2730; border:0; border-radius:8px; padding:8px 12px; font:inherit; font-weight:600; font-size:14px; }
+#rhv .pg { flex:1; overflow:auto; padding:10px; -webkit-overflow-scrolling:touch; } #rhv canvas, #rhv img { display:block; width:100%; max-width:900px; margin:0 auto 10px; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.3); }
 #gate .et.ok .n { background:#e3f4e8; color:#2e7d4f; } #gate .et ol { margin:6px 0 0; padding-left:18px; } #gate .et li { margin:3px 0; }
 /* confidencialidade: marca d'água, tela borrada fora do app, sem copiar, valores ocultos para gerência */
 #marca { display:none; position:fixed; inset:0; pointer-events:none; z-index:9600; background-repeat:repeat; opacity:.05; }
@@ -442,7 +448,7 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
         <div class="sub" id="t-user"></div>
       </div>
       </div>
-      <div style="display:flex;gap:6px"><button class="btn sm" id="b-atu" title="Atualizar o app">⟳</button><button class="btn sm" id="b-sino" title="Avisos" style="position:relative">🔔<span id="sino-n" class="badge-n hide"></span></button><button class="btn sm" id="b-ajuda" title="Como usar">?</button><button class="btn sm" id="b-sair">Sair</button></div>
+      <div style="display:flex;gap:6px"><button class="btn sm" id="b-atu" title="Atualizar o app">⟳</button><button class="btn sm hide" id="b-rh" title="Meu RH" style="position:relative">📁<span id="rh-n" class="badge-n hide"></span></button><button class="btn sm" id="b-sino" title="Avisos" style="position:relative">🔔<span id="sino-n" class="badge-n hide"></span></button><button class="btn sm" id="b-ajuda" title="Como usar">?</button><button class="btn sm" id="b-sair">Sair</button></div>
     </div>
     <div id="sel-loja-box" class="hide" style="margin-top:10px"><select id="sel-loja"></select></div>
     <div id="nuvem-foto" class="nuvem mini hide"><button class="x" id="nv-x" title="Fechar">×</button>📷 <b>Coloque sua foto</b> para a equipe te reconhecer. <button class="btn sm pri" id="nv-ok">Escolher foto</button></div>
@@ -581,7 +587,7 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
 
     <div id="v-gest" class="hide">
       <div class="filtros um"><select id="g-loja"></select></div>
-      <div class="seg"><button id="sg-imp" class="on">📥 Vendas do USE</button><button id="sg-met">🎯 Metas</button><button id="sg-ck">✅ Checklist</button><button id="sg-esc">🗓️ Escala</button><button id="sg-eq">👥 Equipe</button><button id="sg-pla">🌱 Planos</button><button id="sg-pre" class="hide">🎁 Prêmios</button></div>
+      <div class="seg"><button id="sg-imp" class="on">📥 Vendas do USE</button><button id="sg-met">🎯 Metas</button><button id="sg-ck">✅ Checklist</button><button id="sg-esc">🗓️ Escala</button><button id="sg-eq">👥 Equipe</button><button id="sg-pla">🌱 Planos</button><button id="sg-pre" class="hide">🎁 Prêmios</button><button id="sg-rh" class="hide">📁 RH</button></div>
 
       <div id="g-imp">
         <div class="card" style="margin-top:12px">
@@ -641,6 +647,7 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
       <div id="g-eq" class="hide"></div>
       <div id="g-pre" class="hide"></div>
       <div id="g-pla" class="hide"></div>
+      <div id="g-rh" class="hide"></div>
     </div>
 
     <div id="v-prod" class="hide">
@@ -790,7 +797,7 @@ function abrir() {
   if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirTermo(() => exigirApp(false)), 500); }
   if (fazCaminho) { google.script.run.withSuccessHandler((o) => { ONTEM = o; }).withFailureHandler(() => { ONTEM = { semDados: true }; })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
-  setTimeout(checarAvisos, 1500);
+  setTimeout(checarAvisos, 1500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 2500);
   $('t-av').replaceChildren(...avatar(S.foto, S.nome).childNodes); if (!S.foto) $('t-av').textContent = (S.nome || '?').charAt(0);
   nuvemFoto(); desenharMood(); setTimeout(carregarDesafios, 800);
   const sel = $('sel-loja'); sel.replaceChildren(...S.lojas.map((l) => new Option(l, l)));
@@ -1347,6 +1354,7 @@ setInterval(() => { document.querySelectorAll('.timer[data-ini]').forEach((t) =>
 $('lbtn').addEventListener('click', entrar);
 $('ls').addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
 $('b-sair').addEventListener('click', () => sair(''));
+$('b-rh').addEventListener('click', abrirMeuRH);
 $('b-ajuda').addEventListener('click', () => escolher('❓ Ajuda', 'Conheça o app', [['🧭 Tour pelo app', 'pri', () => { fechar(); iniciarTour(); }], ['📖 Guia rápido', '', () => { fechar(); mostrarGuia(true); }], ['🔔 Notificações', '', () => { fechar(); verNotificacoes(); }], ['📜 Termo de uso', '', () => { fechar(); mostrarTermo(null); }]]));
 $('sel-loja').addEventListener('change', (e) => { loja = e.target.value; salvar(); E = null; atualizar(); carregarCk(); });
 $('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') fechar(); });
@@ -1377,7 +1385,7 @@ function prepararFiltros() {
   g.value = f.value; g.classList.toggle('hide', S.lojas.length < 2); $('m-filtro-box').classList.toggle('um', S.lojas.length < 2);
   const gi = $('i-loja'); gi.replaceChildren(...ops.map((l) => new Option(l === 'TODAS' ? 'Todas as lojas' : l, l)));
   gi.value = f.value; gi.classList.toggle('hide', S.lojas.length < 2); $('i-filtro-box').classList.toggle('um', S.lojas.length < 2);
-  $('tab-ini').classList.toggle('hide', !chefe()); $('tab-dia').classList.toggle('hide', chefe()); $('tab-fila').classList.remove('hide'); document.body.classList.toggle('adm', S.cargo === 'ADMIN');
+  $('tab-ini').classList.toggle('hide', !chefe()); $('tab-dia').classList.toggle('hide', chefe()); $('tab-fila').classList.remove('hide'); $('b-rh').classList.toggle('hide', S.cargo === 'ADMIN'); document.body.classList.toggle('adm', S.cargo === 'ADMIN');
   // gerente/admin: os blocos do "Meu dia" ficam no topo do Início
   if (chefe()) { const v = $('v-ini'); v.insertBefore($('dia-blocos'), $('i-cards').nextSibling); } else $('v-dia').insertBefore($('dia-blocos'), $('dia-fila'));
   unirInicio(chefe());
@@ -2200,6 +2208,7 @@ function passosTour() {
   const topo = () => $('t-loja').parentElement.parentElement;
   const comum1 = [
     { el: topo, t: '👋 Bem-vinda ao Amorata Equipe', x: 'Aqui ficam o seu nome, a sua loja e quantas medalhas você já tem. Toque na sua foto para trocar.' },
+    { el: 'b-rh', t: '📁 Meu RH', x: 'Seus documentos da empresa: holerite, folha de ponto, férias. Quando chegar um novo, aparece um número aqui e você recebe um aviso.' },
     { el: 'b-sino', t: '🔔 Avisos', x: 'Recados, medalhas, clientes para retornar e peças que chegaram aparecem aqui — e no celular, se você ativar as notificações.' },
   ];
   const fim = [
@@ -2263,6 +2272,87 @@ function passosInstalar() {
   const ol = el('ol'); ol.style.cssText = 'margin:6px 0 0;padding-left:18px'; passos.forEach((t) => ol.append(el('li', '', t))); b.append(ol);
   if (!HOSPEDADO) { const w = el('div'); w.style.marginTop = '10px'; const a = el('a', 'btn sm pri', 'Abrir o app oficial'); a.href = URL_SITE; a.target = '_blank'; w.append(a); b.append(w); }
   return b;
+}
+// ---------- Meu RH ----------
+let RH = null, RH_SEL = '';
+const RH_IC = { 'Holerite': '💵', 'Folha de ponto': '🕘', 'Férias': '🏖️', 'Contrato': '📝', 'Atestado': '🩺', 'Comunicado': '📢', 'Outro': '📄' };
+function carregarRHBadge() { if (!S || S.cargo === 'ADMIN') return; google.script.run.withSuccessHandler((r) => { RH = r; const n = $('rh-n'); n.textContent = r.novos; n.classList.toggle('hide', !r.novos); }).withFailureHandler(() => {}).rhLista(S.token, ''); }
+function abrirMeuRH() {
+  const ant = $('rh'); if (ant) ant.remove();
+  const w = el('div', 'tc'); w.id = 'rh'; const h = el('div', 'dhead'), x = el('button', '', '×'); h.append(el('h1', '', '📁 Meu RH'), x); const b = el('div', 'dbody'); w.append(h, b); document.body.append(w);
+  x.addEventListener('click', () => w.remove());
+  b.append(el('div', 'vazio', 'Carregando seus documentos…'));
+  rodar('rhLista', [S.token, ''], (r) => { RH = r; desenharRH(b, r, false); carregarRHBadgeLocal(r); });
+}
+function carregarRHBadgeLocal(r) { const n = $('rh-n'); if (n) { n.textContent = r.novos; n.classList.toggle('hide', !r.novos); } }
+function desenharRH(b, r, adm) {
+  b.replaceChildren();
+  if (!adm) { b.append(el('div', 'sub', 'Seus documentos da empresa: holerite, folha de ponto, férias e outros. Só você e a administração veem.')); b.firstChild.style.margin = '0 0 12px'; }
+  if (!r.docs.length) { b.append(el('div', 'vazio', adm ? 'Nenhum documento enviado para esta pessoa.' : 'Ainda não há documentos aqui. Quando a administração enviar, você recebe um aviso. 📄')); return; }
+  const grupos = {}; r.docs.forEach((d) => { (grupos[d.tipo] = grupos[d.tipo] || []).push(d); });
+  r.tipos.concat(Object.keys(grupos).filter((t) => r.tipos.indexOf(t) < 0)).forEach((t) => {
+    if (!grupos[t]) return; const h2 = el('h2'); h2.append(el('span', '', (RH_IC[t] || '📄') + ' ' + t), el('span', '', String(grupos[t].length))); b.append(h2);
+    grupos[t].forEach((d) => {
+      const c = el('div', 'rh-doc'); c.append(el('div', 'ic', d.mime && d.mime.indexOf('image') === 0 ? '🖼️' : (RH_IC[t] || '📄')));
+      const tx = el('div', 'tx'); tx.append(el('b', '', (d.competencia ? d.competencia + ' · ' : '') + (d.titulo || d.tipo)), el('span', '', 'Enviado em ' + d.quando.slice(0, 10) + (adm ? (d.visto ? ' · 👀 aberto em ' + d.visto : ' · ainda não abriu') : ''))); c.append(tx);
+      if (!adm && !d.visto) c.append(el('span', 'nv', 'novo'));
+      c.addEventListener('click', () => abrirDocRH(d, () => { if (!adm && !d.visto) { d.visto = 'agora'; r.novos = Math.max(0, r.novos - 1); carregarRHBadgeLocal(r); desenharRH(b, r, adm); } }));
+      if (adm) { const ap = el('button', 'btn sm', 'Apagar'); ap.addEventListener('click', (ev) => { ev.stopPropagation(); escolher('Apagar este documento?', 'Ele sai do Meu RH de ' + primeiroNome(nomeRH(r.usuario)) + ' e vai para a lixeira do Drive.', [['Apagar', 'bad', () => { fechar(); rodar('rhApagar', [S.token, d.id], desenharRHAdm); }]]); }); c.append(ap); }
+      b.append(c);
+    });
+  });
+}
+let PDFJS = null;
+function carregarPdfJs() {
+  if (PDFJS) return PDFJS;
+  PDFJS = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'; sc.onload = () => { try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(window.pdfjsLib); } catch (e) { rej(e); } }; sc.onerror = () => { PDFJS = null; rej(new Error('sem internet')); }; document.head.append(sc); });
+  return PDFJS;
+}
+function abrirDocRH(d, aoAbrir) {
+  const ant = $('rhv'); if (ant) ant.remove();
+  const v = el('div'); v.id = 'rhv'; const bar = el('div', 'bar'), fx = el('button', '', '✕ Fechar'), sv = el('button', '', '⬇️ Salvar'); bar.append(fx, el('span', '', (d.competencia ? d.competencia + ' · ' : '') + (d.titulo || d.tipo)), sv);
+  const pg = el('div', 'pg'); pg.append(el('div', 'vazio', 'Abrindo…')); pg.firstChild.style.color = '#fff'; v.append(bar, pg); document.body.append(v);
+  let url = null, arq = null; fx.addEventListener('click', () => { v.remove(); if (url) URL.revokeObjectURL(url); }); sv.disabled = true;
+  rodar('rhAbrir', [S.token, d.id], async (f) => {
+    if (aoAbrir) aoAbrir();
+    const bin = atob(f.b64), by = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) by[i] = bin.charCodeAt(i);
+    arq = new File([by], f.nome || 'documento', { type: f.mime }); url = URL.createObjectURL(arq); sv.disabled = false;
+    sv.onclick = async () => { try { if (navigator.canShare && navigator.canShare({ files: [arq] })) { await navigator.share({ files: [arq], title: f.nome }); return; } } catch (e) { if (e && e.name === 'AbortError') return; } const a = document.createElement('a'); a.href = url; a.download = f.nome || 'documento'; document.body.append(a); a.click(); a.remove(); };
+    pg.replaceChildren();
+    if (/^image\//.test(f.mime)) { const im = el('img'); im.src = url; pg.append(im); return; }
+    try {
+      const lib = await carregarPdfJs(), doc = await lib.getDocument({ data: by.slice() }).promise, larg = Math.min(pg.clientWidth - 20, 900);
+      for (let n = 1; n <= doc.numPages; n++) { const p = await doc.getPage(n), vp0 = p.getViewport({ scale: 1 }), esc = (larg / vp0.width) * (window.devicePixelRatio || 1), vp = p.getViewport({ scale: esc }); const cv = el('canvas'); cv.width = vp.width; cv.height = vp.height; pg.append(cv); await p.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise; }
+    } catch (e) { pg.replaceChildren(el('div', 'vazio', 'Não deu para mostrar o PDF aqui. Toque em ⬇️ Salvar para abrir no celular.')); pg.firstChild.style.color = '#fff'; }
+  }, () => v.remove());
+}
+// --- ADMIN: enviar documentos (Gestão › RH) ---
+const nomeRH = (u) => { const p = RH && RH.pessoas && RH.pessoas.find((x) => x.usuario === u); return p ? p.nome : u; };
+function desenharRHAdm(r) {
+  RH = r; const g = $('g-rh'); g.replaceChildren();
+  const card = el('div', 'card'); card.style.marginTop = '12px'; card.append(el('b', '', '📁 Enviar documento para o Meu RH'));
+  const pes = el('select'); pes.append(new Option('Escolha a funcionária…', '')); let lj = null, og = null;
+  (r.pessoas || []).forEach((p) => { if (p.loja !== lj) { lj = p.loja; og = document.createElement('optgroup'); og.label = lj || 'Sem loja'; pes.append(og); } og.append(new Option(p.nome, p.usuario)); });
+  pes.value = RH_SEL || ''; pes.addEventListener('change', () => { RH_SEL = pes.value; rodar('rhLista', [S.token, RH_SEL], desenharRHAdm); });
+  const tp = el('select'); r.tipos.forEach((t) => tp.append(new Option((RH_IC[t] || '') + ' ' + t, t)));
+  const mes = el('input'); mes.type = 'month'; const d0 = new Date(); d0.setDate(1); d0.setMonth(d0.getMonth() - 1); mes.value = d0.toISOString().slice(0, 7);
+  const ti = el('input'); ti.placeholder = 'Descrição (opcional) — ex.: 13º salário'; ti.maxLength = 80;
+  const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf,image/*'; fi.multiple = true;
+  const env = el('button', 'btn pri', 'Enviar');
+  const lin = (rot, c) => { const w = el('label', 'campo'); w.style.cssText = 'display:block;margin-top:8px'; const s2 = el('div', 'sub', rot); s2.style.marginBottom = '3px'; w.append(s2, c); c.style.width = '100%'; c.style.boxSizing = 'border-box'; return w; };
+  card.append(lin('Funcionária', pes), lin('Tipo', tp), lin('Mês de referência', mes), lin('Descrição', ti), lin('Arquivo (PDF ou foto, até 10 MB — pode escolher vários)', fi));
+  env.style.marginTop = '10px'; card.append(env, el('div', 'sub', 'Ela recebe um aviso no celular e vê o documento em 📁 Meu RH. Você acompanha aqui quando ela abriu.'));
+  card.lastChild.style.marginTop = '6px';
+  env.addEventListener('click', async () => {
+    if (!pes.value) { toast('Escolha a funcionária.'); return; } if (!fi.files.length) { toast('Escolha o arquivo.'); return; }
+    const fs = [...fi.files]; if (fs.some((f) => f.size > 10 * 1024 * 1024)) { toast('Cada arquivo pode ter até 10 MB.'); return; }
+    env.disabled = true; env.textContent = 'Enviando…';
+    const lerArq = (f) => new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res({ nome: f.name, dataUrl: rd.result }); rd.onerror = rej; rd.readAsDataURL(f); });
+    try { const arqs = await Promise.all(fs.map(lerArq)); rodar('rhEnviar', [S.token, pes.value, tp.value, ti.value, mes.value, arqs], (r2) => { toast('Documento enviado 📄'); desenharRHAdm(r2); }, () => { env.disabled = false; env.textContent = 'Enviar'; }); }
+    catch (e) { toast('Não consegui ler o arquivo.'); env.disabled = false; env.textContent = 'Enviar'; }
+  });
+  g.append(card);
+  if (RH_SEL) { const lb = el('div'); lb.style.marginTop = '14px'; g.append(lb); desenharRH(lb, r, true); const h = el('h2'); h.append(el('span', '', 'Documentos de ' + primeiroNome(nomeRH(RH_SEL))), el('span', '', String(r.docs.length))); lb.prepend(h); }
 }
 // ---------- termo de uso ----------
 const TERMO = [
@@ -2766,15 +2856,16 @@ $('a-inst-b').addEventListener('click', guiaInstalar);
 let G_ABA = 'imp', GI = null, GM = null, GE = null;
 const isoBR = (d) => d ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) : '';
 const ontemISO = () => { const d = new Date(Date.now() - 864e5); return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
-function abaGest(q) { G_ABA = q; ['imp', 'met', 'ck', 'esc', 'eq', 'pre', 'pla'].forEach((x) => { $('sg-' + x).classList.toggle('on', x === q); $('g-' + x).classList.toggle('hide', x !== q); }); carregarGestao(); }
-['imp', 'met', 'ck', 'esc', 'eq', 'pre', 'pla'].forEach((x) => $('sg-' + x).addEventListener('click', () => abaGest(x)));
+function abaGest(q) { G_ABA = q; ['imp', 'met', 'ck', 'esc', 'eq', 'pre', 'pla', 'rh'].forEach((x) => { $('sg-' + x).classList.toggle('on', x === q); $('g-' + x).classList.toggle('hide', x !== q); }); carregarGestao(); }
+['imp', 'met', 'ck', 'esc', 'eq', 'pre', 'pla', 'rh'].forEach((x) => $('sg-' + x).addEventListener('click', () => abaGest(x)));
 ['ABERTURA', 'FECHAMENTO'].forEach((t) => $('gc-ok-' + t).addEventListener('click', () => rodar('salvarChecklist', [S.token, $('g-loja').value, t, $('gc-' + t).value.split('\n')], (r) => { desenharCkEd(r); toast('Checklist salvo ✅'); if ($('g-loja').value === loja) desenharCk(r); })));
 function desenharCkEd(r) { r.turnos.forEach((t) => { $('gc-' + t.turno).value = t.itens.map((x) => x.texto).join('\n'); }); }
 $('tab-gest').addEventListener('click', () => mudarAba('gest'));
 $('g-loja').addEventListener('change', carregarGestao);
 function carregarGestao() {
-  const lj = $('g-loja').value; $('sg-pre').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('g-loja').parentNode.classList.toggle('hide', G_ABA === 'pre');
+  const lj = $('g-loja').value; $('sg-pre').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('sg-rh').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('g-loja').parentNode.classList.toggle('hide', G_ABA === 'pre' || G_ABA === 'rh');
   if (G_ABA === 'pre') { rodar('premiosAdm', [S.token], desenharPremiosAdm); return; }
+  if (G_ABA === 'rh') { rodar('rhLista', [S.token, RH_SEL], desenharRHAdm); return; }
   if (G_ABA === 'pla') { rodar('planosLoja', [S.token, lj, ''], desenharPlanos); return; }
   if (G_ABA === 'imp') { if (!$('gi-data').value) $('gi-data').value = ontemISO(); rodar('statusVendas', [S.token, lj], desenharStatusVendas); }
   if (G_ABA === 'met') { prepMeses(); rodar('metasDoMes', [S.token, lj, $('gm-mes').value], desenharMetasEd); }
@@ -3269,7 +3360,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide');
 }));
