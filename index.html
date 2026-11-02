@@ -2795,9 +2795,14 @@ $('sg-con').addEventListener('click', () => abaMural('con'));
 let MED = null;
 function gradeMedalhas(box, r) {
   box.replaceChildren();
-  r.lista.slice().sort((a, b) => (b.vezes > 0) - (a.vezes > 0) || ((b.prog ? b.prog[0] / b.prog[1] : 0) - (a.prog ? a.prog[0] / a.prog[1] : 0))).forEach((m) => {
-    const d = el('div', 'medalha' + (m.vezes ? '' : ' off')); d.append(el('i', '', m.emoji), document.createTextNode(m.nome)); if (m.vezes > 1) d.append(el('sup', '', '×' + m.vezes));
-    if (!m.vezes && m.prog) { const pb = el('div', 'pb'), i = el('i'); i.style.width = Math.min(100, m.prog[0] / m.prog[1] * 100) + '%'; pb.append(i); d.append(pb, el('small', '', m.prog[0] + '/' + m.prog[1])); }
+  const ord = (l) => l.slice().sort((a, b) => (b.vezes > 0) - (a.vezes > 0) || ((b.prog ? b.prog[0] / b.prog[1] : 0) - (a.prog ? a.prog[0] / a.prog[1] : 0)));
+  const vend = r.lista.filter((m) => !m.social), soc = r.lista.filter((m) => m.social);
+  const lista = ord(vend).concat(soc.length ? [{ titulo: true }] : [], ord(soc));
+  lista.forEach((m) => {
+    if (m.titulo) { const t = el('div', 'sub', '💜 Conquistas da equipe · engajamento no app (não contam para prêmios)'); t.style.cssText = 'grid-column:1/-1;margin-top:10px'; box.append(t); return; }
+    const d = el('div', 'medalha' + (m.vezes ? '' : ' off')); d.append(el('i', '', m.emoji), document.createTextNode(m.nome));
+    if (m.niveis && m.vezes) d.append(el('sup', '', ['', '🥉', '🥈', '🥇'][Math.min(3, m.vezes)])); else if (m.vezes > 1) d.append(el('sup', '', '×' + m.vezes));
+    if ((!m.vezes || (m.niveis && m.vezes < 3)) && m.prog) { const pb = el('div', 'pb'), i = el('i'); i.style.width = Math.min(100, m.prog[0] / m.prog[1] * 100) + '%'; pb.append(i); d.append(pb, el('small', '', m.prog[0] + '/' + m.prog[1])); }
     d.addEventListener('click', () => escolher(m.emoji + ' ' + m.nome, m.desc + (m.vezes ? ' · Você já ganhou' + (m.vezes > 1 ? ' ' + m.vezes + ' vezes' : '') + (m.quando ? ' (última: ' + m.quando.slice(0, 10) + ')' : '') : (m.prog ? ' · Seu progresso: ' + m.prog[0] + ' de ' + m.prog[1] + '.' : '') + ' Ainda não conquistada: bora!'), []));
     box.append(d);
   });
