@@ -133,7 +133,7 @@ td.n { white-space:nowrap; font-variant-numeric:tabular-nums; }
 .tc .escolhido { font-size:60px; text-align:center; line-height:1; margin-bottom:4px; }
 #dia-pre { margin-top:12px; } #eu-meta.card { margin-top:12px; }
 .pend-lk { width:100%; text-align:left; border:1px solid #f2d27a; background:#fffbea; border-radius:12px; padding:10px 12px; font:inherit; font-size:13px; cursor:pointer; display:flex; justify-content:space-between; gap:10px; align-items:center; } .pend-lk span { color:var(--accent); font-weight:600; white-space:nowrap; }
-body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fila { display:none !important; }
+body.adm #eu, body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fila { display:none !important; }
 .dash { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
 .dc { background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:14px; cursor:pointer; position:relative; min-width:0; box-shadow:0 1px 2px rgba(0,0,0,.03); transition:transform .12s, box-shadow .12s; }
 .dc:active { transform:scale(.985); } .dc:hover { box-shadow:0 4px 14px rgba(0,0,0,.07); }
@@ -381,6 +381,11 @@ body.tab-on .wrap { max-width:none; padding:14px 18px 30px; }
 #gate .et.ok { opacity:.6; } #gate .et .n { flex:none; width:28px; height:28px; border-radius:50%; background:var(--accentbg); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:600; }
 #termo .tx { background:var(--panel); border-radius:16px; padding:16px; font-size:14px; line-height:1.5; box-shadow:0 2px 10px rgba(0,0,0,.05); } #termo .tx h3 { font-size:15px; margin:14px 0 4px; } #termo .tx h3:first-child { margin-top:0; } #termo .tx p { margin:0; }
 #termo .ac { display:flex; gap:10px; align-items:flex-start; margin:14px 0 10px; font-size:14px; } #termo .ac input { width:22px; height:22px; flex:none; margin-top:1px; }
+#rede-fila { margin:4px 0 6px; } #rede-fila .rt { display:flex; justify-content:space-between; align-items:baseline; margin:2px 2px 8px; } #rede-fila .rt b { font-size:15px; } #rede-fila .rt span { font-size:12px; color:var(--muted); }
+#rede-fila .rg { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
+#rede-fila .rf { background:var(--panel); border:2px solid transparent; border-radius:14px; padding:10px 12px; cursor:pointer; box-shadow:0 1px 6px rgba(0,0,0,.05); text-align:left; font:inherit; color:inherit; }
+#rede-fila .rf.on { border-color:var(--accent); } #rede-fila .rf b { display:block; font-size:14px; margin-bottom:4px; } #rede-fila .rf .l { font-size:12.5px; line-height:1.45; } #rede-fila .rf .s { font-size:11.5px; color:var(--muted); margin-top:3px; }
+#rede-fila .rf.alerta { background:#fff4ec; } #rede-fila .rf.off { opacity:.55; }
 #gate .et.ok .n { background:#e3f4e8; color:#2e7d4f; } #gate .et ol { margin:6px 0 0; padding-left:18px; } #gate .et li { margin:3px 0; }
 /* confidencialidade: marca d'água, tela borrada fora do app, sem copiar, valores ocultos para gerência */
 #marca { display:none; position:fixed; inset:0; pointer-events:none; z-index:9600; background-repeat:repeat; opacity:.05; }
@@ -461,6 +466,7 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
     <button class="btn pri big" id="dia-fila" style="margin-top:14px">👉 Ir para a fila</button>
     </div>
     <div id="v-fila">
+    <div id="rede-fila" class="hide"></div>
     <div class="card eu hide" id="eu">
       <div class="sub">Você</div>
       <div class="estado" id="eu-estado">—</div>
@@ -791,7 +797,7 @@ function abrir() {
   sel.value = loja; $('sel-loja-box').classList.toggle('hide', S.lojas.length < 2);
   prepararFiltros(); mudarAba(chefe() ? 'ini' : 'fila');
   carregarMetaHoje(); carregarPendencias(); carregarCk(); carregarReuniao(); carregarPlano(); setTimeout(desenharPush, 1200); carregarCmn(); carregarMe(); carregarCart(); clearInterval(timerExtra); timerExtra = setInterval(() => { if (!document.hidden) { carregarMetaHoje(); carregarPendencias(); carregarCmn(); } }, 900000);
-  atualizar(); clearInterval(timerPoll); timerPoll = setInterval(() => { if (!document.hidden && aba === 'fila') atualizar(); }, 5000);
+  atualizar(); clearInterval(timerPoll); timerPoll = setInterval(() => { if (!document.hidden && aba === 'fila') { atualizar(); if (S && S.cargo === 'ADMIN' && ++TICK_REDE % 3 === 0) carregarRedeFila(); } }, 5000);
 }
 // ---------- checklist ----------
 let CK = null, CK_T = null;
@@ -1007,6 +1013,31 @@ function carregarPendencias() {
     const its = [...b.children]; if (its.length > 3 && !carregarPendencias.todas) { its.slice(3).forEach((x) => x.classList.add('hide')); const m = el('button', 'mais'); m.append(el('div', '', '+ ' + (its.length - 3) + (its.length - 3 === 1 ? ' pendência' : ' pendências')), el('span', '', 'Ver ›')); m.addEventListener('click', () => { carregarPendencias.todas = true; its.forEach((x) => x.classList.remove('hide')); m.remove(); }); b.append(m); }
     b.classList.toggle('hide', aba !== 'ini' || !b.childElementCount);
   }).withFailureHandler(() => {}).pendencias(S.token);
+}
+// ---------- ADMIN: supervisão das filas de todas as lojas ----------
+let REDE_F = null, TICK_REDE = 0;
+function carregarRedeFila() { if (!S || S.cargo !== 'ADMIN') return; google.script.run.withSuccessHandler((l) => { REDE_F = l; desenharRedeFila(); }).withFailureHandler(() => {}).filasRede(S.token); }
+function desenharRedeFila() {
+  const b = $('rede-fila'); if (!Array.isArray(REDE_F) || !b) return; b.replaceChildren();
+  if (!loja || S.lojas.indexOf(loja) < 0) loja = S.lojas[0];
+  const tf = REDE_F.reduce((a, x) => a + (x.fila || 0), 0), ta = REDE_F.reduce((a, x) => a + (x.at || 0), 0);
+  const t = el('div', 'rt'); t.append(el('b', '', '👀 Filas das lojas agora'), el('span', '', tf + ' na fila · ' + ta + ' em atendimento')); b.append(t);
+  const g = el('div', 'rg');
+  REDE_F.forEach((x) => {
+    const c = el('button', 'rf' + (x.loja === loja ? ' on' : '') + (x.fechada ? ' off' : '')); c.append(el('b', '', x.loja));
+    if (x.erro) c.append(el('div', 's', 'sem dados agora'));
+    else if (x.fechada) c.append(el('div', 's', 'fechada hoje'));
+    else {
+      const parada = !x.fila && !x.at; if (parada && x.hojeAt) c.classList.add('alerta');
+      c.append(el('div', 'l', '👥 ' + x.fila + ' na fila · 🛍️ ' + x.at + ' atendendo' + (x.pausa ? ' · ☕ ' + x.pausa : '')));
+      c.append(el('div', 's', x.prox ? 'Próxima: ' + x.prox : parada ? 'ninguém na fila agora' : 'fila vazia'));
+      c.append(el('div', 's', 'Hoje: ' + x.hojeAt + ' atend. · ' + x.hojeV + ' vendas' + (x.hojeAt ? ' · ' + Math.round(x.hojeV / x.hojeAt * 100) + '%' : '')));
+    }
+    c.addEventListener('click', () => { if (loja === x.loja) return; loja = x.loja; const sl = $('sel-loja'); if (sl) sl.value = x.loja; salvar(); E = null; desenharRedeFila(); atualizar(); try { carregarCk(); } catch (e) {} });
+    g.append(c);
+  });
+  b.append(g, el('div', 'sub', 'Abaixo, a fila de ' + loja + ' ao vivo. Toque em outra loja para trocar.'));
+  b.lastChild.style.margin = '8px 2px 0';
 }
 function atualizar() { if (!S || ocupado) return; rodar('estado', [S.token, loja], desenhar); }
 
@@ -1324,7 +1355,8 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) atua
 let aba = 'fila';
 function mudarAba(a) {
   aba = a; document.body.dataset.aba = a; ['ini', 'dia', 'fila', 'meta', 'mural', 'apr', 'gest', 'prod', 'rel'].forEach((x) => { $('tab-' + x).classList.toggle('on', a === x); $('v-' + x).classList.toggle('hide', a !== x); });
-  $('sel-loja-box').classList.toggle('hide', a !== 'fila' || S.lojas.length < 2);
+  $('sel-loja-box').classList.toggle('hide', a !== 'fila' || S.lojas.length < 2 || S.cargo === 'ADMIN');
+  $('rede-fila').classList.toggle('hide', a !== 'fila' || S.cargo !== 'ADMIN'); if (a === 'fila' && S.cargo === 'ADMIN') carregarRedeFila();
   $('pend').classList.toggle('hide', a !== 'ini' || !$('pend').childElementCount);
   $('mood-fila').classList.add('hide'); $('cmn-top').classList.toggle('hide', !(a === 'dia' || a === 'ini'));
   if (a === 'dia') { desenharDiaPre(); carregarReuniao(); }
@@ -1345,7 +1377,7 @@ function prepararFiltros() {
   g.value = f.value; g.classList.toggle('hide', S.lojas.length < 2); $('m-filtro-box').classList.toggle('um', S.lojas.length < 2);
   const gi = $('i-loja'); gi.replaceChildren(...ops.map((l) => new Option(l === 'TODAS' ? 'Todas as lojas' : l, l)));
   gi.value = f.value; gi.classList.toggle('hide', S.lojas.length < 2); $('i-filtro-box').classList.toggle('um', S.lojas.length < 2);
-  $('tab-ini').classList.toggle('hide', !chefe()); $('tab-dia').classList.toggle('hide', chefe()); $('tab-fila').classList.toggle('hide', S.cargo === 'ADMIN'); document.body.classList.toggle('adm', S.cargo === 'ADMIN');
+  $('tab-ini').classList.toggle('hide', !chefe()); $('tab-dia').classList.toggle('hide', chefe()); $('tab-fila').classList.remove('hide'); document.body.classList.toggle('adm', S.cargo === 'ADMIN');
   // gerente/admin: os blocos do "Meu dia" ficam no topo do Início
   if (chefe()) { const v = $('v-ini'); v.insertBefore($('dia-blocos'), $('i-cards').nextSibling); } else $('v-dia').insertBefore($('dia-blocos'), $('dia-fila'));
   unirInicio(chefe());
@@ -2180,7 +2212,7 @@ function passosTour() {
   return comum1.concat([
     { el: 'pend', aba: 'ini', t: '📌 Pendências', x: 'O que precisa da sua atenção hoje: vendas para importar, trocas de folga, feriados, escala, metas. Some sozinho quando você resolve.' },
     { el: 'i-cards', aba: 'ini', t: '📊 Início', x: (ger ? 'Os resultados da sua loja' : 'Os resultados de todas as lojas') + ' em cards: meta com previsão de fechamento, ritmo de hoje, fila, motivos de perda, equipe e a conferência com o USE. Toque em qualquer card para detalhar.' },
-  ], ger ? [{ el: 'tab-fila', aba: 'fila', t: '👥 Fila da vez', x: 'Acompanhe a fila ao vivo. Você pode mudar a ordem (com motivo) e incluir quem está de folga.' }] : [], [
+  ], ger ? [{ el: 'tab-fila', aba: 'fila', t: '👥 Fila da vez', x: 'Acompanhe a fila ao vivo. Você pode mudar a ordem (com motivo) e incluir quem está de folga.' }] : [{ el: 'tab-fila', aba: 'fila', t: '👀 Filas das lojas', x: 'Supervisione a fila de todas as lojas ao vivo: quantas estão na fila, atendendo e em pausa. Toque numa loja para ver a fila completa dela.' }], [
     { el: 'tab-gest', aba: 'gest', t: '🛠️ Gestão', x: 'Importe as vendas do USE, cadastre metas, escala e checklist, cuide da equipe e dos planos individuais' + (ger ? '.' : ' e defina os prêmios.') },
     { el: 'tab-rel', aba: 'rel', t: '📈 Relatórios', x: 'Conversão, motivos de perda, horários de pico, retornos e avaliações das clientes.' },
   ], fim);
