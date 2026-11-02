@@ -922,6 +922,7 @@ function desenharMetaHoje() {
   const b = $('eu-meta'); if (!b) return;
   if (!MH) { b.classList.add('hide'); return; }
   b.classList.remove('hide'); b.replaceChildren();
+  if (MH.folga) { b.textContent = '🌴 Hoje é sua folga — bom descanso! Você está com ' + pc(MH.pct) + ' da meta do mês' + (MH.restam ? ' · ' + MH.restam + (MH.restam === 1 ? ' dia de trabalho restante' : ' dias de trabalho restantes') : '') + '.'; return; }
   if (MH.batida) { b.textContent = '🏆 Meta do mês batida! Agora é rumo à meta desafio.'; return; }
   if (!MH.restam) { b.textContent = '📅 ' + pc(MH.pct) + ' da meta do mês · sem dias de trabalho restantes no calendário'; return; }
   const n = MH.tkm ? Math.ceil(MH.porDia / MH.tkm) : null, feito = E && E.hoje && E.hoje.meu ? E.hoje.meu.rs || 0 : 0;
