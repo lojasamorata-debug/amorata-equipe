@@ -1,5 +1,5 @@
 // Amorata Equipe: sempre busca a versão nova; usa a cópia guardada só quando estiver sem internet.
-const CACHE = 'amorata-equipe-v4';
+const CACHE = 'amorata-equipe-v5';
 const ARQS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARQS)).catch(() => {})); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
@@ -15,6 +15,6 @@ self.addEventListener('push', (e) => {
 });
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
-  const ab = (e.notification.data && e.notification.data.abrir) || '';
-  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((cs) => { for (const c of cs) { if ('focus' in c) { c.postMessage({ tipo: ab === 'mural' ? 'abrir-mural' : 'abrir-avisos' }); return c.focus(); } } return self.clients.openWindow(ab === 'mural' ? './?mural=1' : './?avisos=1'); }));
+  const ab = (e.notification.data && e.notification.data.abrir) || '', mu = /^mural/.test(ab), post = mu ? (ab.split(':')[1] || '') : '';
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((cs) => { for (const c of cs) { if ('focus' in c) { c.postMessage({ tipo: mu ? 'abrir-mural' : 'abrir-avisos', post: post }); return c.focus(); } } return self.clients.openWindow(mu ? './?mural=' + (post || '1') : './?avisos=1'); }));
 });

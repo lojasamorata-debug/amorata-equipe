@@ -599,7 +599,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
     </div>
 
     <div id="v-meta" class="hide">
-      <div class="filtros" id="m-filtro-box"><select id="m-per"><option value="hoje">Hoje</option><option value="mes" selected>Mês atual</option><option value="mes_ant">Mês anterior</option><option value="ano">Ano</option><option value="custom">Personalizado…</option></select><select id="m-loja"></select></div><div class="datas hide" id="m-datas"><label>De <input type="date" id="m-de"></label><label>Até <input type="date" id="m-ate"></label><button class="btn sm pri" id="m-ok">Ver</button></div>
+      <div class="filtros" id="m-filtro-box"><select id="m-per"><option value="hoje" selected>Hoje</option><option value="mes">Mês atual</option><option value="mes_ant">Mês anterior</option><option value="ano">Ano</option><option value="custom">Personalizado…</option></select><select id="m-loja"></select></div><div class="datas hide" id="m-datas"><label>De <input type="date" id="m-de"></label><label>Até <input type="date" id="m-ate"></label><button class="btn sm pri" id="m-ok">Ver</button></div>
       <div class="sub" id="m-tit" style="margin-top:8px"></div>
       <div id="m-eu"></div>
       <div id="m-des-box"><h2><span>🎯 Desafios</span><button class="btn sm hide" id="m-des-novo">+ Criar desafio</button></h2><div id="m-des"></div></div>
@@ -2117,6 +2117,8 @@ const MU_TIPOS = { meta: '🏆 Meta batida', venda: '🎉 Grande venda', cliente
 function chipsMural() { const b = $('mu-tipos'); b.replaceChildren(); Object.keys(MU_TIPOS).forEach((k) => { const x = el('button', k === MU_TIPO ? 'on' : '', MU_TIPOS[k]); x.addEventListener('click', () => { MU_TIPO = k; chipsMural(); }); b.append(x); }); }
 // ---------- menções com @ ----------
 let PESSOAS = null, MU_FOCO = '';
+// abre o mural na publicação de quem postou (toque na notificação)
+function irParaPost(id) { if (!S) return; ['rh', 'det', 'rhv'].forEach((x) => { const e = $(x); if (e) e.remove(); }); if (id) { MU_FOCO = id; try { $('mu-loja').value = 'TODAS'; } catch (e) {} } mudarAba('mural'); try { abaMural('mural'); } catch (e) {} }
 function carregarPessoas(cb) { if (PESSOAS) { cb && cb(); return; } google.script.run.withSuccessHandler((ps) => { const cont = {}; ps.forEach((p) => { const f = primeiroNome(p.nome); cont[f] = (cont[f] || 0) + 1; }); PESSOAS = ps.map((p) => { const w = String(p.nome).trim().split(/\s+/), f = primeiroNome(p.nome); return Object.assign(p, { rot: cont[f] > 1 && w[1] ? f + ' ' + w[1].charAt(0) + w[1].slice(1).toLowerCase() : f }); }); cb && cb(); }).withFailureHandler(() => {}).pessoas(S.token); }
 const semAc = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 function ativarMencao(inp) {
@@ -4443,9 +4445,9 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && T)
   const bs = $('b-sair'); if (bs) { bs.replaceChildren(svg('sair')); bs.title = 'Sair'; bs.classList.add('ico'); }
   const lg = $('v-login').querySelector('img'); if (lg && $('sp-logo')) $('sp-logo').src = lg.src;
   if (HOSPEDADO && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
-  if (HOSPEDADO && 'serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', (ev) => { if (!ev.data || !S || $('caminho')) return; if (ev.data.tipo === 'abrir-avisos') $('b-sino').click(); else if (ev.data.tipo === 'abrir-mural') { fechar(); mudarAba('mural'); try { abaMural('mural'); } catch (e) {} } });
+  if (HOSPEDADO && 'serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', (ev) => { if (!ev.data || !S || $('caminho')) return; if (ev.data.tipo === 'abrir-avisos') $('b-sino').click(); else if (ev.data.tipo === 'abrir-mural') { fechar(); irParaPost(ev.data.post); } });
   if (/[?&]avisos=1/.test(location.search)) setTimeout(() => { if (S && !$('caminho')) $('b-sino').click(); }, 3000);
-  if (/[?&]mural=1/.test(location.search)) setTimeout(() => { if (S && !$('caminho')) { mudarAba('mural'); try { abaMural('mural'); } catch (e) {} } }, 2500);
+  { const mp = location.search.match(/[?&]mural=([\w-]+)/); if (mp) { const pid = mp[1] === '1' ? '' : mp[1]; const tenta = (n) => { if (S && !$('caminho')) irParaPost(pid); else if (n < 40) setTimeout(() => tenta(n + 1), 1500); }; setTimeout(() => tenta(0), 2000); try { history.replaceState(null, '', location.pathname); } catch (e) {} } }
 })();
 if (T && T.chave) abrirTablet(); else if (S && S.token) abrir(); else setTimeout(tirarSplash, 250);
 setTimeout(tirarSplash, 6000);
