@@ -677,6 +677,13 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
           <div id="gt-prev" style="margin-top:8px"></div>
           <button class="btn pri big hide" id="gt-ok" style="margin-top:8px">Importar</button>
         </div>
+        <details class="card hide" id="ds-card" style="margin-top:12px"><summary><b>🔌 DS Connect · API do USE</b> <span class="sub" id="ds-sit"></span></summary>
+          <div class="sub" style="margin-top:6px">Quando a Data System liberar a chave, cole aqui o endereço da API e a chave e toque em Testar. Com a conexão funcionando, as vendas passam a entrar sozinhas, sem importar arquivo.</div>
+          <label class="sub" style="display:block;margin-top:8px">Endereço da API (começa com https://) <input id="ds-base" placeholder="https://..."></label>
+          <label class="sub" style="display:block;margin-top:8px">Chave de acesso (X-Api-Key) <input id="ds-key" type="password" autocomplete="off" placeholder="cole a chave aqui"></label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" id="ds-salvar">Salvar</button><button class="btn" id="ds-testar">Testar conexão</button></div>
+          <div id="ds-res" style="margin-top:8px"></div>
+        </details>
         <div class="card hide" id="gi-card" style="margin-top:12px">
           <b>Importar o relatório do dia</b>
           <div class="sub" style="margin-top:4px">No USE: Relatório de Análise de Vendedor (Pedidos/PA) → período de UM dia → XLS. Suba o arquivo aqui. Pode importar o mesmo dia mais de uma vez: o app junta os arquivos e fica com o valor mais completo de cada vendedora (não soma em dobro).</div>
@@ -3195,7 +3202,7 @@ function carregarGestao() {
   if (G_ABA === 'pre') { rodar('premiosAdm', [S.token], desenharPremiosAdm); return; }
   if (G_ABA === 'rh') { rodar('rhLista', [S.token, RH_SEL], desenharRHAdm); return; }
   if (G_ABA === 'pla') { rodar('planosLoja', [S.token, lj, ''], desenharPlanos); return; }
-  if (G_ABA === 'imp') { if (!$('gi-data').value) $('gi-data').value = ontemISO(); $('gt-card').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('fc-rede').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); if (!$('fc-data').value) $('fc-data').value = ontemISO(); if (!$('gt-data').value) $('gt-data').value = ontemISO(); rodar('statusVendas', [S.token, lj], desenharStatusVendas); }
+  if (G_ABA === 'imp') { if (!$('gi-data').value) $('gi-data').value = ontemISO(); $('gt-card').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('fc-rede').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); carregarDS(); if (!$('fc-data').value) $('fc-data').value = ontemISO(); if (!$('gt-data').value) $('gt-data').value = ontemISO(); rodar('statusVendas', [S.token, lj], desenharStatusVendas); }
   if (G_ABA === 'met') { prepMeses(); rodar('metasDoMes', [S.token, lj, $('gm-mes').value], desenharMetasEd); }
   if (G_ABA === 'ck') rodar('checklist', [S.token, lj], desenharCkEd);
   if (G_ABA === 'esc') { rodar('escala', [S.token, lj], desenharEscala); rodar('feriados', [S.token, lj], desenharFeriados); }
@@ -3454,6 +3461,10 @@ function lerTodasLojas(file) {
   }; fr.readAsArrayBuffer(file); };
   if (window.XLSX) go(); else { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; sc.onload = go; sc.onerror = () => { p.textContent = 'Não consegui carregar o leitor de planilhas. Verifique a internet.'; }; document.head.append(sc); }
 }
+function carregarDS() { if (!S || S.cargo !== 'ADMIN') return; $('ds-card').classList.remove('hide'); rodar('dsStatus', [S.token], desenharDS); }
+function desenharDS(r) { $('ds-sit').textContent = r.temChave ? '· chave …' + r.fimChave + (r.ultimoTeste ? ' · último teste ' + r.ultimoTeste : '') : '· aguardando a chave'; if (r.base && !$('ds-base').value) $('ds-base').value = r.base; }
+$('ds-salvar').addEventListener('click', () => { rodar('dsSalvar', [S.token, $('ds-base').value, $('ds-key').value], (r) => { $('ds-key').value = ''; desenharDS(r); toast('Configuração salva 🔌'); }); });
+$('ds-testar').addEventListener('click', () => { $('ds-res').textContent = 'Testando…'; rodar('dsTestar', [S.token], (r) => { const b = $('ds-res'); b.replaceChildren(el('div', r.ok ? 'motiva' : 'aviso-meta', r.msg)); if (r.amostra) { const pre = el('div', 'sub', 'Resposta: ' + r.amostra); pre.style.wordBreak = 'break-all'; b.append(pre); } carregarDS(); }, () => { $('ds-res').textContent = ''; }); });
 $('fc-loja').addEventListener('click', () => fechamento($('g-loja').value, $('fc-data').value));
 $('fc-rede').addEventListener('click', () => fechamento('TODAS', $('fc-data').value));
 $('fc-obj').addEventListener('click', () => objetivoDia($('g-loja').value, ONTEM && ONTEM.loja === $('g-loja').value ? ONTEM : null));
