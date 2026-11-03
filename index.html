@@ -662,6 +662,11 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
           <button class="btn pri big hide" id="gi-ok" style="margin-top:8px">Confirmar importação</button>
         </div>
         <div id="gi-falta"></div>
+        <div class="card" style="margin-top:12px">
+          <b>📊 Fechamento do dia para o grupo</b>
+          <div class="sub" style="margin-top:4px">Gera a imagem do fechamento com os números do USE e da fila (dia escolhido acima) para mandar no grupo do WhatsApp. Aparece sozinho depois de importar o dia.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" id="fc-loja">📊 Fechamento da loja</button><button class="btn hide" id="fc-rede">🏬 Fechamento da rede</button></div>
+        </div>
         <h2><span>Últimos dias importados</span></h2>
         <div class="tbl-x"><table><thead><tr><th>Dia</th><th class="n">Total</th><th class="n">Online</th><th class="n">Linhas</th><th>Quem</th></tr></thead><tbody id="gi-ult"></tbody></table></div>
         <div class="nota">Confira o total com o USE logo depois de importar. As vendas ficam guardadas no banco do app; as planilhas DADOS PARA PAINEL não são mais necessárias.</div>
@@ -3161,7 +3166,7 @@ function carregarGestao() {
   if (G_ABA === 'pre') { rodar('premiosAdm', [S.token], desenharPremiosAdm); return; }
   if (G_ABA === 'rh') { rodar('rhLista', [S.token, RH_SEL], desenharRHAdm); return; }
   if (G_ABA === 'pla') { rodar('planosLoja', [S.token, lj, ''], desenharPlanos); return; }
-  if (G_ABA === 'imp') { if (!$('gi-data').value) $('gi-data').value = ontemISO(); $('gt-card').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); if (!$('gt-data').value) $('gt-data').value = ontemISO(); rodar('statusVendas', [S.token, lj], desenharStatusVendas); }
+  if (G_ABA === 'imp') { if (!$('gi-data').value) $('gi-data').value = ontemISO(); $('gt-card').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('fc-rede').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); if (!$('gt-data').value) $('gt-data').value = ontemISO(); rodar('statusVendas', [S.token, lj], desenharStatusVendas); }
   if (G_ABA === 'met') { prepMeses(); rodar('metasDoMes', [S.token, lj, $('gm-mes').value], desenharMetasEd); }
   if (G_ABA === 'ck') rodar('checklist', [S.token, lj], desenharCkEd);
   if (G_ABA === 'esc') { rodar('escala', [S.token, lj], desenharEscala); rodar('feriados', [S.token, lj], desenharFeriados); }
@@ -3417,6 +3422,76 @@ function lerTodasLojas(file) {
   }; fr.readAsArrayBuffer(file); };
   if (window.XLSX) go(); else { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; sc.onload = go; sc.onerror = () => { p.textContent = 'Não consegui carregar o leitor de planilhas. Verifique a internet.'; }; document.head.append(sc); }
 }
+$('fc-loja').addEventListener('click', () => fechamento($('g-loja').value, $('gi-data').value));
+$('fc-rede').addEventListener('click', () => fechamento('TODAS', $('gi-data').value));
+// ---------- fechamento do dia em imagem ----------
+const FC_DS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+const fcDia = (d) => FC_DS[new Date(d + 'T12:00:00Z').getUTCDay()] + ', ' + isoBR(d);
+const fcPct = (x) => x == null ? '—' : Math.round(x * 100) + '%';
+function fechamento(loja, d) {
+  if (!loja) { toast('Escolha a loja.'); return; } toast('Montando o fechamento…');
+  rodar('fechamentoDia', [S.token, loja, d || ''], (r) => {
+    let cv;
+    if (r.rede) cv = cardRede(r); else { const o = r.lojas[0]; if (!o.temVendas) { toast('Ainda não há vendas importadas de ' + isoBR(r.data) + ' nesta loja.'); return; } cv = cardLoja(o, r.gerado); }
+    const nome = 'Fechamento ' + (r.rede ? 'Rede' : r.lojas[0].loja) + ' ' + isoBR(r.data).slice(0, 5).replace('/', '-') + '.png';
+    abrirDet('Fechamento ' + isoBR(r.data).slice(0, 5), (b) => {
+      const img = el('img'); img.src = cv.toDataURL('image/png'); img.style.cssText = 'width:100%;max-width:420px;display:block;margin:0 auto;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.15)';
+      const bx = el('div'); bx.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:14px 0';
+      const env = el('button', 'btn pri big', '📤 Enviar no WhatsApp'), bai = el('button', 'btn', '⬇️ Baixar imagem');
+      env.addEventListener('click', () => cv.toBlob((bl) => { const f = new File([bl], nome, { type: 'image/png' }); if (navigator.canShare && navigator.canShare({ files: [f] })) navigator.share({ files: [f] }).catch(() => {}); else { baixarCv(cv, nome); toast('Imagem baixada: envie pelo WhatsApp.'); } }, 'image/png'));
+      bai.addEventListener('click', () => baixarCv(cv, nome)); bx.append(env, bai);
+      b.append(bx, img, el('div', 'nota', 'Toque em "Enviar no WhatsApp" e escolha o grupo. A imagem mostra só os destaques — o resultado individual de cada vendedora fica no app, no "Meu dia" dela.'));
+    });
+  });
+}
+function baixarCv(cv, nome) { const a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = nome; document.body.append(a); a.click(); a.remove(); }
+const FC_F = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+function fcCanvas(h) { const W = 540, k = 2, c = document.createElement('canvas'); c.width = W * k; c.height = h * k; const g = c.getContext('2d'); g.scale(k, k); g.textBaseline = 'alphabetic'; g.fillStyle = '#fff'; g.fillRect(0, 0, W, h); return [c, g]; }
+function fcT(g, t, x, y, sz, cor, peso, al) { g.font = (peso || 400) + ' ' + sz + 'px ' + FC_F; g.fillStyle = cor || '#1f1e1d'; g.textAlign = al || 'left'; g.fillText(t, x, y); g.textAlign = 'left'; }
+function fcR(g, x, y, w, h, r, cor) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); g.fillStyle = cor; g.fill(); }
+function fcWrap(g, t, x, y, w, lh, sz, cor, peso) { g.font = (peso || 400) + ' ' + sz + 'px ' + FC_F; const ps = t.split(' '); let l = '', n = 0; ps.forEach((p) => { const tt = l ? l + ' ' + p : p; if (g.measureText(tt).width > w && l) { fcT(g, l, x, y + n * lh, sz, cor, peso); n++; l = p; } else l = tt; }); if (l) { fcT(g, l, x, y + n * lh, sz, cor, peso); n++; } return n; }
+function fcTopo(g, h, titulo, sub) { const gr = g.createLinearGradient(0, 0, 540, h); gr.addColorStop(0, '#5b4a7a'); gr.addColorStop(1, '#8a5a86'); g.fillStyle = gr; g.fillRect(0, 0, 540, h); g.font = '400 15px Georgia,"Times New Roman",serif'; g.fillStyle = 'rgba(255,255,255,.85)'; let x = 28; 'AMORATA'.split('').forEach((ch) => { g.fillText(ch, x, 46); x += g.measureText(ch).width + 4; }); fcT(g, titulo, 28, 82, 27, '#fff', 800); fcT(g, sub, 28, 106, 14, 'rgba(255,255,255,.88)'); }
+function fcAnel(g, cx, cy, pct, txt) { g.lineWidth = 10; g.strokeStyle = 'rgba(255,255,255,.25)'; g.beginPath(); g.arc(cx, cy, 43, 0, Math.PI * 2); g.stroke(); g.strokeStyle = '#fff'; g.lineCap = 'round'; g.beginPath(); g.arc(cx, cy, 43, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, Math.max(0.001, pct || 0))); g.stroke(); g.lineCap = 'butt'; fcT(g, txt, cx, cy + 8, txt.length > 4 ? 20 : 24, '#fff', 800, 'center'); }
+function fcSec(g, y, t) { g.fillStyle = '#eee9e1'; g.fillRect(0, y, 540, 1); fcT(g, t.toUpperCase(), 28, y + 30, 11, '#6b6862', 700); }
+function fcLinha(g, y, a, b, forte) { fcT(g, a, 28, y, 15, '#1f1e1d'); fcT(g, b, 512, y, forte ? 16 : 15, '#1f1e1d', forte ? 800 : 400, 'right'); }
+function fcBarra(g, y, pct, cor) { fcR(g, 28, y, 484, 8, 4, '#efebf5'); if (pct > 0) fcR(g, 28, y, Math.max(8, 484 * Math.min(1, pct)), 8, 4, cor || '#5b4a7a'); }
+function cardLoja(o, gerado) {
+  const temMeta = o.meta != null, hDest = (o.destaques || []).length ? 34 + o.destaques.length * 58 : 0;
+  const H = 270 + (temMeta ? 140 : 0) + 230 + (o.fila ? 110 : 0) + hDest + 50; const [c, g] = fcCanvas(H);
+  fcTopo(g, 270, o.loja, 'Fechamento · ' + fcDia(o.data) + (o.parcial ? ' · ⏳ parcial (' + (o.importado || '') + ')' : ''));
+  fcR(g, 28, 132, 484, 118, 16, 'rgba(255,255,255,.13)'); fcAnel(g, 92, 191, o.pct, temMeta ? fcPct(o.pct) : '—');
+  fcT(g, 'Vendido no dia', 160, 170, 13, 'rgba(255,255,255,.85)'); fcT(g, rs(o.valor), 160, 204, 30, '#fff', 800);
+  fcT(g, temMeta ? 'Objetivo ' + rs(o.objetivo) + (o.valor >= o.objetivo ? ' · +' + rs(o.valor - o.objetivo) + ' ✅' : ' · faltaram ' + rs(o.objetivo - o.valor)) : 'Meta do mês não cadastrada', 160, 228, 13, 'rgba(255,255,255,.92)', 600);
+  let y = 270;
+  if (temMeta) { fcSec(g, y, '📅 Mês de ' + ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+o.data.slice(5, 7) - 1]); fcLinha(g, y + 60, 'Vendido no mês', rs(o.mesVendido), true); fcBarra(g, y + 72, o.mesPct); fcLinha(g, y + 104, 'Meta do mês · ' + fcPct(o.mesPct), rs(o.meta)); fcLinha(g, y + 128, o.faltaMes > 0 ? 'Para bater: por dia daqui pra frente' : 'Meta do mês batida! 🎉', o.faltaMes > 0 && o.porDia ? rs(o.porDia) : '', true); y += 140; }
+  fcSec(g, y, '🧾 Indicadores do dia'); const kp = [
+    ['Vendas · Peças', o.vendas + ' · ' + o.itens, '', ''],
+    ['Ticket médio', o.tkm ? rs(o.tkm) : '—', o.tkmMes ? 'média do mês ' + rs(o.tkmMes) + (o.tkm >= o.tkmMes ? ' ✅' : ' ⚠️') : '', o.tkmMes && o.tkm >= o.tkmMes],
+    ['Peças por venda (PA)', o.pa ? o.pa.toFixed(2).replace('.', ',') : '—', o.paMes ? 'média do mês ' + o.paMes.toFixed(2).replace('.', ',') + (o.pa >= o.paMes ? ' ✅' : ' ⚠️') : '', o.paMes && o.pa >= o.paMes],
+    ['Online', rs(o.online), o.objetivoOnline ? fcPct(o.online / o.objetivoOnline) + ' de ' + rs(o.objetivoOnline) + (o.online >= o.objetivoOnline ? ' ✅' : ' ⚠️') : '', o.objetivoOnline && o.online >= o.objetivoOnline]];
+  kp.forEach((k, i) => { const x = 28 + (i % 2) * 247, yy = y + 46 + Math.floor(i / 2) * 88; fcR(g, x, yy, 237, 78, 12, '#f7f6f3'); fcT(g, k[0], x + 12, yy + 22, 12, '#6b6862'); fcT(g, k[1], x + 12, yy + 48, 20, '#1f1e1d', 800); if (k[2]) fcT(g, k[2], x + 12, yy + 68, 12, k[3] ? '#1e7a46' : '#a85d00'); });
+  y += 230;
+  if (o.fila) { fcSec(g, y, '👥 Fila da vez'); fcLinha(g, y + 60, 'Atendimentos · conversão', o.fila.at + ' · ' + fcPct(o.fila.conv), true); fcLinha(g, y + 88, 'Mais perdeu por', o.fila.motivo ? '"' + o.fila.motivo + '" (' + o.fila.motivoN + ')' : '—', true); y += 110; }
+  if (hDest) { fcSec(g, y, '⭐ Destaques do dia'); o.destaques.forEach((d, i) => { const yy = y + 44 + i * 58; fcR(g, 28, yy, 484, 50, 12, '#fbf1e2'); g.font = '800 15px ' + FC_F; const nw = g.measureText('⭐ ' + d.nome).width; fcT(g, '⭐ ' + d.nome, 42, yy + 31, 15, '#1f1e1d', 800); fcT(g, '— ' + d.txt, 48 + nw, yy + 31, 14, '#1f1e1d'); }); y += hDest; }
+  g.fillStyle = '#eee9e1'; g.fillRect(0, y, 540, 1); fcT(g, 'App Amorata Equipe · dados do USE e da fila', 28, y + 30, 11, '#9a968f'); fcT(g, String(gerado || '').slice(11, 16), 512, y + 30, 11, '#9a968f', 400, 'right');
+  return c;
+}
+function cardRede(r) {
+  const ls = r.lojas.filter((o) => o.temVendas), H = 270 + 44 + r.lojas.length * 66 + 90 + 50; const [c, g] = fcCanvas(H);
+  const tot = ls.reduce((a, o) => a + o.valor, 0), obj = ls.reduce((a, o) => a + (o.objetivo || 0), 0), on = ls.reduce((a, o) => a + o.online, 0);
+  fcTopo(g, 270, 'Rede · 5 lojas', 'Fechamento · ' + fcDia(r.data));
+  fcR(g, 28, 132, 484, 118, 16, 'rgba(255,255,255,.13)'); fcAnel(g, 92, 191, obj ? tot / obj : 0, obj ? fcPct(tot / obj) : '—');
+  fcT(g, 'Vendido no dia', 160, 170, 13, 'rgba(255,255,255,.85)'); fcT(g, rs(tot), 160, 204, 30, '#fff', 800); fcT(g, (obj ? 'Objetivo ' + rs(obj) + ' · ' : '') + 'online ' + rs(on), 160, 228, 13, 'rgba(255,255,255,.92)', 600);
+  let y = 270; fcSec(g, y, '🏬 Lojas · % do objetivo do dia · mês'); y += 44;
+  const ord = r.lojas.slice().sort((a, b) => (b.temVendas - a.temVendas) || ((b.pct || 0) - (a.pct || 0)));
+  ord.forEach((o) => { fcT(g, o.loja + (o.parcial ? ' ⏳' : ''), 28, y + 18, 15, '#1f1e1d', 700); if (!o.temVendas) { fcT(g, 'sem vendas importadas', 512, y + 18, 13, '#9a968f', 400, 'right'); y += 66; return; }
+    fcT(g, rs(o.valor), 512, y + 18, 15, '#1f1e1d', 800, 'right'); fcR(g, 28, y + 30, 330, 10, 5, '#f0ede7'); if (o.pct) fcR(g, 28, y + 30, Math.max(10, 330 * Math.min(1, o.pct)), 10, 5, o.pct >= 1 ? '#1e7a46' : '#5b4a7a');
+    fcT(g, 'dia ' + fcPct(o.pct) + ' · mês ' + fcPct(o.mesPct), 512, y + 41, 12, '#6b6862', 400, 'right'); y += 66; });
+  const best = ls.filter((o) => o.pct).sort((a, b) => b.pct - a.pct)[0];
+  fcSec(g, y, '⭐ Destaque do dia'); if (best) { fcR(g, 28, y + 44, 484, 34, 12, '#fbf1e2'); fcT(g, '⭐ ' + best.loja + ' — ' + fcPct(best.pct) + ' do objetivo do dia', 42, y + 66, 14, '#1f1e1d', 700); } y += 90;
+  g.fillStyle = '#eee9e1'; g.fillRect(0, y, 540, 1); fcT(g, 'App Amorata Equipe · dados do USE e da fila', 28, y + 30, 11, '#9a968f'); fcT(g, String(r.gerado || '').slice(11, 16), 512, y + 30, 11, '#9a968f', 400, 'right');
+  return c;
+}
 $('gt-arq').addEventListener('change', (e) => { if (e.target.files[0]) lerTodasLojas(e.target.files[0]); });
 $('gt-data').addEventListener('change', () => { const f = $('gt-arq').files[0]; if (f && GT) lerTodasLojas(f); });
 $('gt-ok').addEventListener('click', () => {
@@ -3424,7 +3499,10 @@ $('gt-ok').addEventListener('click', () => {
   const lojas = Object.keys(GT.por), res = [], parc = lojas.filter((lj) => lojaAberta(lj, d)); let i = 0; $('gt-ok').disabled = true;
   const box = $('gt-prev'), st = el('div', 'motiva', 'Importando…'); box.prepend(st);
   const prox = () => {
-    if (i >= lojas.length) { $('gt-ok').disabled = false; $('gt-ok').classList.add('hide'); $('gt-arq').value = ''; GT = null; box.replaceChildren(el('b', '', '✅ Importação do dia ' + isoBR(d))); res.forEach((x) => box.append(el('div', x.ok ? 'sub' : 'aviso-meta', x.txt))); toast('Vendas importadas ✅'); try { carregarPendencias(); carregarGestao(); } catch (e) {} return; }
+    if (i >= lojas.length) { $('gt-ok').disabled = false; $('gt-ok').classList.add('hide'); $('gt-arq').value = ''; GT = null; box.replaceChildren(el('b', '', '✅ Importação do dia ' + isoBR(d))); res.forEach((x) => box.append(el('div', x.ok ? 'sub' : 'aviso-meta', x.txt))); toast('Vendas importadas ✅'); try { carregarPendencias(); carregarGestao(); } catch (e) {}
+      const bx = el('div'); bx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px'; const br = el('button', 'btn pri', '🏬 Fechamento da rede'); br.addEventListener('click', () => fechamento('TODAS', d)); bx.append(br);
+      lojas.forEach((lj) => { const b = el('button', 'btn', '📊 ' + lj); b.addEventListener('click', () => fechamento(lj, d)); bx.append(b); }); box.append(bx);
+      if (d >= ontemISO()) setTimeout(() => fechamento('TODAS', d), 600); return; }
     const lj = lojas[i++]; st.textContent = 'Importando ' + lj + '… (' + i + ' de ' + lojas.length + ')';
     google.script.run.withSuccessHandler((r) => { const im = (r && r.importado) || {}; res.push({ ok: true, txt: '✅ ' + lj + ': ' + rs(im.total != null ? im.total : GT.por[lj].reduce((a, l) => a + l[2], 0)) + ' · ' + (im.linhas || 0) + ' lançamento(s)' + (parc.indexOf(lj) >= 0 ? ' · ⏳ PARCIAL (loja aberta até ' + fechaLoja(lj, d) + ')' : '') + (im.mesclagem ? ' · juntou com a importação anterior' : '') }); prox(); })
       .withFailureHandler((e) => { res.push({ ok: false, txt: '⚠️ ' + lj + ': ' + ((e && e.message) || 'erro') }); prox(); })
@@ -3457,6 +3535,8 @@ function importarGI(modo, gi, d, loja) {
     }
     $('gi-prev').replaceChildren(box);
     toast(mz ? 'Vendas atualizadas! 🔄' : 'Vendas importadas! 📥'); desenharStatusVendas(r); carregarPendencias();
+    const bf = el('button', 'btn pri', '📊 Gerar o fechamento para o grupo'); bf.style.marginTop = '8px'; bf.addEventListener('click', () => fechamento(loja, im.data)); box.append(bf);
+    if (im.data >= ontemISO()) setTimeout(() => fechamento(loja, im.data), 600);
   }, () => { $('gi-ok').disabled = false; });
 }
 $('gi-ok').addEventListener('click', () => {
