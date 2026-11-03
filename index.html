@@ -1181,13 +1181,8 @@ function protecao(on) {
   const txt = (primeiroNome(S.nome) + ' · ' + (S.usuario || '') + ' · ' + new Date().toLocaleDateString('pt-BR')).replace(/[<>&"]/g, '');
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="190"><text x="150" y="100" text-anchor="middle" transform="rotate(-28 150 95)" font-family="Inter,Arial,sans-serif" font-size="15" fill="#3a2a4a">' + txt + '</text></svg>';
   const w = el('div'); w.id = 'marca'; w.style.backgroundImage = 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) + '")'; document.body.append(w);
-  if (chefe() && !telaLoja()) {
-    const b = el('button', 'btn pri', '🔒 Valores ocultos · toque para ver'); b.id = 'priv-b';
-    b.addEventListener('click', () => { document.body.classList.remove('priv'); clearTimeout(PRIV_T); PRIV_T = setTimeout(ocultarValores, 3 * 60000); });
-    document.body.append(b); ocultarValores();
-  }
 }
-function ocultarValores() { if (S && chefe() && !telaLoja()) document.body.classList.add('priv'); }
+function ocultarValores() {}
 const sairDeFoco = () => { if (!S) return; document.body.classList.add('fora'); ocultarValores(); };
 const voltarFoco = () => document.body.classList.remove('fora');
 document.addEventListener('visibilitychange', () => { if (document.hidden) sairDeFoco(); else voltarFoco(); });
@@ -3369,6 +3364,12 @@ function lerPedidosPA(file) {
 $('gi-arq').addEventListener('change', (e) => { if (e.target.files[0]) lerPedidosPA(e.target.files[0]); });
 // ---------- ADMIN: um arquivo com todas as lojas ----------
 const COD_LOJA = { '1': 'Cerâmica', '2': 'Via Verde', '3': 'Cruzeiro do Sul', '4': 'Via Norte', '5': 'Sumaúma' };
+const TZ_LOJA = { 'Via Norte': 'America/Manaus', 'Sumaúma': 'America/Manaus' };
+const fechaLoja = (lj, d) => { const wd = new Date(d + 'T12:00:00Z').getUTCDay(), shop = ['Via Verde', 'Via Norte', 'Sumaúma'].indexOf(lj) >= 0; return shop ? (wd === 0 ? '21:00' : '22:00') : (wd === 0 ? '13:00' : '19:00'); };
+// a loja ainda não fechou o dia d? (no fuso da loja)
+function lojaAberta(lj, d) {
+  try { const f = new Intl.DateTimeFormat('sv-SE', { timeZone: TZ_LOJA[lj] || 'America/Rio_Branco', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date()); const dia = f.slice(0, 10), hm = f.slice(11, 16); return dia < d || (dia === d && hm < fechaLoja(lj, d)); } catch (e) { return false; }
+}
 let GT = null;
 function lerRelatorioUSE(rows) {
   const datas = []; rows.slice(0, 15).forEach((r) => r.forEach((v) => { String(v).replace(/(\d{2})\/(\d{2})\/(\d{4})/g, (m, d, mm, y) => { datas.push(y + '-' + mm + '-' + d); return m; }); }));
@@ -3403,11 +3404,13 @@ function lerTodasLojas(file) {
       const por = {}, sem = []; r.linhas.forEach((l) => { const n = l[0].split('-')[0], lj = COD_LOJA[n]; if (!lj) { sem.push(l[1]); return; } (por[lj] = por[lj] || []).push(l); });
       GT = { linhas: r.linhas, nome: file.name, por: por };
       p.replaceChildren(); if (aviso) p.append(el('div', 'aviso-meta', aviso));
-      const t = el('table'), tb = el('tbody'), th = el('thead'), trh = el('tr'); ['Loja', 'Total', 'Online', 'Vendedoras'].forEach((x, i) => trh.append(el('th', i ? 'n' : '', x))); th.append(trh);
-      let tg = 0; Object.keys(COD_LOJA).forEach((n) => { const lj = COD_LOJA[n], ls = por[lj] || []; const tot = ls.reduce((a, l) => a + l[2], 0), on = ls.filter((l) => /\sON(-?LINE)?$/i.test(l[1])).reduce((a, l) => a + l[2], 0); tg += tot; const tr = el('tr'); [lj, ls.length ? rs(tot) : '—', ls.length ? rs(on) : '—', ls.length ? String(ls.filter((l) => !/\sON(-?LINE)?$/i.test(l[1])).length) : 'sem vendas no arquivo'].forEach((v, i) => tr.append(el('td', i ? 'n' : '', v))); tb.append(tr); });
-      const trt = el('tr'); [el('b', '', 'Total'), el('b', '', rs(tg)), '', ''].forEach((v, i) => { const td = el('td', i ? 'n' : ''); td.append(v); trt.append(td); }); tb.append(trt);
+      const t = el('table'), tb = el('tbody'), th = el('thead'), trh = el('tr'); ['Loja', 'Total', 'Online', 'Vendedoras', 'Obs.'].forEach((x, i) => trh.append(el('th', i ? 'n' : '', x))); th.append(trh);
+      let tg = 0; Object.keys(COD_LOJA).forEach((n) => { const lj = COD_LOJA[n], ls = por[lj] || []; const tot = ls.reduce((a, l) => a + l[2], 0), on = ls.filter((l) => /\sON(-?LINE)?$/i.test(l[1])).reduce((a, l) => a + l[2], 0); tg += tot; const tr = el('tr'); [lj, ls.length ? rs(tot) : '—', ls.length ? rs(on) : '—', ls.length ? String(ls.filter((l) => !/\sON(-?LINE)?$/i.test(l[1])).length) : 'sem vendas no arquivo', ls.length && lojaAberta(lj, $('gt-data').value) ? '⏳ parcial · aberta até ' + fechaLoja(lj, $('gt-data').value) : ''].forEach((v, i) => tr.append(el('td', i ? 'n' : '', v))); tb.append(tr); });
+      const trt = el('tr'); [el('b', '', 'Total'), el('b', '', rs(tg)), '', '', ''].forEach((v, i) => { const td = el('td', i ? 'n' : ''); td.append(v); trt.append(td); }); tb.append(trt);
       t.append(th, tb); const w = el('div', 'tbl-x'); w.append(t);
       p.append(el('div', 'motiva', 'Dia ' + isoBR($('gt-data').value) + ' · confira os totais com o USE antes de importar.'), w);
+      const abertas = Object.keys(por).filter((lj) => lojaAberta(lj, $('gt-data').value));
+      if (abertas.length) p.append(el('div', 'aviso-meta', '⏳ ' + abertas.join(', ') + (abertas.length > 1 ? ' ainda estão abertas' : ' ainda está aberta') + ': fica marcado como PARCIAL. Depois do fechamento importe o dia de novo — o app junta e completa.'));
       if (sem.length) p.append(el('div', 'sub', sem.length + ' linha(s) sem loja reconhecida serão ignoradas: ' + sem.slice(0, 3).join(', ')));
       const n = Object.keys(por).length; $('gt-ok').textContent = 'Importar nas ' + n + ' loja' + (n > 1 ? 's' : ''); $('gt-ok').classList.toggle('hide', !n || !!aviso);
     } catch (e) { p.textContent = e.message; }
@@ -3418,12 +3421,12 @@ $('gt-arq').addEventListener('change', (e) => { if (e.target.files[0]) lerTodasL
 $('gt-data').addEventListener('change', () => { const f = $('gt-arq').files[0]; if (f && GT) lerTodasLojas(f); });
 $('gt-ok').addEventListener('click', () => {
   if (!GT) return; const d = $('gt-data').value; if (!d) { toast('Escolha o dia.'); return; }
-  const lojas = Object.keys(GT.por), res = []; let i = 0; $('gt-ok').disabled = true;
+  const lojas = Object.keys(GT.por), res = [], parc = lojas.filter((lj) => lojaAberta(lj, d)); let i = 0; $('gt-ok').disabled = true;
   const box = $('gt-prev'), st = el('div', 'motiva', 'Importando…'); box.prepend(st);
   const prox = () => {
     if (i >= lojas.length) { $('gt-ok').disabled = false; $('gt-ok').classList.add('hide'); $('gt-arq').value = ''; GT = null; box.replaceChildren(el('b', '', '✅ Importação do dia ' + isoBR(d))); res.forEach((x) => box.append(el('div', x.ok ? 'sub' : 'aviso-meta', x.txt))); toast('Vendas importadas ✅'); try { carregarPendencias(); carregarGestao(); } catch (e) {} return; }
     const lj = lojas[i++]; st.textContent = 'Importando ' + lj + '… (' + i + ' de ' + lojas.length + ')';
-    google.script.run.withSuccessHandler((r) => { const im = (r && r.importado) || {}; res.push({ ok: true, txt: '✅ ' + lj + ': ' + rs(im.total != null ? im.total : GT.por[lj].reduce((a, l) => a + l[2], 0)) + ' · ' + (im.linhas || 0) + ' lançamento(s)' + (im.mesclagem ? ' · juntou com a importação anterior' : '') }); prox(); })
+    google.script.run.withSuccessHandler((r) => { const im = (r && r.importado) || {}; res.push({ ok: true, txt: '✅ ' + lj + ': ' + rs(im.total != null ? im.total : GT.por[lj].reduce((a, l) => a + l[2], 0)) + ' · ' + (im.linhas || 0) + ' lançamento(s)' + (parc.indexOf(lj) >= 0 ? ' · ⏳ PARCIAL (loja aberta até ' + fechaLoja(lj, d) + ')' : '') + (im.mesclagem ? ' · juntou com a importação anterior' : '') }); prox(); })
       .withFailureHandler((e) => { res.push({ ok: false, txt: '⚠️ ' + lj + ': ' + ((e && e.message) || 'erro') }); prox(); })
       .importarVendasUSE(S.token, lj, d, GT.por[lj], GT.nome, '');
   };
