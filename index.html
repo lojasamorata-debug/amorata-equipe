@@ -435,6 +435,11 @@ body.fila-v #eu-acoes .btn.lk { flex:1 1 auto; padding:6px 8px; font-size:13px; 
 #stv .rod { display:flex; justify-content:space-between; align-items:center; padding:10px 14px calc(14px + env(safe-area-inset-bottom)); font-size:14px; } #stv .rod button { background:rgba(255,255,255,.15); color:#fff; border:0; border-radius:999px; padding:8px 14px; font:inherit; }
 #stv .streac { display:flex; gap:6px; margin:0 auto; } #stv .streac button { background:rgba(255,255,255,.12); border:0; border-radius:50%; width:44px; height:44px; font-size:24px; padding:0; cursor:pointer; } #stv .streac button.on { background:rgba(255,255,255,.4); transform:scale(1.1); }
 #stv .stvoa { position:absolute; left:50%; bottom:20%; font-size:72px; transform:translateX(-50%); animation:stvoa 1.2s ease-out forwards; z-index:3; pointer-events:none; } @keyframes stvoa { from { opacity:1; transform:translate(-50%,0) scale(.6); } to { opacity:0; transform:translate(-50%,-180px) scale(1.4); } }
+#st-bolha { position:fixed; right:14px; bottom:calc(22px + env(safe-area-inset-bottom)); z-index:65; display:flex; align-items:center; gap:8px; background:var(--panel); border-radius:999px; padding:6px 12px 6px 6px; box-shadow:0 6px 20px rgba(0,0,0,.18); cursor:pointer; animation:stentra .4s ease-out; font-size:13px; font-weight:600; color:var(--fg); }
+body.fila-v #st-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body.sheet-on #st-bolha, body[data-aba=mural] #st-bolha { display:none; }
+#st-bolha .avs { display:flex; } #st-bolha .avs .av { width:34px; height:34px; font-size:13px; margin-left:-10px; box-shadow:0 0 0 2px var(--panel), 0 0 0 4px #e8738a; } #st-bolha .avs .av:first-child { margin-left:0; }
+#st-bolha .xb { border:0; background:none; color:var(--muted); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
+@keyframes stentra { from { transform:translateY(20px) scale(.8); opacity:0; } to { transform:none; opacity:1; } }
 #strec .cont { flex:1; display:flex; align-items:center; justify-content:center; position:relative; } #strec video { max-width:100%; max-height:100%; background:#000; } #strec .tmp { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.5); padding:4px 12px; border-radius:999px; font-variant-numeric:tabular-nums; }
 #strec .rod { padding:12px 14px calc(16px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:10px; align-items:center; } #strec .rec { width:74px; height:74px; border-radius:50%; border:5px solid #fff; background:#e33; cursor:pointer; } #strec .rec.on { border-radius:18px; width:60px; height:60px; animation:stpulso 1s infinite; }
 #strec input { width:100%; max-width:480px; box-sizing:border-box; border:0; border-radius:12px; padding:12px; font:inherit; } #strec .bts { display:flex; gap:10px; width:100%; max-width:480px; } #strec .bts .btn { flex:1; }
@@ -836,7 +841,7 @@ function entrar() {
     .login($('lu').value, $('ls').value);
 }
 function sair(msg) {
-  document.body.classList.remove('fila-v'); S = null; protecao(false); E = null; MH = null; clearInterval(timerPoll); clearInterval(timerExtra); $('pend').replaceChildren(); $('pend').classList.add('hide'); $('cmn-top').replaceChildren();
+  document.body.classList.remove('fila-v'); { const sb = $('st-bolha'); if (sb) sb.remove(); } S = null; protecao(false); E = null; MH = null; clearInterval(timerPoll); clearInterval(timerExtra); $('pend').replaceChildren(); $('pend').classList.add('hide'); $('cmn-top').replaceChildren();
   try { localStorage.removeItem('amorata_fila'); } catch (e) {}
   $('v-app').classList.add('hide'); $('v-login').classList.remove('hide'); $('lerr').textContent = msg || '';
 }
@@ -847,7 +852,7 @@ function abrir() {
   if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirTermo(() => exigirApp(false)), 500); }
   if (fazCaminho) { google.script.run.withSuccessHandler((o) => { ONTEM = o; }).withFailureHandler(() => { ONTEM = { semDados: true }; })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
-  setTimeout(checarAvisos, 1500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 2500);
+  setTimeout(checarAvisos, 1500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 2500); setTimeout(carregarStatus, 3500); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
   $('t-av').replaceChildren(...avatar(S.foto, S.nome).childNodes); if (!S.foto) $('t-av').textContent = (S.nome || '?').charAt(0);
   nuvemFoto(); desenharMood(); setTimeout(carregarDesafios, 800);
   const sel = $('sel-loja'); sel.replaceChildren(...S.lojas.map((l) => new Option(l, l)));
@@ -2141,7 +2146,19 @@ function desenharStatus() {
   mi.addEventListener('click', () => { if (meu) escolher('Seu status', meu.itens.length + (meu.itens.length > 1 ? ' publicações' : ' publicação') + ' · somem 24 h depois', [['👀 Ver meu status', 'pri', () => { fechar(); verStatus(ST.grupos.indexOf(meu), 0); }], ['➕ Publicar outro', '', () => { fechar(); novoStatus(); }]]); else novoStatus(); });
   b.append(mi);
   ST.grupos.forEach((g, gi) => { if (g.eu) return; const d = el('div', 'st'); const a = avatar(g.foto, g.nome); a.classList.add('st-ring'); if (!g.novo) a.classList.add('visto'); d.append(a, el('div', '', g.nome)); d.addEventListener('click', () => verStatus(gi, Math.max(0, g.itens.findIndex((i) => !i.visto)))); b.append(d); });
-  aneisStatus();
+  aneisStatus(); bolhaStatus();
+}
+// bolinha flutuante: avisa que tem status novo sem mandar notificação
+let ST_OCULTOS = {};
+function bolhaStatus() {
+  const ant = $('st-bolha'); if (ant) ant.remove(); if (!S || !ST || $('stv') || telaLoja()) return;
+  const novos = ST.grupos.filter((g) => !g.eu && g.novo && !g.itens.every((i) => ST_OCULTOS[i.id])); if (!novos.length) return;
+  const b = el('div'); b.id = 'st-bolha'; const avs = el('div', 'avs'); novos.slice(0, 3).forEach((g) => avs.append(avatar(g.foto, g.nome)));
+  const x = el('button', 'xb', '×'); x.title = 'Esconder';
+  b.append(avs, el('span', '', novos.length === 1 ? '✨ ' + novos[0].nome + ' postou' : '✨ ' + novos.length + ' status novos'), x);
+  x.addEventListener('click', (ev) => { ev.stopPropagation(); novos.forEach((g) => g.itens.forEach((i) => { ST_OCULTOS[i.id] = 1; })); b.remove(); });
+  b.addEventListener('click', () => { const gi = ST.grupos.indexOf(novos[0]); b.remove(); verStatus(gi, Math.max(0, novos[0].itens.findIndex((i) => !i.visto))); });
+  document.body.append(b);
 }
 // anel na foto de quem tem status (na fila e no mural)
 function aneisStatus() {
@@ -2151,6 +2168,7 @@ function aneisStatus() {
 function b64Blob(b64, mime) { const bin = atob(b64), by = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) by[i] = bin.charCodeAt(i); return new Blob([by], { type: mime }); }
 function verStatus(gi, ii) {
   const ant = $('stv'); if (ant) ant.remove(); if (!ST || !ST.grupos[gi]) return;
+  { const sb = $('st-bolha'); if (sb) sb.remove(); }
   const g = ST.grupos[gi], v = el('div'); v.id = 'stv'; let tm = null, raf = null, midia = null;
   const bars = el('div', 'stbars'); g.itens.forEach(() => { const i = el('i'); i.append(el('b')); bars.append(i); });
   const top = el('div', 'top'), x = el('button', 'x', '×'), nm = el('div', 'nm'); top.append(avatar(g.foto, g.nome), nm, x);
