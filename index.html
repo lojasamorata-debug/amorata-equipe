@@ -717,6 +717,7 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
         <div class="sub" id="gm-soma" style="margin-top:8px"></div>
         <button class="btn pri big" id="gm-ok" style="margin-top:10px">Salvar metas do mês</button>
         <div class="nota">Cada mês fica guardado para sempre. Mudar a meta de novembro não mexe em outubro.</div>
+        <div class="card" id="gd-card" style="margin-top:14px"></div>
       </div>
 
       <div id="g-ck" class="hide">
@@ -1607,7 +1608,7 @@ function cartaoMeta(c, titulo) {
   const pr = el('div', 'prog'); const i = el('i', c.pct >= 1 ? 'ok' : ''); i.style.width = Math.min(100, (c.pct || 0) * 100) + '%'; pr.append(i); k.append(pr);
   const l2 = el('div', 'linha2'); l2.append(el('span', '', pc(c.pct) + ' da meta'), el('span', '', c.falta > 0 ? 'faltam ' + rs(c.falta) : 'meta batida 🎉')); k.append(l2);
   const rt = c.restam != null ? c.restam : cartaoMeta.restam;
-  if (c.falta > 0 && rt > 0 && !cartaoMeta.encerrado) { const d = el('div', '', rt === 1 ? 'Último dia de trabalho: faltam ' + rs(c.porDia) + ' hoje' : 'Precisa vender ' + rs(c.porDia) + ' por dia de trabalho (' + rt + ' dias restantes)'); d.style.marginTop = '10px'; d.style.fontWeight = '600'; k.append(d); }
+  if (c.falta > 0 && rt > 0 && !cartaoMeta.encerrado) { const d = el('div', '', rt === 1 ? 'Último dia de trabalho: faltam ' + rs(c.porDia) + ' hoje' : 'Objetivo de hoje: ' + rs(c.porDia) + ' (' + rt + ' dias de trabalho restantes)'); d.style.marginTop = '10px'; d.style.fontWeight = '600'; k.append(d); }
   else if (c.falta > 0 && !cartaoMeta.encerrado && rt === 0 && cartaoMeta.restam > 0) { const d = el('div', 'sub', 'Sem dias de trabalho restantes no calendário'); d.style.marginTop = '8px'; k.append(d); }
   else if (c.falta > 0 && cartaoMeta.encerrado) { const d = el('div', 'sub', 'Período encerrado'); d.style.marginTop = '8px'; k.append(d); }
   if (c.metaDesafio) {
@@ -1626,8 +1627,8 @@ function fraseMeta(c, restam) {
   const vendas = c.tkm ? Math.ceil(c.porDia / c.tkm) : null;
   const quanto = vendas ? 'cerca de ' + vendas + (vendas === 1 ? ' venda' : ' vendas') + ' no seu ticket médio' : rs(c.porDia);
   if (vendas && vendas > 10) return 'Bora, ' + n + '! Cada venda conta: hoje o foco é aumentar o PA, oferecendo a peça que completa o look. Uma cliente de cada vez 💪';
-  if (c.pct >= 0.9) return 'Falta pouco, ' + n + '! ' + (restam > 1 ? 'São ' + quanto + ' por dia.' : 'Hoje são ' + quanto + '.') + ' Você consegue! 💪';
-  return 'Bora virar o jogo, ' + n + '! ' + (restam > 1 ? 'São ' + quanto + ' por dia.' : 'Hoje são ' + quanto + '.') + ' Uma cliente de cada vez 💪';
+  if (c.pct >= 0.9) return 'Falta pouco, ' + n + '! ' + 'Hoje são ' + quanto + '. Você consegue! 💪';
+  return 'Bora virar o jogo, ' + n + '! ' + 'Hoje são ' + quanto + '. Uma cliente de cada vez 💪';
 }
 function cartaoOnline(c, titulo) {
   const k = el('div', 'card meta-card'); k.style.marginTop = '8px';
@@ -1638,7 +1639,7 @@ function cartaoOnline(c, titulo) {
   const pr = el('div', 'prog'); const i = el('i', on >= mt ? 'ok' : ''); i.style.width = Math.min(100, on / mt * 100) + '%'; pr.append(i); k.append(pr);
   const l2 = el('div', 'linha2'); l2.append(el('span', '', pc(on / mt) + ' da meta online'), el('span', '', on < mt ? 'faltam ' + rs(mt - on) : 'meta online batida 🎉')); k.append(l2);
   const rt = c.restam != null ? c.restam : cartaoMeta.restam;
-  if (on < mt && rt > 0 && !cartaoMeta.encerrado) { const d = el('div', '', 'Online: ' + rs((mt - on) / rt) + ' por dia de trabalho'); d.style.marginTop = '8px'; d.style.fontWeight = '600'; k.append(d); }
+  if (on < mt && rt > 0 && !cartaoMeta.encerrado) { const d = el('div', '', 'Online hoje: ' + rs(c.porDiaOnline != null && c.porDiaOnline > 0 ? c.porDiaOnline : (mt - on) / rt)); d.style.marginTop = '8px'; d.style.fontWeight = '600'; k.append(d); }
   return k;
 }
 function perArgs(p) { const v = $(p + '-per').value; return v === 'custom' ? [v, $(p + '-de').value, $(p + '-ate').value] : [v, '', '']; }
@@ -1662,7 +1663,7 @@ function cardsVendedora(box, u, r) {
   // meta
   const h = card('full', '🎯 Sua meta', 'detalhar ›', () => abrirDet('Sua meta', (b) => { const d = $('m-eu-det'); if (d) [...d.children].forEach((n) => b.append(n.cloneNode(true))); }));
   const hr = el('div', 'hero'), tx = el('div', 'tx'); tx.append(el('div', 'big', rs(u.venda)), el('div', 'sm', u.meta ? 'de ' + rs(u.meta) + (u.falta > 0 ? ' · faltam ' + rs(u.falta) : ' · meta batida! 🏆') : 'sem meta cadastrada'));
-  if (u.falta > 0 && u.porDia && !r.encerrado) tx.append(el('span', 'pill n', '≈ ' + rs(u.porDia) + ' por dia' + (restam ? ' · ' + restam + ' dias' : '')));
+  if (u.falta > 0 && u.porDia && !r.encerrado) tx.append(el('span', 'pill n', '🎯 hoje: ' + rs(u.porDia) + (restam ? ' · ' + restam + ' dias' : '')));
   if (u.fechaPct != null && !r.encerrado) tx.append(el('div', 'sm', (u.fechaPct >= 1 ? '🚀 ' : '') + 'no seu ritmo, fecha em ' + pc(u.fechaPct)));
   hr.append(ring(u.pct, 92, COR[k]), tx); h.append(hr);
   // fila
@@ -1753,7 +1754,7 @@ function desenharResumo(r) {
   txt.push(r.titulo.replace(/ \(.*/, '') + (r.multi ? ' na rede' : '') + ': ' + rs(R.vendido) + ' vendidos de ' + rs(R.meta) + ' (' + pc(R.pct) + ').');
   if (!r.encerrado && R.fecha != null) txt.push('No ritmo atual, fecha em ' + rs(R.fecha) + ' (' + pc(R.fechaPct) + ').');
   if (R.comp) txt.push('Comparado ao mesmo período do mês passado (dias 1 a ' + R.comp.dias + '): ' + (R.comp.var >= 0 ? '+' : '−') + PCT.format(Math.abs(R.comp.var)) + (R.comp.var >= 0 ? ' 📈.' : ' 📉.'));
-  if (!r.encerrado && R.meta > R.vendido && R.porDia) txt.push('Para bater: ' + rs(R.porDia) + ' por dia de trabalho' + (R.restam ? ' nos ' + R.restam + ' dias que faltam' : '') + '.');
+  if (!r.encerrado && R.meta > R.vendido && R.porDia) txt.push('Objetivo de hoje: ' + rs(R.porDia) + (R.restam ? ' (faltam ' + R.restam + ' dias; dias de mais movimento pesam mais)' : '') + '.');
   if (r.encerrado) txt.push(R.pct >= 1 ? 'Meta batida! 🏆' : 'Faltaram ' + rs(Math.max(0, R.meta - R.vendido)) + '.');
   if (R.at) txt.push('Na fila: ' + R.at + ' atendimentos, conversão de ' + pc(R.conv) + (r.perdasMotivos.length ? '; o que mais faz perder venda é "' + r.perdasMotivos[0].motivo + '"' : '') + '.');
   p.append(el('div', '', txt.join(' ')));
@@ -2462,7 +2463,7 @@ function telaGerente(c, r, fim) {
 }
 function focoLoja(o) {
     const pts = [], m = o.meta;
-    if (m && m.fechaPct != null && m.fechaPct < 1) pts.push(['📉', 'No ritmo atual a loja fecha em ' + pc(m.fechaPct) + ' da meta. Para virar: ' + rs(m.porDia) + ' por dia nos ' + m.restam + ' dias que faltam.']);
+    if (m && m.fechaPct != null && m.fechaPct < 1) pts.push(['📉', 'No ritmo atual a loja fecha em ' + pc(m.fechaPct) + ' da meta. Objetivo de hoje: ' + rs(m.porDia) + ' (faltam ' + m.restam + ' dias).']);
     else if (m && m.fechaPct >= 1) pts.push(['🚀', 'No ritmo atual a loja fecha em ' + pc(m.fechaPct) + ' da meta. Mantenha a equipe nesse pique!']);
     if (o.conv != null && o.convMes != null && o.conv < o.convMes - 0.05) pts.push(['🎯', 'A conversão caiu para ' + pc(o.conv) + ' (média do mês ' + pc(o.convMes) + '). Reforce na reunião rápida: abordagem e levar 2 opções ao provador.']);
     if (o.motivos && o.motivos.length && o.motivos[0][1] >= 2) { const mm = o.motivos[0][0], cc = COACH[mm] || COACH.Outro; pts.push(['💡', 'A equipe mais perdeu por “' + mm + '” (' + o.motivos[0][1] + 'x). Combine com elas: ' + cc.d[0]]); }
@@ -3219,7 +3220,7 @@ function carregarGestao() {
   if (G_ABA === 'rh') { rodar('rhLista', [S.token, RH_SEL], desenharRHAdm); return; }
   if (G_ABA === 'pla') { rodar('planosLoja', [S.token, lj, ''], desenharPlanos); return; }
   if (G_ABA === 'imp') { if (!$('gi-data').value) $('gi-data').value = ontemISO(); $('gt-card').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('fc-rede').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); carregarDS(); if (!$('fc-data').value) $('fc-data').value = ontemISO(); if (!$('gt-data').value) $('gt-data').value = ontemISO(); rodar('statusVendas', [S.token, lj], desenharStatusVendas); }
-  if (G_ABA === 'met') { prepMeses(); rodar('metasDoMes', [S.token, lj, $('gm-mes').value], desenharMetasEd); }
+  if (G_ABA === 'met') { prepMeses(); rodar('metasDoMes', [S.token, lj, $('gm-mes').value], desenharMetasEd); rodar('distribuicaoMeta', [S.token, lj, $('gm-mes').value], desenharDistrib); }
   if (G_ABA === 'ck') rodar('checklist', [S.token, lj], desenharCkEd);
   if (G_ABA === 'esc') { rodar('escala', [S.token, lj], desenharEscala); rodar('feriados', [S.token, lj], desenharFeriados); }
   if (G_ABA === 'eq') { if (!HOSPEDADO && !URL_APP) google.script.run.withSuccessHandler((u) => { URL_APP = u; }).withFailureHandler(() => {}).urlDoApp(); rodar('equipe', [S.token, lj], desenharEquipe); }
@@ -3503,6 +3504,33 @@ function desenharCodUse(r) {
   if (!r.linhas.length) t.append(el('div', 'vazio', 'Ainda não há vendas importadas desta loja.'));
   c.append(t, ok);
 }
+// ---------- distribuição da meta no mês (peso de cada dia) ----------
+function desenharDistrib(r) {
+  const c = $('gd-card'); if (!c) return; c.replaceChildren(); const SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  c.append(el('b', '', '📅 3. Como a meta se divide nos dias'), el('div', 'sub', 'O objetivo de cada dia segue o movimento da loja: dias que vendem mais (sábado, Black, Natal…) recebem uma parte maior da meta. Objetivo do dia = o que falta da meta × peso do dia ÷ soma dos pesos dos dias que faltam.'));
+  const sw = el('div', 'sub'); sw.style.marginTop = '8px'; sw.textContent = 'Peso de cada dia da semana (pelas vendas dos últimos 4 meses): ' + r.semana.map((w, i) => SEM[i] + ' ' + String(w).replace('.', ',')).join(' · '); c.append(sw);
+  const h = el('h2'); h.append(el('span', '', '⭐ Datas especiais'), el('span', '', '')); c.append(h);
+  if (!r.especiais.length) c.append(el('div', 'sub', 'Nenhuma data especial neste mês.'));
+  r.especiais.forEach((e) => { const d = el('div', 'pess eq'), x = el('div'); x.append(el('b', '', e.nome + ' · ' + String(e.mult).replace('.', ',') + 'x'), el('span', '', isoBR(e.de).slice(0, 5) + (e.ate !== e.de ? ' a ' + isoBR(e.ate).slice(0, 5) : '') + (e.loja === 'TODAS' ? ' · todas as lojas' : '') + (e.por ? ' · ' + e.por : ''))); d.append(x);
+    if (r.podeEditar) { const ops = el('div', 'ops'), ed = el('button', 'btn sm', 'Editar'), ap = el('button', 'btn sm', 'Apagar'); ed.addEventListener('click', () => formEspecial(r, e)); ap.addEventListener('click', () => { if (confirm('Apagar "' + e.nome + '"?')) rodar('apagarDataEspecial', [S.token, r.loja, e.id, r.mes], desenharDistrib); }); ops.append(ed, ap); d.append(ops); } c.append(d); });
+  if (r.podeEditar) { const nb = el('button', 'btn sm', '+ Data especial'); nb.style.marginTop = '8px'; nb.addEventListener('click', () => formEspecial(r, null)); c.append(nb); }
+  // calendário do mês
+  const h2 = el('h2'); h2.append(el('span', '', 'Objetivo de cada dia' + (r.meta ? ' · meta ' + rs(r.meta) : '')), el('span', '', '')); c.append(h2);
+  const g = el('div'); g.style.cssText = 'display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;font-size:11px';
+  SEM.forEach((n) => { const x = el('div', 'sub', n); x.style.textAlign = 'center'; g.append(x); });
+  const ini = new Date(r.mes + '-01T12:00:00Z').getUTCDay(); for (let i = 0; i < ini; i++) g.append(el('div'));
+  const mx = Math.max(...r.dias.map((x) => x.pct || 0), 0.0001);
+  r.dias.forEach((x) => { const b = el('div'); b.style.cssText = 'border:1px solid var(--line);border-radius:8px;padding:4px;min-height:44px;background:' + (!x.aberto ? '#f3f1ec' : x.especial ? '#fbf1e2' : 'rgba(91,74,122,' + (0.06 + 0.3 * x.pct / mx).toFixed(2) + ')');
+    b.append(el('div', '', x.d.slice(8, 10) + (x.especial ? ' ⭐' : ''))); b.append(el('div', '', !x.aberto ? 'fechada' : x.valor ? Math.round(x.valor).toLocaleString('pt-BR') : (x.pct * 100).toFixed(1).replace('.', ',') + '%')); b.lastChild.style.fontWeight = '700'; g.append(b); });
+  c.append(g, el('div', 'nota', 'Valores pela meta inteira do mês (antes de vender). No dia a dia o app recalcula com o que já foi vendido: se a loja vender mais num dia, o objetivo dos próximos diminui.'));
+}
+function formEspecial(r, e) {
+  const w = el('div'); const f = (lb, inp) => { const l = el('label', 'sub', lb); l.style.cssText = 'display:block;margin-top:8px'; l.append(inp); w.append(l); return inp; };
+  const nm = f('Nome', el('input')); nm.value = e ? e.nome : 'Black Friday'; const de = f('De', el('input')); de.type = 'date'; de.value = e ? e.de : ''; const ate = f('Até', el('input')); ate.type = 'date'; ate.value = e ? e.ate : '';
+  const mu = f('Multiplicador (quantas vezes um dia normal vende)', el('input')); mu.inputMode = 'decimal'; mu.value = e ? String(e.mult).replace('.', ',') : '2';
+  const td = el('input'); td.type = 'checkbox'; td.checked = e ? e.loja === 'TODAS' : false; const lt = el('label', 'sub'); lt.style.cssText = 'display:flex;gap:6px;align-items:center;margin-top:8px'; lt.append(td, document.createTextNode('Vale para todas as lojas')); w.append(lt);
+  abrirDet(e ? 'Editar data especial' : 'Nova data especial', (b) => { const ok = el('button', 'btn pri big', 'Salvar'); ok.style.marginTop = '12px'; ok.addEventListener('click', () => { rodar('salvarDataEspecial', [S.token, r.loja, { id: e ? e.id : '', nome: nm.value, de: de.value, ate: ate.value || de.value, mult: mu.value, todas: td.checked }, r.mes], (x) => { const d = $('det'); if (d) d.querySelector('.dhead button').click(); desenharDistrib(x); toast('Data especial salva ⭐'); }); }); b.append(w, ok); });
+}
 // ---------- objetivo do dia em imagem (manhã) ----------
 function verImagem(titulo, cv, nome, nota) {
   abrirDet(titulo, (b) => {
@@ -3528,7 +3556,7 @@ function cardObjetivo(o, y, foco) {
   fcTopo(g, 270, o.loja, 'Objetivo do dia · ' + fcDia(o.data));
   fcR(g, 28, 132, 484, 118, 16, 'rgba(255,255,255,.13)'); fcT(g, '🎯', 70, 210, 48, '#fff', 400, 'center');
   fcT(g, 'Objetivo de hoje', 128, 170, 13, 'rgba(255,255,255,.85)'); fcT(g, rs(o.objetivo), 128, 206, 32, '#fff', 800);
-  fcT(g, o.objetivoOnline ? 'dentro dele, online: ' + rs(o.objetivoOnline) : 'Bora juntas! 💜', 128, 230, 13, 'rgba(255,255,255,.92)', 600);
+  fcT(g, (o.especial ? '⭐ ' + o.especial.nome + ' · ' : '') + (o.objetivoOnline ? 'dentro dele, online: ' + rs(o.objetivoOnline) : 'Bora juntas! 💜'), 128, 230, 13, 'rgba(255,255,255,.92)', 600);
   let yy = 270; const MES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+o.data.slice(5, 7) - 1];
   const vend = o.mesVendido - o.valor, pctM = o.meta ? vend / o.meta : 0;
   fcSec(g, yy, '📅 Mês de ' + MES); fcLinha(g, yy + 60, 'Vendido até ontem', rs(vend), true); fcBarra(g, yy + 72, pctM); fcLinha(g, yy + 104, 'Meta do mês · ' + fcPct(pctM), rs(o.meta)); fcLinha(g, yy + 128, 'Falta para a meta', rs(Math.max(0, o.meta - vend)), true); yy += 140;
@@ -3579,7 +3607,7 @@ function cardLoja(o, gerado) {
   fcT(g, 'Vendido no dia', 160, 170, 13, 'rgba(255,255,255,.85)'); fcT(g, rs(o.valor), 160, 204, 30, '#fff', 800);
   fcT(g, temMeta ? 'Objetivo ' + rs(o.objetivo) + (o.valor >= o.objetivo ? ' · +' + rs(o.valor - o.objetivo) + ' ✅' : ' · faltaram ' + rs(o.objetivo - o.valor)) : 'Meta do mês não cadastrada', 160, 228, 13, 'rgba(255,255,255,.92)', 600);
   let y = 270;
-  if (temMeta) { fcSec(g, y, '📅 Mês de ' + ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+o.data.slice(5, 7) - 1]); fcLinha(g, y + 60, 'Vendido no mês', rs(o.mesVendido), true); fcBarra(g, y + 72, o.mesPct); fcLinha(g, y + 104, 'Meta do mês · ' + fcPct(o.mesPct), rs(o.meta)); fcLinha(g, y + 128, o.faltaMes > 0 ? 'Para bater: por dia daqui pra frente' : 'Meta do mês batida! 🎉', o.faltaMes > 0 && o.porDia ? rs(o.porDia) : '', true); y += 140; }
+  if (temMeta) { fcSec(g, y, '📅 Mês de ' + ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+o.data.slice(5, 7) - 1]); fcLinha(g, y + 60, 'Vendido no mês', rs(o.mesVendido), true); fcBarra(g, y + 72, o.mesPct); fcLinha(g, y + 104, 'Meta do mês · ' + fcPct(o.mesPct), rs(o.meta)); fcLinha(g, y + 128, o.faltaMes > 0 ? 'Objetivo de ' + (o.proxDia ? fcDia(o.proxDia).split(',')[0] + ' (' + isoBR(o.proxDia).slice(0, 5) + ')' : 'amanhã') : 'Meta do mês batida! 🎉', o.faltaMes > 0 && o.porDia ? rs(o.porDia) : '', true); y += 140; }
   fcSec(g, y, '🧾 Indicadores do dia'); const kp = [
     ['Vendas · Peças', o.vendas + ' · ' + o.itens, '', ''],
     ['Ticket médio', o.tkm ? rs(o.tkm) : '—', o.tkmMes ? 'média do mês ' + rs(o.tkmMes) + (o.tkm >= o.tkmMes ? ' ✅' : ' ⚠️') : '', o.tkmMes && o.tkm >= o.tkmMes],
