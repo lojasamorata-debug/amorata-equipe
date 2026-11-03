@@ -648,14 +648,14 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
 
       <div id="g-imp">
         <div class="card hide" id="gt-card" style="margin-top:12px;border:2px solid var(--accent)">
-          <b>📥 Importar TODAS as lojas de uma vez</b>
-          <div class="sub" style="margin-top:4px">Só para a administração. No USE: Análise de Vendedor (Pedidos/PA) de UM dia, com todas as lojas → exporte (XLS ou XML). O app separa cada vendedora na loja certa pelo código (1-, 2-, 3-…).</div>
+          <b>📥 Importar as vendas do USE · todas as lojas</b>
+          <div class="sub" style="margin-top:4px">Só a administração importa. No USE: Análise de Vendedor (Pedidos/PA) de UM dia, com todas as lojas (ou só uma) → exporte (XLS ou XML). O app separa cada vendedora na loja certa pelo código (1-, 2-, 3-…).</div>
           <input type="file" id="gt-arq" accept=".xls,.xlsx,.xml,.csv" style="margin-top:10px">
           <label class="sub" style="display:block;margin-top:8px">Dia das vendas <input type="date" id="gt-data"></label>
           <div id="gt-prev" style="margin-top:8px"></div>
           <button class="btn pri big hide" id="gt-ok" style="margin-top:8px">Importar</button>
         </div>
-        <div class="card" style="margin-top:12px">
+        <div class="card hide" id="gi-card" style="margin-top:12px">
           <b>Importar o relatório do dia</b>
           <div class="sub" style="margin-top:4px">No USE: Relatório de Análise de Vendedor (Pedidos/PA) → período de UM dia → XLS. Suba o arquivo aqui. Pode importar o mesmo dia mais de uma vez: o app junta os arquivos e fica com o valor mais completo de cada vendedora (não soma em dobro).</div>
           <input type="file" id="gi-arq" accept=".xls,.xlsx,.xml,.csv" style="margin-top:10px">
@@ -666,7 +666,8 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
         <div id="gi-falta"></div>
         <div class="card" style="margin-top:12px">
           <b>📊 Fechamento do dia para o grupo</b>
-          <div class="sub" style="margin-top:4px">Gera a imagem do fechamento com os números do USE e da fila (dia escolhido acima) para mandar no grupo do WhatsApp. Aparece sozinho depois de importar o dia.</div>
+          <div class="sub" style="margin-top:4px">Gera a imagem do fechamento com os números do USE e da fila para mandar no grupo do WhatsApp. Quando a administração importa as vendas do dia, a gerente recebe o aviso e é só gerar e enviar.</div>
+          <label class="sub" style="display:block;margin-top:8px">Dia <input type="date" id="fc-data"></label>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" id="fc-loja">📊 Fechamento da loja</button><button class="btn hide" id="fc-rede">🏬 Fechamento da rede</button></div>
         </div>
         <h2><span>Últimos dias importados</span></h2>
@@ -3168,7 +3169,7 @@ function carregarGestao() {
   if (G_ABA === 'pre') { rodar('premiosAdm', [S.token], desenharPremiosAdm); return; }
   if (G_ABA === 'rh') { rodar('rhLista', [S.token, RH_SEL], desenharRHAdm); return; }
   if (G_ABA === 'pla') { rodar('planosLoja', [S.token, lj, ''], desenharPlanos); return; }
-  if (G_ABA === 'imp') { if (!$('gi-data').value) $('gi-data').value = ontemISO(); $('gt-card').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('fc-rede').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); if (!$('gt-data').value) $('gt-data').value = ontemISO(); rodar('statusVendas', [S.token, lj], desenharStatusVendas); }
+  if (G_ABA === 'imp') { if (!$('gi-data').value) $('gi-data').value = ontemISO(); $('gt-card').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('fc-rede').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); if (!$('fc-data').value) $('fc-data').value = ontemISO(); if (!$('gt-data').value) $('gt-data').value = ontemISO(); rodar('statusVendas', [S.token, lj], desenharStatusVendas); }
   if (G_ABA === 'met') { prepMeses(); rodar('metasDoMes', [S.token, lj, $('gm-mes').value], desenharMetasEd); }
   if (G_ABA === 'ck') rodar('checklist', [S.token, lj], desenharCkEd);
   if (G_ABA === 'esc') { rodar('escala', [S.token, lj], desenharEscala); rodar('feriados', [S.token, lj], desenharFeriados); }
@@ -3297,14 +3298,16 @@ function mostrarSenha(x) {
 let STV = null;
 function desenharStatusVendas(r) {
   STV = r; const f = $('gi-falta'); f.replaceChildren();
-  if (r.faltando.length) {
+  const adm = S && S.cargo === 'ADMIN', imp = (d) => { if (adm) { $('gt-data').value = d; $('gt-arq').click(); } };
+  if (r.faltando.length && !adm) { f.append(el('div', 'aviso-meta', '⏳ Aguardando a administração importar: ' + r.faltando.slice(-7).map(isoBR).map((x) => x.slice(0, 5)).join(', '))); }
+  else if (r.faltando.length) {
     const c = el('div', 'aviso-meta'); c.append(el('b', '', '⚠️ Dias sem vendas importadas: ' + r.faltando.length), el('div', 'sub', 'Importe o relatório de cada dia. Se a loja não abriu, marque como "sem vendas".'));
-    const box = el('div'); r.faltando.slice(-31).forEach((d) => { const ch = el('span', 'chip-dia', isoBR(d)); const b1 = el('button', '', 'importar'); b1.addEventListener('click', () => { $('gi-data').value = d; $('gi-arq').click(); }); const b2 = el('button', '', 'sem vendas'); b2.addEventListener('click', () => escolher('Marcar ' + isoBR(d) + ' sem vendas?', 'Use só se a loja não vendeu nada neste dia.', [['Marcar sem vendas', '', () => { fechar(); rodar('marcarSemVendas', [S.token, $('g-loja').value, d], (r) => { desenharStatusVendas(r); carregarPendencias(); }); }]])); ch.append(b1, b2); box.append(ch); });
+    const box = el('div'); r.faltando.slice(-31).forEach((d) => { const ch = el('span', 'chip-dia', isoBR(d)); const b1 = el('button', '', 'importar'); b1.addEventListener('click', () => imp(d)); const b2 = el('button', '', 'sem vendas'); b2.addEventListener('click', () => escolher('Marcar ' + isoBR(d) + ' sem vendas?', 'Use só se a loja não vendeu nada neste dia.', [['Marcar sem vendas', '', () => { fechar(); rodar('marcarSemVendas', [S.token, $('g-loja').value, d], (r) => { desenharStatusVendas(r); carregarPendencias(); }); }]])); ch.append(b1, b2); box.append(ch); });
     c.append(box); f.append(c);
   } else if (!(r.parciais || []).length) f.append(el('div', 'motiva', '✅ Todos os dias até ontem estão importados.'));
-  if ((r.parciais || []).length) {
+  if ((r.parciais || []).length && adm) {
     const c = el('div', 'aviso-meta'); c.append(el('b', '', '⏳ Dias importados antes de acabar: ' + r.parciais.length), el('div', 'sub', 'O relatório foi gerado com a loja ainda aberta, então pode faltar venda. Importe de novo o dia completo — o app junta com o que já está lá.'));
-    const box = el('div'); r.parciais.forEach((x) => { const ch = el('span', 'chip-dia', isoBR(x.data) + ' · ' + String(x.quando || '').slice(11, 16)); const b1 = el('button', '', 'importar de novo'); b1.addEventListener('click', () => { $('gi-data').value = x.data; $('gi-arq').click(); }); ch.append(b1); box.append(ch); });
+    const box = el('div'); r.parciais.forEach((x) => { const ch = el('span', 'chip-dia', isoBR(x.data) + ' · ' + String(x.quando || '').slice(11, 16)); const b1 = el('button', '', 'importar de novo'); b1.addEventListener('click', () => imp(x.data)); ch.append(b1); box.append(ch); });
     c.append(box); f.append(c);
   }
   const tb = $('gi-ult'); tb.replaceChildren();
@@ -3424,8 +3427,8 @@ function lerTodasLojas(file) {
   }; fr.readAsArrayBuffer(file); };
   if (window.XLSX) go(); else { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; sc.onload = go; sc.onerror = () => { p.textContent = 'Não consegui carregar o leitor de planilhas. Verifique a internet.'; }; document.head.append(sc); }
 }
-$('fc-loja').addEventListener('click', () => fechamento($('g-loja').value, $('gi-data').value));
-$('fc-rede').addEventListener('click', () => fechamento('TODAS', $('gi-data').value));
+$('fc-loja').addEventListener('click', () => fechamento($('g-loja').value, $('fc-data').value));
+$('fc-rede').addEventListener('click', () => fechamento('TODAS', $('fc-data').value));
 // ---------- fechamento do dia em imagem ----------
 const FC_DS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 const fcDia = (d) => FC_DS[new Date(d + 'T12:00:00Z').getUTCDay()] + ', ' + isoBR(d);
@@ -3504,7 +3507,7 @@ $('gt-ok').addEventListener('click', () => {
     if (i >= lojas.length) { $('gt-ok').disabled = false; $('gt-ok').classList.add('hide'); $('gt-arq').value = ''; GT = null; box.replaceChildren(el('b', '', '✅ Importação do dia ' + isoBR(d))); res.forEach((x) => box.append(el('div', x.ok ? 'sub' : 'aviso-meta', x.txt))); toast('Vendas importadas ✅'); try { carregarPendencias(); carregarGestao(); } catch (e) {}
       const bx = el('div'); bx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px'; const br = el('button', 'btn pri', '🏬 Fechamento da rede'); br.addEventListener('click', () => fechamento('TODAS', d)); bx.append(br);
       lojas.forEach((lj) => { const b = el('button', 'btn', '📊 ' + lj); b.addEventListener('click', () => fechamento(lj, d)); bx.append(b); }); box.append(bx);
-      if (d >= ontemISO()) setTimeout(() => fechamento('TODAS', d), 600); return; }
+      $('fc-data').value = d; if (d >= ontemISO()) setTimeout(() => fechamento('TODAS', d), 600); return; }
     const lj = lojas[i++]; st.textContent = 'Importando ' + lj + '… (' + i + ' de ' + lojas.length + ')';
     google.script.run.withSuccessHandler((r) => { const im = (r && r.importado) || {}; res.push({ ok: true, txt: '✅ ' + lj + ': ' + rs(im.total != null ? im.total : GT.por[lj].reduce((a, l) => a + l[2], 0)) + ' · ' + (im.linhas || 0) + ' lançamento(s)' + (parc.indexOf(lj) >= 0 ? ' · ⏳ PARCIAL (loja aberta até ' + fechaLoja(lj, d) + ')' : '') + (im.mesclagem ? ' · juntou com a importação anterior' : '') }); prox(); })
       .withFailureHandler((e) => { res.push({ ok: false, txt: '⚠️ ' + lj + ': ' + ((e && e.message) || 'erro') }); prox(); })
@@ -3806,7 +3809,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide'); blocoNotif(o);
 }));
