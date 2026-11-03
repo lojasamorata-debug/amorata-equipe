@@ -1230,6 +1230,12 @@ function cabecalho(loja) {
   if (!S) { if (loja) $('t-loja').textContent = loja; return; } const l = S.cargo === 'ADMIN' ? 'todas as lojas' : loja || (S.lojas && S.lojas.length === 1 ? S.lojas[0] : '');
   $('t-loja').textContent = primeiroNome(S.nome); $('t-user').textContent = saudacao() + (l ? ' · ' + l : '') + (chefe() ? ' · ' + S.cargo.toLowerCase() : '');
 }
+// nome curto sem confundir: se duas pessoas da lista começam com o mesmo nome (MARIA DA GLORIA × MARIA SUELEN), usa o nome seguinte
+function nomeCurto(nome, lista) {
+  const pts = String(nome || '').trim().split(/\s+/).filter((x) => !/^(da|de|do|das|dos|e)$/i.test(x)), cap = (x) => x ? x.charAt(0).toUpperCase() + x.slice(1).toLowerCase() : '';
+  const p0 = (pts[0] || '').toLowerCase(), rep = (lista || []).filter((o) => (String(o.nome || '').trim().split(/\s+/)[0] || '').toLowerCase() === p0).length;
+  return rep > 1 && pts[1] ? cap(pts[1]) : cap(pts[0]);
+}
 const saudacao = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; };
 const primeiroNome = (n) => { const p = String(n || '').trim().split(/\s+/)[0] || ''; return p.charAt(0) + p.slice(1).toLowerCase(); };
 function dicaDoMomento() { const n = Math.floor(Date.now() / (20 * 60000)); return DICAS[(n + (S.usuario || '').length) % DICAS.length]; }
@@ -1567,7 +1573,7 @@ function carregarRel() {
     $('r-rx-t').textContent = r.soEu ? 'Seu raio-x' : 'Raio-x da equipe';
     const tb = $('r-rx'); tb.replaceChildren();
     const cel = (v, txt, med) => { const td = el('td', 'n', txt); if (v != null && med != null && med > 0) { const d = v / med - 1; if (Math.abs(d) >= 0.05) td.append(el('span', d > 0 ? 'up' : 'down', ' ' + (d > 0 ? '▲' : '▼'))); } return td; };
-    rx.forEach((p) => { const tr = el('tr'); tr.append(el('td', '', primeiroNome(p.nome) + (r.lojas.length > 1 && !r.soEu ? ' · ' + p.loja : '')), cel(p.valor, rs(p.valor), M.valor), el('td', 'n', String(p.vendas)), cel(p.ticket, rs(p.ticket), M.ticket), cel(p.pa, p.pa == null ? '—' : DEC1.format(p.pa), M.pa), cel(p.conv, pc(p.conv), M.conv)); tb.append(tr); });
+    rx.forEach((p) => { const tr = el('tr'); tr.append(el('td', '', nomeCurto(p.nome, rx) + (r.lojas.length > 1 && !r.soEu ? ' · ' + p.loja : '')), cel(p.valor, rs(p.valor), M.valor), el('td', 'n', String(p.vendas)), cel(p.ticket, rs(p.ticket), M.ticket), cel(p.pa, p.pa == null ? '—' : DEC1.format(p.pa), M.pa), cel(p.conv, pc(p.conv), M.conv)); tb.append(tr); });
     $('r-rx-n').textContent = 'Média da equipe: ticket ' + rs(M.ticket) + ' · PA ' + (M.pa == null ? '—' : DEC1.format(M.pa)) + ' · conversão ' + pc(M.conv) + '. ▲▼ = 5% ou mais acima/abaixo da média. Vendido inclui online; ticket e PA são da venda na loja.';
     // evolução diária contra a meta do dia
     const ev = r.evolucao || [];
@@ -1587,7 +1593,7 @@ function carregarRel() {
     $('r-cb-box').classList.toggle('hide', !cb.length);
     $('r-cb-t').textContent = r.soEu ? 'Seu cashback usado' : 'Cashback usado por vendedora';
     const tc = $('r-cb'); tc.replaceChildren();
-    cb.forEach((p) => { const tr = el('tr'); [primeiroNome(p.nome) + (r.lojas.length > 1 && !r.soEu ? ' · ' + p.loja : ''), rs(p.valor), rs(p.bonus), pc(p.pctBonus)].forEach((v, i) => tr.append(el('td', i ? 'n' : '', v))); tc.append(tr); });
+    cb.forEach((p) => { const tr = el('tr'); [nomeCurto(p.nome, cb) + (r.lojas.length > 1 && !r.soEu ? ' · ' + p.loja : ''), rs(p.valor), rs(p.bonus), pc(p.pctBonus)].forEach((v, i) => tr.append(el('td', i ? 'n' : '', v))); tc.append(tr); });
     $('r-ev-n').textContent = r.metaDia ? 'Meta do dia: ' + rs(r.metaDia) + ' (linha preta). ' + acima + ' de ' + ev.length + ' dias acima da meta (verde).' : 'Vendas por dia (loja + online).';
   });
 }
@@ -1964,7 +1970,7 @@ function mapaEquipe(lista) {
   tx(W - m.r, m.t + 10, 'converte e vende alto ⭐', { 'text-anchor': 'end', fill: '#1e7a46' }); tx(m.l + 4, H - m.b - 6, 'precisa de treino', { fill: '#b3261e' });
   tx(W - m.r, m.t + 22, '', {}); tx(m.l + 4, m.t + 10, 'ticket alto, converte pouco', { fill: '#a85d00' }); tx(W - m.r, H - m.b - 6, 'converte, mas ticket baixo', { 'text-anchor': 'end', fill: '#a85d00' });
   tx((m.l + W - m.r) / 2, H - 6, 'conversão na fila →', { 'text-anchor': 'middle' }); const yl = sv('text', { x: 12, y: (m.t + H - m.b) / 2, 'font-size': 10, fill: '#6b6862', transform: 'rotate(-90 12 ' + (m.t + H - m.b) / 2 + ')', 'text-anchor': 'middle' }); yl.textContent = 'ticket médio →'; s.append(yl);
-  pts.forEach((p) => { const cx = X(p.conv), cy = Y(p.tkm); s.append(sv('circle', { cx: cx, cy: cy, r: 6, fill: COR[nivelCor(p.fechaPct, p.pct)], stroke: '#fff', 'stroke-width': 1.5 })); tx(cx + 8, cy + 3, primeiroNome(p.nome), { fill: '#2b2a28', 'font-size': 10.5 }); });
+  pts.forEach((p) => { const cx = X(p.conv), cy = Y(p.tkm); s.append(sv('circle', { cx: cx, cy: cy, r: 6, fill: COR[nivelCor(p.fechaPct, p.pct)], stroke: '#fff', 'stroke-width': 1.5 })); tx(cx + 8, cy + 3, nomeCurto(p.nome, pts), { fill: '#2b2a28', 'font-size': 10.5 }); });
   const c = el('div', 'card'); c.append(el('b', '', '🗺️ Mapa da equipe'), el('div', 'sm', 'Cada bolinha é uma consultora (cor = meta). Direita = converte mais; para cima = ticket maior. Linhas tracejadas = média do grupo.'));
   const ch = el('div', 'chart'); ch.append(s); c.append(ch); return c;
 }
@@ -2009,7 +2015,7 @@ function abrirConferencia() {
         const row = el('div'); row.style.cssText = 'margin-top:12px;border-top:1px solid var(--line);padding-top:8px';
         const top = el('div'); top.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:center';
         const tag = p.dif > 0 ? el('span', 'pill r', p.dif + (p.dif === 1 ? ' venda fora da fila' : ' vendas fora da fila')) : p.dif < 0 ? el('span', 'pill y', (-p.dif) + ' a mais na fila que no USE') : el('span', 'pill g', '✓ confere');
-        top.append(el('b', '', primeiroNome(p.nome)), tag); row.append(top);
+        top.append(el('b', '', nomeCurto(p.nome, L.pessoas)), tag); row.append(top);
         [['🧾 USE', p.use, '#5b4a7a'], ['👥 Fila', p.fila, '#1e7a46']].forEach(([lb, v, cor]) => { const r2 = el('div', 'mini-r'), t = el('div', 'tr'), i = el('i'); i.style.width = (v / mx * 100) + '%'; i.style.background = cor; t.append(i); r2.append(el('div', 'nm', lb), t, el('div', 'v', String(v))); row.append(r2); });
         if (p.dias.length) row.append(el('div', 'sm', 'Dias com diferença: ' + p.dias.map((d) => d.dia.slice(8, 10) + '/' + d.dia.slice(5, 7) + ' (USE ' + d.use + ' · fila ' + d.fila + ')').join(' · ')));
         if (!p.at && p.use) row.append(el('div', 'sm', 'Não usou a fila nesses dias (ou o nome no USE é diferente do cadastro do app).'));
