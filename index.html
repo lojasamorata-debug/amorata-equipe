@@ -57,8 +57,10 @@ th { font-size:12px; color:var(--muted); font-weight:500; } .n { text-align:righ
 .login { max-width:360px; margin:10vh auto 0; }
 .err { color:var(--bad); font-size:13px; min-height:18px; margin:6px 0; }
 .hide { display:none !important; }
-.sheet-bg { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:flex-end; justify-content:center; z-index:10; }
-.sheet { background:var(--panel); width:100%; max-width:640px; border-radius:18px 18px 0 0; padding:18px 16px 26px; max-height:85vh; overflow:auto; }
+.sheet-bg { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:flex-end; justify-content:center; z-index:80; overscroll-behavior:contain; touch-action:none; }
+.sheet { background:var(--panel); width:100%; max-width:640px; border-radius:18px 18px 0 0; padding:18px 16px calc(26px + env(safe-area-inset-bottom)); max-height:85vh; max-height:85dvh; overflow:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-y; }
+body.sheet-on { overflow:hidden; } body.sheet-on #eu { display:none !important; }
+.toast { z-index:9900 !important; }
 .sheet h3 { margin:0 0 4px; font-size:18px; font-weight:600; }
 .sheet .opts { display:grid; gap:8px; margin-top:14px; }
 .toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:#1f1e1d; color:#fff; padding:10px 16px; border-radius:10px; font-size:14px; z-index:20; max-width:90%; }
@@ -1296,6 +1298,8 @@ function linha(p, extra, ops, me) {
   if (ops && ops.length) { const o = el('div', 'ops'); ops.forEach((x) => o.append(x)); r.append(o); }
   return r;
 }
+// com uma janelinha aberta: trava a tela de trás e esconde a barra da fila (senão ela fica por cima e "rouba" o toque)
+new MutationObserver(() => { const ab = !$('sheet').classList.contains('hide'); document.body.classList.toggle('sheet-on', ab); }).observe($('sheet'), { attributes: true, attributeFilter: ['class'] });
 const bt = (txt, cls, fn) => { const b = el('button', 'btn sm ' + (cls || ''), txt); b.addEventListener('click', fn); return b; };
 
 function desenhar(e) {
