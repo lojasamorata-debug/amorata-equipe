@@ -2573,6 +2573,7 @@ function desenharRH(b, r, adm) {
   if (!adm) {
     b.append(el('div', 'sub', 'Seus documentos da empresa: holerite, folha de ponto, férias e outros. Só você e a administração veem.')); b.firstChild.style.margin = '0 0 10px';
     const up = el('button', 'btn pri', '📎 Enviar documento (atestado…)'); up.style.cssText = 'width:100%;margin-bottom:12px'; up.addEventListener('click', () => enviarMeuRH(b, r, up)); b.append(up);
+    b.append(cardMeusDados(b, r));
   }
   if (!r.docs.length) { b.append(el('div', 'vazio', adm ? 'Nenhum documento para esta pessoa ainda.' : 'Ainda não há documentos aqui. Quando a administração enviar, você recebe um aviso. 📄')); return; }
   const pend = r.docs.filter((d) => d.assinatura === 'pendente');
@@ -2596,6 +2597,23 @@ function itemRH(d, r, b, adm) {
     if (d.temArquivo) c.addEventListener('click', () => abrirDocRH(d, () => { if (!adm && !d.visto) { d.visto = 'agora'; r.novos = Math.max(0, r.novos - 1); carregarRHBadgeLocal(r); desenharRH(b, r, adm); } }));
   }
   if (adm) { const ap = el('button', 'btn sm', 'Tirar do app'); ap.addEventListener('click', (ev) => { ev.stopPropagation(); escolher('Tirar este documento do app?', 'Ele some do Meu RH de ' + primeiroNome(nomeRH(r.usuario)) + '. O arquivo continua na pasta dela no Drive.', [['Tirar do app', 'bad', () => { fechar(); rodar('rhApagar', [S.token, d.id], desenharRHAdm); }]]); }); c.append(ap); }
+  return c;
+}
+// dados para assinatura eletrônica (nome completo, CPF e e-mail)
+function formDadosRH(d, salvar, cancelar) {
+  const w = el('div'); const f = (lb, ph) => { const l = el('label', 'sub', lb); l.style.cssText = 'display:block;margin-top:8px'; const i = el('input'); i.placeholder = ph; i.style.cssText = 'width:100%;box-sizing:border-box;margin-top:3px'; l.append(i); w.append(l); return i; };
+  const nm = f('Nome completo (como nos documentos)', 'Ex.: MARIA DA GLORIA BANDEIRA DA SILVA'), cp = f('CPF', '000.000.000-00'), em = f('E-mail (onde chega o código para assinar)', 'seuemail@gmail.com');
+  cp.inputMode = 'numeric'; em.type = 'email'; em.autocomplete = 'email'; nm.value = d.nome || ''; cp.value = d.cpf ? d.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : ''; em.value = d.email || '';
+  cp.addEventListener('input', () => { const x = cp.value.replace(/\D/g, '').slice(0, 11); cp.value = x.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2'); });
+  const ok = el('button', 'btn pri', 'Salvar'); ok.style.marginTop = '10px'; ok.addEventListener('click', () => { ok.disabled = true; salvar(nm.value, cp.value, em.value, () => { ok.disabled = false; }); });
+  w.append(ok); if (cancelar) { const c = el('button', 'btn sm', 'Cancelar'); c.style.marginLeft = '8px'; c.addEventListener('click', cancelar); w.append(c); }
+  return w;
+}
+function cardMeusDados(b, r) {
+  const d = r.meusDados || {}, ok = d.nome && d.cpf && d.email, c = el('div', 'card'); c.style.cssText = 'margin-bottom:12px;' + (ok ? '' : 'border:2px solid var(--accent)');
+  if (ok) { c.append(el('b', '', '✍️ Dados para assinatura'), el('div', 'sub', d.nome + ' · CPF •••.•••.•' + d.cpf.slice(8, 9) + '-' + d.cpf.slice(9) + ' · ' + d.email)); const e = el('button', 'btn sm', 'Alterar'); e.style.marginTop = '6px'; e.addEventListener('click', () => { c.replaceChildren(el('b', '', '✍️ Dados para assinatura'), formDadosRH(d, salvarM, () => desenharRH(b, r, false))); }); c.append(e); return c; }
+  function salvarM(nm, cp, em, fim) { rodar('rhSalvarMeusDados', [S.token, nm, cp, em], (r2) => { toast('Dados salvos ✅'); RH = r2; desenharRH(b, r2, false); }, fim); }
+  c.append(el('b', '', '📝 Complete seus dados para assinar seus holerites'), el('div', 'sub', 'Seus holerites chegam aqui para você assinar. Na assinatura, a ZapSign manda um código para o seu e-mail e pede o seu CPF. Só você e a administração veem esses dados.'), formDadosRH(d, salvarM));
   return c;
 }
 function enviarMeuRH(b, r, up) {
@@ -2673,6 +2691,7 @@ function desenharRHAdm(r) {
     catch (e) { toast('Não consegui ler o arquivo.'); env.disabled = false; env.textContent = 'Enviar'; }
   });
   g.append(card);
+  g.append(cardHolerites(r));
   // ZapSign: uma conta por loja
   if (r.zs) {
     const zc = el('details', 'card dob'); zc.style.marginTop = '12px'; const sm = el('summary'); sm.append(el('b', '', '✍️ ZapSign — documentos para assinar'), el('span', 'sub', ' · ' + r.zs.filter((z) => z.ok).length + ' de ' + r.zs.length + ' lojas conectadas')); zc.append(sm);
@@ -2691,6 +2710,74 @@ function desenharRHAdm(r) {
     g.append(zc);
   }
   if (RH_SEL) { const lb = el('div'); lb.style.marginTop = '14px'; g.append(lb); desenharRH(lb, r, true); const h = el('h2'); h.append(el('span', '', 'Documentos de ' + primeiroNome(nomeRH(RH_SEL))), el('span', '', String(r.docs.length))); lb.prepend(h); }
+}
+// ---------- ADMIN: holerites do mês (um PDF por loja) → separa por funcionária → ZapSign → Meu RH ----------
+let PDFLIB = null;
+function carregarPdfLib() { if (PDFLIB) return PDFLIB; PDFLIB = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'; sc.onload = () => res(window.PDFLib); sc.onerror = () => { PDFLIB = null; rej(new Error('Não consegui carregar o leitor de PDF. Verifique a internet.')); }; document.head.append(sc); }); return PDFLIB; }
+const semAcC = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+function cardHolerites(r) {
+  const c = el('details', 'card dob'); c.style.marginTop = '12px'; c.open = true; const sm = el('summary'); sm.append(el('b', '', '🧾 Holerites do mês para assinar')); c.append(sm);
+  const pes = r.pessoas || [], semDados = pes.filter((p) => !(p.nomeCompleto && p.cpf && p.email));
+  c.append(el('div', 'sub', 'Suba o PDF de holerites de cada loja. O app separa a página de cada funcionária (pelo CPF ou pelo nome completo), cria o documento na ZapSign da loja e coloca no Meu RH dela para assinar — com código por e-mail e CPF. Depois de assinado, o PDF vai para a pasta dela no Drive.'));
+  c.lastChild.style.margin = '8px 0';
+  // dados das funcionárias
+  const dd = el('details'); dd.style.margin = '6px 0 10px'; const ds = el('summary'); ds.append(el('span', '', '👥 Dados para assinatura: ' + (pes.length - semDados.length) + ' de ' + pes.length + ' completos')); dd.append(ds);
+  pes.forEach((p) => { const ln = el('div', 'pess eq'), x = el('div'); x.append(el('b', '', p.nome + ' · ' + (p.loja || '')), el('span', '', p.nomeCompleto && p.cpf && p.email ? '✅ ' + p.nomeCompleto + ' · ' + p.email : '⚠️ falta ' + [!p.nomeCompleto && 'nome completo', !p.cpf && 'CPF', !p.email && 'e-mail'].filter(Boolean).join(', ')));
+    const e = el('button', 'btn sm', 'Editar'); e.addEventListener('click', () => abrirDet('Dados de ' + primeiroNome(p.nome), (b) => b.append(formDadosRH({ nome: p.nomeCompleto, cpf: p.cpf, email: p.email }, (nm, cp, em, fim) => rodar('rhSalvarDados', [S.token, p.usuario, nm, cp, em], (r2) => { toast('Dados salvos ✅'); const d0 = $('det'); if (d0) d0.querySelector('.dhead button').click(); desenharRHAdm(r2); }, fim))))); const ops = el('div', 'ops'); ops.append(e); ln.append(x, ops); dd.append(ln); });
+  if (semDados.length) { const lb = el('button', 'btn sm pri', '📣 Pedir para as ' + semDados.length + ' completarem no Meu RH'); lb.style.marginTop = '8px'; lb.addEventListener('click', () => { lb.disabled = true; rodar('rhLembrarDados', [S.token], (x) => { lb.textContent = '✓ Aviso enviado para ' + x.enviados; }); }); dd.append(lb); }
+  c.append(dd);
+  const lj = el('select'); LOJAS_APP.forEach((l) => lj.append(new Option(l, l))); const mes = el('input'); mes.type = 'month'; const d0 = new Date(); d0.setDate(1); d0.setMonth(d0.getMonth() - 1); mes.value = d0.toISOString().slice(0, 7);
+  const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf'; const prev = el('div'); prev.style.marginTop = '8px';
+  [lj, mes, fi].forEach((x) => { x.style.cssText = 'width:100%;box-sizing:border-box;margin-top:6px;max-width:420px;display:block'; });
+  c.append(el('div', 'sub', 'Loja'), lj, el('div', 'sub', 'Mês do holerite'), mes, el('div', 'sub', 'PDF dos holerites da loja'), fi, prev);
+  [...c.querySelectorAll(':scope > .sub')].slice(1).forEach((x) => { x.style.marginTop = '8px'; });
+  fi.addEventListener('change', () => { if (fi.files[0]) lerHolerites(fi.files[0], lj.value, mes, prev, pes); });
+  lj.addEventListener('change', () => { if (fi.files[0]) lerHolerites(fi.files[0], lj.value, mes, prev, pes); });
+  return c;
+}
+const LOJAS_APP = ['Cerâmica', 'Via Verde', 'Cruzeiro do Sul', 'Via Norte', 'Sumaúma'];
+async function lerHolerites(file, loja, mesInp, prev, pes) {
+  prev.replaceChildren(el('div', 'sub', 'Lendo o PDF…'));
+  try {
+    const by = new Uint8Array(await file.arrayBuffer()), lib = await carregarPdfJs(), doc = await lib.getDocument({ data: by.slice() }).promise, pags = [];
+    for (let n = 1; n <= doc.numPages; n++) { const pg = await doc.getPage(n), tc = await pg.getTextContent(); pags.push(tc.items.map((i) => i.str).join(' ')); }
+    // mês: "10/2026" ou "OUTUBRO/2026"
+    const MES = ['JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], t0 = semAcC(pags.join(' '));
+    for (let i = 0; i < 12; i++) { const m = t0.match(new RegExp(MES[i] + ' (?:DE )?(20\\d{2})')); if (m) { mesInp.value = m[1] + '-' + String(i + 1).padStart(2, '0'); break; } }
+    const daLoja = pes.filter((p) => p.loja === loja), todos = pes;
+    const quemPag = (tx) => { const dig = tx.replace(/[^\d]/g, ' '), cpfs = (tx.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/g) || []).map((x) => x.replace(/\D/g, ''));
+      let p = todos.find((q) => q.cpf && cpfs.indexOf(q.cpf) >= 0); if (p) return [p, 'CPF'];
+      const T = ' ' + semAcC(tx) + ' '; const cand = (daLoja.length ? daLoja : todos).filter((q) => { const n = semAcC(q.nomeCompleto || q.pasta || ''); return n.split(' ').length >= 2 && T.indexOf(' ' + n + ' ') >= 0; });
+      if (cand.length === 1) return [cand[0], 'nome']; void dig; return [null, '']; };
+    const linhas = pags.map((tx, i) => { const [p, como] = quemPag(tx); return { i: i, p: p, como: como }; });
+    // página sem dono logo depois de uma com dono (verso/continuação): fica com a mesma pessoa
+    linhas.forEach((l, k) => { if (!l.p && k && linhas[k - 1].p && !pags[k].replace(/\s/g, '').length) { l.p = linhas[k - 1].p; l.como = 'continuação'; } });
+    desenharPrevHol(file, by, loja, mesInp, prev, pes, linhas);
+  } catch (e) { prev.replaceChildren(el('div', 'aviso-meta', 'Não consegui ler o PDF: ' + (e.message || e))); }
+}
+function desenharPrevHol(file, by, loja, mesInp, prev, pes, linhas) {
+  prev.replaceChildren(); const t = el('table'), tb = el('tbody'), th = el('thead'), trh = el('tr'); ['Página', 'Funcionária', 'Como achei'].forEach((x) => trh.append(el('th', '', x))); th.append(trh);
+  linhas.forEach((l) => { const tr = el('tr'), s2 = el('select'); s2.append(new Option('— ninguém (não enviar) —', '')); pes.forEach((p) => s2.append(new Option(p.nome + ' · ' + p.loja, p.usuario))); s2.value = l.p ? l.p.usuario : '';
+    s2.addEventListener('change', () => { l.p = pes.find((p) => p.usuario === s2.value) || null; l.como = l.p ? 'escolhido' : ''; resumo(); });
+    const td = el('td'); td.append(s2); tr.append(el('td', '', String(l.i + 1)), td, el('td', 'sub', l.como || '⚠️ não achei')); tb.append(tr); });
+  t.append(th, tb); const w = el('div', 'tbl-x'); w.append(t);
+  const rs2 = el('div', 'sub'); rs2.style.marginTop = '8px'; const env = el('button', 'btn pri big'); env.style.marginTop = '8px'; const res = el('div');
+  const grupos = () => { const g = {}; linhas.forEach((l) => { if (l.p) (g[l.p.usuario] = g[l.p.usuario] || { p: l.p, pags: [] }).pags.push(l.i); }); return Object.values(g); };
+  function resumo() { const g = grupos(), sem = g.filter((x) => !(x.p.nomeCompleto && x.p.email)), soltas = linhas.filter((l) => !l.p).length; rs2.textContent = g.length + ' funcionária(s) · ' + soltas + ' página(s) sem dono' + (sem.length ? ' · ⚠️ sem dados para assinar: ' + sem.map((x) => primeiroNome(x.p.nome)).join(', ') + ' (complete em "Dados para assinatura" acima)' : ''); env.textContent = '✍️ Enviar ' + (g.length - sem.length) + ' holerite(s) para assinar · ' + mesInp.value.slice(5, 7) + '/' + mesInp.value.slice(0, 4); env.disabled = !(g.length - sem.length); }
+  resumo(); mesInp.addEventListener('change', resumo);
+  env.addEventListener('click', async () => {
+    const g = grupos().filter((x) => x.p.nomeCompleto && x.p.email); if (!g.length) return; env.disabled = true; res.replaceChildren();
+    try {
+      const PL = await carregarPdfLib(), src = await PL.PDFDocument.load(by, { ignoreEncryption: true }), out = [];
+      for (let k = 0; k < g.length; k++) {
+        const x = g[k]; env.textContent = 'Enviando ' + (k + 1) + ' de ' + g.length + '…';
+        const nd = await PL.PDFDocument.create(), cps = await nd.copyPages(src, x.pags); cps.forEach((pg) => nd.addPage(pg)); const b64 = await nd.saveAsBase64();
+        await new Promise((ok) => google.script.run.withSuccessHandler(() => { out.push('✅ ' + primeiroNome(x.p.nome)); ok(); }).withFailureHandler((e) => { out.push('⚠️ ' + primeiroNome(x.p.nome) + ': ' + ((e && e.message) || 'erro')); ok(); }).rhHoleriteEnviar(S.token, x.p.usuario, mesInp.value, b64, 'Holerite ' + mesInp.value + ' - ' + x.p.nome + '.pdf', false));
+      }
+      res.replaceChildren(el('b', '', 'Resultado · ' + loja)); out.forEach((t2) => res.append(el('div', /^✅/.test(t2) ? 'sub' : 'aviso-meta', t2))); env.textContent = 'Enviado ✅'; toast('Holerites enviados para assinatura ✍️');
+    } catch (e) { res.replaceChildren(el('div', 'aviso-meta', 'Erro: ' + (e.message || e))); env.disabled = false; resumo(); }
+  });
+  prev.append(w, rs2, env, res);
 }
 // ---------- termo de uso ----------
 const TERMO = [
