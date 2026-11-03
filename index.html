@@ -668,7 +668,7 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
           <b>📊 Fechamento do dia para o grupo</b>
           <div class="sub" style="margin-top:4px">Gera a imagem do fechamento com os números do USE e da fila para mandar no grupo do WhatsApp. Quando a administração importa as vendas do dia, a gerente recebe o aviso e é só gerar e enviar.</div>
           <label class="sub" style="display:block;margin-top:8px">Dia <input type="date" id="fc-data"></label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" id="fc-loja">📊 Fechamento da loja</button><button class="btn hide" id="fc-rede">🏬 Fechamento da rede</button></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" id="fc-obj">🎯 Objetivo de hoje</button><button class="btn pri" id="fc-loja">📊 Fechamento da loja</button><button class="btn hide" id="fc-rede">🏬 Fechamento da rede</button></div>
         </div>
         <h2><span>Últimos dias importados</span></h2>
         <div class="tbl-x"><table><thead><tr><th>Dia</th><th class="n">Total</th><th class="n">Online</th><th class="n">Linhas</th><th>Quem</th></tr></thead><tbody id="gi-ult"></tbody></table></div>
@@ -2447,6 +2447,7 @@ function cardMetaLoja(o) {
 }
 function telaGerenteFim(c, r, fim, o) {
   c.append(cardMetaLoja(o));
+  if (o && o.meta) { const en = el('button', 'btn big', '📤 Enviar o objetivo do dia no grupo'); en.style.marginTop = '10px'; en.addEventListener('click', () => objetivoDia(o.loja || (S.lojas || [])[0], o)); c.append(en); }
   const go = el('button', 'btn pri big', '👉 Começar o dia'); go.addEventListener('click', fim); r.append(go);
 }
 // ---------- tour guiado: destaca cada parte do app com uma explicação ----------
@@ -3429,6 +3430,44 @@ function lerTodasLojas(file) {
 }
 $('fc-loja').addEventListener('click', () => fechamento($('g-loja').value, $('fc-data').value));
 $('fc-rede').addEventListener('click', () => fechamento('TODAS', $('fc-data').value));
+$('fc-obj').addEventListener('click', () => objetivoDia($('g-loja').value, ONTEM && ONTEM.loja === $('g-loja').value ? ONTEM : null));
+// ---------- objetivo do dia em imagem (manhã) ----------
+function verImagem(titulo, cv, nome, nota) {
+  abrirDet(titulo, (b) => {
+    const img = el('img'); img.src = cv.toDataURL('image/png'); img.style.cssText = 'width:100%;max-width:420px;display:block;margin:0 auto;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.15)';
+    const bx = el('div'); bx.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:14px 0';
+    const env = el('button', 'btn pri big', '📤 Enviar no WhatsApp'), bai = el('button', 'btn', '⬇️ Baixar imagem');
+    env.addEventListener('click', () => cv.toBlob((bl) => { const f = new File([bl], nome, { type: 'image/png' }); if (navigator.canShare && navigator.canShare({ files: [f] })) navigator.share({ files: [f] }).catch(() => {}); else { baixarCv(cv, nome); toast('Imagem baixada: envie pelo WhatsApp.'); } }, 'image/png'));
+    bai.addEventListener('click', () => baixarCv(cv, nome)); bx.append(env, bai); b.append(bx, img); if (nota) b.append(el('div', 'nota', nota));
+  });
+}
+function objetivoDia(loja, on) {
+  if (!loja) { toast('Escolha a loja.'); return; } toast('Montando o objetivo do dia…');
+  rodar('fechamentoDia', [S.token, loja, ''], (r) => {
+    const o = r.lojas[0]; if (o.objetivo == null) { toast('A meta do mês desta loja ainda não foi cadastrada.'); return; }
+    const d0 = new Date(r.data + 'T12:00:00Z'); d0.setUTCDate(d0.getUTCDate() - 1); const ont = d0.toISOString().slice(0, 10);
+    const fim = (y) => { const cv = cardObjetivo(o, y && y.lojas[0] && y.lojas[0].temVendas ? y.lojas[0] : null, on && !on.semDados ? focoLoja(on).filter((x) => x[0] !== '🤝').slice(0, 3) : []); verImagem('Objetivo ' + isoBR(r.data).slice(0, 5), cv, 'Objetivo ' + loja + ' ' + isoBR(r.data).slice(0, 5).replace('/', '-') + '.png', 'Toque em "Enviar no WhatsApp" e escolha o grupo da loja.'); };
+    google.script.run.withSuccessHandler(fim).withFailureHandler(() => fim(null)).fechamentoDia(S.token, loja, ont);
+  });
+}
+function cardObjetivo(o, y, foco) {
+  const hY = y ? 150 + ((y.destaques || []).length ? 30 + y.destaques.length * 26 : 0) : 0, hF = foco.length ? 50 + foco.length * 56 : 0;
+  const H = 270 + 140 + hY + hF + 92; const [c, g] = fcCanvas(H);
+  fcTopo(g, 270, o.loja, 'Objetivo do dia · ' + fcDia(o.data));
+  fcR(g, 28, 132, 484, 118, 16, 'rgba(255,255,255,.13)'); fcT(g, '🎯', 70, 210, 48, '#fff', 400, 'center');
+  fcT(g, 'Objetivo de hoje', 128, 170, 13, 'rgba(255,255,255,.85)'); fcT(g, rs(o.objetivo), 128, 206, 32, '#fff', 800);
+  fcT(g, o.objetivoOnline ? 'dentro dele, online: ' + rs(o.objetivoOnline) : 'Bora juntas! 💜', 128, 230, 13, 'rgba(255,255,255,.92)', 600);
+  let yy = 270; const MES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+o.data.slice(5, 7) - 1];
+  const vend = o.mesVendido - o.valor, pctM = o.meta ? vend / o.meta : 0;
+  fcSec(g, yy, '📅 Mês de ' + MES); fcLinha(g, yy + 60, 'Vendido até ontem', rs(vend), true); fcBarra(g, yy + 72, pctM); fcLinha(g, yy + 104, 'Meta do mês · ' + fcPct(pctM), rs(o.meta)); fcLinha(g, yy + 128, 'Falta para a meta', rs(Math.max(0, o.meta - vend)), true); yy += 140;
+  if (y) { fcSec(g, yy, '📊 Ontem · ' + fcDia(y.data).split(',')[0]); fcLinha(g, yy + 60, 'Vendido', rs(y.valor) + (y.pct ? ' · ' + fcPct(y.pct) + ' do objetivo' + (y.pct >= 1 ? ' ✅' : '') : ''), true);
+    fcLinha(g, yy + 88, 'Vendas · peças · ticket', y.vendas + ' · ' + y.itens + ' · ' + (y.tkm ? rs(y.tkm) : '—')); if (y.fila) fcLinha(g, yy + 116, 'Fila: atendimentos · conversão', y.fila.at + ' · ' + fcPct(y.fila.conv));
+    let k = yy + 150; if ((y.destaques || []).length) { fcT(g, '⭐ Destaques de ontem', 28, k, 13, '#a85d00', 700); y.destaques.forEach((d, i) => fcT(g, d.nome + ' — ' + d.txt, 28, k + 24 + i * 26, 14, '#1f1e1d')); } yy += hY; }
+  if (foco.length) { fcSec(g, yy, '🧭 Foco de hoje'); foco.forEach(([e, t], i) => { fcR(g, 28, yy + 44 + i * 56, 484, 48, 12, '#f7f6f3'); fcT(g, e, 44, yy + 74 + i * 56, 18); const n = fcWrap(g, t.length > 110 ? t.slice(0, 107) + '…' : t, 76, yy + 64 + i * 56, 424, 17, 13, '#1f1e1d'); void n; }); yy += hF; }
+  fcR(g, 28, yy + 14, 484, 44, 12, '#efebf5'); fcT(g, '💜 Bora fazer acontecer, equipe!', 270, yy + 42, 15, '#5b4a7a', 800, 'center'); yy += 72;
+  g.fillStyle = '#eee9e1'; g.fillRect(0, yy, 540, 1); fcT(g, 'App Amorata Equipe', 28, yy + 14, 11, '#9a968f');
+  return c;
+}
 // ---------- fechamento do dia em imagem ----------
 const FC_DS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 const fcDia = (d) => FC_DS[new Date(d + 'T12:00:00Z').getUTCDay()] + ', ' + isoBR(d);
