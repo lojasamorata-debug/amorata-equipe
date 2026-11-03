@@ -668,7 +668,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
 
     <div id="v-gest" class="hide">
       <div class="filtros um"><select id="g-loja"></select></div>
-      <div class="seg"><button id="sg-imp" class="on">📥 Vendas do USE</button><button id="sg-met">🎯 Metas</button><button id="sg-ck">✅ Checklist</button><button id="sg-esc">🗓️ Escala</button><button id="sg-eq">👥 Equipe</button><button id="sg-pla">🌱 Planos</button><button id="sg-pre" class="hide">🎁 Prêmios</button><button id="sg-rh" class="hide">📁 RH</button></div>
+      <div class="seg"><button id="sg-imp" class="on">📥 Vendas do USE</button><button id="sg-met">🎯 Metas</button><button id="sg-ck">📋 Tarefas</button><button id="sg-esc">🗓️ Escala</button><button id="sg-eq">👥 Equipe</button><button id="sg-pla">🌱 Planos</button><button id="sg-pre" class="hide">🎁 Prêmios</button><button id="sg-rh" class="hide">📁 RH</button></div>
 
       <div id="g-imp">
         <div class="card hide" id="gt-card" style="margin-top:12px;border:2px solid var(--accent)">
@@ -723,9 +723,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
       </div>
 
       <div id="g-ck" class="hide">
-        <div class="sub" style="margin-top:12px">Um item por linha. A equipe marca no app (ou no tablet) e o resumo diário mostra o que faltou.</div>
-        <h2><span>Abertura</span></h2><textarea id="gc-ABERTURA" rows="8"></textarea><button class="btn pri" id="gc-ok-ABERTURA" style="margin-top:8px">Salvar abertura</button>
-        <h2><span>Fechamento</span></h2><textarea id="gc-FECHAMENTO" rows="8"></textarea><button class="btn pri" id="gc-ok-FECHAMENTO" style="margin-top:8px">Salvar fechamento</button>
+        <div class="hide"><textarea id="gc-ABERTURA"></textarea><button id="gc-ok-ABERTURA"></button><textarea id="gc-FECHAMENTO"></textarea><button id="gc-ok-FECHAMENTO"></button></div>
         <h2><span>📋 Tarefas da equipe</span><button class="btn sm pri" id="gt-nova">+ Nova tarefa</button></h2>
         <div class="sub">Tarefa com responsável e dia: só um dia, toda semana ou todo dia. A pessoa recebe o aviso e marca no checklist do app (ou no tablet).</div>
         <div id="gt-lista" style="margin-top:8px"></div>
@@ -919,7 +917,6 @@ function carregarCk() { if (S && loja) google.script.run.withSuccessHandler(dese
 const TURNO_TXT = { ABERTURA: '☀️ abertura', DIA: '🕐 durante o dia', FECHAMENTO: '🌙 fechamento' };
 function listaTarefas(box, r, marcarT) {
   const ts = r.tarefas || []; if (!ts.length) return;
-  const h = el('div', 'sub', '📋 Tarefas de hoje'); h.style.cssText = 'margin:12px 0 6px;font-weight:700;color:var(--fg)'; box.append(h);
   ts.slice().sort((a, b) => (b.minha - a.minha) || (['ABERTURA', 'DIA', 'FECHAMENTO'].indexOf(a.turno) - ['ABERTURA', 'DIA', 'FECHAMENTO'].indexOf(b.turno))).forEach((t) => {
     const d = el('div', 'ck-it' + (t.feito ? ' ok' : '')); if (t.minha && !t.feito) d.style.background = 'var(--accentbg)';
     const tx = el('span', 't'); tx.append(document.createTextNode(t.texto)); const sb = el('small', '', (t.respNome ? '👤 ' + (t.minha ? 'você' : t.respNome) : '👥 qualquer pessoa') + ' · ' + (TURNO_TXT[t.turno] || '')); sb.style.cssText = 'display:block;opacity:.75'; tx.append(sb);
@@ -934,17 +931,12 @@ function listaCk(box, r, turno, marcar) {
   t.itens.forEach((x) => { const d = el('div', 'ck-it' + (x.feito ? ' ok' : '')); d.append(el('i', '', x.feito ? '✓' : ''), el('span', 't', x.texto)); if (x.feito) d.append(el('small', '', x.feito.nome + ' ' + x.feito.hora)); d.addEventListener('click', () => marcar(turno, x.texto, !x.feito)); box.append(d); });
 }
 function desenharCk(r) {
-  CK = r; const t = CK_T || turnoAgora(), tu = r.turnos.find((x) => x.turno === t), f = tu.itens.filter((x) => x.feito).length;
-  $('ck').classList.remove('hide'); $('ck-tit').textContent = (t === 'ABERTURA' ? '☀️ Checklist de abertura' : '🌙 Checklist de fechamento');
-  const n = $('ck-n'); n.textContent = f + '/' + tu.itens.length; n.classList.toggle('ok', f === tu.itens.length);
-  listaCk($('ck-box'), r, t, (turno, item, feito) => {
-    CK_T = turno; const tu2 = CK.turnos.find((y) => y.turno === turno), it = tu2 && tu2.itens.find((y) => y.texto === item), ant = it ? it.feito : null;
-    if (it) { const d = new Date(); it.feito = feito ? { nome: primeiroNome(S.nome), hora: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') } : null; desenharCk(CK); }
-    rodar('marcarCheck', [S.token, loja, turno, item, feito], desenharCk, () => { if (it) { it.feito = ant; desenharCk(CK); } });
-  });
+  CK = r; const ts = r.tarefas || [], f = ts.filter((x) => x.feito).length;
+  $('ck').classList.toggle('hide', !ts.length); $('ck-tit').textContent = '📋 Tarefas de hoje';
+  const n = $('ck-n'); n.textContent = f + '/' + ts.length; n.classList.toggle('ok', ts.length && f === ts.length); $('ck-box').replaceChildren(); $('ck-box').classList.add('ck-l');
   listaTarefas($('ck-box'), r, (id, feito) => { const t = (CK.tarefas || []).find((x) => x.id === id), ant = t ? t.feito : null; if (t) { const d = new Date(); t.feito = feito ? { nome: primeiroNome(S.nome), hora: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') } : null; desenharCk(CK); }
     rodar('marcarTarefa', [S.token, loja, id, feito], desenharCk, () => { if (t) { t.feito = ant; desenharCk(CK); } }); });
-  const minhas = (r.tarefas || []).filter((t) => t.minha && !t.feito).length; if (minhas) $('ck-tit').textContent += ' · 📋 ' + minhas + (minhas === 1 ? ' tarefa sua' : ' tarefas suas');
+  const minhas = ts.filter((t) => t.minha && !t.feito).length; if (minhas) $('ck-tit').textContent += ' · ' + minhas + (minhas === 1 ? ' sua' : ' suas');
 }
 // ---------- atualizar o app ----------
 let URL_APP = '';
@@ -2576,7 +2568,7 @@ function passosAba(a) {
     ],
     dia: [
       { el: 'eu-meta', t: '🎯 Sua meta de hoje', x: 'Quanto você precisa vender hoje. Dias de mais movimento (sábado, Black) têm objetivo maior.' },
-      { el: 'ck', t: '✅ Checklist e tarefas', x: 'Itens de abertura/fechamento da loja e as tarefas de hoje. As suas aparecem em destaque: toque para marcar como feita.' },
+      { el: 'ck', t: '📋 Tarefas de hoje', x: 'As tarefas da loja para hoje. As suas aparecem em destaque: toque para marcar como feita.' },
       { el: 'cart', t: '📞 Minhas clientes', x: 'Clientes para retornar hoje, peças que elas pediram e a busca pela ficha da cliente. Toque para chamar no WhatsApp.' },
       { el: 'me', t: '🗓️ Minha escala', x: 'Seus dias de trabalho e folga. Precisa trocar? Peça por aqui.' },
       { el: 'dia-fila', t: '👉 Ir para a fila', x: 'Chegou na loja? Toque aqui para entrar na fila da vez.' },
@@ -2611,7 +2603,7 @@ function passosAba(a) {
     ],
     gest: [
       { el: 'g-loja', t: '🏬 Loja', x: 'Escolha a loja que você quer gerenciar.' },
-      { el: () => $('sg-imp').parentElement, t: '🗂️ Abas da gestão', x: 'Vendas do USE, Metas, Checklist e tarefas, Escala, Equipe, Planos' + (adm ? ', Prêmios e RH.' : '.') },
+      { el: () => $('sg-imp').parentElement, t: '🗂️ Abas da gestão', x: 'Vendas do USE, Metas, Tarefas, Escala, Equipe, Planos' + (adm ? ', Prêmios e RH.' : '.') },
       { el: 'gt-card', t: '📥 Importar vendas', x: 'Suba o relatório do USE (um dia, todas as lojas). O app separa cada vendedora na loja certa.' },
       { el: 'fc-loja', t: '📊 Fechamento e objetivo', x: 'Gere a imagem do fechamento do dia ou do objetivo de hoje e envie no grupo com um toque.' },
       { el: 'gd-card', t: '📅 Divisão da meta', x: 'Como a meta do mês se divide nos dias (sábado, Black…).' },
@@ -4417,11 +4409,10 @@ $('b-atu').addEventListener('click', atualizarApp);
 $('tb-atu').addEventListener('click', atualizarApp);
 $('tb-sair').addEventListener('click', () => escolher('Sair do modo tablet', 'O aparelho volta para a tela de login. Para ligar de novo, a gerente entra com o usuário dela.', [['Sair do tablet', 'bad', () => { fechar(); tabletDesligar(false); }]]));
 function tCk(r) {
-  const t = CK_T || turnoAgora(), tu = r.turnos.find((x) => x.turno === t), f = tu.itens.filter((x) => x.feito).length;
-  $('tb-ck').textContent = '✅ ' + f + '/' + tu.itens.length;
+  const ts = r.tarefas || [], f = ts.filter((x) => x.feito).length;
+  $('tb-ck').textContent = '📋 ' + f + '/' + ts.length;
   if ($('sheet').classList.contains('hide') || !tCk.aberto) return;
-  $('sh-t').textContent = 'Checklist da loja'; $('sh-s').textContent = 'Toque no item para marcar';
-  listaCk($('sh-o'), r, t, (turno, item, feito) => { CK_T = turno; trodar('tabletMarcarCheck', [T.chave, turno, item, feito], tCk); });
+  $('sh-t').textContent = 'Tarefas de hoje'; $('sh-s').textContent = ts.length ? 'Toque na tarefa para marcar' : 'Nenhuma tarefa para hoje.'; $('sh-o').replaceChildren(); $('sh-o').classList.add('ck-l');
   listaTarefas($('sh-o'), r, (id, feito) => trodar('tabletMarcarTarefa', [T.chave, id, feito], tCk));
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', () => { tCk.aberto = false; fechar(); }); $('sh-o').append(c);
 }
