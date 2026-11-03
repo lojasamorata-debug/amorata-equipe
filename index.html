@@ -425,7 +425,7 @@ body.fila-v #eu-acoes .btn.lk { flex:1 1 auto; padding:6px 8px; font-size:13px; 
 .av.st-ring { box-shadow:0 0 0 2px var(--bg), 0 0 0 4.5px #e8738a; cursor:pointer; } .av.st-ring.visto { box-shadow:0 0 0 2px var(--bg), 0 0 0 4px #c9c4bd; }
 #st-strip .st .mais { position:relative; } #st-strip .st .mais::after { content:'+'; position:absolute; right:-2px; bottom:-2px; width:20px; height:20px; border-radius:50%; background:var(--accent); color:#fff; font-size:15px; line-height:19px; border:2px solid var(--bg); }
 #stv, #strec { position:fixed; inset:0; z-index:75; background:#111; color:#fff; display:flex; flex-direction:column; }
-#stv .bars { display:flex; gap:4px; padding:calc(10px + env(safe-area-inset-top)) 10px 6px; } #stv .bars i { flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.3); overflow:hidden; } #stv .bars i b { display:block; height:100%; width:0; background:#fff; }
+#stv .stbars { display:flex; gap:4px; padding:calc(10px + env(safe-area-inset-top)) 10px 6px; } #stv .stbars i { flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.3); overflow:hidden; } #stv .stbars i b { display:block; height:100%; width:0; background:#fff; }
 #stv .top, #strec .top { display:flex; align-items:center; gap:10px; padding:6px 12px; } #stv .top .av { width:36px; height:36px; } #stv .top .nm { flex:1; font-weight:600; font-size:14px; } #stv .top .nm span { display:block; font-weight:400; font-size:12px; opacity:.7; }
 #stv .x, #strec .x { background:none; border:0; color:#fff; font-size:28px; padding:0 6px; cursor:pointer; }
 #stv .cont { flex:1; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; } #stv .cont video, #stv .cont img { max-width:100%; max-height:100%; }
@@ -433,6 +433,8 @@ body.fila-v #eu-acoes .btn.lk { flex:1 1 auto; padding:6px 8px; font-size:13px; 
 #stv .leg { position:absolute; left:0; right:0; bottom:16px; text-align:center; padding:8px 18px; font-size:16px; text-shadow:0 1px 4px rgba(0,0,0,.8); }
 #stv .tapE, #stv .tapD { position:absolute; top:0; bottom:0; width:35%; z-index:2; } #stv .tapE { left:0; } #stv .tapD { right:0; }
 #stv .rod { display:flex; justify-content:space-between; align-items:center; padding:10px 14px calc(14px + env(safe-area-inset-bottom)); font-size:14px; } #stv .rod button { background:rgba(255,255,255,.15); color:#fff; border:0; border-radius:999px; padding:8px 14px; font:inherit; }
+#stv .streac { display:flex; gap:6px; margin:0 auto; } #stv .streac button { background:rgba(255,255,255,.12); border:0; border-radius:50%; width:44px; height:44px; font-size:24px; padding:0; cursor:pointer; } #stv .streac button.on { background:rgba(255,255,255,.4); transform:scale(1.1); }
+#stv .stvoa { position:absolute; left:50%; bottom:20%; font-size:72px; transform:translateX(-50%); animation:stvoa 1.2s ease-out forwards; z-index:3; pointer-events:none; } @keyframes stvoa { from { opacity:1; transform:translate(-50%,0) scale(.6); } to { opacity:0; transform:translate(-50%,-180px) scale(1.4); } }
 #strec .cont { flex:1; display:flex; align-items:center; justify-content:center; position:relative; } #strec video { max-width:100%; max-height:100%; background:#000; } #strec .tmp { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.5); padding:4px 12px; border-radius:999px; font-variant-numeric:tabular-nums; }
 #strec .rod { padding:12px 14px calc(16px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:10px; align-items:center; } #strec .rec { width:74px; height:74px; border-radius:50%; border:5px solid #fff; background:#e33; cursor:pointer; } #strec .rec.on { border-radius:18px; width:60px; height:60px; animation:stpulso 1s infinite; }
 #strec input { width:100%; max-width:480px; box-sizing:border-box; border:0; border-radius:12px; padding:12px; font:inherit; } #strec .bts { display:flex; gap:10px; width:100%; max-width:480px; } #strec .bts .btn { flex:1; }
@@ -2150,7 +2152,7 @@ function b64Blob(b64, mime) { const bin = atob(b64), by = new Uint8Array(bin.len
 function verStatus(gi, ii) {
   const ant = $('stv'); if (ant) ant.remove(); if (!ST || !ST.grupos[gi]) return;
   const g = ST.grupos[gi], v = el('div'); v.id = 'stv'; let tm = null, raf = null, midia = null;
-  const bars = el('div', 'bars'); g.itens.forEach(() => { const i = el('i'); i.append(el('b')); bars.append(i); });
+  const bars = el('div', 'stbars'); g.itens.forEach(() => { const i = el('i'); i.append(el('b')); bars.append(i); });
   const top = el('div', 'top'), x = el('button', 'x', '×'), nm = el('div', 'nm'); top.append(avatar(g.foto, g.nome), nm, x);
   const cont = el('div', 'cont'), tE = el('div', 'tapE'), tD = el('div', 'tapD'), rod = el('div', 'rod'); v.append(bars, top, cont, rod); document.body.append(v);
   const parar = () => { clearTimeout(tm); cancelAnimationFrame(raf); if (midia) { try { midia.pause(); } catch (e) {} } };
@@ -2161,8 +2163,11 @@ function verStatus(gi, ii) {
     ii = k; const it = g.itens[k]; [...bars.children].forEach((b, j) => { b.firstChild.style.width = j < k ? '100%' : '0'; });
     nm.replaceChildren(document.createTextNode(g.eu ? 'Você' : g.nome), el('span', '', 'hoje às ' + it.quando + (g.loja ? ' · ' + g.loja : '')));
     cont.replaceChildren(tE, tD, el('div', '', 'Carregando…')); rod.replaceChildren();
-    if (g.eu) { const vi = el('button', '', '👀 ' + (it.vistos || 0) + ' ' + (it.vistos === 1 ? 'visualização' : 'visualizações')); vi.addEventListener('click', () => { parar(); rodar('statusQuemViu', [S.token, it.id], (l) => escolher('Quem viu', l.length ? l.join(', ') : 'Ninguém viu ainda.', [])); }); const ap = el('button', '', '🗑️ Apagar'); ap.addEventListener('click', () => { parar(); escolher('Apagar este status?', 'Ele sai do ar agora.', [['Apagar', 'bad', () => { fechar(); rodar('statusApagar', [S.token, it.id], (r) => { ST = r; v.remove(); desenharStatus(); toast('Status apagado'); }); }]]); }); rod.append(vi, ap); }
-    else rod.append(el('span', '', ''));
+    if (g.eu) { const rs = Object.keys(it.reacoes || {}).map((e2) => e2 + (it.reacoes[e2] > 1 ? it.reacoes[e2] : '')).join(' '); const vi = el('button', '', '👀 ' + (it.vistos || 0) + (rs ? '  ·  ' + rs : '')); vi.addEventListener('click', () => { parar(); rodar('statusQuemViu', [S.token, it.id], (l) => escolher('Quem viu', l.length ? l.join(', ') : 'Ninguém viu ainda.', [])); }); const ap = el('button', '', '🗑️ Apagar'); ap.addEventListener('click', () => { parar(); escolher('Apagar este status?', 'Ele sai do ar agora.', [['Apagar', 'bad', () => { fechar(); rodar('statusApagar', [S.token, it.id], (r) => { ST = r; v.remove(); desenharStatus(); toast('Status apagado'); }); }]]); }); rod.append(vi, ap); }
+    else {
+      const rr = el('div', 'streac'); REACOES_APP.forEach((em) => { const b2 = el('button', it.minha === em ? 'on' : '', em); b2.addEventListener('click', (ev) => { ev.stopPropagation(); const ja = it.minha === em; it.minha = ja ? '' : em; [...rr.children].forEach((z) => z.classList.toggle('on', z.textContent === it.minha)); if (!ja) { const f = el('div', 'stvoa', em); cont.append(f); setTimeout(() => f.remove(), 1200); } rodar('statusReagir', [S.token, it.id, em], (x2) => { it.minha = x2.minha; [...rr.children].forEach((z) => z.classList.toggle('on', z.textContent === it.minha)); }); }); rr.append(b2); });
+      rod.append(rr);
+    }
     const tocar = (url) => {
       const fill = bars.children[k].firstChild, ini = Date.now();
       const anim = (durMs) => { const pass = () => { const pc = midia && midia.duration && isFinite(midia.duration) ? midia.currentTime / midia.duration : (Date.now() - ini) / durMs; fill.style.width = Math.min(100, pc * 100) + '%'; raf = requestAnimationFrame(pass); }; pass(); };
@@ -2187,7 +2192,7 @@ function novoStatus() {
     if (f.size > 12 * 1024 * 1024) { toast('Vídeo muito grande. Grave pelo app (🎥), que já sai menor.'); return; }
     const u = URL.createObjectURL(f), t = el('video'); t.preload = 'metadata'; t.src = u; t.onloadedmetadata = () => { if (t.duration > 30.5) { toast('O vídeo pode ter até 30 segundos.'); URL.revokeObjectURL(u); return; } previaStatus('video', f, null, Math.round(t.duration)); }; t.onerror = () => toast('Não consegui ler este vídeo.');
   });
-  escolher('Novo status', 'Some sozinho depois de 24 horas · até 30 segundos', [['🎥 Gravar vídeo', 'pri', () => { fechar(); gravarStatus('video'); }], ['🎙️ Gravar áudio', '', () => { fechar(); gravarStatus('audio'); }], ['🖼️ Foto ou vídeo do celular', '', () => { fechar(); gal.click(); }]]);
+  escolher('Novo status', 'Some sozinho depois de 24 horas · até 30 segundos', [['🎥 Gravar vídeo', 'pri', () => { fechar(); gravarStatus('video'); }], ['🎙️ Gravar áudio', '', () => { fechar(); gravarStatus('audio'); }], ['✍️ Texto', '', () => { fechar(); textoStatus(); }], ['🖼️ Foto ou vídeo do celular', '', () => { fechar(); gal.click(); }]]);
 }
 function tipoGrav(video) { const op = video ? ['video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm'] : ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm']; return op.find((m) => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || ''; }
 async function gravarStatus(tipo) {
@@ -2211,6 +2216,31 @@ async function gravarStatus(tipo) {
     mr.onstop = () => { desligar(); const tipoB = (mr.mimeType || mt || (video ? 'video/mp4' : 'audio/mp4')).split(';')[0]; const bl = new Blob(pedacos, { type: tipoB }); const dur = Math.min(30, Math.round((Date.now() - ini) / 1000)); w.remove(); previaStatus(tipo, bl, null, dur); };
     mr.start(500); ini = Date.now(); rec.classList.add('on');
     tk = setInterval(() => { const s2 = 30 - Math.floor((Date.now() - ini) / 1000); tmp.textContent = '0:' + String(Math.max(0, s2)).padStart(2, '0'); if (s2 <= 0) fim(); }, 250);
+  });
+}
+// status de texto: fundo colorido com a frase (vira uma imagem, como no WhatsApp)
+const ST_CORES = [['#5b4a7a', '#7a64a0'], ['#e8738a', '#f2a07b'], ['#1e7a46', '#3fae6a'], ['#1f3c88', '#3f7fd1'], ['#c2410c', '#f59e0b'], ['#1f1e1d', '#4b4744']];
+function textoStatus() {
+  let cor = 0; const w = el('div'); w.id = 'strec'; const top = el('div', 'top'), x = el('button', 'x', '×'); top.append(el('b', '', '✍️ Status de texto'), el('span', '', '')); top.lastChild.style.flex = '1'; top.append(x);
+  const cont = el('div', 'cont'); const ta = el('textarea'); ta.maxLength = 200; ta.placeholder = 'Escreva aqui…'; ta.style.cssText = 'width:88%;max-width:480px;min-height:40%;background:none;border:0;color:#fff;font:500 28px/1.3 Inter,system-ui,sans-serif;text-align:center;resize:none;outline:none';
+  const pinta = () => { cont.style.background = 'linear-gradient(160deg,' + ST_CORES[cor][0] + ',' + ST_CORES[cor][1] + ')'; };
+  cont.append(ta); pinta();
+  const rod = el('div', 'rod'), cores = el('div'); cores.style.cssText = 'display:flex;gap:10px';
+  ST_CORES.forEach((c, i) => { const b = el('button'); b.style.cssText = 'width:30px;height:30px;border-radius:50%;border:2px solid #fff;cursor:pointer;background:linear-gradient(160deg,' + c[0] + ',' + c[1] + ')'; b.addEventListener('click', () => { cor = i; pinta(); ta.focus(); }); cores.append(b); });
+  const pub = el('button', 'btn pri big', 'Publicar'); pub.style.cssText = 'width:100%;max-width:480px'; rod.append(cores, pub);
+  w.append(top, cont, rod); document.body.append(w); setTimeout(() => ta.focus(), 80);
+  x.addEventListener('click', () => w.remove());
+  pub.addEventListener('click', () => {
+    const t = ta.value.trim(); if (!t) { toast('Escreva o texto.'); return; }
+    const cv = document.createElement('canvas'); cv.width = 720; cv.height = 1280; const g = cv.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 720, 1280); gr.addColorStop(0, ST_CORES[cor][0]); gr.addColorStop(1, ST_CORES[cor][1]); g.fillStyle = gr; g.fillRect(0, 0, 720, 1280);
+    let tam = t.length > 120 ? 44 : t.length > 60 ? 54 : 66; g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    const quebra = () => { g.font = '600 ' + tam + 'px Inter, system-ui, sans-serif'; const linhas = []; t.split('\n').forEach((par) => { let l = ''; par.split(/\s+/).forEach((p2) => { const tt = l ? l + ' ' + p2 : p2; if (g.measureText(tt).width > 620 && l) { linhas.push(l); l = p2; } else l = tt; }); linhas.push(l); }); return linhas; };
+    let ls = quebra(); while (ls.length * tam * 1.3 > 1000 && tam > 28) { tam -= 4; ls = quebra(); }
+    const y0 = 640 - (ls.length - 1) * tam * 0.65; ls.forEach((l, i) => g.fillText(l, 360, y0 + i * tam * 1.3));
+    g.font = '500 26px Inter, system-ui, sans-serif'; g.globalAlpha = 0.7; g.fillText(primeiroNome(S.nome) + ' · Amorata Equipe', 360, 1210); g.globalAlpha = 1;
+    pub.disabled = true; pub.textContent = 'Publicando…';
+    rodar('statusPostar', [S.token, 'foto', cv.toDataURL('image/jpeg', 0.85), '', 0], (r) => { ST = r; w.remove(); desenharStatus(); toast('Status publicado! Some em 24 h ✨'); }, () => { pub.disabled = false; pub.textContent = 'Publicar'; });
   });
 }
 function previaStatus(tipo, blob, dataUrl, dur) {
