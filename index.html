@@ -645,10 +645,18 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
       <div class="seg"><button id="sg-imp" class="on">📥 Vendas do USE</button><button id="sg-met">🎯 Metas</button><button id="sg-ck">✅ Checklist</button><button id="sg-esc">🗓️ Escala</button><button id="sg-eq">👥 Equipe</button><button id="sg-pla">🌱 Planos</button><button id="sg-pre" class="hide">🎁 Prêmios</button><button id="sg-rh" class="hide">📁 RH</button></div>
 
       <div id="g-imp">
+        <div class="card hide" id="gt-card" style="margin-top:12px;border:2px solid var(--accent)">
+          <b>📥 Importar TODAS as lojas de uma vez</b>
+          <div class="sub" style="margin-top:4px">Só para a administração. No USE: Análise de Vendedor (Pedidos/PA) de UM dia, com todas as lojas → exporte (XLS ou XML). O app separa cada vendedora na loja certa pelo código (1-, 2-, 3-…).</div>
+          <input type="file" id="gt-arq" accept=".xls,.xlsx,.xml,.csv" style="margin-top:10px">
+          <label class="sub" style="display:block;margin-top:8px">Dia das vendas <input type="date" id="gt-data"></label>
+          <div id="gt-prev" style="margin-top:8px"></div>
+          <button class="btn pri big hide" id="gt-ok" style="margin-top:8px">Importar</button>
+        </div>
         <div class="card" style="margin-top:12px">
           <b>Importar o relatório do dia</b>
           <div class="sub" style="margin-top:4px">No USE: Relatório de Análise de Vendedor (Pedidos/PA) → período de UM dia → XLS. Suba o arquivo aqui. Pode importar o mesmo dia mais de uma vez: o app junta os arquivos e fica com o valor mais completo de cada vendedora (não soma em dobro).</div>
-          <input type="file" id="gi-arq" accept=".xls,.xlsx,.csv" style="margin-top:10px">
+          <input type="file" id="gi-arq" accept=".xls,.xlsx,.xml,.csv" style="margin-top:10px">
           <label class="sub" style="display:block;margin-top:8px">Dia das vendas <input type="date" id="gi-data"></label>
           <div id="gi-prev" style="margin-top:8px"></div>
           <button class="btn pri big hide" id="gi-ok" style="margin-top:8px">Confirmar importação</button>
@@ -3158,7 +3166,7 @@ function carregarGestao() {
   if (G_ABA === 'pre') { rodar('premiosAdm', [S.token], desenharPremiosAdm); return; }
   if (G_ABA === 'rh') { rodar('rhLista', [S.token, RH_SEL], desenharRHAdm); return; }
   if (G_ABA === 'pla') { rodar('planosLoja', [S.token, lj, ''], desenharPlanos); return; }
-  if (G_ABA === 'imp') { if (!$('gi-data').value) $('gi-data').value = ontemISO(); rodar('statusVendas', [S.token, lj], desenharStatusVendas); }
+  if (G_ABA === 'imp') { if (!$('gi-data').value) $('gi-data').value = ontemISO(); $('gt-card').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); if (!$('gt-data').value) $('gt-data').value = ontemISO(); rodar('statusVendas', [S.token, lj], desenharStatusVendas); }
   if (G_ABA === 'met') { prepMeses(); rodar('metasDoMes', [S.token, lj, $('gm-mes').value], desenharMetasEd); }
   if (G_ABA === 'ck') rodar('checklist', [S.token, lj], desenharCkEd);
   if (G_ABA === 'esc') { rodar('escala', [S.token, lj], desenharEscala); rodar('feriados', [S.token, lj], desenharFeriados); }
@@ -3359,6 +3367,68 @@ function lerPedidosPA(file) {
   if (window.XLSX) go(); else { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = go; s.onerror = () => { $('gi-prev').textContent = 'Não consegui carregar o leitor de Excel. Verifique a internet.'; }; document.head.append(s); }
 }
 $('gi-arq').addEventListener('change', (e) => { if (e.target.files[0]) lerPedidosPA(e.target.files[0]); });
+// ---------- ADMIN: um arquivo com todas as lojas ----------
+const COD_LOJA = { '1': 'Cerâmica', '2': 'Via Verde', '3': 'Cruzeiro do Sul', '4': 'Via Norte', '5': 'Sumaúma' };
+let GT = null;
+function lerRelatorioUSE(rows) {
+  const datas = []; rows.slice(0, 15).forEach((r) => r.forEach((v) => { String(v).replace(/(\d{2})\/(\d{2})\/(\d{4})/g, (m, d, mm, y) => { datas.push(y + '-' + mm + '-' + d); return m; }); }));
+  let hi = -1, m = null;
+  for (let i = 0; i < Math.min(rows.length, 40) && hi < 0; i++) {
+    const hs = rows[i].map(nrmH); const f = (re, no) => hs.findIndex((h) => h && re.test(h) && !(no && no.test(h)));
+    const vend = f(/vendedor|funcionario|nome/); if (vend < 0) continue;
+    let valor = f(/total.*venda|venda.*total|valor total|^total$/, /%|percent/); if (valor < 0) valor = f(/valor|^vendas? \(r\$\)/, /%|percent|medio/);
+    const qtd = f(/^vendas$|qtd.*venda|quant.*venda|^pedidos$|n.*vendas/, /%|percent|total|valor|item/), itens = f(/^itens$|^pecas$|qtd.*ite|quant.*ite|^itens vendidos/, /%|percent|\//), bonus = f(/bonus/);
+    if (valor >= 0) { hi = i; m = { vend: vend, valor: valor, qtd: qtd, itens: itens, bonus: bonus, loja: f(/^loja/), cod: f(/^cod|^vendedor$/) }; }
+  }
+  if (hi < 0) throw new Error('Não reconheci o relatório. Confira se é o "Análise de Vendedor – Pedidos/PA".');
+  const linhas = [];
+  rows.slice(hi + 1).forEach((r) => {
+    let nome = String(r[m.vend] || '').trim(); if (!nome || /^total/i.test(nrmH(nome))) return;
+    let cod = (nome.match(/^(\d+-\d+)\s+/) || [])[1];
+    if (!cod && m.loja >= 0 && m.cod >= 0 && m.cod !== m.vend) { const lj = String(r[m.loja]).match(/\d+/), cv = String(r[m.cod]).match(/\d+/); if (lj && cv) cod = lj[0] + '-' + cv[0]; }
+    if (!cod) return; nome = nome.replace(/^\d+-\d+\s+/, '');
+    linhas.push([cod, nome, numBR(r[m.valor]), m.bonus >= 0 ? numBR(r[m.bonus]) : 0, m.qtd >= 0 ? numBR(r[m.qtd]) : 0, m.itens >= 0 ? numBR(r[m.itens]) : 0]);
+  });
+  return { linhas: linhas, datas: datas };
+}
+function lerTodasLojas(file) {
+  const p = $('gt-prev'); p.textContent = 'Lendo o arquivo…'; $('gt-ok').classList.add('hide'); GT = null;
+  const go = () => { const fr = new FileReader(); fr.onload = () => {
+    try {
+      const wb = XLSX.read(new Uint8Array(fr.result), { type: 'array', cellDates: false });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: '' });
+      const r = lerRelatorioUSE(rows); let aviso = '';
+      if (r.datas.length) { const u = Array.from(new Set(r.datas)); if (u.length === 1) $('gt-data').value = u[0]; else if (r.datas[0] === r.datas[1]) $('gt-data').value = r.datas[0]; else aviso = '⚠️ O arquivo parece ter mais de um dia (' + isoBR(r.datas[0]) + ' a ' + isoBR(r.datas[1]) + '). Exporte UM dia só.'; }
+      if (!r.linhas.length) throw new Error('Não encontrei vendedores no arquivo.');
+      const por = {}, sem = []; r.linhas.forEach((l) => { const n = l[0].split('-')[0], lj = COD_LOJA[n]; if (!lj) { sem.push(l[1]); return; } (por[lj] = por[lj] || []).push(l); });
+      GT = { linhas: r.linhas, nome: file.name, por: por };
+      p.replaceChildren(); if (aviso) p.append(el('div', 'aviso-meta', aviso));
+      const t = el('table'), tb = el('tbody'), th = el('thead'), trh = el('tr'); ['Loja', 'Total', 'Online', 'Vendedoras'].forEach((x, i) => trh.append(el('th', i ? 'n' : '', x))); th.append(trh);
+      let tg = 0; Object.keys(COD_LOJA).forEach((n) => { const lj = COD_LOJA[n], ls = por[lj] || []; const tot = ls.reduce((a, l) => a + l[2], 0), on = ls.filter((l) => /\sON(-?LINE)?$/i.test(l[1])).reduce((a, l) => a + l[2], 0); tg += tot; const tr = el('tr'); [lj, ls.length ? rs(tot) : '—', ls.length ? rs(on) : '—', ls.length ? String(ls.filter((l) => !/\sON(-?LINE)?$/i.test(l[1])).length) : 'sem vendas no arquivo'].forEach((v, i) => tr.append(el('td', i ? 'n' : '', v))); tb.append(tr); });
+      const trt = el('tr'); [el('b', '', 'Total'), el('b', '', rs(tg)), '', ''].forEach((v, i) => { const td = el('td', i ? 'n' : ''); td.append(v); trt.append(td); }); tb.append(trt);
+      t.append(th, tb); const w = el('div', 'tbl-x'); w.append(t);
+      p.append(el('div', 'motiva', 'Dia ' + isoBR($('gt-data').value) + ' · confira os totais com o USE antes de importar.'), w);
+      if (sem.length) p.append(el('div', 'sub', sem.length + ' linha(s) sem loja reconhecida serão ignoradas: ' + sem.slice(0, 3).join(', ')));
+      const n = Object.keys(por).length; $('gt-ok').textContent = 'Importar nas ' + n + ' loja' + (n > 1 ? 's' : ''); $('gt-ok').classList.toggle('hide', !n || !!aviso);
+    } catch (e) { p.textContent = e.message; }
+  }; fr.readAsArrayBuffer(file); };
+  if (window.XLSX) go(); else { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; sc.onload = go; sc.onerror = () => { p.textContent = 'Não consegui carregar o leitor de planilhas. Verifique a internet.'; }; document.head.append(sc); }
+}
+$('gt-arq').addEventListener('change', (e) => { if (e.target.files[0]) lerTodasLojas(e.target.files[0]); });
+$('gt-data').addEventListener('change', () => { const f = $('gt-arq').files[0]; if (f && GT) lerTodasLojas(f); });
+$('gt-ok').addEventListener('click', () => {
+  if (!GT) return; const d = $('gt-data').value; if (!d) { toast('Escolha o dia.'); return; }
+  const lojas = Object.keys(GT.por), res = []; let i = 0; $('gt-ok').disabled = true;
+  const box = $('gt-prev'), st = el('div', 'motiva', 'Importando…'); box.prepend(st);
+  const prox = () => {
+    if (i >= lojas.length) { $('gt-ok').disabled = false; $('gt-ok').classList.add('hide'); $('gt-arq').value = ''; GT = null; box.replaceChildren(el('b', '', '✅ Importação do dia ' + isoBR(d))); res.forEach((x) => box.append(el('div', x.ok ? 'sub' : 'aviso-meta', x.txt))); toast('Vendas importadas ✅'); try { carregarPendencias(); carregarGestao(); } catch (e) {} return; }
+    const lj = lojas[i++]; st.textContent = 'Importando ' + lj + '… (' + i + ' de ' + lojas.length + ')';
+    google.script.run.withSuccessHandler((r) => { const im = (r && r.importado) || {}; res.push({ ok: true, txt: '✅ ' + lj + ': ' + rs(im.total != null ? im.total : GT.por[lj].reduce((a, l) => a + l[2], 0)) + ' · ' + (im.linhas || 0) + ' lançamento(s)' + (im.mesclagem ? ' · juntou com a importação anterior' : '') }); prox(); })
+      .withFailureHandler((e) => { res.push({ ok: false, txt: '⚠️ ' + lj + ': ' + ((e && e.message) || 'erro') }); prox(); })
+      .importarVendasUSE(S.token, lj, d, GT.por[lj], GT.nome, '');
+  };
+  prox();
+});
 $('gi-data').addEventListener('change', () => { const f = $('gi-arq').files[0]; if (f && GI) lerPedidosPA(f); });
 function importarGI(modo, gi, d, loja) {
   $('gi-ok').disabled = true;
