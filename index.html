@@ -455,6 +455,28 @@ body.priv #v-ini, body.priv #v-meta, body.priv #v-rel, body.priv #v-prod, body.p
 body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[data-aba=rel] #priv-b, body.priv[data-aba=prod] #priv-b, body.priv:has(#det) #priv-b { display:block; }
 /* iOS: campo de data não pode passar da largura do card */
 #g-imp input[type=date], #g-imp input[type=file] { display:block; width:100%; max-width:100%; min-width:0; box-sizing:border-box; -webkit-appearance:none; appearance:none; margin-top:4px; }
+/* ---------- computador (tela larga): menu lateral e conteúdo largo ---------- */
+@media (min-width:1100px) {
+  body.logado .wrap { max-width:none; margin:0; padding:22px 40px 60px 280px; }
+  body.logado #v-app { max-width:1180px; margin:0 auto; }
+  body.logado .tabs { position:fixed; left:0; top:0; bottom:0; width:240px; flex-direction:column; gap:2px; margin:0; border:0; border-right:1px solid var(--line); border-radius:0; padding:86px 14px 20px; overflow-y:auto; z-index:50; }
+  body.logado .tabs::before { content:'AMORATA'; position:absolute; top:30px; left:30px; font-family:Georgia,'Times New Roman',serif; letter-spacing:6px; font-size:17px; color:var(--accent); }
+  body.logado .tabs::after { content:'Equipe'; position:absolute; top:52px; left:30px; font-size:12px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; }
+  body.logado .tab { flex:0 0 auto; text-align:left; padding:11px 14px; font-size:15px; }
+  body.logado .tab .ic { width:18px; height:18px; margin-right:10px; }
+  body.logado .dash { grid-template-columns:repeat(4, minmax(0,1fr)); }
+  body.logado #i-det:not(.hide) { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 24px; align-items:start; }
+  body.logado #i-ritmo-box, body.logado #i-res, body.logado #i-topo, body.logado #i-lojas-box, body.logado #i-nota { grid-column:1 / -1; }
+  body.logado #v-mural, body.logado #v-apr, body.logado #v-dia { max-width:760px; margin-left:auto; margin-right:auto; }
+  .sheet-bg { align-items:center; } .sheet { border-radius:18px; max-width:560px; }
+  .tc .dhead, .tc .dbody { max-width:980px; }
+  .tc .dbody > .dash { grid-template-columns:repeat(3, minmax(0,1fr)); }
+  #b-inst { display:inline-flex; }
+  body.logado svg[width="100%"] { max-height:200px; }
+  body.logado #v-fila { max-width:900px; margin-left:auto; margin-right:auto; }
+  body.logado #v-gest input[type=date], body.logado #v-gest input[type=file] { max-width:360px; }
+}
+#b-inst { display:none; }
 </style>
 </head>
 <body>
@@ -501,7 +523,7 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
         <div class="sub" id="t-user"></div>
       </div>
       </div>
-      <div style="display:flex;gap:6px"><button class="btn sm" id="b-atu" title="Atualizar o app">⟳</button><button class="btn sm hide" id="b-rh" title="Meu RH" style="position:relative">📁<span id="rh-n" class="badge-n hide"></span></button><button class="btn sm" id="b-sino" title="Avisos" style="position:relative">🔔<span id="sino-n" class="badge-n hide"></span></button><button class="btn sm" id="b-ajuda" title="Como usar">?</button><button class="btn sm" id="b-sair">Sair</button></div>
+      <div style="display:flex;gap:6px"><button class="btn sm hide" id="b-inst" title="Instalar no computador">💻 Instalar</button><button class="btn sm" id="b-atu" title="Atualizar o app">⟳</button><button class="btn sm hide" id="b-rh" title="Meu RH" style="position:relative">📁<span id="rh-n" class="badge-n hide"></span></button><button class="btn sm" id="b-sino" title="Avisos" style="position:relative">🔔<span id="sino-n" class="badge-n hide"></span></button><button class="btn sm" id="b-ajuda" title="Como usar">?</button><button class="btn sm" id="b-sair">Sair</button></div>
     </div>
     <div id="sel-loja-box" class="hide" style="margin-top:10px"><select id="sel-loja"></select></div>
     <div id="nuvem-foto" class="nuvem mini hide"><button class="x" id="nv-x" title="Fechar">×</button>📷 <b>Coloque sua foto</b> para a equipe te reconhecer. <button class="btn sm pri" id="nv-ok">Escolher foto</button></div>
@@ -2688,7 +2710,10 @@ function mostrarTermo(aoAceitar) {
 function exigirTermo(depois) { if (S && S.termoPend && !telaLoja()) mostrarTermo(depois); else depois(); }
 // ---------- obrigatório no celular: app na tela inicial + notificações ativas ----------
 let PROMPT_INST = null;
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); PROMPT_INST = e; if ($('gate')) exigirApp(); });
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); PROMPT_INST = e; if ($('gate')) exigirApp(); mostrarInstalarPC(); });
+function mostrarInstalarPC() { const b = $('b-inst'); if (!b) return; const st = window.matchMedia && matchMedia('(display-mode: standalone)').matches; b.classList.toggle('hide', !(PROMPT_INST && !ehCelular() && !st)); }
+window.addEventListener('appinstalled', () => { PROMPT_INST = null; mostrarInstalarPC(); toast('App instalado no computador 💻'); });
+$('b-inst').addEventListener('click', async () => { if (!PROMPT_INST) { toast('No Chrome ou Edge: menu ⋮ › Instalar Amorata Equipe.'); return; } PROMPT_INST.prompt(); try { await PROMPT_INST.userChoice; } catch (e) {} PROMPT_INST = null; mostrarInstalarPC(); });
 window.addEventListener('appinstalled', () => { try { localStorage.setItem('amorata_inst', '1'); } catch (e) {} if ($('gate')) exigirApp(); });
 const ehAndroid = () => /android/i.test(navigator.userAgent);
 const ehWebview = () => /; wv\)|FBAN|FBAV|Instagram|WhatsApp|Line\//i.test(navigator.userAgent);
