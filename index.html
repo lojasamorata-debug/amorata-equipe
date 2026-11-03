@@ -420,6 +420,22 @@ body.fila-v #eu-acoes .btn.lk { flex:1 1 auto; padding:6px 8px; font-size:13px; 
 #mu-lista .reac { font-size:13px; color:var(--muted); } #mu-lista .btn.on { background:var(--accentbg); border-color:var(--accent); }
 #mu-lista .ed { font-size:11.5px; color:var(--muted); font-style:italic; } #mu-lista .com .mnu { border:0; background:none; color:var(--muted); font-size:18px; padding:0 4px; cursor:pointer; align-self:flex-start; }
 #mu-lista .edbox textarea { width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; padding:8px; font:inherit; }
+#st-strip { display:flex; gap:12px; overflow-x:auto; padding:10px 2px 6px; scrollbar-width:none; } #st-strip::-webkit-scrollbar { display:none; }
+#st-strip .st { flex:none; width:64px; text-align:center; font-size:11.5px; cursor:pointer; color:var(--fg); } #st-strip .st .av { width:56px; height:56px; margin:0 auto 4px; font-size:20px; }
+.av.st-ring { box-shadow:0 0 0 2px var(--bg), 0 0 0 4.5px #e8738a; cursor:pointer; } .av.st-ring.visto { box-shadow:0 0 0 2px var(--bg), 0 0 0 4px #c9c4bd; }
+#st-strip .st .mais { position:relative; } #st-strip .st .mais::after { content:'+'; position:absolute; right:-2px; bottom:-2px; width:20px; height:20px; border-radius:50%; background:var(--accent); color:#fff; font-size:15px; line-height:19px; border:2px solid var(--bg); }
+#stv, #strec { position:fixed; inset:0; z-index:75; background:#111; color:#fff; display:flex; flex-direction:column; }
+#stv .bars { display:flex; gap:4px; padding:calc(10px + env(safe-area-inset-top)) 10px 6px; } #stv .bars i { flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.3); overflow:hidden; } #stv .bars i b { display:block; height:100%; width:0; background:#fff; }
+#stv .top, #strec .top { display:flex; align-items:center; gap:10px; padding:6px 12px; } #stv .top .av { width:36px; height:36px; } #stv .top .nm { flex:1; font-weight:600; font-size:14px; } #stv .top .nm span { display:block; font-weight:400; font-size:12px; opacity:.7; }
+#stv .x, #strec .x { background:none; border:0; color:#fff; font-size:28px; padding:0 6px; cursor:pointer; }
+#stv .cont { flex:1; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; } #stv .cont video, #stv .cont img { max-width:100%; max-height:100%; }
+#stv .aud { text-align:center; } #stv .aud .av { width:120px; height:120px; font-size:44px; margin:0 auto 14px; animation:stpulso 1.6s infinite; } @keyframes stpulso { 50% { transform:scale(1.06); } }
+#stv .leg { position:absolute; left:0; right:0; bottom:16px; text-align:center; padding:8px 18px; font-size:16px; text-shadow:0 1px 4px rgba(0,0,0,.8); }
+#stv .tapE, #stv .tapD { position:absolute; top:0; bottom:0; width:35%; z-index:2; } #stv .tapE { left:0; } #stv .tapD { right:0; }
+#stv .rod { display:flex; justify-content:space-between; align-items:center; padding:10px 14px calc(14px + env(safe-area-inset-bottom)); font-size:14px; } #stv .rod button { background:rgba(255,255,255,.15); color:#fff; border:0; border-radius:999px; padding:8px 14px; font:inherit; }
+#strec .cont { flex:1; display:flex; align-items:center; justify-content:center; position:relative; } #strec video { max-width:100%; max-height:100%; background:#000; } #strec .tmp { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.5); padding:4px 12px; border-radius:999px; font-variant-numeric:tabular-nums; }
+#strec .rod { padding:12px 14px calc(16px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:10px; align-items:center; } #strec .rec { width:74px; height:74px; border-radius:50%; border:5px solid #fff; background:#e33; cursor:pointer; } #strec .rec.on { border-radius:18px; width:60px; height:60px; animation:stpulso 1s infinite; }
+#strec input { width:100%; max-width:480px; box-sizing:border-box; border:0; border-radius:12px; padding:12px; font:inherit; } #strec .bts { display:flex; gap:10px; width:100%; max-width:480px; } #strec .bts .btn { flex:1; }
 #gate .et.ok .n { background:#e3f4e8; color:#2e7d4f; } #gate .et ol { margin:6px 0 0; padding-left:18px; } #gate .et li { margin:3px 0; }
 /* confidencialidade: marca d'água, tela borrada fora do app, sem copiar, valores ocultos para gerência */
 #marca { display:none; position:fixed; inset:0; pointer-events:none; z-index:9600; background-repeat:repeat; opacity:.05; }
@@ -562,6 +578,7 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
     </div>
 
     <div id="v-mural" class="hide">
+      <div id="st-strip"></div>
       <div class="seg"><button id="sg-mural" class="on">📸 Mural</button><button id="sg-rec">💌 Recados <span id="rec-n"></span></button><button id="sg-cmn">📢 Comunicados</button><button id="sg-con">🏅 Conquistas</button></div>
       <div id="mu-area">
       <div id="mood-mu"></div>
@@ -1288,7 +1305,7 @@ function avatar(foto, nome, cls) {
   return d;
 }
 function linha(p, extra, ops, me) {
-  const r = el('div', 'row' + (me ? ' me' : ''));
+  const r = el('div', 'row' + (me ? ' me' : '')); r.dataset.u = p.usuario || '';
   if (p.pos) r.append(el('div', 'pos', String(p.pos)));
   r.append(avatar(p.foto, p.nome));
   const w = el('div', 'who'); w.append(el('b', '', p.nome + (me ? ' (você)' : '')));
@@ -1381,6 +1398,7 @@ function desenhar(e) {
     const info = p.motivo ? p.motivo + ' · há ' + espera(agora() - p.desde) : 'ainda não entrou';
     lo.append(linha(p, el('span', '', info), chefe() && p.usuario !== eu ? [bt('Pôr na fila', '', () => fazer('entrar', p.usuario))] : [], p.usuario === eu));
   });
+  try { aneisStatus(); } catch (x) {}
   // hoje
   const h = e.hoje;
   $('k-at').textContent = h.loja.at; $('k-v').textContent = h.loja.v; $('k-c').textContent = h.loja.at ? PCT.format(h.loja.v / h.loja.at) : '—';
@@ -1414,7 +1432,8 @@ function mudarAba(a) {
   if (a === 'meta') carregarMetas();
   if (a === 'ini') carregarInicio();
   if (a === 'prod') carregarProdutos();
-  if (a === 'mural') carregarMural();
+  if (a === 'mural') { carregarMural(); carregarStatus(); }
+  if (a === 'fila') carregarStatus();
   if (a === 'apr') carregarAprender();
   if (a === 'gest') carregarGestao();
 }
@@ -2109,6 +2128,110 @@ function editarTexto(alvo, atual, max, salvar) {
   alvo.replaceChildren(w); setTimeout(() => ta.focus(), 50);
   cc.addEventListener('click', () => alvo.replaceChildren(...orig));
   ok.addEventListener('click', () => { const v = ta.value.trim(); if (!v) { toast('Escreva o texto.'); return; } ok.disabled = true; salvar(v); });
+}
+// ---------- Status (some em 24 h) ----------
+let ST = null; const STB = {};
+function carregarStatus() { if (!S) return; google.script.run.withSuccessHandler((r) => { if (r && Array.isArray(r.grupos)) { ST = r; desenharStatus(); } }).withFailureHandler(() => {}).statusLista(S.token); }
+function desenharStatus() {
+  const b = $('st-strip'); if (!b || !ST) return; b.replaceChildren();
+  const meu = ST.grupos.find((g) => g.eu);
+  const mi = el('div', 'st'); const ma = avatar(S.foto, S.nome); if (meu) { ma.classList.add('st-ring'); } const wrap = el('div', 'mais'); wrap.append(ma); mi.append(wrap, el('div', '', meu ? 'Seu status' : 'Novo status'));
+  mi.addEventListener('click', () => { if (meu) escolher('Seu status', meu.itens.length + (meu.itens.length > 1 ? ' publicações' : ' publicação') + ' · somem 24 h depois', [['👀 Ver meu status', 'pri', () => { fechar(); verStatus(ST.grupos.indexOf(meu), 0); }], ['➕ Publicar outro', '', () => { fechar(); novoStatus(); }]]); else novoStatus(); });
+  b.append(mi);
+  ST.grupos.forEach((g, gi) => { if (g.eu) return; const d = el('div', 'st'); const a = avatar(g.foto, g.nome); a.classList.add('st-ring'); if (!g.novo) a.classList.add('visto'); d.append(a, el('div', '', g.nome)); d.addEventListener('click', () => verStatus(gi, Math.max(0, g.itens.findIndex((i) => !i.visto)))); b.append(d); });
+  aneisStatus();
+}
+// anel na foto de quem tem status (na fila e no mural)
+function aneisStatus() {
+  if (!ST) return; const m = {}; ST.grupos.forEach((g, gi) => { m[g.usuario] = gi; });
+  document.querySelectorAll('.row[data-u]').forEach((r) => { const a = r.querySelector('.av'); if (!a) return; const gi = m[r.dataset.u]; a.classList.toggle('st-ring', gi != null); if (gi != null) { a.classList.toggle('visto', !ST.grupos[gi].novo); if (!a.dataset.st) { a.dataset.st = '1'; a.addEventListener('click', (ev) => { const k = ST && ST.grupos.findIndex((g) => g.usuario === r.dataset.u); if (k >= 0) { ev.stopPropagation(); verStatus(k, 0); } }); } } });
+}
+function b64Blob(b64, mime) { const bin = atob(b64), by = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) by[i] = bin.charCodeAt(i); return new Blob([by], { type: mime }); }
+function verStatus(gi, ii) {
+  const ant = $('stv'); if (ant) ant.remove(); if (!ST || !ST.grupos[gi]) return;
+  const g = ST.grupos[gi], v = el('div'); v.id = 'stv'; let tm = null, raf = null, midia = null;
+  const bars = el('div', 'bars'); g.itens.forEach(() => { const i = el('i'); i.append(el('b')); bars.append(i); });
+  const top = el('div', 'top'), x = el('button', 'x', '×'), nm = el('div', 'nm'); top.append(avatar(g.foto, g.nome), nm, x);
+  const cont = el('div', 'cont'), tE = el('div', 'tapE'), tD = el('div', 'tapD'), rod = el('div', 'rod'); v.append(bars, top, cont, rod); document.body.append(v);
+  const parar = () => { clearTimeout(tm); cancelAnimationFrame(raf); if (midia) { try { midia.pause(); } catch (e) {} } };
+  const fecha = () => { parar(); v.remove(); desenharStatus(); };
+  x.addEventListener('click', fecha);
+  const mostrar = (k) => {
+    parar(); if (k < 0) k = 0; if (k >= g.itens.length) { if (gi + 1 < ST.grupos.length && !ST.grupos[gi + 1].eu) { v.remove(); verStatus(gi + 1, 0); } else fecha(); return; }
+    ii = k; const it = g.itens[k]; [...bars.children].forEach((b, j) => { b.firstChild.style.width = j < k ? '100%' : '0'; });
+    nm.replaceChildren(document.createTextNode(g.eu ? 'Você' : g.nome), el('span', '', 'hoje às ' + it.quando + (g.loja ? ' · ' + g.loja : '')));
+    cont.replaceChildren(tE, tD, el('div', '', 'Carregando…')); rod.replaceChildren();
+    if (g.eu) { const vi = el('button', '', '👀 ' + (it.vistos || 0) + ' ' + (it.vistos === 1 ? 'visualização' : 'visualizações')); vi.addEventListener('click', () => { parar(); rodar('statusQuemViu', [S.token, it.id], (l) => escolher('Quem viu', l.length ? l.join(', ') : 'Ninguém viu ainda.', [])); }); const ap = el('button', '', '🗑️ Apagar'); ap.addEventListener('click', () => { parar(); escolher('Apagar este status?', 'Ele sai do ar agora.', [['Apagar', 'bad', () => { fechar(); rodar('statusApagar', [S.token, it.id], (r) => { ST = r; v.remove(); desenharStatus(); toast('Status apagado'); }); }]]); }); rod.append(vi, ap); }
+    else rod.append(el('span', '', ''));
+    const tocar = (url) => {
+      const fill = bars.children[k].firstChild, ini = Date.now();
+      const anim = (durMs) => { const pass = () => { const pc = midia && midia.duration && isFinite(midia.duration) ? midia.currentTime / midia.duration : (Date.now() - ini) / durMs; fill.style.width = Math.min(100, pc * 100) + '%'; raf = requestAnimationFrame(pass); }; pass(); };
+      cont.replaceChildren(tE, tD);
+      if (it.tipo === 'foto') { const im = el('img'); im.src = url; cont.append(im); midia = null; anim(5000); tm = setTimeout(() => mostrar(k + 1), 5000); }
+      else if (it.tipo === 'video') { const vd = el('video'); vd.src = url; vd.playsInline = true; vd.setAttribute('playsinline', ''); vd.autoplay = true; vd.controls = false; cont.append(vd); midia = vd; vd.onended = () => mostrar(k + 1); vd.play().catch(() => { vd.controls = true; }); anim((it.duracao || 30) * 1000); }
+      else { const w = el('div', 'aud'); w.append(avatar(g.foto, g.nome), el('div', '', '🎙️ Áudio')); const au = el('audio'); au.src = url; au.autoplay = true; cont.append(w, au); midia = au; au.onended = () => mostrar(k + 1); au.play().catch(() => { au.controls = true; w.append(au); }); anim((it.duracao || 30) * 1000); }
+      if (it.texto) cont.append(el('div', 'leg', it.texto));
+    };
+    if (STB[it.id]) tocar(STB[it.id]);
+    else google.script.run.withSuccessHandler((f) => { STB[it.id] = URL.createObjectURL(b64Blob(f.b64, f.mime)); it.visto = true; if (ii === k && v.isConnected) tocar(STB[it.id]); }).withFailureHandler((e) => { cont.replaceChildren(tE, tD, el('div', '', (e && e.message) || 'Não deu para abrir.')); tm = setTimeout(() => mostrar(k + 1), 2000); }).statusAbrir(S.token, it.id);
+  };
+  tE.addEventListener('click', () => mostrar(ii - 1)); tD.addEventListener('click', () => mostrar(ii + 1));
+  g.novo = false; mostrar(ii);
+}
+function novoStatus() {
+  const gal = el('input'); gal.type = 'file'; gal.accept = 'image/*,video/*';
+  gal.addEventListener('change', async () => {
+    const f = gal.files[0]; if (!f) return;
+    if (/^image\//.test(f.type)) { try { const du = await comprimir(f, 1080, 0.8, false); previaStatus('foto', null, du, 0); } catch (e) { toast(e.message); } return; }
+    if (!/^video\//.test(f.type)) { toast('Escolha uma foto ou um vídeo.'); return; }
+    if (f.size > 12 * 1024 * 1024) { toast('Vídeo muito grande. Grave pelo app (🎥), que já sai menor.'); return; }
+    const u = URL.createObjectURL(f), t = el('video'); t.preload = 'metadata'; t.src = u; t.onloadedmetadata = () => { if (t.duration > 30.5) { toast('O vídeo pode ter até 30 segundos.'); URL.revokeObjectURL(u); return; } previaStatus('video', f, null, Math.round(t.duration)); }; t.onerror = () => toast('Não consegui ler este vídeo.');
+  });
+  escolher('Novo status', 'Some sozinho depois de 24 horas · até 30 segundos', [['🎥 Gravar vídeo', 'pri', () => { fechar(); gravarStatus('video'); }], ['🎙️ Gravar áudio', '', () => { fechar(); gravarStatus('audio'); }], ['🖼️ Foto ou vídeo do celular', '', () => { fechar(); gal.click(); }]]);
+}
+function tipoGrav(video) { const op = video ? ['video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm'] : ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm']; return op.find((m) => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || ''; }
+async function gravarStatus(tipo) {
+  if (!navigator.mediaDevices || !window.MediaRecorder) { toast('Este celular não deixa gravar pelo app. Use "Foto ou vídeo do celular".'); return; }
+  const video = tipo === 'video'; let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia(video ? { video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 854 } }, audio: true } : { audio: true }); }
+  catch (e) { toast('Libere a ' + (video ? 'câmera e o microfone' : 'o microfone') + ' para o Amorata Equipe nas configurações do celular.'); return; }
+  const w = el('div'); w.id = 'strec'; const top = el('div', 'top'), x = el('button', 'x', '×'); top.append(el('b', '', video ? '🎥 Vídeo · até 30 s' : '🎙️ Áudio · até 30 s'), el('span', '', '')); top.lastChild.style.flex = '1'; top.append(x);
+  const cont = el('div', 'cont'), tmp = el('div', 'tmp', '0:30'), rod = el('div', 'rod'), rec = el('button', 'rec'); rec.title = 'Gravar';
+  if (video) { const vd = el('video'); vd.muted = true; vd.playsInline = true; vd.setAttribute('playsinline', ''); vd.autoplay = true; vd.srcObject = stream; vd.style.transform = 'scaleX(-1)'; cont.append(vd); } else { const a = avatar(S.foto, S.nome); a.style.cssText = 'width:120px;height:120px;font-size:44px'; cont.append(a); }
+  cont.append(tmp); rod.append(rec, el('div', 'sub', 'Toque no botão para começar e de novo para parar.')); rod.lastChild.style.color = '#ccc';
+  w.append(top, cont, rod); document.body.append(w);
+  const desligar = () => stream.getTracks().forEach((t) => t.stop());
+  let mr = null, pedacos = [], ini = 0, tk = null;
+  const fim = () => { if (mr && mr.state !== 'inactive') mr.stop(); clearInterval(tk); };
+  x.addEventListener('click', () => { fim(); desligar(); w.remove(); });
+  rec.addEventListener('click', () => {
+    if (mr && mr.state === 'recording') { fim(); return; }
+    const mt = tipoGrav(video); try { mr = new MediaRecorder(stream, Object.assign(mt ? { mimeType: mt } : {}, video ? { videoBitsPerSecond: 800000, audioBitsPerSecond: 64000 } : { audioBitsPerSecond: 64000 })); } catch (e) { mr = new MediaRecorder(stream); }
+    pedacos = []; mr.ondataavailable = (ev) => { if (ev.data && ev.data.size) pedacos.push(ev.data); };
+    mr.onstop = () => { desligar(); const tipoB = (mr.mimeType || mt || (video ? 'video/mp4' : 'audio/mp4')).split(';')[0]; const bl = new Blob(pedacos, { type: tipoB }); const dur = Math.min(30, Math.round((Date.now() - ini) / 1000)); w.remove(); previaStatus(tipo, bl, null, dur); };
+    mr.start(500); ini = Date.now(); rec.classList.add('on');
+    tk = setInterval(() => { const s2 = 30 - Math.floor((Date.now() - ini) / 1000); tmp.textContent = '0:' + String(Math.max(0, s2)).padStart(2, '0'); if (s2 <= 0) fim(); }, 250);
+  });
+}
+function previaStatus(tipo, blob, dataUrl, dur) {
+  const w = el('div'); w.id = 'strec'; const top = el('div', 'top'), x = el('button', 'x', '×'); top.append(el('b', '', 'Prévia do status'), el('span', '', '')); top.lastChild.style.flex = '1'; top.append(x);
+  const cont = el('div', 'cont'), rod = el('div', 'rod'), url = blob ? URL.createObjectURL(blob) : dataUrl;
+  if (tipo === 'foto') { const im = el('img'); im.src = url; im.style.cssText = 'max-width:100%;max-height:100%'; cont.append(im); }
+  else if (tipo === 'video') { const vd = el('video'); vd.src = url; vd.controls = true; vd.playsInline = true; vd.setAttribute('playsinline', ''); cont.append(vd); }
+  else { const au = el('audio'); au.src = url; au.controls = true; cont.append(au); }
+  const leg = el('input'); leg.placeholder = 'Legenda (opcional)'; leg.maxLength = 140;
+  const bts = el('div', 'bts'), refaz = el('button', 'btn big', tipo === 'foto' ? 'Trocar' : 'Refazer'), pub = el('button', 'btn pri big', 'Publicar');
+  bts.append(refaz, pub); rod.append(leg, bts); w.append(top, cont, rod); document.body.append(w);
+  const sai = () => { w.remove(); if (blob) URL.revokeObjectURL(url); };
+  x.addEventListener('click', sai); refaz.addEventListener('click', () => { sai(); if (tipo === 'foto') novoStatus(); else gravarStatus(tipo); });
+  pub.addEventListener('click', async () => {
+    pub.disabled = true; pub.textContent = 'Publicando…';
+    try {
+      let du = dataUrl; if (!du) du = await new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(rd.result); rd.onerror = rej; rd.readAsDataURL(blob); });
+      du = String(du).replace(/^data:([^;,]+)(;[^,]*?)?;base64,/, 'data:$1;base64,');
+      rodar('statusPostar', [S.token, tipo, du, leg.value, dur], (r) => { ST = r; sai(); desenharStatus(); toast('Status publicado! Some em 24 h ✨'); }, () => { pub.disabled = false; pub.textContent = 'Publicar'; });
+    } catch (e) { toast('Não consegui preparar o arquivo.'); pub.disabled = false; pub.textContent = 'Publicar'; }
+  });
 }
 function carregarMural() { chipsMural(); $('mu-lista').replaceChildren(el('div', 'vazio', 'Carregando…')); rodar('mural', [S.token, $('mu-loja').value], desenharMural); }
 $('mu-fbtn').addEventListener('click', () => $('mu-foto').click());
