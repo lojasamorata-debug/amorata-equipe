@@ -579,7 +579,7 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
     </div>
 
     <div id="v-ini" class="hide">
-      <div class="filtros" id="i-filtro-box"><select id="i-per"><option value="mes" selected>Mês atual</option><option value="mes_ant">Mês anterior</option><option value="ano">Ano</option><option value="custom">Personalizado…</option></select><select id="i-loja"></select></div><div class="datas hide" id="i-datas"><label>De <input type="date" id="i-de"></label><label>Até <input type="date" id="i-ate"></label><button class="btn sm pri" id="i-ok">Ver</button></div>
+      <div class="filtros" id="i-filtro-box"><select id="i-per"><option value="hoje">Hoje</option><option value="mes" selected>Mês atual</option><option value="mes_ant">Mês anterior</option><option value="ano">Ano</option><option value="custom">Personalizado…</option></select><select id="i-loja"></select></div><div class="datas hide" id="i-datas"><label>De <input type="date" id="i-de"></label><label>Até <input type="date" id="i-ate"></label><button class="btn sm pri" id="i-ok">Ver</button></div>
       <div class="sub" id="i-tit" style="margin-top:8px"></div>
       <div id="i-cards" class="dash"></div>
       <div id="i-det" class="hide">
@@ -596,7 +596,7 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
     </div>
 
     <div id="v-meta" class="hide">
-      <div class="filtros" id="m-filtro-box"><select id="m-per"><option value="mes" selected>Mês atual</option><option value="mes_ant">Mês anterior</option><option value="ano">Ano</option><option value="custom">Personalizado…</option></select><select id="m-loja"></select></div><div class="datas hide" id="m-datas"><label>De <input type="date" id="m-de"></label><label>Até <input type="date" id="m-ate"></label><button class="btn sm pri" id="m-ok">Ver</button></div>
+      <div class="filtros" id="m-filtro-box"><select id="m-per"><option value="hoje">Hoje</option><option value="mes" selected>Mês atual</option><option value="mes_ant">Mês anterior</option><option value="ano">Ano</option><option value="custom">Personalizado…</option></select><select id="m-loja"></select></div><div class="datas hide" id="m-datas"><label>De <input type="date" id="m-de"></label><label>Até <input type="date" id="m-ate"></label><button class="btn sm pri" id="m-ok">Ver</button></div>
       <div class="sub" id="m-tit" style="margin-top:8px"></div>
       <div id="m-eu"></div>
       <div id="m-des-box"><h2><span>🎯 Desafios</span><button class="btn sm hide" id="m-des-novo">+ Criar desafio</button></h2><div id="m-des"></div></div>
@@ -724,6 +724,9 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
         <div class="sub" style="margin-top:12px">Um item por linha. A equipe marca no app (ou no tablet) e o resumo diário mostra o que faltou.</div>
         <h2><span>Abertura</span></h2><textarea id="gc-ABERTURA" rows="8"></textarea><button class="btn pri" id="gc-ok-ABERTURA" style="margin-top:8px">Salvar abertura</button>
         <h2><span>Fechamento</span></h2><textarea id="gc-FECHAMENTO" rows="8"></textarea><button class="btn pri" id="gc-ok-FECHAMENTO" style="margin-top:8px">Salvar fechamento</button>
+        <h2><span>📋 Tarefas da equipe</span><button class="btn sm pri" id="gt-nova">+ Nova tarefa</button></h2>
+        <div class="sub">Tarefa com responsável e dia: só um dia, toda semana ou todo dia. A pessoa recebe o aviso e marca no checklist do app (ou no tablet).</div>
+        <div id="gt-lista" style="margin-top:8px"></div>
       </div>
       <div id="g-esc" class="hide">
         <div class="sub" style="margin-top:12px">Marque os dias da semana em que cada consultora trabalha. Domingo alternado: informe um domingo em que ela trabalha.</div>
@@ -911,6 +914,17 @@ function abrir() {
 let CK = null, CK_T = null;
 const turnoAgora = () => (new Date().getHours() < 15 ? 'ABERTURA' : 'FECHAMENTO');
 function carregarCk() { if (S && loja) google.script.run.withSuccessHandler(desenharCk).withFailureHandler(() => {}).checklist(S.token, loja); }
+const TURNO_TXT = { ABERTURA: '☀️ abertura', DIA: '🕐 durante o dia', FECHAMENTO: '🌙 fechamento' };
+function listaTarefas(box, r, marcarT) {
+  const ts = r.tarefas || []; if (!ts.length) return;
+  const h = el('div', 'sub', '📋 Tarefas de hoje'); h.style.cssText = 'margin:12px 0 6px;font-weight:700;color:var(--fg)'; box.append(h);
+  ts.slice().sort((a, b) => (b.minha - a.minha) || (['ABERTURA', 'DIA', 'FECHAMENTO'].indexOf(a.turno) - ['ABERTURA', 'DIA', 'FECHAMENTO'].indexOf(b.turno))).forEach((t) => {
+    const d = el('div', 'ck-it' + (t.feito ? ' ok' : '')); if (t.minha && !t.feito) d.style.background = 'var(--accentbg)';
+    const tx = el('span', 't'); tx.append(document.createTextNode(t.texto)); const sb = el('small', '', (t.respNome ? '👤 ' + (t.minha ? 'você' : t.respNome) : '👥 qualquer pessoa') + ' · ' + (TURNO_TXT[t.turno] || '')); sb.style.cssText = 'display:block;opacity:.75'; tx.append(sb);
+    d.append(el('i', '', t.feito ? '✓' : ''), tx); if (t.feito) d.append(el('small', '', t.feito.nome + ' ' + t.feito.hora));
+    d.addEventListener('click', () => marcarT(t.id, !t.feito)); box.append(d);
+  });
+}
 function listaCk(box, r, turno, marcar) {
   box.replaceChildren(); box.classList.add('ck-l');
   const tt = el('div', 'tt'); r.turnos.forEach((t) => { const f = t.itens.filter((x) => x.feito).length, b = el('button', t.turno === turno ? 'on' : '', (t.turno === 'ABERTURA' ? '☀️ Abertura ' : '🌙 Fechamento ') + f + '/' + t.itens.length); b.addEventListener('click', (ev) => { ev.preventDefault(); listaCk(box, r, t.turno, marcar); CK_T = t.turno; }); tt.append(b); }); box.append(tt);
@@ -926,6 +940,9 @@ function desenharCk(r) {
     if (it) { const d = new Date(); it.feito = feito ? { nome: primeiroNome(S.nome), hora: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') } : null; desenharCk(CK); }
     rodar('marcarCheck', [S.token, loja, turno, item, feito], desenharCk, () => { if (it) { it.feito = ant; desenharCk(CK); } });
   });
+  listaTarefas($('ck-box'), r, (id, feito) => { const t = (CK.tarefas || []).find((x) => x.id === id), ant = t ? t.feito : null; if (t) { const d = new Date(); t.feito = feito ? { nome: primeiroNome(S.nome), hora: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') } : null; desenharCk(CK); }
+    rodar('marcarTarefa', [S.token, loja, id, feito], desenharCk, () => { if (t) { t.feito = ant; desenharCk(CK); } }); });
+  const minhas = (r.tarefas || []).filter((t) => t.minha && !t.feito).length; if (minhas) $('ck-tit').textContent += ' · 📋 ' + minhas + (minhas === 1 ? ' tarefa sua' : ' tarefas suas');
 }
 // ---------- atualizar o app ----------
 let URL_APP = '';
@@ -3299,7 +3316,33 @@ const ontemISO = () => { const d = new Date(Date.now() - 864e5); return new Date
 function abaGest(q) { G_ABA = q; ['imp', 'met', 'ck', 'esc', 'eq', 'pre', 'pla', 'rh'].forEach((x) => { $('sg-' + x).classList.toggle('on', x === q); $('g-' + x).classList.toggle('hide', x !== q); }); carregarGestao(); }
 ['imp', 'met', 'ck', 'esc', 'eq', 'pre', 'pla', 'rh'].forEach((x) => $('sg-' + x).addEventListener('click', () => abaGest(x)));
 ['ABERTURA', 'FECHAMENTO'].forEach((t) => $('gc-ok-' + t).addEventListener('click', () => rodar('salvarChecklist', [S.token, $('g-loja').value, t, $('gc-' + t).value.split('\n')], (r) => { desenharCkEd(r); toast('Checklist salvo ✅'); if ($('g-loja').value === loja) desenharCk(r); })));
-function desenharCkEd(r) { r.turnos.forEach((t) => { $('gc-' + t.turno).value = t.itens.map((x) => x.texto).join('\n'); }); }
+function desenharCkEd(r) { r.turnos.forEach((t) => { $('gc-' + t.turno).value = t.itens.map((x) => x.texto).join('\n'); }); CKE = r; desenharTarefasEd(r); }
+let CKE = null; const DS_C = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+function quandoTar(t) { return t.tipo === 'dia' ? '📅 ' + isoBR(t.data).slice(0, 5) : t.tipo === 'semanal' ? '🔁 toda ' + t.dias.map((d) => DS_C[d]).join(', ') : '♾️ todo dia'; }
+function desenharTarefasEd(r) {
+  const b = $('gt-lista'); b.replaceChildren(); const ts = r.todasTarefas || [], hoje = {}; (r.tarefas || []).forEach((t) => { hoje[t.id] = t; });
+  if (!ts.length) { b.append(el('div', 'vazio', 'Nenhuma tarefa ainda. Toque em "+ Nova tarefa".')); return; }
+  ts.forEach((t) => { const d = el('div', 'pess eq'), x = el('div'), h = hoje[t.id]; x.append(el('b', '', t.texto), el('span', '', quandoTar(t) + ' · ' + (TURNO_TXT[t.turno] || '') + ' · ' + (t.respNome ? '👤 ' + primeiroNome(t.respNome) : '👥 qualquer pessoa') + (h ? (h.feito ? ' · ✅ feita hoje ' + h.feito.hora : ' · ⏳ hoje') : '')));
+    const ops = el('div', 'ops'), e = el('button', 'btn sm', 'Editar'), a = el('button', 'btn sm', 'Apagar'); e.addEventListener('click', () => formTarefa(t)); a.addEventListener('click', () => { if (confirm('Apagar a tarefa "' + t.texto + '"?')) rodar('apagarTarefa', [S.token, $('g-loja').value, t.id], (r2) => { desenharCkEd(r2); toast('Tarefa apagada'); }); }); ops.append(e, a); d.append(x, ops); b.append(d); });
+}
+function formTarefa(t) {
+  const r = CKE || {}; const hj = new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10); t = t || { tipo: 'dia', turno: 'DIA', dias: [], data: hj };
+  abrirDet(t.id ? 'Editar tarefa' : 'Nova tarefa', (b) => {
+    const lb = (x, c) => { const l = el('label', 'sub', x); l.style.cssText = 'display:block;margin-top:10px'; c.style.cssText = 'width:100%;box-sizing:border-box;margin-top:4px'; l.append(c); b.append(l); return c; };
+    const tx = lb('O que precisa ser feito', el('input')); tx.maxLength = 120; tx.value = t.texto || ''; tx.placeholder = 'Ex.: Limpar o estoque do fundo';
+    const rp = lb('Quem faz', el('select')); rp.append(new Option('👥 Qualquer pessoa da loja', '')); (r.equipe || []).forEach((p) => rp.append(new Option(p.nome, p.usuario))); rp.value = t.responsavel || '';
+    const tp = lb('Quando', el('select')); [['dia', '📅 Só um dia'], ['semanal', '🔁 Toda semana'], ['sempre', '♾️ Todo dia (sempre)']].forEach(([v, n]) => tp.append(new Option(n, v))); tp.value = t.tipo;
+    const dt = lb('Dia', el('input')); dt.type = 'date'; dt.value = t.data || hj;
+    const dsw = el('div'); dsw.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:10px'; const sel = new Set(t.dias || []);
+    DS_C.forEach((n, i) => { const c = el('button', 'btn sm' + (sel.has(i) ? ' pri' : ''), n); c.addEventListener('click', () => { if (sel.has(i)) sel.delete(i); else sel.add(i); c.classList.toggle('pri', sel.has(i)); }); dsw.append(c); }); b.append(dsw);
+    const tu = lb('Em que momento', el('select')); [['ABERTURA', '☀️ Na abertura'], ['DIA', '🕐 Durante o dia'], ['FECHAMENTO', '🌙 No fechamento']].forEach(([v, n]) => tu.append(new Option(n, v))); tu.value = t.turno || 'DIA';
+    const vis = () => { dt.parentNode.style.display = tp.value === 'dia' ? 'block' : 'none'; dsw.style.display = tp.value === 'semanal' ? 'flex' : 'none'; }; tp.addEventListener('change', vis); vis();
+    const ok = el('button', 'btn pri big', 'Salvar tarefa'); ok.style.marginTop = '14px';
+    ok.addEventListener('click', () => { ok.disabled = true; rodar('salvarTarefa', [S.token, $('g-loja').value, { id: t.id || '', texto: tx.value, responsavel: rp.value, tipo: tp.value, data: dt.value, dias: [...sel], turno: tu.value }], (r2) => { const d0 = $('det'); if (d0) d0.querySelector('.dhead button').click(); desenharCkEd(r2); toast(rp.value ? 'Tarefa salva e avisada 📋' : 'Tarefa salva 📋'); if ($('g-loja').value === loja) carregarCk(); }, () => { ok.disabled = false; }); });
+    b.append(ok);
+  });
+}
+$('gt-nova').addEventListener('click', () => formTarefa(null));
 $('tab-gest').addEventListener('click', () => mudarAba('gest'));
 $('g-loja').addEventListener('change', carregarGestao);
 function carregarGestao() {
@@ -4036,7 +4079,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide'); blocoNotif(o);
 }));
@@ -4300,6 +4343,7 @@ function tCk(r) {
   if ($('sheet').classList.contains('hide') || !tCk.aberto) return;
   $('sh-t').textContent = 'Checklist da loja'; $('sh-s').textContent = 'Toque no item para marcar';
   listaCk($('sh-o'), r, t, (turno, item, feito) => { CK_T = turno; trodar('tabletMarcarCheck', [T.chave, turno, item, feito], tCk); });
+  listaTarefas($('sh-o'), r, (id, feito) => trodar('tabletMarcarTarefa', [T.chave, id, feito], tCk));
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', () => { tCk.aberto = false; fechar(); }); $('sh-o').append(c);
 }
 $('tb-ck').addEventListener('click', () => { tCk.aberto = true; $('sheet').classList.remove('hide'); trodar('tabletChecklist', [T.chave], tCk); });
