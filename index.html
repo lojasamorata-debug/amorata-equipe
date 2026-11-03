@@ -479,6 +479,7 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
 #b-inst { display:none; }
 .ajuda-aba { display:flex; align-items:center; gap:4px; margin:10px 0 0 auto; border:1px solid var(--line); background:var(--panel); color:var(--accent); font:inherit; font-size:12.5px; font-weight:600; padding:5px 11px; border-radius:999px; cursor:pointer; }
 body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
+.tc input[type=date], .tc input[type=month] { display:block; width:100%; max-width:100%; min-width:0; box-sizing:border-box; -webkit-appearance:none; appearance:none; }
 </style>
 </head>
 <body>
@@ -3397,11 +3398,13 @@ function desenharTarefasEd(r) {
     const ops = el('div', 'ops'), e = el('button', 'btn sm', 'Editar'), a = el('button', 'btn sm', 'Apagar'); e.addEventListener('click', () => formTarefa(t)); a.addEventListener('click', () => { if (confirm('Apagar a tarefa "' + t.texto + '"?')) rodar('apagarTarefa', [S.token, $('g-loja').value, t.id], (r2) => { desenharCkEd(r2); toast('Tarefa apagada'); }); }); ops.append(e, a); d.append(x, ops); b.append(d); });
 }
 function formTarefa(t) {
-  const r = CKE || {}; const hj = new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10); t = t || { tipo: 'dia', turno: 'DIA', dias: [], data: hj };
+  const lj = $('g-loja').value; if (!lj || lj === 'TODAS') { toast('Escolha a loja no topo da Gestão.'); return; }
+  if (!CKE || CKE.loja !== lj || !(CKE.equipe || []).length) { toast('Carregando a equipe…'); rodar('checklist', [S.token, lj], (r2) => { CKE = r2; if ((r2.equipe || []).length) formTarefa(t); else toast('Não encontrei funcionárias cadastradas nesta loja.'); }); return; }
+  const r = CKE; const hj = new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10); t = t || { tipo: 'dia', turno: 'DIA', dias: [], data: hj };
   abrirDet(t.id ? 'Editar tarefa' : 'Nova tarefa', (b) => {
     const lb = (x, c) => { const l = el('label', 'sub', x); l.style.cssText = 'display:block;margin-top:10px'; c.style.cssText = 'width:100%;box-sizing:border-box;margin-top:4px'; l.append(c); b.append(l); return c; };
     const tx = lb('O que precisa ser feito', el('input')); tx.maxLength = 120; tx.value = t.texto || ''; tx.placeholder = 'Ex.: Limpar o estoque do fundo';
-    const rp = lb('Quem faz', el('select')); rp.append(new Option('👥 Qualquer pessoa da loja', '')); (r.equipe || []).forEach((p) => rp.append(new Option(p.nome, p.usuario))); rp.value = t.responsavel || '';
+    const rp = lb('Quem faz', el('select')); rp.append(new Option('👥 Qualquer pessoa da loja', '')); (r.equipe || []).slice().sort((a, b) => a.nome.localeCompare(b.nome)).forEach((p) => rp.append(new Option(p.nome, p.usuario))); rp.value = t.responsavel || '';
     const tp = lb('Quando', el('select')); [['dia', '📅 Só um dia'], ['semanal', '🔁 Toda semana'], ['sempre', '♾️ Todo dia (sempre)']].forEach(([v, n]) => tp.append(new Option(n, v))); tp.value = t.tipo;
     const dt = lb('Dia', el('input')); dt.type = 'date'; dt.value = t.data || hj;
     const dsw = el('div'); dsw.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:10px'; const sel = new Set(t.dias || []);
