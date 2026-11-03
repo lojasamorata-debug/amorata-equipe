@@ -413,6 +413,11 @@ body.fila-v #eu-acoes .btn.lk { flex:1 1 auto; padding:6px 8px; font-size:13px; 
   body.fila-v #eu-acoes { margin:0 0 0 auto; flex-wrap:nowrap; } body.fila-v #eu-acoes .btn { flex:0 0 auto; width:auto; padding:10px 18px; }
   body.fila-v .wrap { max-width:none; padding-left:18px; padding-right:18px; } body.fila-v #vez-hero { margin-top:6px; padding:8px 14px; } body.fila-v #vez-hero .nm { font-size:22px; }
 }
+#mu-lista .rpick { display:flex; gap:4px; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:4px 8px; width:max-content; margin:6px 0 0; box-shadow:0 4px 14px rgba(0,0,0,.08); }
+#mu-lista .rpick.hide { display:none; } #mu-lista .rpick button { border:0; background:none; font-size:24px; padding:2px 4px; cursor:pointer; transition:transform .1s; } #mu-lista .rpick button:active { transform:scale(1.3); }
+#mu-lista .reac { font-size:13px; color:var(--muted); } #mu-lista .btn.on { background:var(--accentbg); border-color:var(--accent); }
+#mu-lista .ed { font-size:11.5px; color:var(--muted); font-style:italic; } #mu-lista .com .mnu { border:0; background:none; color:var(--muted); font-size:18px; padding:0 4px; cursor:pointer; align-self:flex-start; }
+#mu-lista .edbox textarea { width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; padding:8px; font:inherit; }
 #gate .et.ok .n { background:#e3f4e8; color:#2e7d4f; } #gate .et ol { margin:6px 0 0; padding-left:18px; } #gate .et li { margin:3px 0; }
 /* confidencialidade: marca d'água, tela borrada fora do app, sem copiar, valores ocultos para gerência */
 #marca { display:none; position:fixed; inset:0; pointer-events:none; z-index:9600; background-repeat:repeat; opacity:.05; }
@@ -2064,19 +2069,42 @@ function desenharMural(r) {
     if (p.foto) { const i = document.createElement('img'); i.className = 'ft'; i.src = p.foto; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; c.append(i); }
     if (p.texto) { const tx = el('div', 'tx'); tx.append(comMencoes(p.texto)); c.append(tx); }
     c.dataset.id = p.id;
-    const ac = el('div', 'ac'); const like = el('button', 'btn sm', (p.curti ? '❤️ ' : '🤍 ') + p.curtidas);
-    const cbox = el('div', 'coms'); const desenharComs = (lst) => { cbox.replaceChildren(); lst.forEach((x) => { const d = el('div', 'com'); const t = el('div'); t.append(el('b', '', primeiroNome(x.nome)), comMencoes(x.texto)); d.append(avatar(x.avatar, x.nome), t); cbox.append(d); }); const f = el('div', 'envia'); const inp = el('input'); inp.placeholder = 'Comentar… (@ marca uma colega)'; inp.maxLength = 300; ativarMencao(inp); const b = el('button', 'btn sm pri', 'Enviar'); const go = () => { const v = inp.value.trim(); if (!v) return; b.disabled = true; rodar('comentar', [S.token, p.id, v, mencoesDe(inp)], (l) => { p.comentarios = l; desenharComs(l); cb.textContent = '💬 ' + l.length; }, () => { b.disabled = false; }); }; b.addEventListener('click', go); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }); f.append(inp, b); cbox.append(f); };
+    if (p.editado) { const ed = el('div', 'ed', 'editado'); c.append(ed); }
+    const ac = el('div', 'ac'); const like = el('button', 'btn sm', ''); const resumo = el('span', 'reac');
+    const pintar = () => { like.textContent = (p.minha || (p.curti ? '❤️' : '🤍')) + ' ' + (p.curtidas || ''); like.classList.toggle('on', !!p.minha || p.curti); resumo.textContent = Object.keys(p.reacoes || {}).sort((a, b) => p.reacoes[b] - p.reacoes[a]).map((e) => e + (p.reacoes[e] > 1 ? p.reacoes[e] : '')).join(' '); };
+    const picker = el('div', 'rpick hide'); REACOES_APP.forEach((em) => { const b = el('button', '', em); b.addEventListener('click', () => { picker.classList.add('hide'); reagirPost(p, em, pintar); }); picker.append(b); });
+    const cbox = el('div', 'coms'); const desenharComs = (lst) => { cbox.replaceChildren(); lst.forEach((x) => { const d = el('div', 'com'); const t = el('div'); t.style.flex = '1'; t.append(el('b', '', primeiroNome(x.nome)), comMencoes(x.texto)); if (x.editado) t.append(el('span', 'ed', ' (editado)')); d.append(avatar(x.avatar, x.nome), t); const meu = x.usuario === S.usuario, adm = S.cargo === 'ADMIN', ger = S.cargo === 'GERENTE' && S.lojas.indexOf(p.loja) >= 0; if (x.id && (meu || adm || ger)) { const mb = el('button', 'mnu', '⋯'); mb.title = 'Opções'; mb.addEventListener('click', () => escolher('Comentário', '', [].concat(meu || adm ? [['✏️ Editar', '', () => { fechar(); editarTexto(t, x.texto, 300, (nv) => rodar('editarComentario', [S.token, x.id, nv], (l) => { p.comentarios = l; desenharComs(l); toast('Comentário editado'); })); }]] : [], [['🗑️ Apagar', 'bad', () => { fechar(); rodar('apagarComentario', [S.token, x.id], (l) => { p.comentarios = l; desenharComs(l); cb.textContent = '💬 ' + l.length; toast('Comentário apagado'); }); }]]))); d.append(mb); } cbox.append(d); }); const f = el('div', 'envia'); const inp = el('input'); inp.placeholder = 'Comentar… (@ marca uma colega)'; inp.maxLength = 300; ativarMencao(inp); const b = el('button', 'btn sm pri', 'Enviar'); const go = () => { const v = inp.value.trim(); if (!v) return; b.disabled = true; rodar('comentar', [S.token, p.id, v, mencoesDe(inp)], (l) => { p.comentarios = l; desenharComs(l); cb.textContent = '💬 ' + l.length; }, () => { b.disabled = false; }); }; b.addEventListener('click', go); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }); f.append(inp, b); cbox.append(f); };
     desenharComs(p.comentarios || []); if (!(p.comentarios || []).length) cbox.classList.add('hide');
     const cb = el('button', 'btn sm', '💬 ' + (p.comentarios || []).length); cb.addEventListener('click', () => { cbox.classList.toggle('hide'); const i = cbox.querySelector('input'); if (i && !cbox.classList.contains('hide')) i.focus(); });
-    like.addEventListener('click', () => { // resposta na hora; o servidor confirma em segundo plano
-      p.curti = !p.curti; p.curtidas = Math.max(0, (p.curtidas || 0) + (p.curti ? 1 : -1)); like.textContent = (p.curti ? '❤️ ' : '🤍 ') + p.curtidas;
-      rodar('curtir', [S.token, p.id], (x) => { p.curti = x.curti; p.curtidas = x.curtidas; like.textContent = (x.curti ? '❤️ ' : '🤍 ') + x.curtidas; }, () => { p.curti = !p.curti; p.curtidas = Math.max(0, p.curtidas + (p.curti ? 1 : -1)); like.textContent = (p.curti ? '❤️ ' : '🤍 ') + p.curtidas; });
-    });
-    const esq = el('div'); esq.style.cssText = 'display:flex;gap:6px'; esq.append(like, cb); ac.append(esq);
-    if (p.podeApagar) { const ap = el('button', 'btn sm', 'Apagar'); ap.addEventListener('click', () => escolher('Apagar publicação?', 'Ela sai do mural para todas.', [['Apagar', 'bad', () => { fechar(); rodar('apagarPost', [S.token, p.id], desenharMural); }]])); ac.append(ap); }
-    c.append(ac, cbox); box.append(c);
+    pintar(); like.addEventListener('click', () => picker.classList.toggle('hide'));
+    const esq = el('div'); esq.style.cssText = 'display:flex;gap:6px;align-items:center'; esq.append(like, cb, resumo); ac.append(esq);
+    if (p.podeApagar || p.podeEditar) {
+      const mb = el('button', 'btn sm', '⋯'); mb.title = 'Opções';
+      mb.addEventListener('click', () => escolher('Publicação', '', [].concat(p.podeEditar ? [['✏️ Editar texto', '', () => { fechar(); const tx0 = c.querySelector('.tx') || (() => { const z = el('div', 'tx'); c.insertBefore(z, ac); return z; })(); editarTexto(tx0, p.texto || '', 500, (nv) => rodar('editarPost', [S.token, p.id, nv], (r2) => { toast('Publicação editada ✏️'); desenharMural(r2); })); }]] : [], p.podeApagar ? [['🗑️ Apagar publicação', 'bad', () => { fechar(); escolher('Apagar publicação?', 'Ela sai do mural para todas.', [['Apagar', 'bad', () => { fechar(); rodar('apagarPost', [S.token, p.id], desenharMural); }]]); }]] : [])));
+      ac.append(mb);
+    }
+    c.append(ac, picker, cbox); box.append(c);
   });
   if (MU_FOCO) { const alvo = box.querySelector('[data-id="' + MU_FOCO + '"]'); MU_FOCO = ''; if (alvo) { alvo.classList.add('foco'); alvo.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => alvo.classList.remove('foco'), 2500); } }
+}
+const REACOES_APP = ['❤️', '😂', '😮', '👏', '🔥', '🙏'];
+// reação: resposta na hora; o servidor confirma em segundo plano
+function reagirPost(p, em, pintar) {
+  const ant = { minha: p.minha, curti: p.curti, curtidas: p.curtidas, reacoes: Object.assign({}, p.reacoes || {}) };
+  const r = p.reacoes = Object.assign({}, p.reacoes || {}), velho = p.minha || (p.curti ? '❤️' : '');
+  if (velho) { r[velho] = (r[velho] || 1) - 1; if (r[velho] <= 0) delete r[velho]; }
+  if (velho === em) { p.minha = ''; p.curti = false; p.curtidas = Math.max(0, (p.curtidas || 0) - 1); }
+  else { r[em] = (r[em] || 0) + 1; if (!velho) p.curtidas = (p.curtidas || 0) + 1; p.minha = em; p.curti = true; }
+  pintar();
+  rodar('reagir', [S.token, p.id, em], (x) => { p.minha = x.minha; p.curti = x.curti; p.curtidas = x.curtidas; p.reacoes = x.reacoes; pintar(); }, () => { Object.assign(p, ant); pintar(); });
+}
+// edição no lugar: troca o texto por uma caixinha com Salvar/Cancelar
+function editarTexto(alvo, atual, max, salvar) {
+  const orig = [...alvo.childNodes], w = el('div', 'edbox'), ta = el('textarea'); ta.value = atual; ta.maxLength = max; ta.rows = 3;
+  const ok = el('button', 'btn sm pri', 'Salvar'), cc = el('button', 'btn sm', 'Cancelar'), lin = el('div'); lin.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;margin-top:6px'; lin.append(cc, ok); w.append(ta, lin);
+  alvo.replaceChildren(w); setTimeout(() => ta.focus(), 50);
+  cc.addEventListener('click', () => alvo.replaceChildren(...orig));
+  ok.addEventListener('click', () => { const v = ta.value.trim(); if (!v) { toast('Escreva o texto.'); return; } ok.disabled = true; salvar(v); });
 }
 function carregarMural() { chipsMural(); $('mu-lista').replaceChildren(el('div', 'vazio', 'Carregando…')); rodar('mural', [S.token, $('mu-loja').value], desenharMural); }
 $('mu-fbtn').addEventListener('click', () => $('mu-foto').click());
