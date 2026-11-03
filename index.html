@@ -453,6 +453,8 @@ body.logado input, body.logado textarea, body.logado select, body.logado [conten
 body.priv #v-ini, body.priv #v-meta, body.priv #v-rel, body.priv #v-prod, body.priv #det .dbody { filter:blur(9px); pointer-events:none; }
 #priv-b { display:none; position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:8500; box-shadow:0 6px 18px rgba(0,0,0,.2); white-space:nowrap; }
 body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[data-aba=rel] #priv-b, body.priv[data-aba=prod] #priv-b, body.priv:has(#det) #priv-b { display:block; }
+/* iOS: campo de data não pode passar da largura do card */
+#g-imp input[type=date], #g-imp input[type=file] { display:block; width:100%; max-width:100%; min-width:0; box-sizing:border-box; -webkit-appearance:none; appearance:none; margin-top:4px; }
 </style>
 </head>
 <body>
