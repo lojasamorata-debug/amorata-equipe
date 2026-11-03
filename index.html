@@ -477,6 +477,8 @@ body.priv[data-aba=ini] #priv-b, body.priv[data-aba=meta] #priv-b, body.priv[dat
   body.logado #v-gest input[type=date], body.logado #v-gest input[type=file] { max-width:360px; }
 }
 #b-inst { display:none; }
+.ajuda-aba { display:flex; align-items:center; gap:4px; margin:10px 0 0 auto; border:1px solid var(--line); background:var(--panel); color:var(--accent); font:inherit; font-size:12.5px; font-weight:600; padding:5px 11px; border-radius:999px; cursor:pointer; }
+body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
 </style>
 </head>
 <body>
@@ -906,7 +908,7 @@ function abrir() {
   nuvemFoto(); desenharMood(); setTimeout(carregarDesafios, 800);
   const sel = $('sel-loja'); sel.replaceChildren(...S.lojas.map((l) => new Option(l, l)));
   sel.value = loja; $('sel-loja-box').classList.toggle('hide', S.lojas.length < 2);
-  prepararFiltros(); mudarAba(chefe() ? 'ini' : 'fila');
+  prepararFiltros(); botaoAjudaAba(); mudarAba(chefe() ? 'ini' : 'fila');
   carregarMetaHoje(); carregarPendencias(); carregarCk(); carregarReuniao(); carregarPlano(); setTimeout(desenharPush, 1200); carregarCmn(); carregarMe(); carregarCart(); clearInterval(timerExtra); timerExtra = setInterval(() => { if (!document.hidden) { carregarMetaHoje(); carregarPendencias(); carregarCmn(); } }, 900000);
   atualizar(); clearInterval(timerPoll); timerPoll = setInterval(() => { if (!document.hidden && aba === 'fila') { atualizar(); if (S && S.cargo === 'ADMIN' && ++TICK_REDE % 3 === 0) carregarRedeFila(); } }, 5000);
 }
@@ -2532,12 +2534,13 @@ function passosTour() {
     { el: 'tab-rel', aba: 'rel', t: '📈 Relatórios', x: 'Conversão, motivos de perda, horários de pico, retornos e avaliações das clientes.' },
   ], fim);
 }
-function iniciarTour() {
+function iniciarTour(lista) {
   if (!S) return; fechar(); const ant = $('tour'); if (ant) ant.remove();
-  const passos = passosTour(); let i = 0;
+  const passos = Array.isArray(lista) ? lista.filter((p) => { const e = typeof p.el === 'function' ? p.el() : $(p.el); return e && e.offsetParent !== null; }) : passosTour(); let i = 0;
+  if (!passos.length) { toast('Nada para mostrar nesta tela agora.'); return; }
   const w = el('div'); w.id = 'tour'; const hole = el('div', 'hole'), tip = el('div', 'tip'); w.append(hole, tip); document.body.append(w);
   const alvo = (p) => { const e = typeof p.el === 'function' ? p.el() : $(p.el); return e && e.offsetParent !== null && e.getBoundingClientRect().height > 0 ? e : null; };
-  const fim = () => { w.remove(); try { localStorage.setItem('amorata_tour_' + S.usuario, '1'); } catch (e) {} };
+  const fim = () => { w.remove(); if (!Array.isArray(lista)) try { localStorage.setItem('amorata_tour_' + S.usuario, '1'); } catch (e) {} };
   const ir = (dir) => {
     i += dir; if (i < 0) i = 0; if (i >= passos.length) { fim(); return; }
     const p = passos[i]; if (p.aba) { try { mudarAba(p.aba); } catch (e) {} }
@@ -2559,6 +2562,82 @@ function iniciarTour() {
     }, p.aba ? 350 : 0);
   };
   ir(0);
+}
+// ---------- "Como usar" de cada aba: ícone ❓ no topo da aba abre o tour só daquela tela ----------
+function passosAba(a) {
+  const ch = chefe(), adm = S && S.cargo === 'ADMIN';
+  const P = {
+    ini: [
+      { el: 'pend', t: '📌 Pendências', x: 'O que precisa da sua atenção hoje: trocas de folga, feriados, checklist, tarefas, metas. Some sozinho quando você resolve.' },
+      { el: 'i-filtro-box', t: '📅 Período e loja', x: 'Escolha o período (Hoje, Mês atual, Mês anterior, Ano ou datas) e a loja. Todos os números da tela seguem essa escolha.' },
+      { el: 'i-cards', t: '📊 Cards do resultado', x: 'Meta com previsão de fechamento, ritmo de hoje, fila, equipe, conferência com o USE. Toque em um card para ver o detalhe.' },
+      { el: 'i-prec-box', t: '🤝 Quem precisa de você', x: 'Quem está mais longe da meta, com uma conversa sugerida para hoje.' },
+      { el: 'i-mot-box', t: '❓ Por que não vendemos', x: 'Os motivos de perda mais comuns na fila. Use para orientar a equipe.' },
+    ],
+    dia: [
+      { el: 'eu-meta', t: '🎯 Sua meta de hoje', x: 'Quanto você precisa vender hoje. Dias de mais movimento (sábado, Black) têm objetivo maior.' },
+      { el: 'ck', t: '✅ Checklist e tarefas', x: 'Itens de abertura/fechamento da loja e as tarefas de hoje. As suas aparecem em destaque: toque para marcar como feita.' },
+      { el: 'cart', t: '📞 Minhas clientes', x: 'Clientes para retornar hoje, peças que elas pediram e a busca pela ficha da cliente. Toque para chamar no WhatsApp.' },
+      { el: 'me', t: '🗓️ Minha escala', x: 'Seus dias de trabalho e folga. Precisa trocar? Peça por aqui.' },
+      { el: 'dia-fila', t: '👉 Ir para a fila', x: 'Chegou na loja? Toque aqui para entrar na fila da vez.' },
+    ],
+    fila: [
+      { el: 'rede-fila', t: '👀 Filas das lojas', x: 'Você vê a fila de todas as lojas ao vivo.' },
+      { el: 'vez-hero', t: '🔔 Próxima da vez', x: 'Quem atende a próxima cliente. Quando for a sua vez, o celular avisa.' },
+      { el: 'eu', t: '🙋 Você', x: 'Seu estado agora: na fila, atendendo ou em pausa. Atendeu? No fim, diga se vendeu — não vendeu, conte o motivo.' },
+      { el: 'l-fila', t: '👥 Na fila', x: 'A ordem da vez.' + (ch ? ' A gerente pode mudar a ordem (com motivo) e incluir quem está de folga.' : '') },
+      { el: 'l-at', t: '🛍️ Em atendimento', x: 'Quem está com cliente agora e há quanto tempo.' },
+      { el: 'l-fora', t: '☕ Fora da fila', x: 'Quem está em pausa (almoço, banheiro…) ou ainda não entrou.' },
+      { el: 'tb-rank', t: '🏆 Hoje na fila', x: 'Atendimentos e vendas do dia de cada uma.' },
+    ],
+    meta: [
+      { el: 'm-filtro-box', t: '📅 Período', x: 'Escolha Hoje, o mês ou outro período.' },
+      { el: 'm-eu', t: '🎯 Seus resultados', x: 'Meta do mês, objetivo de hoje, ticket, peças por venda e conversão na fila. Toque num card para ver o detalhe.' },
+      { el: 'm-des-box', t: '🔥 Desafios', x: 'Desafios da semana (ex.: vender 10 vestidos de linho). Marque cada venda e acompanhe o ranking.' },
+      { el: 'm-pre-box', t: '🎁 Prêmios', x: 'O que dá para ganhar e quanto falta para cada prêmio.' },
+      { el: 'm-med-box', t: '🏅 Medalhas', x: 'Medalhas que você já ganhou e o caminho para as próximas.' },
+      { el: 'm-equipe-box', t: '👥 Equipe', x: 'Como cada consultora está em relação à meta.' },
+    ],
+    mural: [
+      { el: 'st-strip', t: '⭕ Status', x: 'Fotos, áudios, vídeos e textos que somem em 24 h. Toque na sua foto para postar; toque na de uma colega para ver.' },
+      { el: () => $('sg-mural').parentElement, t: '🗂️ Abas do mural', x: 'Mural da equipe, recados (conversa direta), comunicados da gerência e conquistas.' },
+      { el: 'mu-comp', t: '✍️ Publicar', x: 'Escolha o tipo, escreva, coloque uma foto e marque colegas com @.' },
+      { el: 'mu-lista', t: '💜 Publicações', x: 'Reaja com emoji, comente, e use ⋯ para editar ou apagar o que é seu.' },
+    ],
+    apr: [
+      { el: 'tr-box', t: '📚 Trilha de vendas', x: 'Módulos curtos: abordagem, sondagem, demonstração, objeções, fechamento e pós-venda. Conclua todos para ganhar medalha.' },
+      { el: 'a-quiz', t: '🧠 Quiz', x: 'Teste o que aprendeu e ganhe medalha.' },
+      { el: 'a-lista', t: '💡 Dicas', x: 'Dicas da gerência e do time, por assunto.' },
+    ],
+    gest: [
+      { el: 'g-loja', t: '🏬 Loja', x: 'Escolha a loja que você quer gerenciar.' },
+      { el: () => $('sg-imp').parentElement, t: '🗂️ Abas da gestão', x: 'Vendas do USE, Metas, Checklist e tarefas, Escala, Equipe, Planos' + (adm ? ', Prêmios e RH.' : '.') },
+      { el: 'gt-card', t: '📥 Importar vendas', x: 'Suba o relatório do USE (um dia, todas as lojas). O app separa cada vendedora na loja certa.' },
+      { el: 'fc-loja', t: '📊 Fechamento e objetivo', x: 'Gere a imagem do fechamento do dia ou do objetivo de hoje e envie no grupo com um toque.' },
+      { el: 'gd-card', t: '📅 Divisão da meta', x: 'Como a meta do mês se divide nos dias (sábado, Black…).' },
+      { el: 'gt-lista', t: '📋 Tarefas', x: 'Crie tarefas com responsável e dia: só um dia, toda semana ou todo dia.' },
+    ],
+    prod: [
+      { el: 'p-kpis', t: '📦 Produtos', x: 'Peças vendidas, estoque e cobertura da loja.' },
+      { el: 'p-top', t: '🔥 Mais vendidos', x: 'O que mais saiu e quanto ainda tem. Faltando tamanho? Aparece aqui.' },
+      { el: 'p-ac', t: '⚠️ Acabando', x: 'Produtos com poucos dias de estoque: hora de repor.' },
+      { el: 'p-par', t: '🐢 Parados', x: 'Peças sem venda: pense em vitrine, combinação ou promoção.' },
+    ],
+    rel: [
+      { el: () => $('f-per').parentElement, t: '📅 Período e loja', x: 'Escolha o período e a loja do relatório.' },
+      { el: 'r-cmp', t: '📈 Resumo', x: 'Atendimentos, vendas, conversão, tempo e comparação com o período anterior.' },
+      { el: 'r-vend', t: '👥 Por vendedora', x: 'Conversão e motivos de perda de cada uma.' },
+      { el: 'r-rx-box', t: '🩻 Raio-x da equipe', x: 'Vendido, ticket, peças por venda e conversão de cada uma, comparados com a média.' },
+      { el: 'r-av-box', t: '⭐ Avaliações', x: 'O que as clientes acharam do atendimento (QR code da loja).' },
+    ],
+  };
+  return P[a] || [];
+}
+function botaoAjudaAba() {
+  ['ini', 'dia', 'fila', 'meta', 'mural', 'apr', 'gest', 'prod', 'rel'].forEach((a) => {
+    const v = $('v-' + a); if (!v || v.querySelector(':scope > .ajuda-aba')) return;
+    const b = el('button', 'ajuda-aba', '❓ Como usar'); b.title = 'Ver o passo a passo desta tela'; b.addEventListener('click', () => iniciarTour(passosAba(a))); v.prepend(b);
+  });
 }
 // passo a passo de instalação (aparece no primeiro acesso, enquanto a senha for a padrão)
 function passosInstalar() {
