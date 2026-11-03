@@ -2725,11 +2725,14 @@ window.addEventListener('appinstalled', () => { try { localStorage.setItem('amor
 const ehAndroid = () => /android/i.test(navigator.userAgent);
 const ehWebview = () => /; wv\)|FBAN|FBAV|Instagram|WhatsApp|Line\//i.test(navigator.userAgent);
 const marcouInst = () => { try { return localStorage.getItem('amorata_inst') === '1'; } catch (e) { return false; } };
+// o celular recusou o serviço de notificações (Chrome sem Google Play, outro navegador…): não trava o app por 7 dias
+function pushFalhou() { try { const t = Number(localStorage.getItem('amorata_push_erro')) || 0; return !!t && Date.now() - t < 7 * 864e5; } catch (e) { return false; } }
+const MSG_PUSH_FALHA = 'Este celular não aceitou as notificações (erro no serviço de notificações do Google). Você pode usar o app normalmente. Para tentar resolver: abra o app pelo Google Chrome (não por outro navegador), atualize o Chrome e o "Google Play Services" na Play Store, confira em Configurações › Apps › Chrome › Notificações se está permitido, desligue a economia de bateria e toque em "Tentar de novo".';
 async function pushSit() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'sem';
   if (Notification.permission === 'denied') return 'bloqueado';
   if (Notification.permission !== 'granted') return 'ativar';
-  try { const reg = await Promise.race([navigator.serviceWorker.ready, new Promise((_, rj) => setTimeout(() => rj(new Error('sw')), 4000))]), sub = await reg.pushManager.getSubscription(); return sub ? 'ok' : 'ativar'; } catch (e) { return 'ativar'; }
+  try { const reg = await Promise.race([navigator.serviceWorker.ready, new Promise((_, rj) => setTimeout(() => rj(new Error('sw')), 4000))]), sub = await reg.pushManager.getSubscription(); return sub ? 'ok' : pushFalhou() ? 'falha' : 'ativar'; } catch (e) { return pushFalhou() ? 'falha' : 'ativar'; }
 }
 // Android: o app conta como instalado se está aberto pelo ícone, se o Chrome avisou a instalação ou se ele já aparece instalado
 async function instaladoAndroid() {
@@ -2744,7 +2747,7 @@ async function situacaoApp() {
   if (ehAndroid()) { // Android: tudo pelo próprio app — ativar aqui mesmo e instalar com um toque
     if (ehWebview()) return 'webview';
     const ps = await pushSit(), inst = await instaladoAndroid();
-    return inst && (ps === 'ok' || ps === 'sem') ? 'ok' : 'android';
+    return inst && (ps === 'ok' || ps === 'sem' || ps === 'falha') ? 'ok' : 'android';
   }
   if (!instalado()) return 'instalar';
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'ok'; // celular antigo sem suporte: não trava
@@ -2753,10 +2756,17 @@ async function situacaoApp() {
   try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); if (!sub) return 'ativar'; } catch (e) { return 'ok'; }
   return 'ok';
 }
+// assina o push; se o serviço do Google recusar ("push service error"), tenta de novo e, persistindo, marca o aparelho
+async function assinarSW(chave) {
+  const reg = await navigator.serviceWorker.ready; let sub = await reg.pushManager.getSubscription(); if (sub) { try { localStorage.removeItem('amorata_push_erro'); } catch (x) {} return sub; }
+  const assina = () => reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(chave) });
+  try { sub = await assina(); } catch (e1) { if (!/push service|AbortError|Registration failed/i.test((e1 && (e1.name + ' ' + e1.message)) || '')) throw e1; await new Promise((r) => setTimeout(r, 1500)); try { sub = await assina(); } catch (e2) { try { localStorage.setItem('amorata_push_erro', String(Date.now())); } catch (x) {} throw new Error('falha_servico'); } }
+  try { localStorage.removeItem('amorata_push_erro'); } catch (x) {} return sub;
+}
 async function assinarPush() {
   const perm = await Notification.requestPermission(); if (perm !== 'granted') throw new Error(perm === 'denied' ? 'bloqueado' : 'Permissão não concedida. Toque de novo e escolha Permitir.');
   const chave = await new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej).pushChave(S.token));
-  const reg = await navigator.serviceWorker.ready; let sub = await reg.pushManager.getSubscription(); if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(chave) });
+  const sub = await assinarSW(chave);
   await new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej).salvarPush(S.token, JSON.parse(JSON.stringify(sub)), ehIOS() ? 'iPhone' : /android/i.test(navigator.userAgent) ? 'Android' : 'Computador'));
 }
 async function exigirApp(tourDepois) {
@@ -2779,11 +2789,11 @@ async function exigirApp(tourDepois) {
   }
   if (st === 'android') {
     const ps = await pushSit(), inst = await instaladoAndroid(); if (!$('gate')) return;
-    const okP = ps === 'ok' || ps === 'sem';
+    const okP = ps === 'ok' || ps === 'sem' || ps === 'falha';
     const b1 = etapa(1, okP, 'Ative as notificações');
     if (ps === 'ativar') {
       const v = el('button', 'btn pri big', '🔔 Ativar notificações'); v.style.cssText = 'margin-top:8px;width:100%';
-      v.addEventListener('click', async () => { v.disabled = true; v.textContent = 'Ativando…'; try { await assinarPush(); toast('Notificações ativadas 🔔'); } catch (e) { if (e.message !== 'bloqueado') toast(e.message || 'Não consegui ativar.'); } exigirApp(); }); b1.append(v);
+      v.addEventListener('click', async () => { v.disabled = true; v.textContent = 'Ativando…'; try { await assinarPush(); toast('Notificações ativadas 🔔'); } catch (e) { if (e.message === 'falha_servico') toast('Este celular não aceitou as notificações. Pode seguir usando o app — a dica está no sininho 🔔.'); else if (e.message !== 'bloqueado') toast(e.message || 'Não consegui ativar.'); } exigirApp(); }); b1.append(v);
     } else if (ps === 'bloqueado') {
       b1.append(el('div', 'sub', 'As notificações estão bloqueadas. Libere assim:'), lista(['Toque no ícone ⚙️/🔒 ao lado do endereço, lá em cima no Chrome.', 'Toque em Permissões › Notificações › Permitir.', 'Volte aqui e toque em "Já liberei".']));
       const v = el('button', 'btn pri', 'Já liberei'); v.style.marginTop = '8px'; v.addEventListener('click', async () => { v.disabled = true; try { await assinarPush(); toast('Notificações ativadas 🔔'); } catch (e) { toast(e.message === 'bloqueado' ? 'Ainda está bloqueado. Confira os passos acima.' : 'Não consegui ativar: ' + (e.message || e)); } exigirApp(); }); b1.append(v);
@@ -2867,9 +2877,9 @@ async function desenharPush() {
     try {
       const perm = await Notification.requestPermission(); if (perm !== 'granted') { toast('Sem permissão. Dá para liberar depois nas configurações do celular.'); ok.disabled = false; ok.textContent = 'Ativar notificações'; return; }
       const chave = await new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej).pushChave(S.token));
-      const reg = await navigator.serviceWorker.ready; let sub = await reg.pushManager.getSubscription(); if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(chave) });
+      const sub = await assinarSW(chave);
       rodar('salvarPush', [S.token, JSON.parse(JSON.stringify(sub)), (ehIOS() ? 'iPhone' : /android/i.test(navigator.userAgent) ? 'Android' : 'Computador')], () => { toast('Notificações ativadas 🔔'); b.classList.add('hide'); }, () => { ok.disabled = false; ok.textContent = 'Ativar notificações'; });
-    } catch (e) { toast('Não consegui ativar: ' + (e.message || e)); ok.disabled = false; ok.textContent = 'Ativar notificações'; }
+    } catch (e) { toast(e.message === 'falha_servico' ? 'Este celular não aceitou as notificações. Veja a dica no sininho 🔔.' : 'Não consegui ativar: ' + (e.message || e)); ok.disabled = false; ok.textContent = 'Tentar de novo'; }
   });
   b.append(ok); b.classList.remove('hide');
 }
@@ -3918,6 +3928,7 @@ async function blocoNotif(o) {
   if (st === 'ok') { box.style.background = '#e9f6ee'; box.append(el('div', 'sub', '🔔 Notificações ativas neste aparelho ✅')); return; }
   box.style.background = '#fff4ec';
   if (st === 'oficial') { box.append(el('b', '', '🔕 Notificações desligadas'), el('div', 'sub', 'Abra o app pelo endereço oficial para receber os avisos no celular: ' + URL_SITE)); return; }
+  if (st === 'falha') { box.append(el('b', '', '🔕 Este celular não aceitou as notificações'), el('div', 'sub', MSG_PUSH_FALHA)); const tb = el('button', 'btn pri', '🔔 Tentar de novo'); tb.style.cssText = 'margin-top:8px;width:100%'; tb.addEventListener('click', async () => { tb.disabled = true; try { await assinarPush(); toast('Notificações ativadas 🔔'); } catch (e) { toast(e.message === 'falha_servico' ? 'Ainda não deu. Siga as dicas acima.' : (e.message || 'Não consegui ativar.')); } tb.disabled = false; }); box.append(tb); return; }
   if (st === 'sem' && ehIOS() && instalado()) { box.append(el('b', '', '🔕 Este iPhone precisa de atualização'), el('div', 'sub', msgIOSVelho())); return; }
   if (st === 'sem') { box.append(el('b', '', '🔕 Notificações desligadas'), el('div', 'sub', ehIOS() && !instalado() ? 'No iPhone, primeiro coloque o app na tela inicial: Compartilhar ⬆️ › "Adicionar à Tela de Início". Depois abra pelo ícone e ative aqui.' : 'Este navegador não recebe notificações. Use o app instalado no celular.')); return; }
   if (st === 'bloqueado') { box.append(el('b', '', '🔕 Notificações bloqueadas'), el('div', 'sub', ehIOS() ? 'Abra os Ajustes do iPhone › Notificações › Amorata Equipe e ligue "Permitir Notificações".' : ehCelular() ? 'Toque no ícone ⚙️/🔒 ao lado do endereço (ou segure o ícone do app › ⓘ) › Notificações › Permitir.' : 'Clique no cadeado 🔒 ao lado do endereço › Notificações › Permitir.')); }
