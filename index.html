@@ -3253,6 +3253,7 @@ function desenharEquipe(r) {
     }
     g.append(nc);
   }
+  if (S.cargo === 'ADMIN') { const cu = el('div'); cu.id = 'cu-box'; g.append(cu); carregarCodUse(); }
   const b = el('div'); b.style.marginTop = '10px'; g.append(b);
   if (!r.pessoas.length) b.append(el('div', 'vazio', 'Ninguém cadastrado nesta loja.'));
   r.pessoas.forEach((p) => {
@@ -3431,6 +3432,25 @@ function lerTodasLojas(file) {
 $('fc-loja').addEventListener('click', () => fechamento($('g-loja').value, $('fc-data').value));
 $('fc-rede').addEventListener('click', () => fechamento('TODAS', $('fc-data').value));
 $('fc-obj').addEventListener('click', () => objetivoDia($('g-loja').value, ONTEM && ONTEM.loja === $('g-loja').value ? ONTEM : null));
+// ---------- vínculo código do USE → pessoa (ADMIN) ----------
+function carregarCodUse() { const lj = $('g-loja').value; if (!lj || lj === 'TODAS') return; rodar('codigosUSE', [S.token, lj], desenharCodUse); }
+function desenharCodUse(r) {
+  const box = $('cu-box'); if (!box) return; box.replaceChildren(); const c = el('div', 'card'); c.style.marginTop = '12px'; box.append(c);
+  const pend = r.linhas.filter((x) => !x.confirmado);
+  c.append(el('b', '', '🔗 Códigos do USE · ' + r.loja), el('div', 'sub', 'Liga cada código do USE (loja e online) à pessoa do app. Assim metas, conferência da fila, destaques e medalhas não dependem mais do nome. ' + (pend.length ? pend.length + ' código(s) sem vínculo.' : 'Todos vinculados ✅')));
+  const opts = (sel) => { const s2 = el('select'); s2.append(new Option('— escolher —', '')); r.pessoas.forEach((p) => s2.append(new Option(p.nome + (p.ativo ? '' : ' (inativa)'), p.usuario))); s2.append(new Option('Não é ninguém do app (conta da loja, ex-funcionária…)', '-')); s2.value = sel || ''; s2.style.maxWidth = '100%'; return s2; };
+  const muda = {}, t = el('div'); t.style.marginTop = '8px';
+  r.linhas.forEach((x) => {
+    const d = el('div', 'pess eq'), inf = el('div'); inf.append(el('b', '', x.cod + ' · ' + x.nome + (x.online ? ' (online)' : '')), el('span', '', 'vendeu ' + rs(x.total) + ' · último dia ' + isoBR(x.ult) + (x.confirmado ? ' · ✅ vinculado' : x.sugestao ? ' · 💡 sugestão' : ' · ⚠️ sem vínculo')));
+    const s2 = opts(x.usuario || x.sugestao || ''); if (!x.confirmado && x.sugestao) muda[x.cod] = x.sugestao;
+    s2.addEventListener('change', () => { muda[x.cod] = s2.value; ok.disabled = false; });
+    const w = el('div'); w.style.cssText = 'width:100%;margin-top:6px'; w.append(s2); d.style.flexWrap = 'wrap'; d.append(inf, w); t.append(d);
+  });
+  const ok = el('button', 'btn pri', pend.length ? '💾 Salvar vínculos (confirma as sugestões)' : '💾 Salvar alterações'); ok.style.marginTop = '10px'; ok.disabled = !Object.keys(muda).length;
+  ok.addEventListener('click', () => { const pares = Object.keys(muda).map((k) => [k, muda[k]]); if (!pares.length) return; ok.disabled = true; rodar('salvarCodigosUSE', [S.token, r.loja, pares], (x) => { toast('Vínculos salvos 🔗'); desenharCodUse(x); }, () => { ok.disabled = false; }); });
+  if (!r.linhas.length) t.append(el('div', 'vazio', 'Ainda não há vendas importadas desta loja.'));
+  c.append(t, ok);
+}
 // ---------- objetivo do dia em imagem (manhã) ----------
 function verImagem(titulo, cv, nome, nota) {
   abrirDet(titulo, (b) => {
