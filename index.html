@@ -794,7 +794,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
       </div>
       <div class="datas hide" id="f-datas"><label>De <input type="date" id="f-de"></label><label>Até <input type="date" id="f-ate"></label><button class="btn sm pri" id="f-ok">Ver</button></div>
       <div class="sub" id="r-tit" style="margin-top:8px"></div>
-      <h2><span id="r-quem">Resumo</span></h2>
+      <div id="r-res-box"><h2><span id="r-quem">Resumo</span></h2>
       <div class="kpis6">
         <div class="kpi"><div class="v" id="r-at">—</div><div class="l">atendimentos</div></div>
         <div class="kpi"><div class="v" id="r-v">—</div><div class="l">vendas</div></div>
@@ -803,13 +803,12 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
         <div class="kpi"><div class="v" id="r-f">—</div><div class="l">fora da vez</div></div>
         <div class="kpi"><div class="v" id="r-p">—</div><div class="l">perdas</div></div>
       </div>
-      <div class="nota" id="r-cmp"></div>
+      <div class="nota" id="r-cmp"></div></div>
       <div id="r-lojas-box"><h2><span>Por loja</span></h2><div class="tbl-x"><table><thead><tr><th>Loja</th><th class="n">Atend.</th><th class="n">Vendas</th><th class="n">Conv.</th><th class="n">Min</th><th class="n">Fora vez</th></tr></thead><tbody id="r-lojas"></tbody></table></div></div>
       <h2><span id="r-vend-t">Por vendedora</span></h2>
       <div class="tbl-x"><table><thead><tr><th>Vendedora</th><th class="n">Atend.</th><th class="n">Vendas</th><th class="n">Conv.</th><th class="n">Min</th><th>Mais perde por</th></tr></thead><tbody id="r-vend"></tbody></table></div>
       <div id="r-ret" class="hide"></div>
       <div id="r-dsj" class="hide"></div>
-      <button class="btn big hide" id="r-bol" style="margin-top:12px;width:100%">📄 Boletim do período (PDF)</button>
       <div id="r-av-box" class="hide"><h2><span>⭐ Avaliações das clientes</span><span id="r-av-n"></span></h2><div id="r-av"></div><button class="btn sm hide" id="r-av-qr" style="margin-top:8px">📱 QR code para o balcão</button></div>
       <div id="r-rx-box" class="hide"><h2><span id="r-rx-t">Raio-x da equipe</span></h2>
       <div class="tbl-x"><table><thead><tr><th>Vendedora</th><th class="n">Vendido</th><th class="n">Vendas</th><th class="n">Ticket</th><th class="n">PA</th><th class="n">Conv.</th></tr></thead><tbody id="r-rx"></tbody></table></div>
@@ -821,7 +820,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
       <div id="r-cb-box" class="hide"><h2><span id="r-cb-t">Cashback usado por vendedora</span></h2>
       <div class="tbl-x"><table><thead><tr><th>Vendedora</th><th class="n">Vendido</th><th class="n">Cashback usado</th><th class="n">% das vendas</th></tr></thead><tbody id="r-cb"></tbody></table></div>
       <div class="nota">Cashback usado = bônus baixado nas vendas (arquivo Pedidos P.A. que a gerente já importa). Mostra quem mais traz cliente de volta com cashback.</div></div>
-      <h2><span>Motivos de perda</span></h2><div class="bars" id="r-mot"></div>
+      <div id="r-mot-box"><h2><span>Motivos de perda</span></h2><div class="bars" id="r-mot"></div></div>
       <div class="hide"><div class="bars" id="r-dia"></div></div>
       <h2><span>Horários de pico (dia da semana × hora)</span></h2><div class="heat" id="r-heat"></div><div class="nota">Cor mais forte = mais atendimentos (toque no quadrinho para ver a conversão).</div>
       <div id="r-proc-box"><h2><span>O que as clientes procuravam e não levaram</span></h2><div id="r-proc"></div></div>
@@ -1267,7 +1266,7 @@ function slidesGuia() {
     ['✅', 'Encerrar e aprender', 'Terminou? <b>Encerrar</b> e diga se vendeu. Se não vendeu, escolha o motivo: o app te dá <b>dicas para a próxima</b>. Vai sair um pouco? <b>Pausa</b>.'],
     ['🎯', 'Metas, medalhas e equipe', 'Em <b>Metas</b> você vê quanto falta e suas <b>medalhas</b>. No topo, conte seu <b>mood do dia</b> e mande <b>recados</b> para a equipe. Em <b>Aprender</b> tem dicas e quiz.'],
   ];
-  if (chefe()) sl.push(['🧭', 'Para a gerência', 'Em <b>Início</b>: o ritmo do mês e quem precisa de você. Em <b>Gestão</b>: vendas do USE, metas, escala, checklist e <b>Equipe</b> (cadastro e senhas). Em <b>Relatórios</b>: o <b>boletim do mês</b> em PDF.']);
+  if (chefe()) sl.push(['🧭', 'Para a gerência', 'Em <b>Início</b>: o ritmo do mês e quem precisa de você. Em <b>Gestão</b>: vendas do USE, metas, escala, checklist e <b>Equipe</b> (cadastro e senhas). Em <b>Relatórios</b>: raio-x da equipe, horários de pico e avaliações.']);
   return sl;
 }
 function mostrarGuia(forcar) {
@@ -1559,7 +1558,9 @@ function tabela(tb, linhas, cols) {
   linhas.forEach((l) => { const tr = el('tr'); l.forEach((v, i) => tr.append(el('td', i && typeof v !== 'object' && i < cols - (l._txtLast ? 1 : 0) ? 'n' : '', v))); tb.append(tr); });
 }
 function carregarRel() {
-  $('r-tit').textContent = 'Carregando…'; $('r-bol').classList.toggle('hide', !chefe());
+  $('r-tit').textContent = 'Carregando…';
+  // gerente/ADMIN já vê resumo, lojas e motivos de perda no Início: aqui fica só o que é detalhe
+  ['r-res-box', 'r-mot-box'].forEach((id) => $(id).classList.toggle('hide', chefe()));
   rodar('relatorio', [S.token, $('f-per').value, $('f-loja').value, $('f-per').value === 'custom' ? $('f-de').value : '', $('f-per').value === 'custom' ? $('f-ate').value : ''], (r) => {
     const fim = (d) => d.split('-').reverse().join('/');
     { const rt = r.retornos, bx = $('r-ret'); bx.classList.toggle('hide', !rt || !(rt.anotados || rt.abertos)); bx.replaceChildren(); if (rt && (rt.anotados || rt.abertos)) { bx.append(el('h2', '', '📞 Retornos de clientes')); const c = el('div', 'pess'), x = el('div'); x.append(el('b', '', rt.anotados + ' anotados · ' + rt.feitos + ' feitos · ' + rt.compraram + ' voltaram e compraram'), el('span', '', rt.abertos + ' em aberto' + (rt.atrasados.length ? ' · atrasados: ' + rt.atrasados.map((a) => a.nome + ' (' + a.n + ')').join(', ') : ''))); c.append(x); bx.append(c); } }
@@ -1571,7 +1572,7 @@ function carregarRel() {
     $('r-at').textContent = t.at; $('r-v').textContent = t.v; $('r-c').textContent = pc(t.conv);
     $('r-t').textContent = t.tempo == null ? '—' : DEC1.format(t.tempo); $('r-f').textContent = pc(t.fdv); $('r-p').textContent = t.perdas;
     $('r-cmp').textContent = r.soEu && r.loja.at ? 'Conversão da loja no período: ' + pc(r.loja.conv) + ' · ' + r.loja.at + ' atendimentos' : '';
-    $('r-lojas-box').classList.toggle('hide', r.soEu || r.lojas.length < 2);
+    $('r-lojas-box').classList.toggle('hide', chefe() || r.soEu || r.lojas.length < 2);
     tabela($('r-lojas'), r.porLoja.map((l) => [l.loja, String(l.at), String(l.v), pc(l.conv), l.tempo == null ? '—' : DEC1.format(l.tempo), pc(l.fdv)]), 6);
     $('r-vend-t').textContent = r.soEu ? 'Você' : 'Por vendedora';
     const lv = r.vendedoras.map((v) => { const a = [v.nome + (r.lojas.length > 1 ? ' · ' + v.loja : ''), String(v.at), String(v.v), pc(v.conv), v.tempo == null ? '—' : DEC1.format(v.tempo), v.topPerda || '—']; a._txtLast = true; return a; });
@@ -1799,56 +1800,6 @@ function desenharAval(a) {
   if ((a.barradas || []).length) { const d = el('details', 'nota'); d.append(el('summary', '', '⚠️ ' + a.barradas.reduce((s, x) => s + x.n, 0) + ' avaliação(ões) não conferida(s) — fora da média e das medalhas')); d.append(el('div', 'sub', 'Avaliação de consultora sem atendimento dela na fila nas 2 horas anteriores, ou mais avaliações do que atendimentos no dia. Pode ser autoavaliação.')); a.barradas.forEach((x) => d.append(el('div', '', x.nome + ': ' + x.n))); b.append(d); }
   a.comentarios.forEach((c) => { const d = el('div', 'coment', '“' + c.texto + '”'); d.append(el('span', '', (c.nota ? estr(c.nota) + ' · ' + (c.nome || 'sem consultora') : '') + (c.notaLoja ? (c.nota ? ' · ' : '') + 'loja ' + estr(c.notaLoja) : '') + ' · ' + c.quando)); b.append(d); });
 }
-function boletim() {
-  const per = $('f-per').value, lj = $('f-loja').value, de = per === 'custom' ? $('f-de').value : '', ate = per === 'custom' ? $('f-ate').value : '';
-  // abre dentro do próprio app (no app instalado não existe "voltar" de uma janela nova)
-  const ant = $('bol'); if (ant) ant.remove();
-  const ov = el('div'); ov.id = 'bol'; ov.style.cssText = 'position:fixed;inset:0;z-index:9300;background:#fff;display:flex;flex-direction:column';
-  const fr = el('iframe'); fr.style.cssText = 'flex:1;width:100%;border:0;background:#fff'; fr.title = 'Boletim';
-  fr.srcdoc = '<p style="font-family:Arial,sans-serif;padding:30px;color:#555">Montando o boletim…</p><button onclick="parent.postMessage(\'fechar-boletim\',\'*\')" style="margin-left:30px;padding:10px 16px;border-radius:8px;border:1px solid #ccc;background:#fff;font-size:15px">✕ Fechar</button>';
-  ov.append(fr); document.body.append(ov);
-  const fecha = () => ov.remove();
-  rodar('relatorio', [S.token, per, lj, de, ate], (r) => rodar('metas', [S.token, lj, per, de, ate], (m) => { if (ov.isConnected) fr.srcdoc = htmlBoletim(r, m); }, fecha), fecha);
-}
-function htmlBoletim(r, m) {
-  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-  const nk = (n) => String(n || '').trim().split(/\s+/)[0].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const br = (d) => d.split('-').reverse().join('/'), logo = ($('v-login').querySelector('img') || {}).src || '';
-  const per = r.titulo + ' · ' + br(r.de) + (r.de !== r.ate ? ' a ' + br(r.ate) : '');
-  const av = r.avaliacoes || { porConsultora: [], lojas: [] }, multi = r.lojas.length > 1;
-  const avDe = (nome, loja) => av.porConsultora.find((a) => nk(a.nome) === nk(nome) && (!multi || a.nome.indexOf(loja) >= 0));
-  const fila = (nome, loja) => (r.vendedoras || []).find((v) => nk(v.nome) === nk(nome) && v.loja === loja);
-  const kpi = (t, v, s2) => '<div class="k"><div class="t">' + t + '</div><div class="v">' + v + '</div>' + (s2 ? '<div class="s">' + s2 + '</div>' : '') + '</div>';
-  const cab = (tit, sub) => '<div class="cab"><img src="' + logo + '"><div><div class="mini">Amorata Equipe · Boletim</div><h1>' + esc(tit) + '</h1><div class="sub">' + esc(sub) + '</div></div></div>';
-  let html = '';
-  const lojas = (m.lojas || []).length ? m.lojas : r.lojas.map((l) => ({ loja: l }));
-  lojas.forEach((L) => {
-    const pl = (r.porLoja || []).find((x) => x.loja === L.loja) || (r.lojas.length === 1 ? r.total : null) || {}, al = (av.lojas || []).find((x) => x.loja === L.loja);
-    const eq = (m.consultoras || []).filter((c) => c.loja === L.loja).sort((a, b) => (b.pct || 0) - (a.pct || 0));
-    html += '<section>' + cab('Loja ' + L.loja, per) + '<div class="ks">' + kpi('Vendido', rs(L.vendido), L.meta ? 'meta ' + rs(L.meta) : '') + kpi('Da meta', pc(L.pct)) + kpi('Atendimentos na fila', pl.at == null ? '—' : pl.at, pl.v == null ? '' : pl.v + ' com venda') + kpi('Conversão', pc(pl.conv)) + kpi('Avaliação das clientes', al ? DEC1.format(al.media) + ' ★' : (av.n ? DEC1.format(av.media) + ' ★' : '—'), al ? al.n + ' avaliações da loja' : '') + '</div>';
-    if (eq.length) html += '<h2>Equipe</h2><table><tr><th>Consultora</th><th>Vendido</th><th>Meta</th><th>%</th><th>Conversão</th><th>Avaliação</th></tr>' + eq.map((c) => { const f = fila(c.nome, c.loja), a = avDe(c.nome, c.loja); return '<tr><td>' + esc(primeiroNome(c.nome)) + '</td><td>' + rs(c.venda) + '</td><td>' + rs(c.meta) + '</td><td><b>' + pc(c.pct) + '</b></td><td>' + (f ? pc(f.conv) : '—') + '</td><td>' + (a ? DEC1.format(a.media) + ' ★' : '—') + '</td></tr>'; }).join('') + '</table>';
-    if ((r.motivos || []).length) html += '<h2>Principais motivos de não venda</h2><ol>' + r.motivos.slice(0, 4).map((x) => '<li>' + esc(x.motivo) + ' <span class="sub">(' + x.n + ')</span></li>').join('') + '</ol>';
-    html += '</section>';
-    eq.forEach((c) => {
-      const f = fila(c.nome, c.loja), a = avDe(c.nome, c.loja), media = r.media || {}, fortes = [], focar = [];
-      if (c.pct >= 1) fortes.push('Meta do período batida 🎉'); else if (c.pct >= 0.9) fortes.push('Muito perto da meta');
-      if (f && pl.conv != null && f.conv != null && f.conv >= pl.conv + 0.05) fortes.push('Conversão acima da média da loja');
-      if (a && a.media >= 4.7) fortes.push('Clientes muito satisfeitas com o atendimento');
-      if (c.tkm && media.ticket && c.tkm >= media.ticket * 1.1) fortes.push('Ticket médio acima da média');
-      if (c.pct != null && c.pct < 0.8) focar.push('Ritmo de vendas abaixo da meta: combine um objetivo por dia');
-      if (f && pl.conv != null && f.conv != null && f.conv < pl.conv - 0.05) focar.push('Converter mais atendimentos' + (f.topPerda ? ': a principal perda foi “' + f.topPerda + '”' : ''));
-      if (c.pa && media.pa && c.pa < media.pa * 0.9) focar.push('Peças por atendimento: oferecer um complemento em cada venda');
-      if (f && f.fdv > 0.25) focar.push('Muitos atendimentos fora da vez');
-      html += '<section>' + cab(primeiroNome(c.nome) + ' · ' + c.loja, per) + '<div class="ks">' + kpi('Vendido', rs(c.venda), 'meta ' + rs(c.meta)) + kpi('Da meta', pc(c.pct), esc(c.situacao || '')) + kpi('Ticket médio', c.tkm ? rs(c.tkm) : '—') + kpi('Peças por atendimento', c.pa ? DEC1.format(c.pa) : '—') + kpi('Online', c.online ? rs(c.online) : '—') + kpi('Atendimentos na fila', f ? f.at : '—', f ? f.v + ' com venda · ' + pc(f.conv) : '') + kpi('Tempo médio', f && f.tempo != null ? DEC1.format(f.tempo) + ' min' : '—') + kpi('Avaliação das clientes', a ? DEC1.format(a.media) + ' ★' : '—', a ? a.n + (a.n === 1 ? ' avaliação' : ' avaliações') : '') + '</div>';
-      html += '<div class="cols"><div><h2>Pontos fortes</h2><ul>' + (fortes.length ? fortes.map((x) => '<li>' + esc(x) + '</li>').join('') : '<li class="sub">Continue registrando seus atendimentos para aparecerem aqui.</li>') + '</ul></div><div><h2>Para focar</h2><ul>' + (focar.length ? focar.map((x) => '<li>' + esc(x) + '</li>').join('') : '<li class="sub">Nada crítico. Siga assim! 💜</li>') + '</ul></div></div>';
-      html += '<div class="ass"><div>Consultora</div><div>Gerente</div></div></section>';
-    });
-  });
-  const css = '@page{size:A4;margin:14mm}body{font-family:Inter,Arial,sans-serif;color:#1f1e1d;margin:0}section{page-break-after:always;padding:4px 2px}section:last-of-type{page-break-after:auto}.cab{display:flex;gap:14px;align-items:center;border-bottom:2px solid #5b4a7a;padding-bottom:10px;margin-bottom:14px}.cab img{width:56px;height:56px}.mini{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#5b4a7a}h1{font-family:Georgia,serif;font-weight:400;font-size:26px;margin:2px 0}.sub{color:#6b6862;font-size:13px}h2{font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:#5b4a7a;margin:18px 0 8px}.ks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k{border:1px solid #e4e1da;border-radius:10px;padding:10px}.k .t{font-size:11px;color:#6b6862}.k .v{font-size:20px;font-weight:600;margin-top:2px}.k .s{font-size:11px;color:#6b6862;margin-top:2px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #e4e1da}th{font-size:11px;color:#6b6862;text-transform:uppercase}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}li{margin-bottom:6px;font-size:14px}.ass{display:flex;gap:40px;margin-top:60px}.ass div{flex:1;border-top:1px solid #999;padding-top:6px;font-size:12px;color:#6b6862;text-align:center}.barra{position:sticky;top:0;background:#5b4a7a;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-size:14px}.barra button{background:#fff;color:#5b4a7a;border:0;border-radius:8px;padding:8px 14px;font-weight:600;font-size:14px}@media print{.barra{display:none}}';
-  return '<!doctype html><html><head><meta charset="utf-8"><title>Boletim · ' + esc(per) + '</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + css + '</style></head><body><div class="barra"><button onclick="parent.postMessage(\'fechar-boletim\',\'*\')">✕ Fechar</button><span style="flex:1;margin:0 10px;font-size:13px">Para PDF: Imprimir › Salvar como PDF</span><button onclick="print()">Imprimir / PDF</button></div>' + html + '<p class="sub" style="text-align:center">Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' · Amorata Equipe</p></body></html>';
-}
-$('r-bol').addEventListener('click', boletim);
-window.addEventListener('message', (ev) => { if (ev.data === 'fechar-boletim') { const b = $('bol'); if (b) b.remove(); } });
 $('r-av-qr').addEventListener('click', () => {
   const lj = $('f-loja').value === 'TODAS' ? S.lojas[0] : $('f-loja').value;
   rodar('linkAvaliacao', [S.token, lj], (r) => {
