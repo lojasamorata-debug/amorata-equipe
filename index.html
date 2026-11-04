@@ -438,6 +438,13 @@ body.fila-v #eu-acoes .btn.lk { flex:1 1 auto; padding:6px 8px; font-size:13px; 
 #st-bolha { position:fixed; right:14px; bottom:calc(22px + env(safe-area-inset-bottom)); z-index:65; display:flex; align-items:center; gap:8px; background:var(--panel); border-radius:999px; padding:6px 12px 6px 6px; box-shadow:0 6px 20px rgba(0,0,0,.18); cursor:pointer; animation:stentra .4s ease-out; font-size:13px; font-weight:600; color:var(--fg); }
 body.fila-v #st-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body.sheet-on #st-bolha, body[data-aba=mural] #st-bolha { display:none; }
 #st-bolha .avs { display:flex; } #st-bolha .avs .av { width:34px; height:34px; font-size:13px; margin-left:-10px; box-shadow:0 0 0 2px var(--panel), 0 0 0 4px #e8738a; } #st-bolha .avs .av:first-child { margin-left:0; }
+#camp-bolha { position:fixed; left:14px; bottom:calc(22px + env(safe-area-inset-bottom)); z-index:64; display:flex; align-items:center; gap:8px; background:linear-gradient(135deg,#5b4a7a,#b0578d); color:#fff; border-radius:999px; padding:7px 12px 7px 10px; box-shadow:0 8px 24px rgba(91,74,122,.35); font-size:13px; font-weight:600; cursor:pointer; max-width:calc(100vw - 120px); animation:campIn .5s ease-out; }
+#camp-bolha .cr { position:absolute; top:-14px; left:16px; font-size:18px; animation:campFlut 2.4s ease-in-out infinite; }
+#camp-bolha .avs { display:flex; } #camp-bolha .avs .av { width:34px; height:34px; font-size:13px; margin-left:-10px; box-shadow:0 0 0 2px #fff, 0 0 0 4px #f5c84c; animation:campFlut 2.4s ease-in-out infinite; } #camp-bolha .avs .av:first-child { margin-left:0; }
+#camp-bolha span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } #camp-bolha .xb { border:0; background:none; color:rgba(255,255,255,.8); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
+body.fila-v #camp-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body.sheet-on #camp-bolha { display:none; }
+@keyframes campFlut { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } } @keyframes campIn { from { transform:translateY(40px); opacity:0; } to { transform:none; opacity:1; } }
+.sup-lj { background:var(--bg, #f6f3ef); border-radius:12px; padding:8px 10px; } .sup-ev { display:flex; gap:8px; align-items:baseline; padding:6px 0; border-bottom:1px solid rgba(0,0,0,.06); font-size:13px; } .sup-ev .ic { flex:none; } .sup-ev .tx { flex:1; } .sup-ev .qd { flex:none; color:var(--muted); font-size:11px; }
 #st-bolha .xb { border:0; background:none; color:var(--muted); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
 @keyframes stentra { from { transform:translateY(20px) scale(.8); opacity:0; } to { transform:none; opacity:1; } }
 #strec .cont { flex:1; display:flex; align-items:center; justify-content:center; position:relative; } #strec video { max-width:100%; max-height:100%; background:#000; } #strec .tmp { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.5); padding:4px 12px; border-radius:999px; font-variant-numeric:tabular-nums; }
@@ -582,6 +589,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
     </div>
 
     <div id="v-ini" class="hide">
+      <div class="card hide" id="sup-card"></div>
       <div class="filtros" id="i-filtro-box"><select id="i-per"><option value="hoje">Hoje</option><option value="mes" selected>Mês atual</option><option value="mes_ant">Mês anterior</option><option value="ano">Ano</option><option value="custom">Personalizado…</option></select><select id="i-loja"></select></div><div class="datas hide" id="i-datas"><label>De <input type="date" id="i-de"></label><label>Até <input type="date" id="i-ate"></label><button class="btn sm pri" id="i-ok">Ver</button></div>
       <div class="sub" id="i-tit" style="margin-top:8px"></div>
       <div id="i-cards" class="dash"></div>
@@ -891,7 +899,7 @@ function entrar() {
     .login($('lu').value, $('ls').value);
 }
 function sair(msg) {
-  document.body.classList.remove('fila-v'); { const sb = $('st-bolha'); if (sb) sb.remove(); } S = null; protecao(false); E = null; MH = null; clearInterval(timerPoll); clearInterval(timerExtra); $('pend').replaceChildren(); $('pend').classList.add('hide'); $('cmn-top').replaceChildren();
+  document.body.classList.remove('fila-v'); { const sb = $('st-bolha'); if (sb) sb.remove(); const cb = $('camp-bolha'); if (cb) cb.remove(); } CAMP = null; SUP = { per: 'hoje', r: null }; S = null; protecao(false); E = null; MH = null; clearInterval(timerPoll); clearInterval(timerExtra); $('pend').replaceChildren(); $('pend').classList.add('hide'); $('cmn-top').replaceChildren();
   try { localStorage.removeItem('amorata_fila'); } catch (e) {}
   $('v-app').classList.add('hide'); $('v-login').classList.remove('hide'); $('lerr').textContent = msg || '';
 }
@@ -907,7 +915,7 @@ function abrir() {
   nuvemFoto(); desenharMood(); setTimeout(carregarDesafios, 800);
   const sel = $('sel-loja'); sel.replaceChildren(...S.lojas.map((l) => new Option(l, l)));
   sel.value = loja; $('sel-loja-box').classList.toggle('hide', S.lojas.length < 2);
-  prepararFiltros(); botaoAjudaAba(); mudarAba(chefe() ? 'ini' : 'fila');
+  prepararFiltros(); botaoAjudaAba(); mudarAba(chefe() ? 'ini' : 'dia');
   carregarMetaHoje(); carregarPendencias(); carregarCk(); carregarReuniao(); carregarPlano(); setTimeout(desenharPush, 1200); carregarCmn(); carregarMe(); carregarCart(); clearInterval(timerExtra); timerExtra = setInterval(() => { if (!document.hidden) { carregarMetaHoje(); carregarPendencias(); carregarCmn(); } }, 900000);
   atualizar(); clearInterval(timerPoll); timerPoll = setInterval(() => { if (!document.hidden && aba === 'fila') { atualizar(); if (S && S.cargo === 'ADMIN' && ++TICK_REDE % 3 === 0) carregarRedeFila(); } }, 5000);
 }
@@ -2053,7 +2061,7 @@ function detLoja(l) {
   });
 }
 function carregarInicio() {
-  if (chefe()) { carregarMetas(); carregarRitmo(); }
+  if (chefe()) { carregarMetas(); carregarRitmo(); } carregarSupervisao();
   $('i-tit').textContent = 'Carregando…';
   rodar('inicio', [S.token, $('i-loja').value].concat(perArgs('i')), (r) => {
     INI = r; desenharCards();
@@ -2199,7 +2207,7 @@ function editarTexto(alvo, atual, max, salvar) {
 }
 // ---------- Status (some em 24 h) ----------
 let ST = null; const STB = {};
-function carregarStatus() { if (!S) return; google.script.run.withSuccessHandler((r) => { if (r && Array.isArray(r.grupos)) { ST = r; desenharStatus(); } }).withFailureHandler(() => {}).statusLista(S.token); }
+function carregarStatus() { if (!S) return; carregarCampeas(); google.script.run.withSuccessHandler((r) => { if (r && Array.isArray(r.grupos)) { ST = r; desenharStatus(); } }).withFailureHandler(() => {}).statusLista(S.token); }
 function desenharStatus() {
   const b = $('st-strip'); if (!b || !ST) return; b.replaceChildren();
   const meu = ST.grupos.find((g) => g.eu);
@@ -2208,6 +2216,51 @@ function desenharStatus() {
   b.append(mi);
   ST.grupos.forEach((g, gi) => { if (g.eu) return; const d = el('div', 'st'); const a = avatar(g.foto, g.nome); a.classList.add('st-ring'); if (!g.novo) a.classList.add('visto'); d.append(a, el('div', '', g.nome)); d.addEventListener('click', () => verStatus(gi, Math.max(0, g.itens.findIndex((i) => !i.visto)))); b.append(d); });
   aneisStatus(); bolhaStatus();
+}
+// campeãs do dia: fotos flutuando na tela de todas (some ao fechar, volta no dia seguinte)
+let CAMP = null;
+function carregarCampeas() { if (!S || telaLoja()) return; google.script.run.withSuccessHandler((r) => { CAMP = r; bolhaCampeas(); }).withFailureHandler(() => {}).campeasDia(S.token); }
+function bolhaCampeas() {
+  const ant = $('camp-bolha'); if (ant) ant.remove(); if (!S || !CAMP || !CAMP.lista || !CAMP.lista.length || telaLoja()) return;
+  let oc = ''; try { oc = localStorage.getItem('campOculto') || ''; } catch (e) {} if (oc === CAMP.d) return;
+  const b = el('div'); b.id = 'camp-bolha'; const avs = el('div', 'avs'); CAMP.lista.slice(0, 5).forEach((p, i) => { const a = avatar(p.foto, p.nome); a.style.animationDelay = (i * 0.35) + 's'; avs.append(a); });
+  const x = el('button', 'xb', '×'); x.title = 'Esconder';
+  b.append(el('div', 'cr', '👑'), avs, el('span', '', (CAMP.lista.length === 1 ? CAMP.lista[0].nome + ' bateu' : CAMP.lista.length + ' bateram') + ' a meta!'), x);
+  x.addEventListener('click', (ev) => { ev.stopPropagation(); try { localStorage.setItem('campOculto', CAMP.d); } catch (e) {} b.remove(); });
+  b.addEventListener('click', listaCampeas);
+  document.body.append(b);
+}
+function listaCampeas() {
+  if (!CAMP) return; const pb = (p) => p.parabens ? ' · 👏 ' + p.parabens : '';
+  escolher('🏆 Bateram a meta do dia ' + isoBR(CAMP.d), 'Toque para parabenizar a colega 👏 (ela recebe um aviso)', CAMP.lista.map((p) => [
+    p.eu ? '🏆 Você! ' + (p.parabens ? p.parabens + ' colega(s) te parabenizaram 💜' : 'Parabéns!') : p.jaDei ? '✅ Você parabenizou ' + p.nome + ' · ' + p.loja + pb(p) : !p.usuario ? '💜 ' + p.nome + ' · ' + p.loja : '👏 Parabenizar ' + p.nome + ' · ' + p.loja + pb(p),
+    p.eu || p.jaDei || !p.usuario ? '' : 'pri',
+    () => { if (p.eu || p.jaDei || !p.usuario) { fechar(); return; } fechar(); google.script.run.withSuccessHandler((r) => { p.jaDei = true; p.parabens = (r && r.parabens) || p.parabens + 1; toast('👏 ' + p.nome + ' vai saber que você parabenizou!'); listaCampeas(); }).withFailureHandler((e) => toast((e && e.message) || 'Não deu agora.')).parabenizarCampea(S.token, p.usuario, CAMP.d); }]));
+}
+// supervisão (ADMIN): tudo o que foi feito e conquistado na rede
+let SUP = { per: 'hoje', r: null };
+function carregarSupervisao() {
+  const c = $('sup-card'); if (!S || S.cargo !== 'ADMIN') { c.classList.add('hide'); return; } c.classList.remove('hide');
+  if (!SUP.r) c.replaceChildren(el('div', 'sub', '👁️ Supervisão: carregando…'));
+  google.script.run.withSuccessHandler((r) => { SUP.r = r; desenharSupervisao(); }).withFailureHandler((e) => c.replaceChildren(el('div', 'aviso-meta', '⚠️ Supervisão: ' + ((e && e.message) || 'erro')))).supervisao(S.token, SUP.per);
+}
+const SUP_TIPOS = [['', 'Tudo'], ['tarefa', '✅ Tarefas'], ['medalha', '🏅 Medalhas'], ['conversa', '🤝 1:1'], ['reuniao', '🗣️ Reuniões'], ['comunicado', '📢 Avisos'], ['troca', '🔁 Trocas'], ['vendas', '📥 Vendas']];
+function desenharSupervisao() {
+  const c = $('sup-card'), r = SUP.r; if (!r) return; c.replaceChildren();
+  const h = el('h2'); const sel = el('select'); [['hoje', 'Hoje'], ['ontem', 'Ontem'], ['7d', '7 dias']].forEach(([v, t]) => { const o = el('option', '', t); o.value = v; if (v === SUP.per) o.selected = true; sel.append(o); });
+  sel.addEventListener('change', () => { SUP.per = sel.value; SUP.r = null; carregarSupervisao(); }); h.append(el('span', '', '👁️ Supervisão da rede'), sel); c.append(h);
+  const cnt = (t) => r.eventos.filter((e) => e.tipo === t).length;
+  const res = el('div', 'sub'); res.textContent = cnt('tarefa') + ' tarefas feitas · ' + cnt('medalha') + ' medalhas · ' + cnt('conversa') + ' conversas 1:1 · ' + cnt('reuniao') + ' reuniões · ' + cnt('comunicado') + ' avisos'; c.append(res);
+  const tb = el('div'); tb.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:8px 0';
+  r.lojas.forEach((l) => { const b = el('div', 'sup-lj'); b.append(el('b', '', l.loja), el('div', 'sub', '👥 ' + l.at + ' atend. · ' + l.v + ' vendas'), el('div', 'sub', '✅ ' + l.tarefasFeitas + ' tarefa(s) feita(s)'));
+    if (l.pendentes.length) { const pd = el('div', 'sub', '⏳ ' + l.pendentes.length + ' pendente(s)'); pd.style.color = '#c0392b'; pd.title = l.pendentes.join('\n'); pd.style.cursor = 'pointer'; pd.addEventListener('click', () => escolher('⏳ Pendentes — ' + l.loja, 'Tarefas de hoje ainda não feitas', l.pendentes.map((t) => ['• ' + t, '', () => fechar()]))); b.append(pd); }
+    tb.append(b); }); c.append(tb);
+  const fl = el('div', 'chips'); let tipo = SUP.tipo || ''; const lista = el('div', 'sup-feed');
+  const pinta = () => { lista.replaceChildren(); const evs = r.eventos.filter((e) => !tipo || e.tipo === tipo); if (!evs.length) lista.append(el('div', 'sub', 'Nada registrado no período.'));
+    evs.slice(0, SUP.tudo ? 300 : 25).forEach((e) => { const ln = el('div', 'sup-ev'); ln.append(el('span', 'ic', e.ic), el('span', 'tx', e.texto), el('span', 'qd', (e.loja ? e.loja + ' · ' : '') + e.quando)); lista.append(ln); });
+    if (!SUP.tudo && evs.length > 25) { const m = el('button', 'btn sm', 'Ver tudo (' + evs.length + ')'); m.addEventListener('click', () => { SUP.tudo = true; pinta(); }); lista.append(m); } };
+  SUP_TIPOS.forEach(([v, t]) => { const b = el('button', 'btn sm' + (v === tipo ? ' pri' : ''), t); b.addEventListener('click', () => { tipo = SUP.tipo = v; SUP.tudo = false; fl.querySelectorAll('button').forEach((x) => x.classList.remove('pri')); b.classList.add('pri'); pinta(); }); fl.append(b); });
+  fl.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px'; c.append(fl, lista); pinta();
 }
 // bolinha flutuante: avisa que tem status novo sem mandar notificação
 let ST_OCULTOS = {};
@@ -2393,7 +2446,7 @@ function caminho() {
   if ($('caminho')) return;
   const w = el('div', 'tc'); w.id = 'caminho'; document.body.append(w);
   const passos = ['mood', 'recado', 'cmn', 'dia']; let i = S.moodDia === hojeStr() ? 1 : 0, mood = null;
-  const fim = () => { try { localStorage.setItem(chaveCaminho(), '1'); } catch (e) {} w.remove(); mudarAba(chefe() ? 'ini' : 'fila'); mostrarGuia(false); if (comemorar.pend) { const p = comemorar.pend; comemorar.pend = null; setTimeout(() => comemorar(p), 600); } };
+  const fim = () => { try { localStorage.setItem(chaveCaminho(), '1'); } catch (e) {} w.remove(); mudarAba(chefe() ? 'ini' : 'dia'); mostrarGuia(false); if (comemorar.pend) { const p = comemorar.pend; comemorar.pend = null; setTimeout(() => comemorar(p), 600); } };
   const tela = () => {
     w.replaceChildren(); const k = passos[i];
     if (k === 'cmn' && !(CMN || []).some((c) => !c.lido)) { i++; return tela(); }
@@ -3426,6 +3479,7 @@ $('a-inst-b').addEventListener('click', guiaInstalar);
 // ---------- gestão: vendas do USE, metas e escala ----------
 let G_ABA = 'imp', GI = null, GM = null, GE = null;
 const isoBR = (d) => d ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) : '';
+const diaISO = (k) => { const d = new Date(Date.now() + k * 864e5); return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 const ontemISO = () => { const d = new Date(Date.now() - 864e5); return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 function abaGest(q) { G_ABA = q; ['imp', 'met', 'ck', 'esc', 'eq', 'pre', 'pla', 'rh'].forEach((x) => { $('sg-' + x).classList.toggle('on', x === q); $('g-' + x).classList.toggle('hide', x !== q); }); carregarGestao(); }
 ['imp', 'met', 'ck', 'esc', 'eq', 'pre', 'pla', 'rh'].forEach((x) => $('sg-' + x).addEventListener('click', () => abaGest(x)));
@@ -3893,7 +3947,9 @@ $('gt-ok').addEventListener('click', () => {
     if (i >= lojas.length) { $('gt-ok').disabled = false; $('gt-ok').classList.add('hide'); $('gt-arq').value = ''; GT = null; box.replaceChildren(el('b', '', '✅ Importação do dia ' + isoBR(d))); res.forEach((x) => box.append(el('div', x.ok ? 'sub' : 'aviso-meta', x.txt))); toast('Vendas importadas ✅'); try { carregarPendencias(); carregarGestao(); } catch (e) {}
       const bx = el('div'); bx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px'; const br = el('button', 'btn pri', '🏬 Fechamento da rede'); br.addEventListener('click', () => fechamento('TODAS', d)); bx.append(br);
       lojas.forEach((lj) => { const b = el('button', 'btn', '📊 ' + lj); b.addEventListener('click', () => fechamento(lj, d)); bx.append(b); }); box.append(bx);
-      $('fc-data').value = d; if (d >= ontemISO()) setTimeout(() => fechamento('TODAS', d), 600); return; }
+      $('fc-data').value = d; if (d >= ontemISO()) setTimeout(() => fechamento('TODAS', d), 600);
+      if (d >= diaISO(-3) && d < diaISO(0) && res.some((x) => x.ok)) { if (parc.length) box.append(el('div', 'sub', '🎉 O status das campeãs será postado quando você importar o dia completo.')); else google.script.run.withSuccessHandler((r) => { if (r && r.postado) { toast('🎉 Status das campeãs postado (' + r.nomes.length + ')'); box.append(el('div', 'sub', '🎉 Status postado: ' + r.nomes.join(', '))); carregarStatus(); } else box.append(el('div', 'sub', '🎉 Ninguém bateu a meta do dia ' + isoBR(d) + ' — status não postado.')); }).withFailureHandler((e) => box.append(el('div', 'aviso-meta', '⚠️ Status: ' + ((e && e.message) || 'erro')))).postarMetaDiaAgora(S.token, d); }
+      return; }
     const lj = lojas[i++]; st.textContent = 'Importando ' + lj + '… (' + i + ' de ' + lojas.length + ')';
     google.script.run.withSuccessHandler((r) => { const im = (r && r.importado) || {}; res.push({ ok: true, txt: '✅ ' + lj + ': ' + rs(im.total != null ? im.total : GT.por[lj].reduce((a, l) => a + l[2], 0)) + ' · ' + (im.linhas || 0) + ' lançamento(s)' + (parc.indexOf(lj) >= 0 ? ' · ⏳ PARCIAL (loja aberta até ' + fechaLoja(lj, d) + ')' : '') + (im.mesclagem ? ' · juntou com a importação anterior' : '') }); prox(); })
       .withFailureHandler((e) => { res.push({ ok: false, txt: '⚠️ ' + lj + ': ' + ((e && e.message) || 'erro') }); prox(); })
