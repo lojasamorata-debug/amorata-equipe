@@ -444,6 +444,7 @@ body.fila-v #st-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body
 #camp-bolha span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } #camp-bolha .xb { border:0; background:none; color:rgba(255,255,255,.8); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
 body.fila-v #camp-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body:has(#st-bolha) #camp-bolha { bottom:calc(82px + env(safe-area-inset-bottom)); } body.fila-v:has(#st-bolha) #camp-bolha { bottom:calc(238px + env(safe-area-inset-bottom)); } body.sheet-on #camp-bolha { display:none; }
 @keyframes campFlut { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } } @keyframes campIn { from { transform:translateY(40px); opacity:0; } to { transform:none; opacity:1; } }
+#es-scan { position:fixed; inset:0; z-index:200; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:20px; } #es-scan video { width:100%; max-width:520px; max-height:60vh; object-fit:cover; border-radius:14px; } #es-scan .mira { position:absolute; width:min(78vw,420px); height:110px; border:3px solid #f5c84c; border-radius:12px; top:calc(50% - 90px); box-shadow:0 0 0 2000px rgba(0,0,0,.25); pointer-events:none; } #es-scan .tx { color:#fff; text-align:center; font-size:14px; } #es-scan .btn { max-width:320px; width:100%; }
 .es-m { margin-top:10px; } .es-h { display:flex; justify-content:space-between; gap:8px; align-items:baseline; } .es-pr { font-weight:700; color:var(--accent); white-space:nowrap; } .es-cor { display:flex; gap:8px; align-items:flex-start; margin-top:8px; } .es-cn { flex:0 0 92px; font-size:12px; color:var(--muted); padding-top:3px; text-transform:capitalize; } .es-tz { display:flex; flex-wrap:wrap; gap:4px; } .es-t { font-size:12px; padding:3px 8px; border-radius:999px; background:#efe9f6; color:#4b3d68; font-weight:600; } .es-t.z { background:#f2f0ec; color:#aaa59c; font-weight:400; }
 #st-bolha .xb { border:0; background:none; color:var(--muted); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
 @keyframes stentra { from { transform:translateY(20px) scale(.8); opacity:0; } to { transform:none; opacity:1; } }
@@ -764,7 +765,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
     </div>
 
     <div id="v-est" class="hide">
-      <div style="display:flex;gap:8px;margin-top:12px"><input id="es-q" type="search" placeholder="🔎 Nome, referência ou código de barras" autocomplete="off" style="flex:1;width:100%"><select id="es-loja" class="hide" style="width:auto"></select></div>
+      <div style="display:flex;gap:8px;margin-top:12px"><input id="es-q" type="search" placeholder="🔎 Nome, referência ou código de barras" autocomplete="off" style="flex:1;width:100%"><button class="btn" id="es-cam" title="Ler código de barras com a câmera" style="flex:none;font-size:18px">📷</button><select id="es-loja" class="hide" style="width:auto"></select></div>
       <label class="sub" style="display:flex;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="es-zero" style="width:auto"> mostrar também o que está zerado</label>
       <div class="sub" id="es-tit" style="margin-top:8px"></div>
       <div id="es-res"></div>
@@ -2083,6 +2084,24 @@ function desenharEstoque(r, q, pg) {
   });
   if (r.mais) { const rest = r.total - (r.pagina + 1) * 40, mb = el('button', 'btn big', 'Ver mais modelos (' + rest + ' restantes)'); mb.id = 'es-mais'; mb.style.cssText = 'width:100%;margin-top:10px'; mb.addEventListener('click', () => { mb.disabled = true; mb.textContent = 'Carregando…'; buscarEstoque(r.pagina + 1); }); box.append(mb); }
 }
+// leitor de código de barras pela câmera (biblioteca ZXing, carregada só quando usa)
+function carregarZX() { return new Promise((ok, err) => { if (window.ZXing) return ok(); const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js'; sc.onload = () => (window.ZXing ? ok() : err(new Error('leitor indisponível'))); sc.onerror = () => err(new Error('Sem internet para abrir o leitor.')); document.head.append(sc); }); }
+async function lerCodigoCamera() {
+  const ov = el('div'); ov.id = 'es-scan'; const vd = el('video'); vd.setAttribute('playsinline', ''); vd.muted = true; const mira = el('div', 'mira'), tx = el('div', 'tx', 'Aponte para o código de barras da etiqueta'), x = el('button', 'btn big', 'Fechar');
+  ov.append(vd, mira, tx, x); document.body.append(ov); let leitor = null, fim = false;
+  const fechar = () => { fim = true; try { leitor && leitor.reset(); } catch (e) {} try { (vd.srcObject && vd.srcObject.getTracks() || []).forEach((t) => t.stop()); } catch (e) {} ov.remove(); };
+  x.addEventListener('click', fechar);
+  try {
+    await carregarZX(); if (fim) return;
+    const Z = window.ZXing, hints = new Map(); hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E, Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.CODE_39, Z.BarcodeFormat.ITF]); hints.set(Z.DecodeHintType.TRY_HARDER, true);
+    leitor = new Z.BrowserMultiFormatReader(hints);
+    await leitor.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } } }, vd, (res) => {
+      if (!res || fim) return; const cod = res.getText(); try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
+      fechar(); $('es-q').value = cod; buscarEstoque();
+    });
+  } catch (e) { tx.textContent = /Permission|NotAllowed/i.test(String(e && (e.name || e.message))) ? '📷 Libere a câmera para o app nas configurações do celular e tente de novo.' : '⚠️ ' + ((e && e.message) || 'Não consegui abrir a câmera.'); }
+}
+$('es-cam').addEventListener('click', lerCodigoCamera);
 $('es-q').addEventListener('input', () => { clearTimeout(ESQ.t); ESQ.t = setTimeout(() => buscarEstoque(), 400); });
 $('es-zero').addEventListener('change', () => buscarEstoque()); $('es-loja').addEventListener('change', () => buscarEstoque());
 // ---------- fotos ----------
