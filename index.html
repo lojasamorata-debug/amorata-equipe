@@ -444,6 +444,7 @@ body.fila-v #st-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body
 #camp-bolha span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } #camp-bolha .xb { border:0; background:none; color:rgba(255,255,255,.8); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
 body.fila-v #camp-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body:has(#st-bolha) #camp-bolha { bottom:calc(82px + env(safe-area-inset-bottom)); } body.fila-v:has(#st-bolha) #camp-bolha { bottom:calc(238px + env(safe-area-inset-bottom)); } body.sheet-on #camp-bolha { display:none; }
 @keyframes campFlut { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } } @keyframes campIn { from { transform:translateY(40px); opacity:0; } to { transform:none; opacity:1; } }
+.es-m { margin-top:10px; } .es-h { display:flex; justify-content:space-between; gap:8px; align-items:baseline; } .es-pr { font-weight:700; color:var(--accent); white-space:nowrap; } .es-cor { display:flex; gap:8px; align-items:flex-start; margin-top:8px; } .es-cn { flex:0 0 92px; font-size:12px; color:var(--muted); padding-top:3px; text-transform:capitalize; } .es-tz { display:flex; flex-wrap:wrap; gap:4px; } .es-t { font-size:12px; padding:3px 8px; border-radius:999px; background:#efe9f6; color:#4b3d68; font-weight:600; } .es-t.z { background:#f2f0ec; color:#aaa59c; font-weight:400; }
 #st-bolha .xb { border:0; background:none; color:var(--muted); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
 @keyframes stentra { from { transform:translateY(20px) scale(.8); opacity:0; } to { transform:none; opacity:1; } }
 #strec .cont { flex:1; display:flex; align-items:center; justify-content:center; position:relative; } #strec video { max-width:100%; max-height:100%; background:#000; } #strec .tmp { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.5); padding:4px 12px; border-radius:999px; font-variant-numeric:tabular-nums; }
@@ -536,7 +537,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
     </div>
     <div id="sel-loja-box" class="hide" style="margin-top:10px"><select id="sel-loja"></select></div>
     <div id="nuvem-foto" class="nuvem mini hide"><button class="x" id="nv-x" title="Fechar">×</button>📷 <b>Coloque sua foto</b> para a equipe te reconhecer. <button class="btn sm pri" id="nv-ok">Escolher foto</button></div>
-    <div class="tabs"><button class="tab hide" id="tab-ini">Início</button><button class="tab hide" id="tab-dia">Meu dia</button><button class="tab on" id="tab-fila">Fila</button><button class="tab" id="tab-meta">Metas</button><button class="tab" id="tab-mural">Mural</button><button class="tab" id="tab-apr">Aprender</button><button class="tab hide" id="tab-gest">Gestão</button><button class="tab" id="tab-prod">Produtos</button><button class="tab" id="tab-rel">Relatórios</button></div>
+    <div class="tabs"><button class="tab hide" id="tab-ini">Início</button><button class="tab hide" id="tab-dia">Meu dia</button><button class="tab on" id="tab-fila">Fila</button><button class="tab" id="tab-meta">Metas</button><button class="tab" id="tab-mural">Mural</button><button class="tab hide" id="tab-est">Estoque</button><button class="tab" id="tab-apr">Aprender</button><button class="tab hide" id="tab-gest">Gestão</button><button class="tab" id="tab-prod">Produtos</button><button class="tab" id="tab-rel">Relatórios</button></div>
     <div class="pend hide" id="pend"></div>
     <div id="cmn-top"></div>
     <div class="card reu-c hide" id="push-card"></div>
@@ -762,6 +763,12 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
       <div id="g-rh" class="hide"></div>
     </div>
 
+    <div id="v-est" class="hide">
+      <div style="display:flex;gap:8px;margin-top:12px"><input id="es-q" type="search" placeholder="🔎 Nome, referência ou código de barras" autocomplete="off" style="flex:1;width:100%"><select id="es-loja" class="hide" style="width:auto"></select></div>
+      <label class="sub" style="display:flex;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="es-zero" style="width:auto"> mostrar também o que está zerado</label>
+      <div class="sub" id="es-tit" style="margin-top:8px"></div>
+      <div id="es-res"></div>
+    </div>
     <div id="v-prod" class="hide">
       <div class="filtros" id="p-filtro-box"><select id="p-loja"></select><div></div></div>
       <div class="sub" id="p-tit" style="margin-top:8px"></div>
@@ -908,7 +915,7 @@ function abrir() {
   if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirTermo(() => exigirApp(false)), 500); }
   if (fazCaminho) { google.script.run.withSuccessHandler((o) => { ONTEM = o; }).withFailureHandler(() => { ONTEM = { semDados: true }; })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
-  setTimeout(checarAvisos, 1500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 2500); setTimeout(carregarStatus, 3500); setTimeout(carregarCampeas, 1200); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
+  setTimeout(checarAvisos, 1500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 2500); setTimeout(carregarStatus, 3500); setTimeout(carregarCampeas, 1200); setTimeout(carregarEstoqueInfo, 2000); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
   $('t-av').replaceChildren(...avatar(S.foto, S.nome).childNodes); if (!S.foto) $('t-av').textContent = (S.nome || '?').charAt(0);
   nuvemFoto(); desenharMood(); setTimeout(carregarDesafios, 800);
   const sel = $('sel-loja'); sel.replaceChildren(...S.lojas.map((l) => new Option(l, l)));
@@ -1493,7 +1500,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) atua
 // ---------- relatórios ----------
 let aba = 'fila';
 function mudarAba(a) {
-  aba = a; document.body.dataset.aba = a; document.body.classList.toggle('fila-v', a === 'fila' && !!S && !chefe()); ['ini', 'dia', 'fila', 'meta', 'mural', 'apr', 'gest', 'prod', 'rel'].forEach((x) => { $('tab-' + x).classList.toggle('on', a === x); $('v-' + x).classList.toggle('hide', a !== x); });
+  aba = a; document.body.dataset.aba = a; document.body.classList.toggle('fila-v', a === 'fila' && !!S && !chefe()); ['ini', 'dia', 'fila', 'meta', 'mural', 'est', 'apr', 'gest', 'prod', 'rel'].forEach((x) => { $('tab-' + x).classList.toggle('on', a === x); $('v-' + x).classList.toggle('hide', a !== x); });
   $('sel-loja-box').classList.toggle('hide', a !== 'fila' || S.lojas.length < 2 || S.cargo === 'ADMIN');
   $('rede-fila').classList.toggle('hide', a !== 'fila' || S.cargo !== 'ADMIN'); if (a === 'fila' && S.cargo === 'ADMIN') carregarRedeFila();
   $('pend').classList.toggle('hide', a !== 'ini' || !$('pend').childElementCount);
@@ -1504,6 +1511,7 @@ function mudarAba(a) {
   if (a === 'meta') carregarMetas();
   if (a === 'ini') carregarInicio();
   if (a === 'prod') carregarProdutos();
+  if (a === 'est') buscarEstoque();
   if (a === 'mural') { carregarMural(); carregarStatus(); }
   if (a === 'fila') carregarStatus();
   if (a === 'apr') carregarAprender();
@@ -2048,6 +2056,34 @@ $('tab-ini').addEventListener('click', () => mudarAba('ini'));
 $('tab-prod').addEventListener('click', () => mudarAba('prod'));
 $('tab-mural').addEventListener('click', () => mudarAba('mural'));
 $('tab-apr').addEventListener('click', () => mudarAba('apr'));
+$('tab-est').addEventListener('click', () => mudarAba('est'));
+// ---------- estoque (pela API do USE): consulta de disponibilidade por modelo, cor e tamanho ----------
+let ESQ = { t: null, n: 0 };
+function carregarEstoqueInfo() { if (!S) return; google.script.run.withSuccessHandler((r) => { const l = (r && r.lojas) || [], tem = S.cargo === 'ADMIN' ? l.length > 0 : l.some((x) => S.lojas.indexOf(x) >= 0); $('tab-est').classList.toggle('hide', !tem); const sl = $('es-loja'); const mx = S.cargo === 'ADMIN' ? l : l.filter((x) => S.lojas.indexOf(x) >= 0); sl.replaceChildren(...mx.map((x) => new Option(x, x))); sl.classList.toggle('hide', mx.length < 2); }).withFailureHandler(() => {}).estoqueInfo(S.token); }
+function buscarEstoque() {
+  const q = $('es-q').value.trim(), n = ++ESQ.n; $('es-tit').textContent = 'Buscando…';
+  google.script.run.withSuccessHandler((r) => { if (n !== ESQ.n) return; desenharEstoque(r, q); }).withFailureHandler((e) => { $('es-tit').textContent = '⚠️ ' + ((e && e.message) || 'erro'); }).estoqueBuscar(S.token, q, $('es-loja').value, $('es-zero').checked);
+}
+function desenharEstoque(r, q) {
+  const box = $('es-res'); box.replaceChildren();
+  if (r.msg) { $('es-tit').textContent = r.msg; return; }
+  $('es-tit').textContent = r.loja + ' · ' + (q ? r.total + (r.total === 1 ? ' modelo encontrado' : ' modelos encontrados') : 'modelos com mais peças') + (r.atualizado ? ' · estoque do USE de ' + r.atualizado : '') + (r.total > r.itens.length ? ' · mostrando ' + r.itens.length : '');
+  if (!r.itens.length) { box.append(el('div', 'vazio', q ? 'Nada encontrado com “' + q + '”. Tente só uma palavra (ex.: vestido) ou a referência.' : 'Sem estoque.')); return; }
+  r.itens.forEach((m) => {
+    const c = el('div', 'card es-m'), h = el('div', 'es-h');
+    h.append(el('b', '', m.nome || ('Ref. ' + m.ref)), el('span', 'es-pr', rs(m.preco)));
+    c.append(h, el('div', 'sub', 'Ref. ' + m.ref + ' · ' + m.total + (m.total === 1 ? ' peça' : ' peças') + (r.verCusto && m.custo ? ' · custo ' + rs(m.custo) : '')));
+    Object.keys(m.cores).sort().forEach((cor) => {
+      const ln = el('div', 'es-cor'); ln.append(el('span', 'es-cn', cor));
+      const tz = el('div', 'es-tz'); const ord = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'G1', 'G2', 'G3', 'UN', 'U'];
+      Object.keys(m.cores[cor]).sort((a, b) => { const ia = ord.indexOf(a), ib = ord.indexOf(b); return (ia < 0 ? 50 + (parseInt(a, 10) || 0) : ia) - (ib < 0 ? 50 + (parseInt(b, 10) || 0) : ib); }).forEach((t) => { const qn = m.cores[cor][t]; tz.append(el('span', 'es-t' + (qn <= 0 ? ' z' : ''), t + ' · ' + qn)); });
+      ln.append(tz); c.append(ln);
+    });
+    box.append(c);
+  });
+}
+$('es-q').addEventListener('input', () => { clearTimeout(ESQ.t); ESQ.t = setTimeout(buscarEstoque, 400); });
+$('es-zero').addEventListener('change', buscarEstoque); $('es-loja').addEventListener('change', buscarEstoque);
 // ---------- fotos ----------
 function comprimir(file, max, q, quadrado) {
   return new Promise((res, rej) => {
@@ -4469,6 +4505,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && T)
     fila: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c2 .8 3.2 2.5 3.5 5.2"/>',
     meta: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
     mural: '<path d="M4 5h16v11H9l-5 4z"/>',
+    est: '<path d="M3 7h18v13H3z"/><path d="M8 7V4h8v3M3 12h18"/>',
     apr: '<path d="M4 19.5V5a2.5 2.5 0 0 1 2.5-2.5H20v17H6.5A2.5 2.5 0 0 0 4 22z"/>',
     gest: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
     prod: '<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/>',
@@ -4479,7 +4516,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && T)
     sair: '<path d="M14 4h5v16h-5"/><path d="M10 8l-4 4 4 4M6 12h10"/>',
   };
   const svg = (k) => { const d = document.createElement('span'); d.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + I[k] + '</svg>'; return d.firstChild; };
-  ['ini', 'fila', 'meta', 'mural', 'apr', 'gest', 'prod', 'rel'].forEach((k) => { const t = $('tab-' + k); if (t) t.prepend(svg(k)); });
+  ['ini', 'fila', 'meta', 'mural', 'est', 'apr', 'gest', 'prod', 'rel'].forEach((k) => { const t = $('tab-' + k); if (t) t.prepend(svg(k)); });
   [['b-atu', 'atu'], ['b-sino', 'sino'], ['b-ajuda', 'ajuda'], ['tb-atu', 'atu']].forEach(([id, k]) => { const b = $(id); if (!b) return; const tn = [...b.childNodes].find((n) => n.nodeType === 3); if (tn) tn.replaceWith(svg(k)); b.classList.add('ico'); });
   const bs = $('b-sair'); if (bs) { bs.replaceChildren(svg('sair')); bs.title = 'Sair'; bs.classList.add('ico'); }
   const lg = $('v-login').querySelector('img'); if (lg && $('sp-logo')) $('sp-logo').src = lg.src;
