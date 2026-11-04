@@ -2086,27 +2086,29 @@ const H_ESTQ = ['loja', 'referencia', 'nome', 'cor', 'tamanho', 'saldo', 'preco'
 function dsNomesProdutos_(lojaNum) {
   const pr = PropertiesService.getScriptProperties(), k = 'DS_NOMES_' + lojaNum, hoje = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd');
   let o = null; try { o = JSON.parse(pr.getProperty(k) || 'null'); } catch (e) {}
-  if (o && o.d === hoje) return o.n;
-  const n = {}; let pag = 1, lidos = 0, tot = 0;
+  if (o && o.d === hoje && o.c) return o;
+  const n = {}, cs = {}; let pag = 1, lidos = 0, tot = 0;
   do { const r = dsGet_('/api/v1/produtos', { loja: lojaNum, dataUltimaCompraInicio: '2000-01-01', dataUltimaCompraFim: hoje, itensPorPagina: 1000, pagina: pag }); if (r.status !== 200 || !r.json) break;
     const it = r.json.itens || []; tot = r.json.totalItens || it.length; lidos += it.length;
-    it.forEach((p) => { const ref = String(p.referencia || '').trim(); let nm = String((p.tipo && p.tipo.descricao) || p.descricao || '').trim(); if (ref && nm) { nm = nm.replace(new RegExp('^' + ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s+'), ''); n[ref] = nm; } });
+    it.forEach((p) => { (p.cores || []).forEach((c) => { if (c && c.codigo != null && c.descricao) cs[String(c.codigo)] = String(c.descricao).trim(); }); const ref = String(p.referencia || '').trim(); let nm = String((p.tipo && p.tipo.descricao) || p.descricao || '').trim(); if (ref && nm) { nm = nm.replace(new RegExp('^' + ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s+'), ''); n[ref] = nm; } });
     pag++; } while (lidos < tot && pag <= 10);
   // nomes que faltam: das planilhas de estoque/vendas por produto que o app já importa (modelo = 'REF NOME') e das vendas da API (itens[].descricao)
   const add = (t) => { const m = String(t || '').trim().match(/^(\S+)\s+(.+)$/); if (m && !n[m[1]]) n[m[1]] = m[2].trim(); };
   ['estoque', 'vendas_produto'].forEach((tb) => { try { prodTab_(tb).forEach((r) => add(r[1])); } catch (e) {} });
   try { const ini = somaDia_(hoje, -89); const r = dsGet_('/api/v1/vendas', { dataVendaInicio: ini, dataVendaFim: hoje, loja: lojaNum, itensPorPagina: 1000, pagina: 1 }); ((r.json && r.json.itens) || []).forEach((v) => (v.itens || []).forEach((p) => add(p.descricao))); } catch (e) {}
-  try { pr.setProperty(k, JSON.stringify({ d: hoje, n: n })); } catch (e) {}
-  return n;
+  const out = { d: hoje, n: n, c: cs }; try { pr.setProperty(k, JSON.stringify(out)); } catch (e) {}
+  return out;
 }
 function dsEstoqueSync_(lojaNum) {
-  const loja = LOJA_COD[lojaNum], nomes = dsNomesProdutos_(lojaNum), linhas = []; let pag = 1, lidos = 0, tot = 0; const q = agoraBR_();
+  const loja = LOJA_COD[lojaNum], NP = dsNomesProdutos_(lojaNum), nomes = NP.n || {}, cores = Object.assign({}, NP.c || {}), todos = []; let pag = 1, lidos = 0, tot = 0; const q = agoraBR_();
   do { const r = dsGet_('/api/v2/saldos', { loja: lojaNum, itensPorPagina: 1000, pagina: pag }); if (r.status !== 200 || !r.json) throw new Error('DS Connect respondeu ' + r.status + ' em /saldos');
-    const it = r.json.itens || []; tot = r.json.totalItens || it.length; lidos += it.length;
-    it.forEach((x) => { const ref = String(x.referencia || '').trim(), tam = String(x.tamanho || '').trim(), old = String(x.codigoOld || ''), pre = ref + '-' + tam + '-';
-      const cor = old.indexOf(pre) === 0 ? old.slice(pre.length) : (old.split('-').slice(2).join('-') || String(x.cor || ''));
-      linhas.push([loja, ref, nomes[ref] || '', cor, tam, Number(x.saldo != null ? x.saldo : x.estoque) || 0, Number(x.precoVendaAtual || x.precoVenda) || 0, Number(x.custoReal || x.precoCompra) || 0, String(x.codBarra || ''), String(x.produto || ''), q]); });
+    const it = r.json.itens || []; tot = r.json.totalItens || it.length; lidos += it.length; it.forEach((x) => todos.push(x));
     pag++; } while (lidos < tot && pag <= 10);
+  // nome da cor: pelo codigoOld ('REF-TAM-COR') e, quando ele não vem, pelo código da cor (aprendido dos outros itens e do cadastro de produtos)
+  const corOld = (x) => { const ref = String(x.referencia || '').trim(), tam = String(x.tamanho || '').trim(), old = String(x.codigoOld || ''), pre = ref + '-' + tam + '-'; return old.indexOf(pre) === 0 ? old.slice(pre.length) : (old.split('-').length > 2 ? old.split('-').slice(2).join('-') : ''); };
+  todos.forEach((x) => { const c = corOld(x); if (c && x.cor != null && !/^\d+$/.test(c)) cores[String(x.cor)] = c; });
+  const linhas = todos.map((x) => { const ref = String(x.referencia || '').trim(), tam = String(x.tamanho || '').trim(), cor = corOld(x) || cores[String(x.cor)] || ('cor ' + String(x.cor || '?'));
+    return [loja, ref, nomes[ref] || '', cor, tam, Number(x.saldo != null ? x.saldo : x.estoque) || 0, Number(x.precoVendaAtual || x.precoVenda) || 0, Number(x.custoReal || x.precoCompra) || 0, String(x.codBarra || ''), String(x.produto || ''), q]; });
   const sh = aba_('EstoqueAPI', H_ESTQ); sh.getRange('B:B').setNumberFormat('@'); sh.getRange('E:E').setNumberFormat('@'); sh.getRange('I:K').setNumberFormat('@'); const v = sh.getDataRange().getValues();
   for (let i = v.length - 1; i >= 1; i--) if (v[i][0] === loja) sh.deleteRow(i + 1);
   if (linhas.length) sh.getRange(sh.getLastRow() + 1, 1, linhas.length, H_ESTQ.length).setValues(linhas);
@@ -2123,7 +2125,7 @@ function estoqueLinhas_(loja) {
 // lojas com estoque no app (as da chave da API)
 function estoqueInfo(token) { sessao_(token); let l = []; try { l = aba_('EstoqueAPI', H_ESTQ).getRange('A2:A').getValues().map((r) => r[0]).filter(Boolean); } catch (e) {} return { lojas: [...new Set(l)] }; }
 // busca por nome, referência ou código de barras; agrupa por modelo: cores × tamanhos com a quantidade
-function estoqueBuscar(token, termo, loja, todos) {
+function estoqueBuscar(token, termo, loja, todos, pagina) {
   const u = sessao_(token), info = estoqueInfo(token).lojas; loja = loja && info.indexOf(loja) >= 0 ? loja : (info.indexOf(u.loja) >= 0 ? u.loja : info[0]);
   if (!loja) return { lojas: info, itens: [], msg: 'O estoque ainda não está disponível para a sua loja.' };
   const L = estoqueLinhas_(loja), t = norm_(String(termo || '')).replace(/[^a-z0-9 ]/g, ' ').trim(), ws = t.split(/\s+/).filter(Boolean), cust = chefe_(u);
@@ -2139,8 +2141,9 @@ function estoqueBuscar(token, termo, loja, todos) {
     m.preco = Math.max(m.preco, r[5]); if (cust) m.custo = Math.max(m.custo, r[6]); m.total += r[4];
     const cc = m.cores[r[2] || '—'] = m.cores[r[2] || '—'] || {}; cc[r[3]] = (cc[r[3]] || 0) + r[4];
   });
-  const itens = Object.values(g).sort((a, b) => b.total - a.total).slice(0, 60).map((m) => { if (!cust) delete m.custo; return m; });
-  return { loja: loja, lojas: info, atualizado: L.length ? L[0][8] : '', itens: itens, total: Object.keys(g).length, verCusto: cust, aproximado: ws.length > 1 && alvoPts < ws.length };
+  const POR = 40, pg = Math.max(0, Number(pagina) || 0), todosM = Object.values(g).sort((a, b) => b.total - a.total || String(a.nome).localeCompare(String(b.nome)));
+  const itens = todosM.slice(pg * POR, pg * POR + POR).map((m) => { if (!cust) delete m.custo; return m; });
+  return { loja: loja, lojas: info, atualizado: L.length ? L[0][8] : '', itens: itens, total: todosM.length, pagina: pg, mais: todosM.length > (pg + 1) * POR, pecas: todosM.reduce((a, m) => a + m.total, 0), verCusto: cust, aproximado: ws.length > 1 && alvoPts < ws.length };
 }
 
 function dsGatilho_(ligar) {
