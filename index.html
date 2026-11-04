@@ -1511,7 +1511,7 @@ function mudarAba(a) {
   if (a === 'meta') carregarMetas();
   if (a === 'ini') carregarInicio();
   if (a === 'prod') carregarProdutos();
-  if (a === 'est') buscarEstoque();
+  if (a === 'est') buscarEstoque(0);
   if (a === 'mural') { carregarMural(); carregarStatus(); }
   if (a === 'fila') carregarStatus();
   if (a === 'apr') carregarAprender();
@@ -2060,14 +2060,14 @@ $('tab-est').addEventListener('click', () => mudarAba('est'));
 // ---------- estoque (pela API do USE): consulta de disponibilidade por modelo, cor e tamanho ----------
 let ESQ = { t: null, n: 0 };
 function carregarEstoqueInfo() { if (!S) return; google.script.run.withSuccessHandler((r) => { const l = (r && r.lojas) || [], tem = S.cargo === 'ADMIN' ? l.length > 0 : l.some((x) => S.lojas.indexOf(x) >= 0); $('tab-est').classList.toggle('hide', !tem); const sl = $('es-loja'); const mx = S.cargo === 'ADMIN' ? l : l.filter((x) => S.lojas.indexOf(x) >= 0); sl.replaceChildren(...mx.map((x) => new Option(x, x))); sl.classList.toggle('hide', mx.length < 2); }).withFailureHandler(() => {}).estoqueInfo(S.token); }
-function buscarEstoque() {
-  const q = $('es-q').value.trim(), n = ++ESQ.n; $('es-tit').textContent = 'Buscando…';
-  google.script.run.withSuccessHandler((r) => { if (n !== ESQ.n) return; desenharEstoque(r, q); }).withFailureHandler((e) => { $('es-tit').textContent = '⚠️ ' + ((e && e.message) || 'erro'); }).estoqueBuscar(S.token, q, $('es-loja').value, $('es-zero').checked);
+function buscarEstoque(pg) {
+  const q = $('es-q').value.trim(), n = ++ESQ.n; pg = pg || 0; if (!pg) $('es-tit').textContent = 'Buscando…';
+  google.script.run.withSuccessHandler((r) => { if (n !== ESQ.n) return; desenharEstoque(r, q, pg); }).withFailureHandler((e) => { $('es-tit').textContent = '⚠️ ' + ((e && e.message) || 'erro'); }).estoqueBuscar(S.token, q, $('es-loja').value, $('es-zero').checked, pg);
 }
-function desenharEstoque(r, q) {
-  const box = $('es-res'); box.replaceChildren();
+function desenharEstoque(r, q, pg) {
+  const box = $('es-res'); if (!pg) box.replaceChildren(); { const mb = $('es-mais'); if (mb) mb.remove(); }
   if (r.msg) { $('es-tit').textContent = r.msg; return; }
-  $('es-tit').textContent = r.loja + ' · ' + (q ? r.total + (r.total === 1 ? ' modelo encontrado' : ' modelos encontrados') : 'modelos com mais peças') + (r.atualizado ? ' · estoque do USE de ' + r.atualizado : '') + (r.total > r.itens.length ? ' · mostrando ' + r.itens.length : '');
+  $('es-tit').textContent = r.loja + ' · ' + r.total + (r.total === 1 ? ' modelo' : ' modelos') + (q ? ' encontrados' : ' em estoque') + ' · ' + (r.pecas || 0) + ' peças' + (r.atualizado ? ' · USE de ' + r.atualizado : '') + (r.aproximado ? ' · nenhum modelo tem todas as palavras; mostrando os mais parecidos' : '');
   if (!r.itens.length) { box.append(el('div', 'vazio', q ? 'Nada encontrado com “' + q + '”. Tente só uma palavra (ex.: vestido) ou a referência.' : 'Sem estoque.')); return; }
   r.itens.forEach((m) => {
     const c = el('div', 'card es-m'), h = el('div', 'es-h');
@@ -2081,9 +2081,10 @@ function desenharEstoque(r, q) {
     });
     box.append(c);
   });
+  if (r.mais) { const rest = r.total - (r.pagina + 1) * 40, mb = el('button', 'btn big', 'Ver mais modelos (' + rest + ' restantes)'); mb.id = 'es-mais'; mb.style.cssText = 'width:100%;margin-top:10px'; mb.addEventListener('click', () => { mb.disabled = true; mb.textContent = 'Carregando…'; buscarEstoque(r.pagina + 1); }); box.append(mb); }
 }
-$('es-q').addEventListener('input', () => { clearTimeout(ESQ.t); ESQ.t = setTimeout(buscarEstoque, 400); });
-$('es-zero').addEventListener('change', buscarEstoque); $('es-loja').addEventListener('change', buscarEstoque);
+$('es-q').addEventListener('input', () => { clearTimeout(ESQ.t); ESQ.t = setTimeout(() => buscarEstoque(), 400); });
+$('es-zero').addEventListener('change', () => buscarEstoque()); $('es-loja').addEventListener('change', () => buscarEstoque());
 // ---------- fotos ----------
 function comprimir(file, max, q, quadrado) {
   return new Promise((res, rej) => {
