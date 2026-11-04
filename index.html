@@ -2649,7 +2649,7 @@ function passosInstalar() {
 }
 // ---------- Meu RH ----------
 let RH = null, RH_SEL = '';
-const RH_IC = { 'Holerite': '💵', 'Folha de ponto': '🕘', 'Férias': '🏖️', 'Contrato': '📝', 'Atestado': '🩺', 'Documento pessoal': '🪪', 'Comunicado': '📢', 'Outro': '📄' };
+const RH_IC = { 'Holerite': '💵', 'Folha de ponto': '🕘', 'Banco de horas': '⏱️', 'Férias': '🏖️', 'Contrato': '📝', 'Atestado': '🩺', 'Documento pessoal': '🪪', 'Comunicado': '📢', 'Outro': '📄' };
 function carregarRHBadge() { if (!S || S.cargo === 'ADMIN') return; google.script.run.withSuccessHandler((r) => { RH = r; const n = $('rh-n'); n.textContent = r.novos; n.classList.toggle('hide', !r.novos); }).withFailureHandler(() => {}).rhLista(S.token, ''); }
 function abrirMeuRH() {
   const ant = $('rh'); if (ant) ant.remove();
@@ -2818,49 +2818,52 @@ function cardHolerites(r) {
   if (semDados.length) { const zb = el('button', 'btn sm pri', '⬇️ Puxar os dados da ZapSign'); zb.style.cssText = 'margin:8px 8px 0 0'; zb.addEventListener('click', () => { zb.disabled = true; zb.textContent = 'Buscando na ZapSign… (pode levar 1 a 3 minutos)'; rodar('rhImportarZapSign', [S.token], (r2) => { const im = r2.importado || {}; toast('ZapSign: ' + im.atualizadas + ' cadastro(s) completados'); desenharRHAdm(r2); if (im.faltam && im.faltam.length) setTimeout(() => toast('Ainda faltam dados de: ' + im.faltam.join(', ')), 3800); }, () => { zb.disabled = false; zb.textContent = '⬇️ Puxar os dados da ZapSign'; }); }); dd.append(zb); }
   if (semDados.length) { const lb = el('button', 'btn sm', '📣 Pedir para as ' + semDados.length + ' completarem no Meu RH'); lb.style.marginTop = '8px'; lb.addEventListener('click', () => { lb.disabled = true; rodar('rhLembrarDados', [S.token], (x) => { lb.textContent = '✓ Aviso enviado para ' + x.enviados; }); }); dd.append(lb); }
   c.append(dd);
-  const lj = el('select'); LOJAS_APP.forEach((l) => lj.append(new Option(l, l))); const mes = el('input'); mes.type = 'month'; const d0 = new Date(); d0.setDate(1); d0.setMonth(d0.getMonth() - 1); mes.value = d0.toISOString().slice(0, 7);
-  [lj, mes].forEach((x) => { x.style.cssText = 'width:100%;box-sizing:border-box;margin-top:6px;max-width:420px;display:block'; });
-  const arqs = el('div'), prev = el('div'); prev.style.marginTop = '8px';
-  const linhaArq = (tp0) => { const w = el('div'); w.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:10px;max-width:520px';
-    const tp = el('select'); ['Holerite', 'Folha de ponto', 'Banco de horas', 'Férias', 'Outro'].forEach((t) => tp.append(new Option((RH_IC[t] || '📄') + ' ' + t, t))); tp.value = tp0; tp.style.flex = '0 0 auto';
-    const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf'; fi.style.cssText = 'flex:1 1 180px;min-width:0';
-    const x = el('button', 'btn sm', '✕'); x.title = 'Tirar'; x.addEventListener('click', () => { w.remove(); prev.replaceChildren(); });
-    fi.addEventListener('change', () => prev.replaceChildren()); tp.addEventListener('change', () => prev.replaceChildren());
-    w.append(tp, fi, x); w._tp = tp; w._fi = fi; arqs.append(w); };
-  linhaArq('Holerite'); linhaArq('Folha de ponto');
-  const mais = el('button', 'btn sm', '+ outro arquivo'); mais.style.marginTop = '8px'; mais.addEventListener('click', () => linhaArq('Outro'));
-  const ler = el('button', 'btn pri', '🔎 Ler os arquivos'); ler.style.cssText = 'margin:10px 0 0 8px';
-  ler.addEventListener('click', () => { const fs = [...arqs.children].filter((w) => w._fi.files[0]).map((w) => ({ tipo: w._tp.value, file: w._fi.files[0] })); if (!fs.length) { toast('Escolha pelo menos um PDF.'); return; } lerHolerites(fs, lj.value, mes, prev, pes); });
-  c.append(el('div', 'sub', 'Loja'), lj, el('div', 'sub', 'Mês dos documentos'), mes, el('div', 'sub', 'PDFs da loja (um por tipo). Tudo de cada funcionária vira um documento só para assinar — uma assinatura e um crédito na ZapSign.'), arqs, mais, ler, prev);
+  const mes = el('input'); mes.type = 'month'; const d0 = new Date(); d0.setDate(1); d0.setMonth(d0.getMonth() - 1); mes.value = d0.toISOString().slice(0, 7); mes.style.cssText = 'width:100%;box-sizing:border-box;margin-top:6px;max-width:420px;display:block';
+  const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf'; fi.multiple = true; fi.style.cssText = 'width:100%;box-sizing:border-box;margin-top:6px;max-width:520px;display:block';
+  const prev = el('div'); prev.style.marginTop = '8px';
+  fi.addEventListener('change', () => { const fs = [...fi.files]; if (fs.length) lerHolerites(fs, mes, prev, pes); });
+  c.append(el('div', 'sub', 'Mês dos documentos'), mes, el('div', 'sub', 'Escolha TODOS os PDFs de uma vez: holerites das lojas, folhas de ponto, bancos de horas (pode ser um PDF por pessoa). O app descobre o tipo de cada arquivo e a dona de cada página, e junta tudo de cada funcionária num documento só — uma assinatura e um crédito na ZapSign.'), fi, prev);
   [...c.querySelectorAll(':scope > .sub')].slice(1).forEach((x) => { x.style.marginTop = '8px'; });
-  lj.addEventListener('change', () => prev.replaceChildren());
   return c;
 }
 const LOJAS_APP = ['Cerâmica', 'Via Verde', 'Cruzeiro do Sul', 'Via Norte', 'Sumaúma'];
-async function lerHolerites(fs, loja, mesInp, prev, pes) {
-  prev.replaceChildren(el('div', 'sub', 'Lendo os PDFs…'));
+// tipo do arquivo pelo nome ou pelo texto da 1ª página
+function tipoArqRH(nome, tx) { const t = semAcC(nome) + ' ' + semAcC(tx).slice(0, 600); return /BANCO DE HORAS/.test(t) ? 'Banco de horas' : /PONTO|ESPELHO|JORNADA|MARCAC/.test(t) ? 'Folha de ponto' : /FERIAS/.test(t) ? 'Férias' : /HOLERI|CONTRACHEQUE|RECIBO DE PAGAMENTO|DEMONSTRATIVO DE PAGAMENTO|FOLHA DE PAGAMENTO|RECIBO/.test(t) ? 'Holerite' : 'Outro'; }
+async function lerHolerites(files, mesInp, prev, pes) {
+  prev.replaceChildren(el('div', 'sub', 'Lendo ' + files.length + ' PDF(s)…'));
   try {
     const lib = await carregarPdfJs(), MES = ['JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
-    const daLoja = pes.filter((p) => p.loja === loja), todos = pes;
+    const todos = pes, daLoja = [];
     const quemPag = (tx) => { const cpfs = (tx.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/g) || []).map((x) => x.replace(/\D/g, ''));
       const p = todos.find((q) => q.cpf && cpfs.indexOf(q.cpf) >= 0); if (p) return [p, 'CPF'];
       const T = ' ' + semAcC(tx) + ' '; const cand = (daLoja.length ? daLoja : todos).filter((q) => { const n = semAcC(q.nomeCompleto || q.pasta || ''); return n.split(' ').length >= 2 && T.indexOf(' ' + n + ' ') >= 0; });
       return cand.length === 1 ? [cand[0], 'nome'] : [null, '']; };
     const docs = [], linhas = []; let mesAchado = false;
-    for (let a = 0; a < fs.length; a++) {
-      const by = new Uint8Array(await fs[a].file.arrayBuffer()), doc = await lib.getDocument({ data: by.slice() }).promise, pags = [];
+    const fs = [];
+    for (let a = 0; a < files.length; a++) {
+      prev.replaceChildren(el('div', 'sub', 'Lendo ' + (a + 1) + ' de ' + files.length + ': ' + files[a].name + '…'));
+      const by = new Uint8Array(await files[a].arrayBuffer()), doc = await lib.getDocument({ data: by.slice() }).promise, pags = [];
       for (let n = 1; n <= doc.numPages; n++) { const pg = await doc.getPage(n), tc = await pg.getTextContent(); pags.push(tc.items.map((i) => i.str).join(' ')); }
+      fs.push({ tipo: tipoArqRH(files[a].name, pags[0] || ''), file: files[a] });
       if (!mesAchado) { const t0 = semAcC(pags.join(' ')); for (let i = 0; i < 12; i++) { const m = t0.match(new RegExp(MES[i] + ' (?:DE )?(20\\d{2})')); if (m) { mesInp.value = m[1] + '-' + String(i + 1).padStart(2, '0'); mesAchado = true; break; } } }
       docs.push({ tipo: fs[a].tipo, nome: fs[a].file.name, by: by });
       const ls = pags.map((tx, i) => { const [p, como] = quemPag(tx); return { a: a, i: i, tipo: fs[a].tipo, p: p, como: como }; });
       ls.forEach((l, k) => { if (!l.p && k && ls[k - 1].p && !pags[k].replace(/\s/g, '').length) { l.p = ls[k - 1].p; l.como = 'continuação'; } });
+      const donas = ls.filter((l) => l.p).map((l) => l.p.usuario).filter((x, i, v) => v.indexOf(x) === i);
+      if (!donas.length) { const [pn] = quemPag(files[a].name.replace(/[_\-.]+/g, ' ')); if (pn) ls.forEach((l) => { l.p = pn; l.como = 'nome do arquivo'; }); }
+      else if (donas.length === 1) ls.forEach((l) => { if (!l.p) { l.p = ls.find((x) => x.p).p; l.como = 'mesmo arquivo'; } });
       linhas.push(...ls);
     }
-    desenharPrevHol(docs, loja, mesInp, prev, pes, linhas);
+    desenharPrevHol(docs, '', mesInp, prev, pes, linhas);
   } catch (e) { prev.replaceChildren(el('div', 'aviso-meta', 'Não consegui ler o PDF: ' + (e.message || e))); }
 }
 function desenharPrevHol(docs, loja, mesInp, prev, pes, linhas) {
-  prev.replaceChildren(); const t = el('table'), tb = el('tbody'), th = el('thead'), trh = el('tr'); ['Documento', 'Pág.', 'Funcionária', 'Como achei'].forEach((x) => trh.append(el('th', '', x))); th.append(trh);
+  prev.replaceChildren(); const ta = el('div'); ta.style.cssText = 'display:grid;gap:6px;margin-bottom:10px';
+  docs.forEach((d, a) => { const r0 = el('div', 'sub'); r0.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap'; const tp = el('select'); ['Holerite', 'Folha de ponto', 'Banco de horas', 'Férias', 'Outro'].forEach((t2) => tp.append(new Option((RH_IC[t2] || '📄') + ' ' + t2, t2))); tp.value = d.tipo;
+    tp.addEventListener('change', () => { d.tipo = tp.value; linhas.filter((l) => l.a === a).forEach((l) => { l.tipo = tp.value; }); desenharPrevHol(docs, loja, mesInp, prev, pes, linhas); });
+    r0.append(document.createTextNode('📎 ' + d.nome + ' →'), tp); ta.append(r0); });
+  prev.append(el('b', '', 'Arquivos (' + docs.length + ')'), ta);
+  const t = el('table'), tb = el('tbody'), th = el('thead'), trh = el('tr'); ['Documento', 'Pág.', 'Funcionária', 'Como achei'].forEach((x) => trh.append(el('th', '', x))); th.append(trh);
   linhas.forEach((l) => { const tr = el('tr'), s2 = el('select'); s2.append(new Option('— ninguém (não enviar) —', '')); pes.forEach((p) => s2.append(new Option(p.nome + ' · ' + p.loja, p.usuario))); s2.value = l.p ? l.p.usuario : '';
     s2.addEventListener('change', () => { l.p = pes.find((p) => p.usuario === s2.value) || null; l.como = l.p ? 'escolhido' : ''; resumo(); });
     const td = el('td'); td.append(s2); tr.append(el('td', '', (RH_IC[l.tipo] || '📄') + ' ' + l.tipo), el('td', '', String(l.i + 1)), td, el('td', 'sub', l.como || '⚠️ não achei')); tb.append(tr); });
@@ -2882,7 +2885,7 @@ function desenharPrevHol(docs, loja, mesInp, prev, pes, linhas) {
         const b64 = await nd.saveAsBase64(), tipos = docs.map((d) => d.tipo).filter((t) => x.tipos.indexOf(t) >= 0);
         await new Promise((ok) => google.script.run.withSuccessHandler(() => { out.push('✅ ' + primeiroNome(x.p.nome) + ' · ' + tipos.join(' + ')); ok(); }).withFailureHandler((e) => { out.push('⚠️ ' + primeiroNome(x.p.nome) + ': ' + ((e && e.message) || 'erro')); ok(); }).rhHoleriteEnviar(S.token, x.p.usuario, mesInp.value, b64, tipos.join(' + ') + ' ' + mesInp.value + ' - ' + x.p.nome + '.pdf', false, tipos));
       }
-      res.replaceChildren(el('b', '', 'Resultado · ' + loja)); out.forEach((t2) => res.append(el('div', /^✅/.test(t2) ? 'sub' : 'aviso-meta', t2))); env.textContent = 'Enviado ✅'; toast('Documentos enviados para assinatura ✍️');
+      res.replaceChildren(el('b', '', 'Resultado')); out.forEach((t2) => res.append(el('div', /^✅/.test(t2) ? 'sub' : 'aviso-meta', t2))); env.textContent = 'Enviado ✅'; toast('Documentos enviados para assinatura ✍️');
     } catch (e) { res.replaceChildren(el('div', 'aviso-meta', 'Erro: ' + (e.message || e))); env.disabled = false; resumo(); }
   });
   prev.append(w, rs2, env, res);
