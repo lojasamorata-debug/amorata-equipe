@@ -2168,7 +2168,22 @@ function desenharStatus() {
 }
 // campeãs do dia: fotos flutuando na tela de todas (some ao fechar, volta no dia seguinte)
 let CAMP = null;
-function carregarCampeas() { if (!S || telaLoja()) return; google.script.run.withSuccessHandler((r) => { CAMP = r; bolhaCampeas(); }).withFailureHandler(() => {}).campeasDia(S.token); }
+function carregarCampeas() { if (!S || telaLoja()) return; google.script.run.withSuccessHandler((r) => { CAMP = r; bolhaCampeas(); cardMetaBatida(); }).withFailureHandler(() => {}).campeasDia(S.token); }
+// card de comemoração (igual ao da medalha) para quem bateu a meta do dia — uma vez por dia
+function cardMetaBatida() {
+  if (!CAMP || !CAMP.lista || $('festa') || $('caminho')) return; const eu = CAMP.lista.find((p) => p.eu); if (!eu) return;
+  const k = 'metaBatida_' + CAMP.d; try { if (localStorage.getItem(k)) return; localStorage.setItem(k, '1'); } catch (e) { return; }
+  try { navigator.vibrate && navigator.vibrate([100, 60, 100, 60, 400]); } catch (x) {}
+  const f = el('div'); f.id = 'festa'; const cores = ['#5b4a7a', '#f2b01e', '#e8738a', '#1e7a46', '#7fb3e6', '#ff9f43'];
+  for (let i = 0; i < 40; i++) { const c = el('i', 'cf'); c.style.left = Math.random() * 100 + '%'; c.style.background = cores[i % cores.length]; c.style.animationDuration = 2 + Math.random() * 2.5 + 's'; c.style.animationDelay = Math.random() * 0.8 + 's'; f.append(c); }
+  const fc = el('div', 'fc'), DS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'], wd = DS[new Date(CAMP.d + 'T12:00:00').getDay()];
+  fc.append(el('div', 'em', '🏆'), el('div', 'mini', 'Meta do dia batida!'), el('h3', '', 'Parabéns, ' + primeiroNome(S.nome) + '!'),
+    el('p', '', 'Você bateu a meta de ' + wd + ', ' + isoBR(CAMP.d).slice(0, 5) + (eu.venda && eu.meta ? ': vendeu ' + rs(eu.venda) + ' para uma meta de ' + rs(eu.meta) + (eu.pct ? ' (' + Math.round(eu.pct * 100) + '%)' : '') : '') + '. Sua foto está em destaque para toda a equipe 💜'));
+  const sai = () => f.remove(); f.addEventListener('click', (ev) => { if (ev.target === f) sai(); });
+  const bts = el('div'); bts.style.cssText = 'display:flex;flex-direction:column;gap:8px';
+  const ok = el('button', 'btn pri big', 'Obrigada! 💜'), ver = el('button', 'btn sm', 'Ver quem também bateu'); ver.style.cssText = 'margin:2px auto 0;border:0;background:none;color:var(--muted)';
+  ok.addEventListener('click', sai); ver.addEventListener('click', () => { sai(); listaCampeas(); }); bts.append(ok, ver); fc.append(bts); f.append(fc); document.body.append(f);
+}
 function bolhaCampeas() {
   const ant = $('camp-bolha'); if (ant) ant.remove(); if (!S || !CAMP || !CAMP.lista || !CAMP.lista.length || telaLoja()) return;
   let oc = ''; try { oc = localStorage.getItem('campOculto') || ''; } catch (e) {} if (oc === CAMP.d) return;
