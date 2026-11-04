@@ -2822,6 +2822,7 @@ function cardHolerites(r) {
   const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf'; fi.multiple = true; fi.style.cssText = 'width:100%;box-sizing:border-box;margin-top:6px;max-width:520px;display:block';
   const prev = el('div'); prev.style.marginTop = '8px';
   fi.addEventListener('change', () => { const fs = [...fi.files]; if (fs.length) lerHolerites(fs, mes, prev, pes); });
+  const acp = el('button', 'btn sm', '📊 Quem já viu e quem assinou'); acp.style.margin = '4px 0 6px'; acp.addEventListener('click', () => abrirAcompanhamento(mes.value)); c.append(acp);
   c.append(el('div', 'sub', 'Mês dos documentos'), mes, el('div', 'sub', 'Escolha TODOS os PDFs de uma vez: holerites das lojas, folhas de ponto, bancos de horas (pode ser um PDF por pessoa). O app descobre o tipo de cada arquivo e a dona de cada página, e junta tudo de cada funcionária num documento só — uma assinatura e um crédito na ZapSign.'), fi, prev);
   [...c.querySelectorAll(':scope > .sub')].slice(1).forEach((x) => { x.style.marginTop = '8px'; });
   return c;
@@ -2829,6 +2830,20 @@ function cardHolerites(r) {
 const LOJAS_APP = ['Cerâmica', 'Via Verde', 'Cruzeiro do Sul', 'Via Norte', 'Sumaúma'];
 // tipo do arquivo pelo nome ou pelo texto da 1ª página
 function tipoArqRH(nome, tx) { const t = semAcC(nome) + ' ' + semAcC(tx).slice(0, 600); return /BANCO DE HORAS/.test(t) ? 'Banco de horas' : /PONTO|ESPELHO|JORNADA|MARCAC/.test(t) ? 'Folha de ponto' : /FERIAS/.test(t) ? 'Férias' : /HOLERI|CONTRACHEQUE|RECIBO DE PAGAMENTO|DEMONSTRATIVO DE PAGAMENTO|FOLHA DE PAGAMENTO|RECIBO/.test(t) ? 'Holerite' : 'Outro'; }
+function abrirAcompanhamento(mes) {
+  abrirDet('Assinaturas ' + mes.slice(5, 7) + '/' + mes.slice(0, 4), (b) => {
+    const mi = el('input'); mi.type = 'month'; mi.value = mes; mi.style.maxWidth = '220px'; const box = el('div'); b.append(mi, box);
+    const carregar = () => { box.replaceChildren(el('div', 'vazio', 'Consultando a ZapSign…')); rodar('rhAcompanhamento', [S.token, mi.value], (r) => {
+      box.replaceChildren(); if (!r.total) { box.append(el('div', 'vazio', 'Nenhum documento para assinar enviado neste mês.')); return; }
+      const k = el('div', 'dash'); [['✅ Assinaram', r.assinados], ['👀 Viram, falta assinar', r.viram], ['⏳ Ainda não abriram', r.total - r.assinados - r.viram]].forEach(([t, n]) => { const d = el('div', 'dc'); d.append(el('div', 'sm', t), el('div', 'big', String(n))); k.append(d); }); box.append(k);
+      r.lista.forEach((x) => { const d = el('div', 'pess eq'), i = el('div'); i.append(el('b', '', x.nome + (x.loja ? ' · ' + x.loja : '')), el('span', '', x.titulo + ' · enviado ' + x.enviado.slice(0, 5) + ' · ' + (x.assinado ? '✅ assinou' + (x.assinouEm ? ' em ' + x.assinouEm : '') : x.visualizou ? '👀 viu' + (x.viuEm ? ' em ' + x.viuEm : '') + (x.vezes > 1 ? ' (' + x.vezes + 'x)' : '') + ' · falta assinar' : '⏳ ainda não abriu'))); d.append(i); box.append(d); });
+      const pend = r.lista.filter((x) => !x.assinado).length;
+      if (pend) { const lb = el('button', 'btn pri', '📣 Lembrar as ' + pend + ' que faltam'); lb.style.marginTop = '10px'; lb.addEventListener('click', () => { lb.disabled = true; rodar('rhLembrarAssinar', [S.token, mi.value], (x) => { lb.textContent = '✓ Lembrete enviado para ' + x.enviados; }); }); box.append(lb); }
+      box.append(el('div', 'nota', '"Viu" vem da própria ZapSign (abriu o documento para assinar) ou do app. Quem já assinou entra na pasta dela no Drive automaticamente.'));
+    }); };
+    mi.addEventListener('change', carregar); carregar();
+  });
+}
 async function lerHolerites(files, mesInp, prev, pes) {
   prev.replaceChildren(el('div', 'sub', 'Lendo ' + files.length + ' PDF(s)…'));
   try {
