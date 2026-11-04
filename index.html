@@ -687,10 +687,11 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
           <button class="btn pri big hide" id="gt-ok" style="margin-top:8px">Importar</button>
         </div>
         <details class="card hide" id="ds-card" style="margin-top:12px"><summary><b>🔌 DS Connect · API do USE</b> <span class="sub" id="ds-sit"></span></summary>
-          <div class="sub" style="margin-top:6px">Quando a Data System liberar a chave, cole aqui o endereço da API e a chave e toque em Testar. Com a conexão funcionando, as vendas passam a entrar sozinhas, sem importar arquivo.</div>
+          <div class="sub" style="margin-top:6px">As lojas liberadas na chave puxam as vendas sozinhas pela API (de 2 em 2 horas; de manhã fecha o dia anterior). As outras lojas continuam pelo arquivo.</div>
           <label class="sub" style="display:block;margin-top:8px">Endereço da API (começa com https://) <input id="ds-base" placeholder="https://..."></label>
           <label class="sub" style="display:block;margin-top:8px">Chave de acesso (X-Api-Key) <input id="ds-key" type="password" autocomplete="off" placeholder="cole a chave aqui"></label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" id="ds-salvar">Salvar</button><button class="btn" id="ds-testar">Testar conexão</button></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" id="ds-salvar">Salvar</button><button class="btn" id="ds-testar">Testar conexão</button><button class="btn" id="ds-sync">🔄 Buscar vendas agora</button><button class="btn hide" id="ds-off">Pausar automático</button></div>
+          <div class="sub" id="ds-auto" style="margin-top:8px"></div>
           <div id="ds-res" style="margin-top:8px"></div>
         </details>
         <div class="card hide" id="gi-card" style="margin-top:12px">
@@ -3720,8 +3721,10 @@ function lerTodasLojas(file) {
   if (window.XLSX) go(); else { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; sc.onload = go; sc.onerror = () => { p.textContent = 'Não consegui carregar o leitor de planilhas. Verifique a internet.'; }; document.head.append(sc); }
 }
 function carregarDS() { if (!S || S.cargo !== 'ADMIN') return; $('ds-card').classList.remove('hide'); rodar('dsStatus', [S.token], desenharDS); }
-function desenharDS(r) { $('ds-sit').textContent = r.temChave ? '· chave …' + r.fimChave + (r.ultimoTeste ? ' · último teste ' + r.ultimoTeste : '') : '· aguardando a chave'; if (r.base && !$('ds-base').value) $('ds-base').value = r.base; }
+function desenharDS(r) { $('ds-auto').textContent = (r.auto ? '🟢 Sincronização automática ligada' : '⚪ Sincronização automática desligada — toque em Buscar vendas agora para ligar') + (r.ultimaSync ? ' · última: ' + r.ultimaSync : ''); $('ds-off').classList.toggle('hide', !r.auto); $('ds-sit').textContent = r.temChave ? '· chave …' + r.fimChave + (r.ultimoTeste ? ' · último teste ' + r.ultimoTeste : '') : '· aguardando a chave'; if (r.base && !$('ds-base').value) $('ds-base').value = r.base; }
 $('ds-salvar').addEventListener('click', () => { rodar('dsSalvar', [S.token, $('ds-base').value, $('ds-key').value], (r) => { $('ds-key').value = ''; desenharDS(r); toast('Configuração salva 🔌'); }); });
+$('ds-sync').addEventListener('click', () => { $('ds-res').textContent = 'Buscando vendas na API…'; rodar('dsSincronizarAgora', [S.token], (r) => { desenharDS(r); $('ds-res').replaceChildren(el('div', 'motiva', '✅ ' + (r.log || 'nada a importar').split('\n').join(' · '))); toast('Vendas atualizadas pela API 🔌'); try { carregarGestao(); } catch (e) {} }, (e) => { $('ds-res').replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || 'erro'))); }); });
+$('ds-off').addEventListener('click', () => rodar('dsDesligar', [S.token], (r) => { desenharDS(r); toast('Sincronização automática pausada'); }));
 $('ds-testar').addEventListener('click', () => { $('ds-res').textContent = 'Testando…'; rodar('dsTestar', [S.token], (r) => { const b = $('ds-res'); b.replaceChildren(el('div', r.ok ? 'motiva' : 'aviso-meta', r.msg)); if (r.amostra) { const pre = el('div', 'sub', 'Resposta: ' + r.amostra); pre.style.wordBreak = 'break-all'; b.append(pre); } carregarDS(); }, () => { $('ds-res').textContent = ''; }); });
 $('fc-loja').addEventListener('click', () => fechamento($('g-loja').value, $('fc-data').value));
 $('fc-rede').addEventListener('click', () => fechamento('TODAS', $('fc-data').value));
