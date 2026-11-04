@@ -2102,7 +2102,7 @@ function zxLer(fonte, w, h, recortes) {
 }
 async function lerCodigoCamera() {
   const ov = el('div'); ov.id = 'es-scan'; const cx = el('div', 'cx'), vd = el('video'); vd.setAttribute('playsinline', ''); vd.setAttribute('autoplay', ''); vd.muted = true; const mira = el('div', 'mira'); cx.append(vd, mira);
-  const tx = el('div', 'tx', 'Segure a etiqueta a uns 15 cm, com o código dentro do retângulo, e espere o foco. Se demorar, toque em Capturar.');
+  const tx = el('div', 'tx', 'Segure a etiqueta a uns 20 cm (de perto o iPhone não foca), com o código dentro do retângulo, parado por 1 segundo. Se demorar, toque em Capturar.');
   const cap = el('button', 'btn pri big', '📸 Capturar agora'), dig = el('button', 'btn big', '⌨️ Digitar o número'), x = el('button', 'btn big', 'Fechar');
   ov.append(cx, tx, cap, dig, x); document.body.append(ov); let fim = false, stream = null, tm = null, ult = '';
   const fechar = () => { fim = true; clearTimeout(tm); try { (stream && stream.getTracks() || []).forEach((t) => t.stop()); } catch (e) {} ov.remove(); };
@@ -2116,7 +2116,8 @@ async function lerCodigoCamera() {
     await carregarZX(); if (fim) return;
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
     if (fim) { stream.getTracks().forEach((t) => t.stop()); return; }
-    try { const tr = stream.getVideoTracks()[0], cp = tr.getCapabilities ? tr.getCapabilities() : {}; if (cp.focusMode && cp.focusMode.indexOf('continuous') >= 0) await tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) {}
+    // zoom de 2x quando a câmera deixa: dá para segurar mais longe (o iPhone não foca muito perto) e o código continua grande
+    try { const tr = stream.getVideoTracks()[0], cp = tr.getCapabilities ? tr.getCapabilities() : {}, adv = {}; if (cp.focusMode && cp.focusMode.indexOf('continuous') >= 0) adv.focusMode = 'continuous'; if (cp.zoom && cp.zoom.max >= 2) adv.zoom = Math.min(2, cp.zoom.max); if (Object.keys(adv).length) await tr.applyConstraints({ advanced: [adv] }); } catch (e) {}
     vd.srcObject = stream; await vd.play().catch(() => {});
     const ciclo = () => { if (fim) return; const t = tentar(FAIXA); if (t) { if (eanOk(t) || t === ult) { achou(t); return; } ult = t; } tm = setTimeout(ciclo, 180); };
     ciclo();
