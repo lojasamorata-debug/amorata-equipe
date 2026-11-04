@@ -687,7 +687,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
           <button class="btn pri big hide" id="gt-ok" style="margin-top:8px">Importar</button>
         </div>
         <details class="card hide" id="ds-card" style="margin-top:12px"><summary><b>🔌 DS Connect · API do USE</b> <span class="sub" id="ds-sit"></span></summary>
-          <div class="sub" style="margin-top:6px">As lojas liberadas na chave puxam as vendas sozinhas pela API: de hora em hora das 9h às 21h e a última às 22h, que fecha o dia, avisa as gerentes e libera o status das campeãs (quando todas as lojas do dia já estiverem importadas). As outras lojas continuam pelo arquivo.</div>
+          <div class="sub" style="margin-top:6px">As lojas liberadas na chave puxam as vendas sozinhas pela API: de hora em hora das 10h às 21h (horário de Manaus) e a última às 22h, que fecha o dia, avisa a gerente e libera o status das campeãs. As outras lojas continuam pelo arquivo — quando você importar, o status é refeito com todas.</div>
           <label class="sub" style="display:block;margin-top:8px">Endereço da API (começa com https://) <input id="ds-base" placeholder="https://..."></label>
           <label class="sub" style="display:block;margin-top:8px">Chave de acesso (X-Api-Key) <input id="ds-key" type="password" autocomplete="off" placeholder="cole a chave aqui"></label>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" id="ds-salvar">Salvar</button><button class="btn" id="ds-testar">Testar conexão</button><button class="btn" id="ds-sync">🔄 Buscar vendas agora</button><button class="btn hide" id="ds-off">Pausar automático</button></div>
