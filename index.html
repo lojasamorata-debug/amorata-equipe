@@ -444,7 +444,7 @@ body.fila-v #st-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body
 #camp-bolha span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } #camp-bolha .xb { border:0; background:none; color:rgba(255,255,255,.8); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
 body.fila-v #camp-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body:has(#st-bolha) #camp-bolha { bottom:calc(82px + env(safe-area-inset-bottom)); } body.fila-v:has(#st-bolha) #camp-bolha { bottom:calc(238px + env(safe-area-inset-bottom)); } body.sheet-on #camp-bolha { display:none; }
 @keyframes campFlut { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } } @keyframes campIn { from { transform:translateY(40px); opacity:0; } to { transform:none; opacity:1; } }
-#es-scan { position:fixed; inset:0; z-index:200; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:20px; } #es-scan video { width:100%; max-width:520px; max-height:60vh; object-fit:cover; border-radius:14px; } #es-scan .mira { position:absolute; width:min(78vw,420px); height:110px; border:3px solid #f5c84c; border-radius:12px; top:calc(50% - 90px); box-shadow:0 0 0 2000px rgba(0,0,0,.25); pointer-events:none; } #es-scan .tx { color:#fff; text-align:center; font-size:14px; } #es-scan .btn { max-width:320px; width:100%; } #es-scan { gap:10px; overflow:auto; }
+#es-scan { position:fixed; inset:0; z-index:200; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:20px; } #es-scan .cx { position:relative; width:100%; max-width:520px; } #es-scan video { display:block; width:100%; max-height:58vh; object-fit:contain; border-radius:14px; background:#111; } #es-scan .mira { position:absolute; left:8%; right:8%; top:36%; bottom:36%; border:3px solid #f5c84c; border-radius:12px; pointer-events:none; } #es-scan .tx { color:#fff; text-align:center; font-size:14px; } #es-scan .btn { max-width:320px; width:100%; } #es-scan { gap:10px; overflow:auto; }
 .es-m { margin-top:10px; } .es-h { display:flex; justify-content:space-between; gap:8px; align-items:baseline; } .es-pr { font-weight:700; color:var(--accent); white-space:nowrap; } .es-cor { display:flex; gap:8px; align-items:flex-start; margin-top:8px; } .es-cn { flex:0 0 92px; font-size:12px; color:var(--muted); padding-top:3px; text-transform:capitalize; } .es-tz { display:flex; flex-wrap:wrap; gap:4px; } .es-t { font-size:12px; padding:3px 8px; border-radius:999px; background:#efe9f6; color:#4b3d68; font-weight:600; } .es-t.z { background:#f2f0ec; color:#aaa59c; font-weight:400; }
 #st-bolha .xb { border:0; background:none; color:var(--muted); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
 @keyframes stentra { from { transform:translateY(20px) scale(.8); opacity:0; } to { transform:none; opacity:1; } }
@@ -2086,27 +2086,39 @@ function desenharEstoque(r, q, pg) {
 }
 // leitor de código de barras pela câmera (biblioteca ZXing, carregada só quando usa)
 function carregarZX() { return new Promise((ok, err) => { if (window.ZXing) return ok(); const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js'; sc.onload = () => (window.ZXing ? ok() : err(new Error('leitor indisponível'))); sc.onerror = () => err(new Error('Sem internet para abrir o leitor.')); document.head.append(sc); }); }
+// dígito verificador do EAN-13 (a etiqueta da loja é EAN-13): leitura com dígito certo vale na hora; sem isso, precisa ler igual 2 vezes
+function eanOk(t) { if (!/^\d{13}$/.test(t)) return false; let s = 0; for (let i = 0; i < 12; i++) s += (+t[i]) * (i % 2 ? 3 : 1); return (10 - (s % 10)) % 10 === +t[12]; }
+// lê o código direto do vídeo, recortando a faixa do meio (onde fica o retângulo amarelo) e ampliando — funciona melhor no iPhone
+function zxLer(fonte, w, h, recortes) {
+  const Z = window.ZXing; if (!lerCodigoCamera.mf) { const hints = new Map(); hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.CODE_128]); hints.set(Z.DecodeHintType.TRY_HARDER, true); const mf = new Z.MultiFormatReader(); mf.setHints(hints); lerCodigoCamera.mf = mf; }
+  const cv = lerCodigoCamera.cv || (lerCodigoCamera.cv = document.createElement('canvas')), g = cv.getContext('2d', { willReadFrequently: true });
+  for (const [x0, y0, x1, y1] of recortes) {
+    const sw = (x1 - x0) * w, sh = (y1 - y0) * h, k = Math.max(1, Math.min(2.5, 1400 / sw)); cv.width = Math.round(sw * k); cv.height = Math.round(sh * k);
+    g.drawImage(fonte, x0 * w, y0 * h, sw, sh, 0, 0, cv.width, cv.height);
+    try { const bm = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(cv))); return lerCodigoCamera.mf.decode(bm).getText(); } catch (e) {}
+  }
+  return null;
+}
 async function lerCodigoCamera() {
-  const ov = el('div'); ov.id = 'es-scan'; const vd = el('video'); vd.setAttribute('playsinline', ''); vd.muted = true; const mira = el('div', 'mira'), tx = el('div', 'tx', 'Aproxime até o código de barras encher o retângulo. Não leu? Tire uma foto do código ou digite o número que está embaixo dele.');
-  const foto = el('button', 'btn pri big', '📸 Tirar foto do código'), dig = el('button', 'btn big', '⌨️ Digitar o número'), x = el('button', 'btn big', 'Fechar'), fi = el('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.setAttribute('capture', 'environment'); fi.className = 'hide';
-  ov.append(vd, mira, tx, foto, dig, x, fi); document.body.append(ov); let leitor = null, fim = false;
-  const fechar = () => { fim = true; try { leitor && leitor.reset(); } catch (e) {} try { (vd.srcObject && vd.srcObject.getTracks() || []).forEach((t) => t.stop()); } catch (e) {} ov.remove(); };
+  const ov = el('div'); ov.id = 'es-scan'; const cx = el('div', 'cx'), vd = el('video'); vd.setAttribute('playsinline', ''); vd.setAttribute('autoplay', ''); vd.muted = true; const mira = el('div', 'mira'); cx.append(vd, mira);
+  const tx = el('div', 'tx', 'Segure a etiqueta a uns 15 cm, com o código dentro do retângulo, e espere o foco. Se demorar, toque em Capturar.');
+  const cap = el('button', 'btn pri big', '📸 Capturar agora'), dig = el('button', 'btn big', '⌨️ Digitar o número'), x = el('button', 'btn big', 'Fechar');
+  ov.append(cx, tx, cap, dig, x); document.body.append(ov); let fim = false, stream = null, tm = null, ult = '';
+  const fechar = () => { fim = true; clearTimeout(tm); try { (stream && stream.getTracks() || []).forEach((t) => t.stop()); } catch (e) {} ov.remove(); };
   const achou = (cod) => { try { navigator.vibrate && navigator.vibrate(80); } catch (e) {} fechar(); $('es-q').value = cod; buscarEstoque(); };
   x.addEventListener('click', fechar);
   dig.addEventListener('click', () => { fechar(); $('es-q').value = ''; $('es-q').setAttribute('inputmode', 'numeric'); $('es-q').focus(); setTimeout(() => $('es-q').removeAttribute('inputmode'), 4000); toast('Digite os números que estão embaixo das barras'); });
-  foto.addEventListener('click', () => fi.click());
-  fi.addEventListener('change', async () => { const f = fi.files[0]; if (!f) return; tx.textContent = 'Lendo a foto…';
-    try { await carregarZX(); const Z = window.ZXing, h2 = new Map(); h2.set(Z.DecodeHintType.TRY_HARDER, true); const rd = new Z.BrowserMultiFormatReader(h2), url = URL.createObjectURL(f);
-      // tenta a foto inteira e, se não der, a foto reduzida (códigos pequenos às vezes leem melhor assim)
-      let res = null; try { res = await rd.decodeFromImageUrl(url); } catch (e) {}
-      if (!res) { const im = new Image(); im.src = url; await im.decode(); for (const w of [1600, 1000]) { const cv = document.createElement('canvas'), k = Math.min(1, w / im.width); cv.width = im.width * k; cv.height = im.height * k; cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); try { res = await rd.decodeFromImageUrl(cv.toDataURL('image/jpeg', 0.92)); } catch (e) {} if (res) break; } }
-      URL.revokeObjectURL(url); if (res) achou(res.getText()); else tx.textContent = 'Não consegui ler nessa foto. Tente de mais perto, com o código reto e bem iluminado — ou digite o número.';
-    } catch (e) { tx.textContent = '⚠️ ' + ((e && e.message) || 'erro ao ler a foto'); } fi.value = ''; });
+  const FAIXA = [[0.08, 0.36, 0.92, 0.64]], TUDO = [[0.08, 0.36, 0.92, 0.64], [0.02, 0.25, 0.98, 0.75], [0, 0, 1, 1], [0.15, 0.42, 0.85, 0.58]];
+  const tentar = (recortes) => { if (fim || !vd.videoWidth) return null; return zxLer(vd, vd.videoWidth, vd.videoHeight, recortes); };
+  cap.addEventListener('click', () => { const t = tentar(TUDO); if (t) achou(t); else tx.textContent = 'Ainda não deu. Afaste um pouco o celular até ficar nítido, deixe o código reto e com luz — ou digite o número.'; });
   try {
     await carregarZX(); if (fim) return;
-    const Z = window.ZXing, hints = new Map(); hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E, Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.CODE_39, Z.BarcodeFormat.ITF]); hints.set(Z.DecodeHintType.TRY_HARDER, true);
-    leitor = new Z.BrowserMultiFormatReader(hints);
-    await leitor.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 }, advanced: [{ focusMode: 'continuous' }] } }, vd, (res) => { if (res && !fim) achou(res.getText()); });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+    if (fim) { stream.getTracks().forEach((t) => t.stop()); return; }
+    try { const tr = stream.getVideoTracks()[0], cp = tr.getCapabilities ? tr.getCapabilities() : {}; if (cp.focusMode && cp.focusMode.indexOf('continuous') >= 0) await tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) {}
+    vd.srcObject = stream; await vd.play().catch(() => {});
+    const ciclo = () => { if (fim) return; const t = tentar(FAIXA); if (t) { if (eanOk(t) || t === ult) { achou(t); return; } ult = t; } tm = setTimeout(ciclo, 180); };
+    ciclo();
   } catch (e) { tx.textContent = /Permission|NotAllowed/i.test(String(e && (e.name || e.message))) ? '📷 Libere a câmera para o app nas configurações do celular e tente de novo.' : '⚠️ ' + ((e && e.message) || 'Não consegui abrir a câmera.'); }
 }
 $('es-cam').addEventListener('click', lerCodigoCamera);
