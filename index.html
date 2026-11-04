@@ -2872,7 +2872,11 @@ async function lerHolerites(files, mesInp, prev, pes) {
     desenharPrevHol(docs, '', mesInp, prev, pes, linhas);
   } catch (e) { prev.replaceChildren(el('div', 'aviso-meta', 'Não consegui ler o PDF: ' + (e.message || e))); }
 }
+// nome do arquivo: o original; se juntou mais de um arquivo da pessoa, os nomes originais juntos
+function nomeOrigHol(x, docs) { const ns = docs.filter((d, a) => x.pags.some((l) => l.a === a)).map((d) => d.nome.replace(/\.pdf$/i, '')); const varias = docs.some((d, a) => x.pags.some((l) => l.a === a) && DOC_VARIAS[a]); const base = ns.length === 1 ? ns[0] : ns.join(' + '), nm = x.p.nomeCompleto || x.p.nome; return (base + (varias && semAcC(base).indexOf(semAcC(nm)) < 0 ? ' - ' + nm : '')).slice(0, 240) + '.pdf'; }
+let DOC_VARIAS = {}; // arquivo com páginas de várias pessoas (ex.: holerites da loja): o nome ganha o nome dela
 function desenharPrevHol(docs, loja, mesInp, prev, pes, linhas) {
+  DOC_VARIAS = {}; docs.forEach((d, a) => { const us = linhas.filter((l) => l.a === a && l.p).map((l) => l.p.usuario); DOC_VARIAS[a] = us.filter((x, i) => us.indexOf(x) === i).length > 1; });
   prev.replaceChildren(); const ta = el('div'); ta.style.cssText = 'display:grid;gap:6px;margin-bottom:10px';
   docs.forEach((d, a) => { const r0 = el('div', 'sub'); r0.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap'; const tp = el('select'); ['Holerite', 'Folha de ponto', 'Banco de horas', 'Férias', 'Outro'].forEach((t2) => tp.append(new Option((RH_IC[t2] || '📄') + ' ' + t2, t2))); tp.value = d.tipo;
     tp.addEventListener('change', () => { d.tipo = tp.value; linhas.filter((l) => l.a === a).forEach((l) => { l.tipo = tp.value; }); desenharPrevHol(docs, loja, mesInp, prev, pes, linhas); });
@@ -2898,7 +2902,7 @@ function desenharPrevHol(docs, loja, mesInp, prev, pes, linhas) {
         const nd = await PL.PDFDocument.create();
         for (let a = 0; a < docs.length; a++) { const idx = x.pags.filter((l) => l.a === a).map((l) => l.i); if (!idx.length) continue; const cps = await nd.copyPages(srcs[a], idx); cps.forEach((pg) => nd.addPage(pg)); }
         const b64 = await nd.saveAsBase64(), tipos = docs.map((d) => d.tipo).filter((t) => x.tipos.indexOf(t) >= 0);
-        await new Promise((ok) => google.script.run.withSuccessHandler(() => { out.push('✅ ' + primeiroNome(x.p.nome) + ' · ' + tipos.join(' + ')); ok(); }).withFailureHandler((e) => { out.push('⚠️ ' + primeiroNome(x.p.nome) + ': ' + ((e && e.message) || 'erro')); ok(); }).rhHoleriteEnviar(S.token, x.p.usuario, mesInp.value, b64, tipos.join(' + ') + ' ' + mesInp.value + ' - ' + x.p.nome + '.pdf', false, tipos));
+        await new Promise((ok) => google.script.run.withSuccessHandler(() => { out.push('✅ ' + primeiroNome(x.p.nome) + ' · ' + tipos.join(' + ')); ok(); }).withFailureHandler((e) => { out.push('⚠️ ' + primeiroNome(x.p.nome) + ': ' + ((e && e.message) || 'erro')); ok(); }).rhHoleriteEnviar(S.token, x.p.usuario, mesInp.value, b64, nomeOrigHol(x, docs), false, tipos));
       }
       res.replaceChildren(el('b', '', 'Resultado')); out.forEach((t2) => res.append(el('div', /^✅/.test(t2) ? 'sub' : 'aviso-meta', t2))); env.textContent = 'Enviado ✅'; toast('Documentos enviados para assinatura ✍️');
     } catch (e) { res.replaceChildren(el('div', 'aviso-meta', 'Erro: ' + (e.message || e))); env.disabled = false; resumo(); }
