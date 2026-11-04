@@ -2807,7 +2807,7 @@ let PDFLIB = null;
 function carregarPdfLib() { if (PDFLIB) return PDFLIB; PDFLIB = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'; sc.onload = () => res(window.PDFLib); sc.onerror = () => { PDFLIB = null; rej(new Error('Não consegui carregar o leitor de PDF. Verifique a internet.')); }; document.head.append(sc); }); return PDFLIB; }
 const semAcC = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 function cardHolerites(r) {
-  const c = el('details', 'card dob'); c.style.marginTop = '12px'; c.open = true; const sm = el('summary'); sm.append(el('b', '', '🧾 Holerites do mês para assinar')); c.append(sm);
+  const c = el('details', 'card dob'); c.style.marginTop = '12px'; c.open = true; const sm = el('summary'); sm.append(el('b', '', '🧾 Holerites e folhas de ponto do mês para assinar')); c.append(sm);
   const pes = r.pessoas || [], semDados = pes.filter((p) => !(p.nomeCompleto && p.email));
   c.append(el('div', 'sub', 'Suba o PDF de holerites de cada loja. O app separa a página de cada funcionária (pelo CPF ou pelo nome completo), cria o documento na ZapSign da loja e coloca no Meu RH dela para assinar — com código por e-mail e CPF. Depois de assinado, o PDF vai para a pasta dela no Drive.'));
   c.lastChild.style.margin = '8px 0';
@@ -2819,54 +2819,70 @@ function cardHolerites(r) {
   if (semDados.length) { const lb = el('button', 'btn sm', '📣 Pedir para as ' + semDados.length + ' completarem no Meu RH'); lb.style.marginTop = '8px'; lb.addEventListener('click', () => { lb.disabled = true; rodar('rhLembrarDados', [S.token], (x) => { lb.textContent = '✓ Aviso enviado para ' + x.enviados; }); }); dd.append(lb); }
   c.append(dd);
   const lj = el('select'); LOJAS_APP.forEach((l) => lj.append(new Option(l, l))); const mes = el('input'); mes.type = 'month'; const d0 = new Date(); d0.setDate(1); d0.setMonth(d0.getMonth() - 1); mes.value = d0.toISOString().slice(0, 7);
-  const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf'; const prev = el('div'); prev.style.marginTop = '8px';
-  [lj, mes, fi].forEach((x) => { x.style.cssText = 'width:100%;box-sizing:border-box;margin-top:6px;max-width:420px;display:block'; });
-  c.append(el('div', 'sub', 'Loja'), lj, el('div', 'sub', 'Mês do holerite'), mes, el('div', 'sub', 'PDF dos holerites da loja'), fi, prev);
+  [lj, mes].forEach((x) => { x.style.cssText = 'width:100%;box-sizing:border-box;margin-top:6px;max-width:420px;display:block'; });
+  const arqs = el('div'), prev = el('div'); prev.style.marginTop = '8px';
+  const linhaArq = (tp0) => { const w = el('div'); w.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:10px;max-width:520px';
+    const tp = el('select'); ['Holerite', 'Folha de ponto', 'Banco de horas', 'Férias', 'Outro'].forEach((t) => tp.append(new Option((RH_IC[t] || '📄') + ' ' + t, t))); tp.value = tp0; tp.style.flex = '0 0 auto';
+    const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf'; fi.style.cssText = 'flex:1 1 180px;min-width:0';
+    const x = el('button', 'btn sm', '✕'); x.title = 'Tirar'; x.addEventListener('click', () => { w.remove(); prev.replaceChildren(); });
+    fi.addEventListener('change', () => prev.replaceChildren()); tp.addEventListener('change', () => prev.replaceChildren());
+    w.append(tp, fi, x); w._tp = tp; w._fi = fi; arqs.append(w); };
+  linhaArq('Holerite'); linhaArq('Folha de ponto');
+  const mais = el('button', 'btn sm', '+ outro arquivo'); mais.style.marginTop = '8px'; mais.addEventListener('click', () => linhaArq('Outro'));
+  const ler = el('button', 'btn pri', '🔎 Ler os arquivos'); ler.style.cssText = 'margin:10px 0 0 8px';
+  ler.addEventListener('click', () => { const fs = [...arqs.children].filter((w) => w._fi.files[0]).map((w) => ({ tipo: w._tp.value, file: w._fi.files[0] })); if (!fs.length) { toast('Escolha pelo menos um PDF.'); return; } lerHolerites(fs, lj.value, mes, prev, pes); });
+  c.append(el('div', 'sub', 'Loja'), lj, el('div', 'sub', 'Mês dos documentos'), mes, el('div', 'sub', 'PDFs da loja (um por tipo). Tudo de cada funcionária vira um documento só para assinar — uma assinatura e um crédito na ZapSign.'), arqs, mais, ler, prev);
   [...c.querySelectorAll(':scope > .sub')].slice(1).forEach((x) => { x.style.marginTop = '8px'; });
-  fi.addEventListener('change', () => { if (fi.files[0]) lerHolerites(fi.files[0], lj.value, mes, prev, pes); });
-  lj.addEventListener('change', () => { if (fi.files[0]) lerHolerites(fi.files[0], lj.value, mes, prev, pes); });
+  lj.addEventListener('change', () => prev.replaceChildren());
   return c;
 }
 const LOJAS_APP = ['Cerâmica', 'Via Verde', 'Cruzeiro do Sul', 'Via Norte', 'Sumaúma'];
-async function lerHolerites(file, loja, mesInp, prev, pes) {
-  prev.replaceChildren(el('div', 'sub', 'Lendo o PDF…'));
+async function lerHolerites(fs, loja, mesInp, prev, pes) {
+  prev.replaceChildren(el('div', 'sub', 'Lendo os PDFs…'));
   try {
-    const by = new Uint8Array(await file.arrayBuffer()), lib = await carregarPdfJs(), doc = await lib.getDocument({ data: by.slice() }).promise, pags = [];
-    for (let n = 1; n <= doc.numPages; n++) { const pg = await doc.getPage(n), tc = await pg.getTextContent(); pags.push(tc.items.map((i) => i.str).join(' ')); }
-    // mês: "10/2026" ou "OUTUBRO/2026"
-    const MES = ['JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], t0 = semAcC(pags.join(' '));
-    for (let i = 0; i < 12; i++) { const m = t0.match(new RegExp(MES[i] + ' (?:DE )?(20\\d{2})')); if (m) { mesInp.value = m[1] + '-' + String(i + 1).padStart(2, '0'); break; } }
+    const lib = await carregarPdfJs(), MES = ['JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
     const daLoja = pes.filter((p) => p.loja === loja), todos = pes;
-    const quemPag = (tx) => { const dig = tx.replace(/[^\d]/g, ' '), cpfs = (tx.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/g) || []).map((x) => x.replace(/\D/g, ''));
-      let p = todos.find((q) => q.cpf && cpfs.indexOf(q.cpf) >= 0); if (p) return [p, 'CPF'];
+    const quemPag = (tx) => { const cpfs = (tx.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/g) || []).map((x) => x.replace(/\D/g, ''));
+      const p = todos.find((q) => q.cpf && cpfs.indexOf(q.cpf) >= 0); if (p) return [p, 'CPF'];
       const T = ' ' + semAcC(tx) + ' '; const cand = (daLoja.length ? daLoja : todos).filter((q) => { const n = semAcC(q.nomeCompleto || q.pasta || ''); return n.split(' ').length >= 2 && T.indexOf(' ' + n + ' ') >= 0; });
-      if (cand.length === 1) return [cand[0], 'nome']; void dig; return [null, '']; };
-    const linhas = pags.map((tx, i) => { const [p, como] = quemPag(tx); return { i: i, p: p, como: como }; });
-    // página sem dono logo depois de uma com dono (verso/continuação): fica com a mesma pessoa
-    linhas.forEach((l, k) => { if (!l.p && k && linhas[k - 1].p && !pags[k].replace(/\s/g, '').length) { l.p = linhas[k - 1].p; l.como = 'continuação'; } });
-    desenharPrevHol(file, by, loja, mesInp, prev, pes, linhas);
+      return cand.length === 1 ? [cand[0], 'nome'] : [null, '']; };
+    const docs = [], linhas = []; let mesAchado = false;
+    for (let a = 0; a < fs.length; a++) {
+      const by = new Uint8Array(await fs[a].file.arrayBuffer()), doc = await lib.getDocument({ data: by.slice() }).promise, pags = [];
+      for (let n = 1; n <= doc.numPages; n++) { const pg = await doc.getPage(n), tc = await pg.getTextContent(); pags.push(tc.items.map((i) => i.str).join(' ')); }
+      if (!mesAchado) { const t0 = semAcC(pags.join(' ')); for (let i = 0; i < 12; i++) { const m = t0.match(new RegExp(MES[i] + ' (?:DE )?(20\\d{2})')); if (m) { mesInp.value = m[1] + '-' + String(i + 1).padStart(2, '0'); mesAchado = true; break; } } }
+      docs.push({ tipo: fs[a].tipo, nome: fs[a].file.name, by: by });
+      const ls = pags.map((tx, i) => { const [p, como] = quemPag(tx); return { a: a, i: i, tipo: fs[a].tipo, p: p, como: como }; });
+      ls.forEach((l, k) => { if (!l.p && k && ls[k - 1].p && !pags[k].replace(/\s/g, '').length) { l.p = ls[k - 1].p; l.como = 'continuação'; } });
+      linhas.push(...ls);
+    }
+    desenharPrevHol(docs, loja, mesInp, prev, pes, linhas);
   } catch (e) { prev.replaceChildren(el('div', 'aviso-meta', 'Não consegui ler o PDF: ' + (e.message || e))); }
 }
-function desenharPrevHol(file, by, loja, mesInp, prev, pes, linhas) {
-  prev.replaceChildren(); const t = el('table'), tb = el('tbody'), th = el('thead'), trh = el('tr'); ['Página', 'Funcionária', 'Como achei'].forEach((x) => trh.append(el('th', '', x))); th.append(trh);
+function desenharPrevHol(docs, loja, mesInp, prev, pes, linhas) {
+  prev.replaceChildren(); const t = el('table'), tb = el('tbody'), th = el('thead'), trh = el('tr'); ['Documento', 'Pág.', 'Funcionária', 'Como achei'].forEach((x) => trh.append(el('th', '', x))); th.append(trh);
   linhas.forEach((l) => { const tr = el('tr'), s2 = el('select'); s2.append(new Option('— ninguém (não enviar) —', '')); pes.forEach((p) => s2.append(new Option(p.nome + ' · ' + p.loja, p.usuario))); s2.value = l.p ? l.p.usuario : '';
     s2.addEventListener('change', () => { l.p = pes.find((p) => p.usuario === s2.value) || null; l.como = l.p ? 'escolhido' : ''; resumo(); });
-    const td = el('td'); td.append(s2); tr.append(el('td', '', String(l.i + 1)), td, el('td', 'sub', l.como || '⚠️ não achei')); tb.append(tr); });
+    const td = el('td'); td.append(s2); tr.append(el('td', '', (RH_IC[l.tipo] || '📄') + ' ' + l.tipo), el('td', '', String(l.i + 1)), td, el('td', 'sub', l.como || '⚠️ não achei')); tb.append(tr); });
   t.append(th, tb); const w = el('div', 'tbl-x'); w.append(t);
   const rs2 = el('div', 'sub'); rs2.style.marginTop = '8px'; const env = el('button', 'btn pri big'); env.style.marginTop = '8px'; const res = el('div');
-  const grupos = () => { const g = {}; linhas.forEach((l) => { if (l.p) (g[l.p.usuario] = g[l.p.usuario] || { p: l.p, pags: [] }).pags.push(l.i); }); return Object.values(g); };
-  function resumo() { const g = grupos(), sem = g.filter((x) => !(x.p.nomeCompleto && x.p.email)), soltas = linhas.filter((l) => !l.p).length; rs2.textContent = g.length + ' funcionária(s) · ' + soltas + ' página(s) sem dono' + (sem.length ? ' · ⚠️ sem dados para assinar: ' + sem.map((x) => primeiroNome(x.p.nome)).join(', ') + ' (complete em "Dados para assinatura" acima)' : ''); env.textContent = '✍️ Enviar ' + (g.length - sem.length) + ' holerite(s) para assinar · ' + mesInp.value.slice(5, 7) + '/' + mesInp.value.slice(0, 4); env.disabled = !(g.length - sem.length); }
+  const grupos = () => { const g = {}; linhas.forEach((l) => { if (l.p) { const x = g[l.p.usuario] = g[l.p.usuario] || { p: l.p, pags: [], tipos: [] }; x.pags.push(l); if (x.tipos.indexOf(l.tipo) < 0) x.tipos.push(l.tipo); } }); return Object.values(g); };
+  function resumo() { const g = grupos(), sem = g.filter((x) => !(x.p.nomeCompleto && x.p.email)), soltas = linhas.filter((l) => !l.p).length, so1 = g.filter((x) => x.tipos.length < docs.length).map((x) => primeiroNome(x.p.nome));
+    rs2.textContent = g.length + ' funcionária(s) · ' + soltas + ' página(s) sem dono' + (so1.length && docs.length > 1 ? ' · ⚠️ sem todos os documentos: ' + so1.join(', ') : '') + (sem.length ? ' · ⚠️ sem dados para assinar: ' + sem.map((x) => primeiroNome(x.p.nome)).join(', ') : '');
+    env.textContent = '✍️ Enviar ' + (g.length - sem.length) + ' para assinar · ' + mesInp.value.slice(5, 7) + '/' + mesInp.value.slice(0, 4) + ' (1 assinatura por pessoa)'; env.disabled = !(g.length - sem.length); }
   resumo(); mesInp.addEventListener('change', resumo);
   env.addEventListener('click', async () => {
     const g = grupos().filter((x) => x.p.nomeCompleto && x.p.email); if (!g.length) return; env.disabled = true; res.replaceChildren();
     try {
-      const PL = await carregarPdfLib(), src = await PL.PDFDocument.load(by, { ignoreEncryption: true }), out = [];
+      const PL = await carregarPdfLib(), srcs = []; for (const d of docs) srcs.push(await PL.PDFDocument.load(d.by, { ignoreEncryption: true })); const out = [];
       for (let k = 0; k < g.length; k++) {
         const x = g[k]; env.textContent = 'Enviando ' + (k + 1) + ' de ' + g.length + '…';
-        const nd = await PL.PDFDocument.create(), cps = await nd.copyPages(src, x.pags); cps.forEach((pg) => nd.addPage(pg)); const b64 = await nd.saveAsBase64();
-        await new Promise((ok) => google.script.run.withSuccessHandler(() => { out.push('✅ ' + primeiroNome(x.p.nome)); ok(); }).withFailureHandler((e) => { out.push('⚠️ ' + primeiroNome(x.p.nome) + ': ' + ((e && e.message) || 'erro')); ok(); }).rhHoleriteEnviar(S.token, x.p.usuario, mesInp.value, b64, 'Holerite ' + mesInp.value + ' - ' + x.p.nome + '.pdf', false));
+        const nd = await PL.PDFDocument.create();
+        for (let a = 0; a < docs.length; a++) { const idx = x.pags.filter((l) => l.a === a).map((l) => l.i); if (!idx.length) continue; const cps = await nd.copyPages(srcs[a], idx); cps.forEach((pg) => nd.addPage(pg)); }
+        const b64 = await nd.saveAsBase64(), tipos = docs.map((d) => d.tipo).filter((t) => x.tipos.indexOf(t) >= 0);
+        await new Promise((ok) => google.script.run.withSuccessHandler(() => { out.push('✅ ' + primeiroNome(x.p.nome) + ' · ' + tipos.join(' + ')); ok(); }).withFailureHandler((e) => { out.push('⚠️ ' + primeiroNome(x.p.nome) + ': ' + ((e && e.message) || 'erro')); ok(); }).rhHoleriteEnviar(S.token, x.p.usuario, mesInp.value, b64, tipos.join(' + ') + ' ' + mesInp.value + ' - ' + x.p.nome + '.pdf', false, tipos));
       }
-      res.replaceChildren(el('b', '', 'Resultado · ' + loja)); out.forEach((t2) => res.append(el('div', /^✅/.test(t2) ? 'sub' : 'aviso-meta', t2))); env.textContent = 'Enviado ✅'; toast('Holerites enviados para assinatura ✍️');
+      res.replaceChildren(el('b', '', 'Resultado · ' + loja)); out.forEach((t2) => res.append(el('div', /^✅/.test(t2) ? 'sub' : 'aviso-meta', t2))); env.textContent = 'Enviado ✅'; toast('Documentos enviados para assinatura ✍️');
     } catch (e) { res.replaceChildren(el('div', 'aviso-meta', 'Erro: ' + (e.message || e))); env.disabled = false; resumo(); }
   });
   prev.append(w, rs2, env, res);
