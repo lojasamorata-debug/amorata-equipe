@@ -907,7 +907,7 @@ function abrir() {
   if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirTermo(() => exigirApp(false)), 500); }
   if (fazCaminho) { google.script.run.withSuccessHandler((o) => { ONTEM = o; }).withFailureHandler(() => { ONTEM = { semDados: true }; })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
-  setTimeout(checarAvisos, 1500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 2500); setTimeout(carregarStatus, 3500); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
+  setTimeout(checarAvisos, 1500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 2500); setTimeout(carregarStatus, 3500); setTimeout(carregarCampeas, 1200); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
   $('t-av').replaceChildren(...avatar(S.foto, S.nome).childNodes); if (!S.foto) $('t-av').textContent = (S.nome || '?').charAt(0);
   nuvemFoto(); desenharMood(); setTimeout(carregarDesafios, 800);
   const sel = $('sel-loja'); sel.replaceChildren(...S.lojas.map((l) => new Option(l, l)));
@@ -2171,7 +2171,7 @@ let CAMP = null;
 function carregarCampeas() { if (!S || telaLoja()) return; google.script.run.withSuccessHandler((r) => { CAMP = r; bolhaCampeas(); cardMetaBatida(); }).withFailureHandler(() => {}).campeasDia(S.token); }
 // card de comemoração (igual ao da medalha) para quem bateu a meta do dia — uma vez por dia
 function cardMetaBatida() {
-  if (!CAMP || !CAMP.lista || $('festa') || $('caminho')) return; const eu = CAMP.lista.find((p) => p.eu); if (!eu) return;
+  if (!CAMP || !CAMP.lista) return; if ($('festa') || $('caminho')) { clearTimeout(cardMetaBatida.t); cardMetaBatida.t = setTimeout(cardMetaBatida, 4000); return; } const eu = CAMP.lista.find((p) => p.eu); if (!eu) return;
   const k = 'metaBatida_' + CAMP.d; try { if (localStorage.getItem(k)) return; localStorage.setItem(k, '1'); } catch (e) { return; }
   try { navigator.vibrate && navigator.vibrate([100, 60, 100, 60, 400]); } catch (x) {}
   const f = el('div'); f.id = 'festa'; const cores = ['#5b4a7a', '#f2b01e', '#e8738a', '#1e7a46', '#7fb3e6', '#ff9f43'];
@@ -2385,7 +2385,7 @@ function caminho() {
   if ($('caminho')) return;
   const w = el('div', 'tc'); w.id = 'caminho'; document.body.append(w);
   const passos = ['mood', 'recado', 'cmn', 'dia']; let i = S.moodDia === hojeStr() ? 1 : 0, mood = null;
-  const fim = () => { try { localStorage.setItem(chaveCaminho(), '1'); } catch (e) {} w.remove(); mudarAba(chefe() ? 'ini' : 'dia'); mostrarGuia(false); if (comemorar.pend) { const p = comemorar.pend; comemorar.pend = null; setTimeout(() => comemorar(p), 600); } };
+  const fim = () => { try { localStorage.setItem(chaveCaminho(), '1'); } catch (e) {} w.remove(); mudarAba(chefe() ? 'ini' : 'dia'); mostrarGuia(false); setTimeout(() => { if (CAMP) cardMetaBatida(); else carregarCampeas(); }, 700); if (comemorar.pend) { const p = comemorar.pend; comemorar.pend = null; setTimeout(() => comemorar(p), 600); } };
   const tela = () => {
     w.replaceChildren(); const k = passos[i];
     if (k === 'cmn' && !(CMN || []).some((c) => !c.lido)) { i++; return tela(); }
