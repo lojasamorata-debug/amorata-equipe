@@ -442,7 +442,7 @@ body.fila-v #st-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body
 #camp-bolha .cr { position:absolute; top:-14px; left:16px; font-size:18px; animation:campFlut 2.4s ease-in-out infinite; }
 #camp-bolha .avs { display:flex; } #camp-bolha .avs .av { width:34px; height:34px; font-size:13px; margin-left:-10px; box-shadow:0 0 0 2px #fff, 0 0 0 4px #f5c84c; animation:campFlut 2.4s ease-in-out infinite; } #camp-bolha .avs .av:first-child { margin-left:0; }
 #camp-bolha span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } #camp-bolha .xb { border:0; background:none; color:rgba(255,255,255,.8); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
-body.fila-v #camp-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body.sheet-on #camp-bolha { display:none; }
+body.fila-v #camp-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body:has(#st-bolha) #camp-bolha { bottom:calc(82px + env(safe-area-inset-bottom)); } body.fila-v:has(#st-bolha) #camp-bolha { bottom:calc(238px + env(safe-area-inset-bottom)); } body.sheet-on #camp-bolha { display:none; }
 @keyframes campFlut { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } } @keyframes campIn { from { transform:translateY(40px); opacity:0; } to { transform:none; opacity:1; } }
 #st-bolha .xb { border:0; background:none; color:var(--muted); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
 @keyframes stentra { from { transform:translateY(20px) scale(.8); opacity:0; } to { transform:none; opacity:1; } }
@@ -1681,7 +1681,7 @@ function cardsVendedora(box, u, r) {
   const k = nivelCor(u.fechaPct, u.pct), restam = u.restam != null ? u.restam : r.restam;
   // meta
   const h = card('full', '🎯 Sua meta', 'detalhar ›', () => abrirDet('Sua meta', (b) => { const d = $('m-eu-det'); if (d) [...d.children].forEach((n) => b.append(n.cloneNode(true))); }));
-  const hr = el('div', 'hero'), tx = el('div', 'tx'); tx.append(el('div', 'big', rs(u.venda)), el('div', 'sm', u.meta ? 'de ' + rs(u.meta) + (u.falta > 0 ? ' · faltam ' + rs(u.falta) : ' · meta batida! 🏆') : 'sem meta cadastrada'));
+  const hr = el('div', 'hero'), tx = el('div', 'tx'); tx.append(el('div', 'big', rs(u.venda)), el('div', 'sm', u.meta ? 'de ' + rs(u.meta) + (u.falta > 0 ? ' · faltam ' + rs(u.falta) : ' · meta batida! 🏆') : u.folgaPer ? '🌴 folga neste período · sem meta' : 'sem meta cadastrada'));
   if (u.falta > 0 && u.porDia && !r.encerrado) tx.append(el('span', 'pill n', '🎯 hoje: ' + rs(u.porDia) + (restam ? ' · ' + restam + ' dias' : '')));
   if (u.fechaPct != null && !r.encerrado) tx.append(el('div', 'sm', (u.fechaPct >= 1 ? '🚀 ' : '') + 'no seu ritmo, fecha em ' + pc(u.fechaPct)));
   hr.append(ring(u.pct, 92, COR[k]), tx); h.append(hr);
