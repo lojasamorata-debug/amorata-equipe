@@ -2092,10 +2092,11 @@ function eanOk(t) { if (!/^\d{13}$/.test(t)) return false; let s = 0; for (let i
 function zxLer(fonte, w, h, recortes) {
   const Z = window.ZXing; if (!lerCodigoCamera.mf) { const hints = new Map(); hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.CODE_128]); hints.set(Z.DecodeHintType.TRY_HARDER, true); const mf = new Z.MultiFormatReader(); mf.setHints(hints); lerCodigoCamera.mf = mf; }
   const cv = lerCodigoCamera.cv || (lerCodigoCamera.cv = document.createElement('canvas')), g = cv.getContext('2d', { willReadFrequently: true });
-  for (const [x0, y0, x1, y1] of recortes) {
-    const sw = (x1 - x0) * w, sh = (y1 - y0) * h, k = Math.max(1, Math.min(2.5, 1400 / sw)); cv.width = Math.round(sw * k); cv.height = Math.round(sh * k);
-    g.drawImage(fonte, x0 * w, y0 * h, sw, sh, 0, 0, cv.width, cv.height);
-    try { const bm = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(cv))); return lerCodigoCamera.mf.decode(bm).getText(); } catch (e) {}
+  for (const [x0, y0, x1, y1] of recortes) for (const suave of [true, false]) for (const bin of ['H', 'G']) {
+    const sw = (x1 - x0) * w, sh = (y1 - y0) * h, k = Math.max(1, Math.min(5, 1400 / sw)); cv.width = Math.round(sw * k); cv.height = Math.round(sh * k);
+    g.imageSmoothingEnabled = suave; g.drawImage(fonte, x0 * w, y0 * h, sw, sh, 0, 0, cv.width, cv.height);
+    try { const src = new Z.HTMLCanvasElementLuminanceSource(cv), bm = new Z.BinaryBitmap(bin === 'H' ? new Z.HybridBinarizer(src) : new Z.GlobalHistogramBinarizer(src)); return lerCodigoCamera.mf.decode(bm).getText(); } catch (e) {}
+    if (k === 1) break;
   }
   return null;
 }
