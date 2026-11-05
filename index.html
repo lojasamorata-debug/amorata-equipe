@@ -2292,7 +2292,7 @@ function carregarCampeas() { if (!S || telaLoja()) return; google.script.run.wit
 // card de comemoração (igual ao da medalha) para quem bateu a meta do dia — uma vez por dia
 function cardMetaBatida() {
   if (!CAMP || !CAMP.lista) return; if ($('festa') || $('caminho')) { clearTimeout(cardMetaBatida.t); cardMetaBatida.t = setTimeout(cardMetaBatida, 4000); return; } const eu = CAMP.lista.find((p) => p.eu); if (!eu) return;
-  const k = 'metaBatida_' + CAMP.d; try { if (localStorage.getItem(k)) return; localStorage.setItem(k, '1'); } catch (e) { return; }
+  const k = 'metaBatida_' + CAMP.d + '|' + (CAMP.id || ''); try { if (localStorage.getItem(k)) return; localStorage.setItem(k, '1'); } catch (e) { return; }
   try { navigator.vibrate && navigator.vibrate([100, 60, 100, 60, 400]); } catch (x) {}
   const f = el('div'); f.id = 'festa'; const cores = ['#5b4a7a', '#f2b01e', '#e8738a', '#1e7a46', '#7fb3e6', '#ff9f43'];
   for (let i = 0; i < 40; i++) { const c = el('i', 'cf'); c.style.left = Math.random() * 100 + '%'; c.style.background = cores[i % cores.length]; c.style.animationDuration = 2 + Math.random() * 2.5 + 's'; c.style.animationDelay = Math.random() * 0.8 + 's'; f.append(c); }
@@ -2306,11 +2306,11 @@ function cardMetaBatida() {
 }
 function bolhaCampeas() {
   const ant = $('camp-bolha'); if (ant) ant.remove(); if (!S || !CAMP || !CAMP.lista || !CAMP.lista.length || telaLoja()) return;
-  let oc = ''; try { oc = localStorage.getItem('campOculto') || ''; } catch (e) {} if (oc === CAMP.d) return;
+  let oc = ''; try { oc = localStorage.getItem('campOculto') || ''; } catch (e) {} if (oc === CAMP.d + '|' + (CAMP.id || '')) return;
   const b = el('div'); b.id = 'camp-bolha'; const avs = el('div', 'avs'); CAMP.lista.slice(0, 5).forEach((p, i) => { const a = avatar(p.foto, p.nome); a.style.animationDelay = (i * 0.35) + 's'; avs.append(a); });
   const x = el('button', 'xb', '×'); x.title = 'Esconder';
   b.append(el('div', 'cr', '👑'), avs, el('span', '', (CAMP.lista.length === 1 ? CAMP.lista[0].nome + ' bateu' : CAMP.lista.length + ' bateram') + ' a meta!'), x);
-  x.addEventListener('click', (ev) => { ev.stopPropagation(); try { localStorage.setItem('campOculto', CAMP.d); } catch (e) {} b.remove(); });
+  x.addEventListener('click', (ev) => { ev.stopPropagation(); try { localStorage.setItem('campOculto', CAMP.d + '|' + (CAMP.id || '')); } catch (e) {} b.remove(); });
   b.addEventListener('click', listaCampeas);
   document.body.append(b);
 }
