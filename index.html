@@ -771,6 +771,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
     </div>
 
     <div id="v-est" class="hide">
+      <div class="card" id="rp-card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>🔄 Reposição das peças vendidas</b><div class="sub" id="rp-sub">Veja o que foi vendido e precisa voltar para a arara.</div></div><button class="btn pri" id="rp-abrir">Abrir</button></div></div>
       <div style="display:flex;gap:8px;margin-top:12px"><input id="es-q" type="search" placeholder="🔎 Nome, referência ou código de barras" autocomplete="off" style="flex:1;width:100%"><button class="btn" id="es-cam" title="Ler código de barras com a câmera" style="flex:none;font-size:18px">📷</button><select id="es-loja" class="hide" style="width:auto"></select></div>
       <label class="sub" style="display:flex;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="es-zero" style="width:auto"> mostrar também o que está zerado</label>
       <div class="sub" id="es-tit" style="margin-top:8px"></div>
@@ -1885,6 +1886,48 @@ function linhasPct(lista, max) {
   const b = el('div'); lista.slice(0, max || 99).forEach((x) => { const r = el('div', 'mini-r'), t = el('div', 'tr'), i = el('i'), k = x.cor || nivelCor(x.fechaPct, x.pct); i.style.width = Math.min(100, (x.pct || 0) * 100) + '%'; i.style.background = COR[k]; t.append(i); r.append(el('div', 'nm', x.rot), t, el('div', 'v', pc(x.pct))); b.append(r); }); return b;
 }
 // detalhe em tela cheia: move os blocos já desenhados para dentro e devolve ao fechar
+// ---------- reposição: lista do que vendeu (por horário) para repor na arara; marca ✓ reposto / ✗ sem peça ----------
+let RP = null;
+function abrirReposicao() {
+  const LS = (S && S.lojas) || [], lj = LS.length > 1 && LS.indexOf('Sumaúma') >= 0 ? 'Sumaúma' : (LS.indexOf(loja) >= 0 ? loja : LS[0] || 'Sumaúma');
+  abrirDet('🔄 Reposição', (b) => {
+    const hoje = diaISO(0), fx = el('div'); fx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:end';
+    const sl = el('select'); (LS.length > 1 ? LS : [lj]).forEach((x) => sl.append(new Option(x, x))); sl.value = lj;
+    const dt = el('input'); dt.type = 'date'; dt.value = hoje; const de = el('input'); de.type = 'time'; const ate = el('input'); ate.type = 'time';
+    const lab = (t, i) => { const l = el('label', 'sub', t); l.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex:1;min-width:90px'; l.append(i); return l; };
+    if (LS.length > 1) fx.append(lab('Loja', sl)); fx.append(lab('Dia', dt), lab('Das', de), lab('Até', ate));
+    const ch = el('div'); ch.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px';
+    const chip = (t, f) => { const c = el('button', 'btn sm', t); c.addEventListener('click', () => { f(); carregar(); }); ch.append(c); };
+    chip('⏱️ Desde a última reposição', () => { de.value = RP && RP.ultima ? RP.ultima.quando.slice(11, 16) : ''; ate.value = ''; });
+    chip('🌅 Até 14h', () => { de.value = ''; ate.value = '14:00'; }); chip('🌇 14h às 18h', () => { de.value = '14:00'; ate.value = '18:00'; }); chip('🌙 Depois das 18h', () => { de.value = '18:00'; ate.value = ''; }); chip('📅 Dia todo', () => { de.value = ''; ate.value = ''; });
+    const res = el('div'); res.style.marginTop = '10px'; b.append(fx, ch, res);
+    [sl, dt, de, ate].forEach((x) => x.addEventListener('change', carregar));
+    function args() { return [S.token, sl.value, dt.value, de.value || '', ate.value || '']; }
+    function marcar(chaves, st) { google.script.run.withSuccessHandler((r) => { RP = r; desenhar(); }).withFailureHandler((e) => toast((e && e.message) || 'erro')).reposicaoMarcar(S.token, sl.value, dt.value, chaves, st, de.value || '', ate.value || ''); }
+    function carregar() { res.replaceChildren(el('div', 'sub', 'Buscando as vendas no USE…')); google.script.run.withSuccessHandler((r) => { RP = r; desenhar(); }).withFailureHandler((e) => res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || 'erro')))).reposicao.apply(null, args()); }
+    function desenhar() {
+      const r = RP; res.replaceChildren(); if (!r) return;
+      if (r.semApi) { res.append(el('div', 'aviso-meta', 'A reposição pelo app funciona nas lojas ligadas à API do USE' + (r.lojasApi && r.lojasApi.length ? ' (hoje: ' + r.lojasApi.join(', ') + ')' : '') + '. Nas outras, continue pelo relatório de Reabastecimento do USE.')); return; }
+      const top = el('div', 'motiva'); top.append(el('b', '', r.pendentes ? '🔄 ' + r.pendentes + (r.pendentes === 1 ? ' peça para repor' : ' peças para repor') : (r.total ? '✅ Tudo reposto!' : 'Nenhuma venda nesse horário.')));
+      top.append(el('div', 'sub', (r.de !== '00:00' || r.ate !== '23:59' ? 'Vendas das ' + r.de + ' às ' + (r.ate === '23:59' ? r.agora : r.ate) + ' · ' : '') + r.total + ' peça(s) vendida(s)' + (r.ultima ? ' · última reposição às ' + r.ultima.quando.slice(11, 16) + ' (' + r.ultima.nome + ')' : '')));
+      res.append(top);
+      const pend = r.lista.filter((x) => !x.status);
+      if (pend.length > 1) { const all = el('button', 'btn pri', '✓ Marcar todas como repostas (' + r.pendentes + ')'); all.style.marginTop = '8px'; all.addEventListener('click', () => { if (confirm('Marcar as ' + r.pendentes + ' peças como repostas?')) marcar([].concat(...pend.map((x) => x.linhas)), 'FEITO'); }); res.append(all); }
+      r.lista.forEach((x) => {
+        const c = el('div', 'card'); c.style.cssText = 'margin-top:8px;padding:10px 12px;' + (x.status === 'FEITO' ? 'opacity:.55;' : x.status === 'SEM' ? 'border-left:4px solid #c0392b;' : '');
+        const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:flex-start';
+        const info = el('div'); info.append(el('b', '', x.nome), el('div', 'sub', (x.cor ? x.cor.split('-')[0] : '') + ' · tam ' + x.tam + ' · ref ' + x.ref), el('div', 'sub', '🕘 vendida às ' + x.horas.join(', ')));
+        const q = el('div'); q.style.cssText = 'text-align:right;white-space:nowrap'; q.append(el('div', 'big', '×' + x.qtd)); q.append(el('div', 'sub', x.saldo == null ? 'estoque —' : x.saldo > 0 ? 'estoque ' + x.saldo : '⚠️ estoque 0'));
+        h.append(info, q); c.append(h);
+        const ops = el('div'); ops.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap';
+        if (x.status) { ops.append(el('span', 'sub', (x.status === 'FEITO' ? '✓ Reposta' : '✗ Sem peça no estoque') + (x.por ? ' · ' + x.por : ''))); const u2 = el('button', 'btn sm', 'Desfazer'); u2.addEventListener('click', () => marcar(x.linhas, '')); ops.append(u2); }
+        else { const ok = el('button', 'btn sm pri', '✓ Reposta'), no = el('button', 'btn sm', '✗ Sem peça'); ok.addEventListener('click', () => marcar(x.linhas, 'FEITO')); no.addEventListener('click', () => marcar(x.linhas, 'SEM')); ops.append(ok, no); }
+        c.append(ops); res.append(c);
+      });
+    }
+    carregar();
+  });
+}
 function abrirDet(titulo, montar) {
   const w = el('div', 'tc'); w.id = 'det'; const movidos = [];
   const mover = (id) => { const n = $(id); if (!n) return null; movidos.push([n, n.parentNode, n.nextSibling]); n.classList.remove('hide'); return n; };
@@ -3946,6 +3989,7 @@ $('ds-off').addEventListener('click', () => rodar('dsDesligar', [S.token], (r) =
 $('ds-testar').addEventListener('click', () => { $('ds-res').textContent = 'Testando…'; rodar('dsTestar', [S.token], (r) => { const b = $('ds-res'); b.replaceChildren(el('div', r.ok ? 'motiva' : 'aviso-meta', r.msg)); if (r.amostra) { const pre = el('div', 'sub', 'Resposta: ' + r.amostra); pre.style.wordBreak = 'break-all'; b.append(pre); } carregarDS(); }, () => { $('ds-res').textContent = ''; }); });
 $('fc-loja').addEventListener('click', () => fechamento($('g-loja').value, $('fc-data').value));
 $('fc-rede').addEventListener('click', () => fechamento('TODAS', $('fc-data').value));
+$('rp-abrir').addEventListener('click', abrirReposicao);
 $('fc-obj').addEventListener('click', () => objetivoDia($('g-loja').value, ONTEM && ONTEM.loja === $('g-loja').value ? ONTEM : null));
 // ---------- vínculo código do USE → pessoa (ADMIN) ----------
 function carregarCodUse() { const lj = $('g-loja').value; if (!lj || lj === 'TODAS') return; rodar('codigosUSE', [S.token, lj], desenharCodUse); }
