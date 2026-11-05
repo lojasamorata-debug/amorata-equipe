@@ -2097,6 +2097,7 @@ function dsVendasDia_(lojaNum, d) {
   const ag = {}; let pag = 1, tot = null, n = 0;
   do {
     const r = dsGet_('/api/v1/vendas', { dataVendaInicio: d, dataVendaFim: d, loja: lojaNum, itensPorPagina: 1000, pagina: pag });
+    if (r.status === 204) break; // sem vendas no dia
     if (r.status !== 200 || !r.json) throw new Error('DS Connect respondeu ' + r.status + ' em /vendas: ' + String(r.texto).slice(0, 120));
     const it = r.json.itens || []; tot = r.json.totalItens || it.length; n += it.length;
     it.forEach((v) => {
@@ -2121,6 +2122,7 @@ function dsItensDia_(lojaNum, d) {
   const out = []; let pag = 1, tot = null, n = 0;
   do {
     const r = dsGet_('/api/v1/vendas', { dataVendaInicio: d, dataVendaFim: d, loja: lojaNum, itensPorPagina: 1000, pagina: pag });
+    if (r.status === 204) break; // sem vendas no dia
     if (r.status !== 200 || !r.json) throw new Error('DS Connect respondeu ' + r.status + ' em /vendas');
     const it = r.json.itens || []; tot = r.json.totalItens || it.length; n += it.length;
     it.forEach((v) => {
