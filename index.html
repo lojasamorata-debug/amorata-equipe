@@ -118,6 +118,7 @@ td.n { white-space:nowrap; font-variant-numeric:tabular-nums; }
 .mood { background:linear-gradient(135deg,#fff5fb,#f3f0ff); border:1px solid var(--line); border-radius:16px; padding:12px 14px; margin-top:12px; }
 .mood b { display:block; font-size:16px; } .mood .sub { margin-top:2px; }
 .tc { position:fixed; inset:0; z-index:8000; background:linear-gradient(160deg,#fff5fb,#f3f0ff 60%,#eef6ff); display:flex; flex-direction:column; padding:22px 18px 18px; overflow:auto; }
+body.estq #eu-meta, body.estq #plano-card, body.estq #dia-pre, body.estq #des-fila, body.estq #cart, body.estq #me, body.estq #dia-fila, body.estq #tab-fila, body.estq #tab-meta { display:none !important; }
 #det { overscroll-behavior:contain; -webkit-overflow-scrolling:touch; transform:translateZ(0); will-change:transform; height:100%; height:100dvh; }
 html:has(#det), body:has(#det) { overflow:hidden; height:100%; }
 .tc .pas { display:flex; gap:6px; justify-content:center; margin-bottom:18px; } .tc .pas i { width:28px; height:5px; border-radius:3px; background:rgba(91,74,122,.18); } .tc .pas i.on { background:var(--accent); }
@@ -774,6 +775,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
     </div>
 
     <div id="v-est" class="hide">
+      <div class="card hide" id="en-card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>📦 Entradas de mercadoria</b><div class="sub">O que chegou na loja na semana, por nota e por modelo.</div></div><button class="btn pri" id="en-abrir">Abrir</button></div></div>
       <div class="card" id="rp-card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>🔄 Reposição das peças vendidas</b><div class="sub" id="rp-sub">Veja o que foi vendido e precisa voltar para a arara.</div></div><button class="btn pri" id="rp-abrir">Abrir</button></div></div>
       <div style="display:flex;gap:8px;margin-top:12px"><input id="es-q" type="search" placeholder="🔎 Nome, referência ou código de barras" autocomplete="off" style="flex:1;width:100%"><button class="btn" id="es-cam" title="Ler código de barras com a câmera" style="flex:none;font-size:18px">📷</button><select id="es-loja" class="hide" style="width:auto"></select></div>
       <label class="sub" style="display:flex;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="es-zero" style="width:auto"> mostrar também o que está zerado</label>
@@ -922,7 +924,7 @@ function sair(msg) {
 function abrir() {
   $('v-login').classList.add('hide'); $('v-app').classList.remove('hide');
   cabecalho(); protecao(true);
-  const fazCaminho = S.cargo !== 'ADMIN' && !S.trocarSenha && !(typeof T !== 'undefined' && T) && caminhoPendente();
+  const fazCaminho = S.cargo !== 'ADMIN' && S.cargo !== 'ESTOQUISTA' && !S.trocarSenha && !(typeof T !== 'undefined' && T) && caminhoPendente();
   if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirTermo(() => exigirApp(false)), 500); }
   if (fazCaminho) { google.script.run.withSuccessHandler((o) => { ONTEM = o; }).withFailureHandler(() => { ONTEM = { semDados: true }; })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
@@ -1536,7 +1538,7 @@ function prepararFiltros() {
   g.value = f.value; g.classList.toggle('hide', S.lojas.length < 2); $('m-filtro-box').classList.toggle('um', S.lojas.length < 2);
   const gi = $('i-loja'); gi.replaceChildren(...ops.map((l) => new Option(l === 'TODAS' ? 'Todas as lojas' : l, l)));
   gi.value = f.value; gi.classList.toggle('hide', S.lojas.length < 2); $('i-filtro-box').classList.toggle('um', S.lojas.length < 2);
-  $('tab-ini').classList.toggle('hide', !chefe()); $('tab-dia').classList.toggle('hide', chefe()); $('tab-fila').classList.remove('hide'); $('b-rh').classList.toggle('hide', S.cargo === 'ADMIN'); document.body.classList.toggle('adm', S.cargo === 'ADMIN');
+  $('tab-ini').classList.toggle('hide', !chefe()); $('tab-dia').classList.toggle('hide', chefe()); $('tab-fila').classList.toggle('hide', S.cargo === 'ESTOQUISTA'); document.body.classList.toggle('estq', S.cargo === 'ESTOQUISTA'); $('b-rh').classList.toggle('hide', S.cargo === 'ADMIN'); document.body.classList.toggle('adm', S.cargo === 'ADMIN');
   // gerente/admin: os blocos do "Meu dia" ficam no topo do Início
   if (chefe()) { const v = $('v-ini'); v.insertBefore($('dia-blocos'), $('i-cards').nextSibling); } else $('v-dia').insertBefore($('dia-blocos'), $('dia-fila'));
   unirInicio(chefe());
@@ -1550,7 +1552,7 @@ function prepararFiltros() {
 // Para gerente/admin, Início e Metas viram uma aba só (Início): os blocos de Metas entram dentro do Início.
 function unirInicio(on) {
   const ids = ['m-eu', 'm-des-box', 'm-pre-box', 'm-med-box', 'm-lojas-box', 'm-equipe-box', 'm-nota'];
-  $('tab-meta').classList.toggle('hide', on); $('m-tit').classList.toggle('hide', on);
+  $('tab-meta').classList.toggle('hide', on || (S && S.cargo === 'ESTOQUISTA')); $('m-tit').classList.toggle('hide', on);
   $('m-lojas-box').querySelector('h2 span').textContent = on ? 'Vendas online por loja' : 'Lojas';
   if (on) {
     const v = $('v-ini'), det = $('i-det');
@@ -1961,6 +1963,26 @@ function abrirReposicao(desdeUlt, lojaIni) {
       });
     }
     let primeira = !!desdeUlt; const carregar0 = carregar;
+    carregar();
+  });
+}
+// ---------- entradas de mercadoria da semana ----------
+function abrirEntradas(ref) {
+  abrirDet('📦 Entradas da semana', (b) => {
+    const fx = el('div'); fx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:center'; const sl = el('select'), res = el('div'); res.style.marginTop = '10px';
+    let semRef = ref || diaISO(0); const sb = (t, k) => { const x = el('button', 'btn sm', t); x.addEventListener('click', () => { const d = new Date(semRef + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + k * 7); semRef = d.toISOString().slice(0, 10); carregar(); }); return x; };
+    fx.append(sb('‹ semana anterior', -1), sb('próxima ›', 1)); b.append(fx, res);
+    sl.addEventListener('change', carregar);
+    function carregar() { res.replaceChildren(el('div', 'sub', 'Buscando as entradas no USE…')); google.script.run.withSuccessHandler(desenhar).withFailureHandler((e) => res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || 'erro')))).entradasSemana(S.token, sl.value || '', semRef); }
+    function desenhar(r) {
+      res.replaceChildren(); if (r.lojas.length > 1 && !sl.options.length) { r.lojas.forEach((l) => sl.append(new Option(l, l))); fx.prepend(sl); } sl.value = r.loja;
+      const top = el('div', 'motiva'); top.append(el('b', '', r.pecas ? '📦 ' + r.pecas + ' peças · ' + r.modelos.length + ' modelos' : 'Nenhuma mercadoria entrou nesta semana'), el('div', 'sub', r.loja + ' · ' + isoBR(r.de).slice(0, 5) + ' a ' + isoBR(r.ate).slice(0, 5))); res.append(top);
+      if (r.notas.length) { const dn = el('details', 'card'); dn.style.marginTop = '8px'; dn.append(el('summary', '', '🧾 Notas (' + r.notas.length + ')')); r.notas.forEach((n) => dn.append(el('div', 'sm', isoBR(n.data).slice(0, 5) + ' · ' + (n.transf ? '🔁 Transferência ' : '') + n.fornecedor + ' · nº ' + n.documento + ' · ' + n.pecas + ' peças'))); res.append(dn); }
+      r.modelos.forEach((m) => { const c = el('div', 'card'); c.style.cssText = 'margin-top:8px;padding:10px 12px';
+        const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px'; h.append(el('b', '', m.nome), el('b', '', m.pecas + ' pç')); c.append(h, el('div', 'sub', 'Ref. ' + m.ref + (m.preco ? ' · ' + rs(m.preco) : '')));
+        Object.keys(m.cores).forEach((cor) => { const ln = el('div'); ln.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px'; ln.append(el('span', 'sm', cor)); Object.keys(m.cores[cor]).forEach((t) => { const ch = el('span', 'sm', t + ' · ' + m.cores[cor][t]); ch.style.cssText = 'padding:2px 8px;border-radius:10px;background:#efebf5;font-weight:700'; ln.append(ch); }); c.append(ln); });
+        res.append(c); });
+    }
     carregar();
   });
 }
@@ -3840,7 +3862,7 @@ function editarPremio(p) {
 }
 // --- equipe: cadastro e senhas ---
 let EQ = null;
-const cargoTxt = (c) => ({ VENDEDORA: 'Consultora', GERENTE: 'Gerente', ADMIN: 'Administração' })[c] || c;
+const cargoTxt = (c) => ({ VENDEDORA: 'Consultora', GERENTE: 'Gerente', ADMIN: 'Administração', ESTOQUISTA: 'Estoquista' })[c] || c;
 const linkApp = () => (HOSPEDADO ? location.origin + location.pathname : URL_APP || '');
 function desenharEquipe(r) {
   EQ = r; const g = $('g-eq'); g.replaceChildren();
@@ -3890,7 +3912,7 @@ function editarPessoa(p) {
   const us = el('input'); us.value = p.usuario; us.maxLength = 20; us.autocapitalize = 'none'; us.placeholder = 'Ex.: maria'; if (!novo) us.disabled = true;
   if (novo) { nm.addEventListener('input', () => { if (!us.dataset.mexeu) us.value = primeiroNome(nm.value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ''); }); us.addEventListener('input', () => { us.dataset.mexeu = '1'; }); }
   const lj = el('select'); EQ.lojas.forEach((l) => lj.append(new Option(l === 'TODAS' ? 'Todas as lojas' : l, l))); lj.value = EQ.lojas.indexOf(p.loja) >= 0 ? p.loja : EQ.lojas[0];
-  const cg = el('select'); (EQ.podeCargo ? ['VENDEDORA', 'GERENTE', 'ADMIN'] : ['VENDEDORA']).forEach((c) => cg.append(new Option(cargoTxt(c), c))); cg.value = p.cargo; cg.disabled = !EQ.podeCargo;
+  const cg = el('select'); (EQ.podeCargo ? ['VENDEDORA', 'ESTOQUISTA', 'GERENTE', 'ADMIN'] : ['VENDEDORA', 'ESTOQUISTA']).forEach((c) => cg.append(new Option(cargoTxt(c), c))); cg.value = p.cargo || 'VENDEDORA'; cg.disabled = !EQ.podeCargo && p.cargo !== 'VENDEDORA' && p.cargo !== 'ESTOQUISTA' && !novo;
   const at = el('select'); at.append(new Option('Ativa: pode entrar no app', '1'), new Option('Inativa: não entra mais', '0')); at.value = p.ativo ? '1' : '0';
   const ok = el('button', 'btn pri big', novo ? 'Cadastrar' : 'Salvar');
   ok.addEventListener('click', () => { ok.disabled = true; rodar('salvarPessoa', [S.token, { novo: novo, usuario: us.value.trim().toLowerCase(), nome: nm.value, loja: lj.value, cargo: cg.value, ativo: at.value === '1', filtro: $('g-loja').value }], (x) => { desenharEquipe(x); if (x.senha) mostrarSenha(x); else { fechar(); toast('Cadastro salvo ✅'); } }, () => { ok.disabled = false; }); });
@@ -4050,6 +4072,8 @@ $('ds-testar').addEventListener('click', () => { $('ds-res').textContent = 'Test
 $('fc-loja').addEventListener('click', () => fechamento($('g-loja').value, $('fc-data').value));
 $('fc-rede').addEventListener('click', () => fechamento('TODAS', $('fc-data').value));
 $('rp-abrir').addEventListener('click', () => abrirReposicao());
+$('en-abrir').addEventListener('click', () => abrirEntradas(''));
+$('tab-est').addEventListener('click', () => { $('en-card').classList.toggle('hide', !(chefe() || S.cargo === 'ESTOQUISTA')); });
 $('tab-est').addEventListener('click', () => { if (!chefe()) return; const box = $('rp-prog'); if (!box) { const d = el('div'); d.id = 'rp-prog'; $('rp-card').after(d); } const b2 = $('rp-prog'); b2.replaceChildren(); cardReposicao(b2); });
 $('fc-obj').addEventListener('click', () => objetivoDia($('g-loja').value, ONTEM && ONTEM.loja === $('g-loja').value ? ONTEM : null));
 // ---------- vínculo código do USE → pessoa (ADMIN) ----------
@@ -4563,7 +4587,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide'); blocoNotif(o);
 }));
