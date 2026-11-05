@@ -2084,11 +2084,11 @@ function dsSincronizar() {
 }
 // 22h: última atualização do dia (completa, avisa as gerentes que o fechamento está pronto) e, se todas as lojas abertas
 // já estão com o dia importado, posta o status das campeãs (fotos flutuando + card da meta batida)
-function dsFechamentoDia() {
+function dsFechamentoDia(soLojas) {
   const c = dsCfg_(); if (!c.base || !c.key) return 'sem configuração';
   const pr = PropertiesService.getScriptProperties(), log = []; let hoje = '';
   let lojas = []; try { lojas = dsLojas_(); } catch (e) { pr.setProperty('DS_SYNC', agoraBR_() + ' · fechamento: erro ' + e.message); return e.message; }
-  lojas.forEach((ln) => { hoje = dia_(LOJA_COD[ln]); try { const r = dsImportarDia_(ln, hoje, false); pr.setProperty('DS_FECHOU_' + ln, hoje); log.push(r.loja + ' fechado: ' + r.linhas + ' vendedora(s)'); } catch (e) { log.push(LOJA_COD[ln] + ': ' + e.message); } });
+  lojas.forEach((ln) => { if (soLojas && soLojas.indexOf(ln) < 0) return; hoje = dia_(LOJA_COD[ln]); try { const r = dsImportarDia_(ln, hoje, false); pr.setProperty('DS_FECHOU_' + ln, hoje); log.push(r.loja + ' fechado: ' + r.linhas + ' vendedora(s)'); } catch (e) { log.push(LOJA_COD[ln] + ': ' + e.message); } });
   // por enquanto (só a Sumaúma na API) o status sai com as lojas que já têm o dia importado; quando o arquivo das demais
   // lojas for importado, o status é refeito com todas (postarMetaDiaAgora substitui o do mesmo dia)
   if (hoje) try {
@@ -2186,9 +2186,23 @@ function dsEstoque10() {
   if (log.length) pr.setProperty('DS_ESTQ', agoraBR_() + ' · ' + log.join(' · '));
   return log.join('\n');
 }
+// fim do dia: das 22h às 22h20 (hora da loja) busca as vendas de 5 em 5 minutos (venda que passa um pouco das 22h entra);
+// a partir das 22h18 faz o fechamento do dia (aviso à gerente, conferência e status das campeãs), uma vez por loja
+function dsFim5() {
+  const c = dsCfg_(); if (!c.base || !c.key) return 'sem configuração';
+  const pr = PropertiesService.getScriptProperties(), agora = new Date(), log = []; let lojas = []; try { lojas = dsLojas_(); } catch (e) { return e.message; }
+  lojas.forEach((ln) => {
+    const tz = TZ[LOJA_COD[ln]] || 'America/Rio_Branco', hh = +Utilities.formatDate(agora, tz, 'H'), mm = +Utilities.formatDate(agora, tz, 'm'), hoje = dia_(LOJA_COD[ln]);
+    if (pr.getProperty('DS_FECHOU_' + ln) === hoje) return;
+    if (hh === 22 && mm < 18) { try { const r = dsImportarDia_(ln, hoje, true); log.push(LOJA_COD[ln] + ' 22h' + String(mm).padStart(2, '0') + ': ' + r.linhas + ' vendedora(s)'); } catch (e) { log.push(LOJA_COD[ln] + ': ' + e.message); } }
+    else if ((hh === 22 && mm >= 18) || hh === 23) log.push(dsFechamentoDia([ln]));
+  });
+  if (log.length) pr.setProperty('DS_SYNC', agoraBR_() + ' · ' + log.join(' · '));
+  return log.join('\n');
+}
 function dsGatilho_(ligar) {
-  ScriptApp.getProjectTriggers().filter((g) => ['dsSincronizar', 'dsFechamentoDia', 'dsEstoque10'].indexOf(g.getHandlerFunction()) >= 0).forEach((g) => ScriptApp.deleteTrigger(g));
-  if (ligar) { ScriptApp.newTrigger('dsEstoque10').timeBased().everyMinutes(10).create(); ScriptApp.newTrigger('dsSincronizar').timeBased().everyHours(1).create(); ScriptApp.newTrigger('dsFechamentoDia').timeBased().everyDays(1).atHour(22).nearMinute(5).inTimezone('America/Manaus').create(); }
+  ScriptApp.getProjectTriggers().filter((g) => ['dsSincronizar', 'dsFechamentoDia', 'dsEstoque10', 'dsFim5'].indexOf(g.getHandlerFunction()) >= 0).forEach((g) => ScriptApp.deleteTrigger(g));
+  if (ligar) { ScriptApp.newTrigger('dsEstoque10').timeBased().everyMinutes(10).create(); ScriptApp.newTrigger('dsSincronizar').timeBased().everyHours(1).create(); ScriptApp.newTrigger('dsFim5').timeBased().everyMinutes(5).create(); }
 }
 // ADMIN: buscar agora / ligar ou desligar a sincronização automática
 function dsSincronizarAgora(token) { const u = sessao_(token); if (u.cargo !== 'ADMIN') throw new Error('Só a administração.'); dsGatilho_(true); let r = dsSincronizar(); try { dsLojas_().forEach((ln) => { r += '\n' + LOJA_COD[ln] + ' estoque: ' + dsEstoqueSync_(ln) + ' itens'; }); } catch (e) { r += '\nestoque: ' + e.message; } return Object.assign({ log: r }, dsStatus(token)); }
@@ -3503,7 +3517,7 @@ function urlDoApp() { return urlApp_(); }
 
 
 // ---------- API: o mesmo app hospedado fora do Google (GitHub Pages) chama as funções por aqui ----------
-const API_NEGADAS = ['filaSaida', 'bhLembretes', 'bhAutoSaldos', 'dsEstoque10', 'dsFechamentoDia', 'dsSincronizar', 'postarMetaDia', 'rhImportarZapSign_', 'limparStatus', 'zsSincronizar', 'doGet', 'doPost', 'migrarVendasPlanilhas', 'prepararFotos', 'instalarResumo', 'resumoDiario', 'auditoriaMesAnterior', 'criarChaveImport', 'backupDiario', 'autorizarNotificacoes'];
+const API_NEGADAS = ['dsFim5', 'filaSaida', 'bhLembretes', 'bhAutoSaldos', 'dsEstoque10', 'dsFechamentoDia', 'dsSincronizar', 'postarMetaDia', 'rhImportarZapSign_', 'limparStatus', 'zsSincronizar', 'doGet', 'doPost', 'migrarVendasPlanilhas', 'prepararFotos', 'instalarResumo', 'resumoDiario', 'auditoriaMesAnterior', 'criarChaveImport', 'backupDiario', 'autorizarNotificacoes'];
 function api_(b) {
   const fn = String(b.fn || '');
   if (!/^[a-zA-Z]\w*$/.test(fn) || /_$/.test(fn) || API_NEGADAS.indexOf(fn) >= 0 || typeof globalThis[fn] !== 'function') throw new Error('Função não permitida.');
