@@ -445,6 +445,7 @@ body.fila-v #st-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body
 body.fila-v #camp-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } body:has(#st-bolha) #camp-bolha { bottom:calc(82px + env(safe-area-inset-bottom)); } body.fila-v:has(#st-bolha) #camp-bolha { bottom:calc(238px + env(safe-area-inset-bottom)); } body.sheet-on #camp-bolha { display:none; }
 @keyframes campFlut { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } } @keyframes campIn { from { transform:translateY(40px); opacity:0; } to { transform:none; opacity:1; } }
 #es-scan { position:fixed; inset:0; z-index:200; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:20px; } #es-scan .cx { position:relative; width:100%; max-width:520px; } #es-scan video { display:block; width:100%; max-height:58vh; object-fit:contain; border-radius:14px; background:#111; } #es-scan .mira { position:absolute; left:8%; right:8%; top:36%; bottom:36%; border:3px solid #f5c84c; border-radius:12px; pointer-events:none; } #es-scan .tx { color:#fff; text-align:center; font-size:14px; } #es-scan .btn { max-width:320px; width:100%; } #es-scan { gap:10px; overflow:auto; }
+.av-dest .av-big { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin:6px 0 4px; } .av-dest .av-n { font-family:Georgia,serif; font-size:40px; line-height:1; color:#1f1e1d; } .av-dest .av-st { color:#f2b01e; font-size:20px; letter-spacing:2px; } .av-dest .av-st.sm2 { font-size:14px; letter-spacing:1px; } .av-dest .av-sec { margin-top:12px; font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; } .av-lojas { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:6px; margin-top:8px; } .av-lj { background:#fbf6e9; border-radius:12px; padding:8px 10px; } .av-top { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; text-align:center; } .av-p { background:#fbf6e9; border-radius:14px; padding:10px 6px; position:relative; } .av-p .av { margin:0 auto 4px; width:46px; height:46px; box-shadow:0 0 0 2px #fff, 0 0 0 4px #f2b01e; } .av-p .av-md { position:absolute; top:4px; left:6px; font-size:16px; } .av-q { margin-top:8px; padding:10px 12px; background:#f6f2fb; border-left:3px solid #f2b01e; border-radius:10px; font-size:14px; font-style:italic; } .av-q span { display:block; margin-top:4px; font-style:normal; font-size:11px; color:var(--muted); }
 .es-m { margin-top:10px; } .es-h { display:flex; justify-content:space-between; gap:8px; align-items:baseline; } .es-pr { font-weight:700; color:var(--accent); white-space:nowrap; } .es-cor { display:flex; gap:8px; align-items:flex-start; margin-top:8px; } .es-cn { flex:0 0 92px; font-size:12px; color:var(--muted); padding-top:3px; text-transform:capitalize; } .es-tz { display:flex; flex-wrap:wrap; gap:4px; } .es-t { font-size:12px; padding:3px 8px; border-radius:999px; background:#efe9f6; color:#4b3d68; font-weight:600; } .es-t.z { background:#f2f0ec; color:#aaa59c; font-weight:400; }
 #st-bolha .xb { border:0; background:none; color:var(--muted); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
 @keyframes stentra { from { transform:translateY(20px) scale(.8); opacity:0; } to { transform:none; opacity:1; } }
@@ -1707,6 +1708,8 @@ function cardsVendedora(box, u, r) {
   // loja
   const l = (r.lojas || [])[0]; if (l && l.meta) { const kl = nivelCor(l.fechaPct, l.pct), c = card('', '🏬 ' + l.loja, 'ver ›', () => abrirDet(l.loja, (b) => { b.append(cartaoMeta(l, l.loja + ' · loja')); if (l.metaOnline) b.append(cartaoOnline(l, '🛍️ ' + l.loja + ' · online')); b.append(el('div', 'motiva', 'A loja é um time: cada venda sua ajuda todo mundo a chegar lá 💜')); }));
     const lj = el('div', 'lj'), t = el('div'); t.append(el('div', 'nm', rsK(l.vendido)), el('div', 'sm', 'de ' + rsK(l.meta))); lj.append(ring(l.pct, 54, COR[kl]), t); c.append(lj); }
+  // avaliações das clientes (só as dela)
+  cardAvaliacoes(g);
 }
 function carregarMetas() {
   carregarDesafios(); carregarMedalhas();
@@ -1930,12 +1933,37 @@ function desenharCards() {
     const nm = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][(new Date().getMonth() + 11) % 12];
     const c = card('full', '📅 Fechamento de ' + nm, 'abrir ›', () => abrirFechamento(nm)); c.append(el('div', 'sm', 'O resumo do mês que passou: resultado, ranking das lojas, destaques da equipe. Dá para salvar em PDF e apresentar na reunião.')); box.insertBefore(c, box.children[1]);
   }
+  // 7. avaliações das clientes (destaque)
+  cardAvaliacoes(box);
   // 6. equipe
   if (r.equipe && r.equipe.length) {
     const eq = r.equipe.filter((x) => x.meta).sort((a, b) => (b.pct || 0) - (a.pct || 0));
     const c = card(r.multi ? 'meio' : '', '🏅 Equipe', r.precisam.length ? r.precisam.length + ' precisam de você' : '', () => abrirDet('Equipe', (b, mv) => { const cc = el('div', 'card'); cc.append(el('b', '', '% da meta de cada consultora'), el('div', 'sm', 'verde: no ritmo da meta · laranja: perto · vermelho: precisa de ajuda')); cc.append(linhasPct(eq.map((x) => ({ rot: primeiroNome(x.nome) + (r.multi ? ' · ' + x.loja.slice(0, 3) : ''), pct: x.pct, fechaPct: x.fechaPct })))); b.append(cc); const mp = mapaEquipe(r.equipe); if (mp) b.append(mp); ['i-prec-box', 'm-equipe-box'].concat(S.cargo === 'ADMIN' ? [] : ['m-eu']).forEach((id) => { const n = mv(id); if (n) b.append(n); }); }));
     eq.slice(0, 3).forEach((x, i) => { const rr = el('div', 'mini-r'), t = el('div', 'tr'), ii = el('i'); ii.style.width = Math.min(100, (x.pct || 0) * 100) + '%'; ii.style.background = COR[nivelCor(x.fechaPct, x.pct)]; t.append(ii); rr.append(el('div', 'nm', ['🥇', '🥈', '🥉'][i] + ' ' + primeiroNome(x.nome)), t, el('div', 'v', pc(x.pct))); c.append(rr); });
   }
+}
+// ⭐ avaliações das clientes em destaque (cards do Início e de Metas)
+function cardAvaliacoes(box, cls) {
+  const c = el('div', 'dc full av-dest ' + (cls || '')); c.append(el('div', 'sub', '⭐ Carregando avaliações…')); box.append(c);
+  google.script.run.withSuccessHandler((r) => {
+    c.replaceChildren(); if (!r || !r.mes) { c.remove(); return; }
+    const MES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'], nm = MES[(+r.mes.slice(0, 2)) - 1];
+    const t = el('div', 'dt'); t.append(el('span', '', r.tipo === 'eu' ? '⭐ Suas avaliações' : '⭐ Avaliações das clientes'), el('span', '', nm)); c.append(t);
+    const big = (m, n, rot) => { const h = el('div', 'av-big'); h.append(el('div', 'av-n', m == null ? '—' : DEC1.format(m)), el('div', 'av-st', estr(m || 0)), el('div', 'sm', n + (n === 1 ? ' avaliação' : ' avaliações') + (rot ? ' · ' + rot : ''))); return h; };
+    if (r.tipo === 'eu') {
+      if (!r.n) { c.append(el('div', 'sm', 'Nenhuma avaliação sua neste mês ainda. Ao fim do atendimento, convide a cliente a avaliar pelo QR code do balcão — leva 10 segundos 💜')); }
+      else { c.append(big(r.media, r.n, r.cinco + ' com 5 estrelas')); }
+    } else {
+      if (!r.n && !(r.lojas || []).length) { c.append(el('div', 'sm', 'Nenhuma avaliação neste mês ainda. Coloque o QR code no balcão (Relatórios › Avaliações).')); }
+      else {
+        c.append(big(r.media, r.n, 'atendimento'));
+        if ((r.lojas || []).length > 1 || ((r.lojas || [])[0] && r.lojas[0].nLoja)) { const g = el('div', 'av-lojas'); r.lojas.slice().sort((a, b) => (b.media || 0) - (a.media || 0)).forEach((l) => { const d = el('div', 'av-lj'); d.append(el('b', '', l.loja), el('div', 'av-st sm2', l.media != null ? estr(l.media) + ' ' + DEC1.format(l.media) : '—'), el('div', 'sm', l.n + ' aval.' + (l.nLoja ? ' · loja ' + DEC1.format(l.mediaLoja) + ' ★' : ''))); g.append(d); }); c.append(g); }
+        if ((r.destaques || []).length) { c.append(el('div', 'av-sec', '🌟 Destaques do mês')); const g = el('div', 'av-top'); r.destaques.forEach((p, i) => { const d = el('div', 'av-p'); const a = avatar(p.foto, p.nome); d.append(el('div', 'av-md', ['🥇', '🥈', '🥉'][i]), a, el('b', '', p.nome), el('div', 'av-st sm2', estr(p.media)), el('div', 'sm', DEC1.format(p.media) + ' · ' + p.n + ' aval.' + (S.lojas.length > 1 ? ' · ' + p.loja : ''))); g.append(d); }); c.append(g); }
+      }
+    }
+    if ((r.elogios || []).length) { c.append(el('div', 'av-sec', '💬 O que as clientes disseram')); r.elogios.forEach((e) => { const q = el('div', 'av-q', '“' + e.texto + '”'); q.append(el('span', '', (e.nota ? estr(e.nota) + ' · ' : '') + (r.tipo === 'eu' ? '' : (e.nome ? e.nome + ' · ' : '') + (S.lojas.length > 1 ? e.loja + ' · ' : '')) + e.quando)); c.append(q); }); }
+    if (r.tipo !== 'eu') { c.style.cursor = 'pointer'; c.addEventListener('click', () => { mudarAba('rel'); setTimeout(() => { const b = $('r-av-box'); if (b) b.scrollIntoView({ behavior: 'smooth' }); }, 900); }); }
+  }).withFailureHandler(() => c.remove()).avaliacoesResumo(S.token);
 }
 // mapa da equipe: conversão na fila (→) × ticket médio (↑); linhas = média do grupo
 function mapaEquipe(lista) {
