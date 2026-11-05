@@ -29,6 +29,7 @@ button, .btn, .tab, .ck-it, .chip { touch-action:manipulation; -webkit-tap-highl
 .btn:active, .tab:active, .ck-it:active { transform:scale(.96); filter:brightness(.94); }
 .btn { transition:transform .08s ease; border:1px solid var(--line); background:var(--panel); color:var(--fg); border-radius:10px; padding:10px 14px; font:inherit; font-weight:500; cursor:pointer; }
 .btn.sm { padding:6px 10px; font-size:13px; }
+.btn.rp-ok { background:#1e7a46; border-color:#1e7a46; color:#fff; font-weight:800; font-size:16px; padding:10px 18px; flex:1; } .btn.rp-no { font-size:15px; padding:10px 14px; color:#c0392b; border-color:#e7b3ac; } .btn.rp-ok:active, .btn.rp-no:active { transform:scale(.97); }
 .btn.pri { background:var(--accent); border-color:var(--accent); color:#fff; }
 .btn.ok { background:var(--ok); border-color:var(--ok); color:#fff; }
 .btn.bad { background:var(--bad); border-color:var(--bad); color:#fff; }
@@ -1903,40 +1904,58 @@ function abrirReposicao(desdeUlt) {
     const res = el('div'); res.style.marginTop = '10px'; b.append(fx, ch, res);
     [sl, dt, de, ate].forEach((x) => x.addEventListener('change', carregar));
     function args() { return [S.token, sl.value, dt.value, de.value || '', ate.value || '']; }
-    function marcar(chaves, st) { google.script.run.withSuccessHandler((r) => { RP = r; desenhar(); }).withFailureHandler((e) => toast((e && e.message) || 'erro')).reposicaoMarcar(S.token, sl.value, dt.value, chaves, st, de.value || '', ate.value || ''); }
+    // marca na hora na tela (sem esperar o servidor); se der erro, volta como estava
+    function marcar(chaves, st) {
+      const nome = primeiroNome(S.nome || ''), ant = RP.lista.map((x) => [x.status, x.por, x.feito, x.sem]), set = new Set(chaves);
+      RP.lista.forEach((x) => { if (x.linhas.some((k) => set.has(k))) { x.status = st; x.por = st ? nome : ''; x.feito = st === 'FEITO' ? x.qtd : 0; x.sem = st === 'SEM' ? x.qtd : 0; } });
+      RP.pendentes = RP.lista.filter((x) => !x.status).reduce((a, x) => a + x.qtd, 0); if (st === 'FEITO') RP.ultima = { quando: dt.value + ' ' + new Date().toTimeString().slice(0, 5), nome: nome };
+      try { navigator.vibrate && navigator.vibrate(30); } catch (e) {} desenhar();
+      google.script.run.withSuccessHandler(() => {}).withFailureHandler((e) => { RP.lista.forEach((x, i) => { [x.status, x.por, x.feito, x.sem] = ant[i]; }); RP.pendentes = RP.lista.filter((x) => !x.status).reduce((a, x) => a + x.qtd, 0); desenhar(); toast('Não salvou: ' + ((e && e.message) || 'erro') + '. Tente de novo.'); }).reposicaoMarcar(S.token, sl.value, dt.value, chaves, st, de.value || '', ate.value || '', true);
+    }
     function carregar() { res.replaceChildren(el('div', 'sub', 'Buscando as vendas no USE…')); google.script.run.withSuccessHandler((r) => { RP = r; desenhar(); }).withFailureHandler((e) => res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || 'erro')))).reposicao.apply(null, args()); }
     function desenhar() {
       const r = RP; res.replaceChildren(); if (!r) return;
       if (primeira && r.ultima && !de.value) { primeira = false; de.value = r.ultima.quando.slice(11, 16); carregar(); return; } primeira = false;
       if (r.semApi) { res.append(el('div', 'aviso-meta', 'A reposição pelo app funciona nas lojas ligadas à API do USE' + (r.lojasApi && r.lojasApi.length ? ' (hoje: ' + r.lojasApi.join(', ') + ')' : '') + '. Nas outras, continue pelo relatório de Reabastecimento do USE.')); return; }
       const top = el('div', 'motiva'); top.append(el('b', '', r.pendentes ? '🔄 ' + r.pendentes + (r.pendentes === 1 ? ' peça para repor' : ' peças para repor') : (r.total ? '✅ Tudo reposto!' : 'Nenhuma venda nesse horário.')));
-      top.append(el('div', 'sub', (r.de !== '00:00' || r.ate !== '23:59' ? 'Vendas das ' + r.de + ' às ' + (r.ate === '23:59' ? r.agora : r.ate) + ' · ' : '') + r.total + ' peça(s) vendida(s)' + (r.ultima ? ' · última reposição às ' + r.ultima.quando.slice(11, 16) + ' (' + r.ultima.nome + ')' : '')));
+      top.append(el('div', 'sub', (r.de !== '00:00' || r.ate !== '23:59' ? 'Vendas das ' + r.de + ' às ' + (r.ate === '23:59' ? r.agora : r.ate) + ' · ' : '') + r.total + ' peça(s) para repor' + (r.semEstoque ? ' · ' + r.semEstoque + ' vendida(s) sem estoque para repor (não aparecem)' : '') + (r.ultima ? ' · última reposição às ' + r.ultima.quando.slice(11, 16) + ' (' + r.ultima.nome + ')' : '')));
       res.append(top);
       if (r.chefe) {
-        const dz = el('details', 'card'); dz.style.marginTop = '8px'; dz.append(el('summary', '', '👤 Quem repõe: ' + (r.cfg.nome ? r.cfg.nome + (r.cfg.horas.length ? ' · ' + r.cfg.horas.join(', ') : '') : 'ninguém designado')));
-        const ps = el('select'); ps.append(new Option('— ninguém —', '')); r.equipe.forEach((x) => ps.append(new Option(x.nome, x.usuario))); ps.value = r.cfg.usuario || '';
-        const hs = el('input'); hs.placeholder = 'horários, ex.: 14:00, 18:00, 21:30'; hs.value = (r.cfg.horas || []).join(', ');
-        const sv = el('button', 'btn pri', 'Salvar'), ag = el('button', 'btn', '📤 Mandar a lista agora');
-        const go = (agora) => { const hh = (hs.value.match(/\d{1,2}[:h]\d{2}|\b\d{1,2}\b/g) || []).map((t) => { const m = t.replace('h', ':').split(':'); return String(+m[0]).padStart(2, '0') + ':' + (m[1] || '00').padStart(2, '0'); });
-          if (agora && !ps.value) { toast('Escolha quem vai repor.'); return; }
-          google.script.run.withSuccessHandler((x) => { RP.cfg = { usuario: x.cfg.usuario, nome: ps.value ? ps.options[ps.selectedIndex].text : '', horas: x.cfg.horas }; toast(x.enviado ? 'Lista enviada para ' + RP.cfg.nome + ' (' + x.enviado.pendentes + ' peças) ✅' : 'Salvo ✅'); desenhar(); }).withFailureHandler((e) => toast((e && e.message) || 'erro')).reposicaoDesignar(S.token, sl.value, ps.value, hh, agora); };
-        sv.addEventListener('click', () => go(false)); ag.addEventListener('click', () => go(true));
-        const bx = el('div'); bx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px'; bx.append(sv, ag);
-        const lab2 = (t, i) => { const l = el('label', 'sub', t); l.style.cssText = 'display:block;margin-top:8px'; l.append(i); return l; };
-        dz.append(lab2('Responsável pela reposição', ps), lab2('Horários (ela recebe a lista sozinha nesses horários)', hs), bx, el('div', 'sub', 'No horário marcado, ela recebe um aviso no celular com o que vendeu desde a última reposição. "Mandar agora" envia na hora.'));
+        const DN = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'], sl0 = (r.cfg && r.cfg.slots) || [];
+        const dz = el('details', 'card'); dz.style.marginTop = '8px'; dz.open = !sl0.length;
+        dz.append(el('summary', '', '👤 Escala fixa da reposição' + (sl0.length ? ' · ' + sl0.length + (sl0.length === 1 ? ' horário' : ' horários') : ' · ninguém designado')));
+        const lst = el('div'); let rows = sl0.map((x) => ({ dias: x.dias.slice(), hora: x.hora, usuario: x.usuario }));
+        const pessoaSel = (v) => { const ps = el('select'); ps.append(new Option('— escolha —', '')); r.equipe.forEach((x) => ps.append(new Option(x.nome, x.usuario))); ps.value = v || ''; return ps; };
+        const montarLst = () => { lst.replaceChildren(); rows.forEach((x, i) => {
+          const c2 = el('div'); c2.style.cssText = 'border:1px solid var(--line);border-radius:12px;padding:8px;margin-top:8px';
+          const top2 = el('div'); top2.style.cssText = 'display:flex;gap:6px;align-items:center'; const hr = el('input'); hr.type = 'time'; hr.value = x.hora; hr.style.cssText = 'width:110px;flex:none'; hr.addEventListener('change', () => { x.hora = hr.value; });
+          const ps = pessoaSel(x.usuario); ps.style.flex = '1'; ps.addEventListener('change', () => { x.usuario = ps.value; }); const del = el('button', 'xb', '×'); del.title = 'Tirar'; del.addEventListener('click', () => { rows.splice(i, 1); montarLst(); });
+          top2.append(hr, ps, del); const ds = el('div'); ds.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;margin-top:6px';
+          DN.forEach((n, k) => { const b2 = el('button', 'btn sm' + (x.dias.indexOf(k) >= 0 ? ' pri' : ''), n); b2.addEventListener('click', () => { const j = x.dias.indexOf(k); if (j >= 0) x.dias.splice(j, 1); else x.dias.push(k); b2.classList.toggle('pri', j < 0); }); ds.append(b2); });
+          c2.append(top2, ds); lst.append(c2); }); };
+        montarLst();
+        const add = el('button', 'btn sm', '+ Adicionar horário'); add.style.marginTop = '8px'; add.addEventListener('click', () => { rows.push({ dias: [1, 2, 3, 4, 5, 6], hora: '14:00', usuario: '' }); montarLst(); });
+        const sv = el('button', 'btn pri', 'Salvar escala'); sv.addEventListener('click', () => {
+          if (rows.some((x) => !x.usuario || !x.hora || !x.dias.length)) { toast('Em cada horário, escolha a funcionária, a hora e pelo menos um dia.'); return; }
+          sv.disabled = true; google.script.run.withSuccessHandler((x) => { sv.disabled = false; RP.cfg = x.cfg; toast('Escala da reposição salva ✅'); desenhar(); }).withFailureHandler((e) => { sv.disabled = false; toast((e && e.message) || 'erro'); }).reposicaoDesignar(S.token, sl.value, rows, ''); });
+        const ag = pessoaSel(''), agb = el('button', 'btn', '📤 Mandar a lista agora'); ag.style.cssText = 'flex:1;min-width:120px';
+        agb.addEventListener('click', () => { if (!ag.value) { toast('Escolha para quem mandar.'); return; } agb.disabled = true; google.script.run.withSuccessHandler((x) => { agb.disabled = false; toast(x.enviado ? 'Lista enviada para ' + x.enviado.nome + ' (' + x.enviado.pendentes + ' peças) ✅' : 'Enviado'); }).withFailureHandler((e) => { agb.disabled = false; toast((e && e.message) || 'erro'); }).reposicaoDesignar(S.token, sl.value, null, ag.value); });
+        const bx = el('div'); bx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center'; bx.append(sv);
+        const bx2 = el('div'); bx2.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;align-items:center;border-top:1px solid var(--line);padding-top:10px'; bx2.append(ag, agb);
+        dz.append(el('div', 'sub', 'Cada horário tem os dias da semana e quem repõe. Nesses dias e horários ela recebe sozinha, no celular, a lista do que vendeu desde a última reposição. Se ela estiver de folga, a lista vai para você.'), lst, add, bx, bx2);
         res.append(dz);
       }
       const pend = r.lista.filter((x) => !x.status);
       if (pend.length > 1) { const all = el('button', 'btn pri', '✓ Marcar todas como repostas (' + r.pendentes + ')'); all.style.marginTop = '8px'; all.addEventListener('click', () => { if (confirm('Marcar as ' + r.pendentes + ' peças como repostas?')) marcar([].concat(...pend.map((x) => x.linhas)), 'FEITO'); }); res.append(all); }
       r.lista.forEach((x) => {
-        const c = el('div', 'card'); c.style.cssText = 'margin-top:8px;padding:10px 12px;' + (x.status === 'FEITO' ? 'opacity:.55;' : x.status === 'SEM' ? 'border-left:4px solid #c0392b;' : '');
+        const c = el('div', 'card'); c.style.cssText = 'margin-top:8px;padding:10px 12px;' + (x.status === 'FEITO' ? 'background:#eef7f0;border-left:4px solid #1e7a46;' : x.status === 'SEM' ? 'border-left:4px solid #c0392b;' : '');
         const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:flex-start';
         const info = el('div'); info.append(el('b', '', x.nome), el('div', 'sub', (x.cor ? x.cor.split('-')[0] : '') + ' · tam ' + x.tam + ' · ref ' + x.ref), el('div', 'sub', '🕘 vendida às ' + x.horas.join(', ')));
         const q = el('div'); q.style.cssText = 'text-align:right;white-space:nowrap'; q.append(el('div', 'big', '×' + x.qtd)); q.append(el('div', 'sub', x.saldo == null ? 'estoque —' : x.saldo > 0 ? 'estoque ' + x.saldo : '⚠️ estoque 0'));
         h.append(info, q); c.append(h);
         const ops = el('div'); ops.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap';
-        if (x.status) { ops.append(el('span', 'sub', (x.status === 'FEITO' ? '✓ Reposta' : '✗ Sem peça no estoque') + (x.por ? ' · ' + x.por : ''))); const u2 = el('button', 'btn sm', 'Desfazer'); u2.addEventListener('click', () => marcar(x.linhas, '')); ops.append(u2); }
-        else { const ok = el('button', 'btn sm pri', '✓ Reposta'), no = el('button', 'btn sm', '✗ Sem peça'); ok.addEventListener('click', () => marcar(x.linhas, 'FEITO')); no.addEventListener('click', () => marcar(x.linhas, 'SEM')); ops.append(ok, no); }
+        if (x.status) { const tg = el('b', '', (x.status === 'FEITO' ? '✅ Reposta' : '❌ Sem peça no estoque') + (x.por ? ' · ' + x.por : '')); tg.style.cssText = 'align-self:center;color:' + (x.status === 'FEITO' ? '#1e7a46' : '#c0392b'); ops.append(tg); const u2 = el('button', 'btn sm', 'Desfazer'); u2.addEventListener('click', () => marcar(x.linhas, '')); ops.append(u2); }
+        else { const ok = el('button', 'btn rp-ok', '✓ Reposta'), no = el('button', 'btn rp-no', '✗ Sem peça'); ok.addEventListener('click', () => marcar(x.linhas, 'FEITO')); no.addEventListener('click', () => marcar(x.linhas, 'SEM')); ops.append(ok, no); }
         c.append(ops); res.append(c);
       });
     }
