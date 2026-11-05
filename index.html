@@ -584,6 +584,18 @@ html, body { overflow-x:hidden; }
 
 .ck-cf { display:inline-block; width:100%; margin-top:3px; font-size:12px; font-weight:600; text-decoration:none; } .ck-cf.ok { color:var(--ok); } .ck-cf.bad { color:var(--bad); } .ck-cf.esp { color:var(--warn); }
 .ck-cfb { display:inline-flex; width:100%; gap:6px; margin-top:6px; } .ck-cfb .btn { flex:1; white-space:nowrap; text-decoration:none; }
+
+.ct-f { display:flex; flex-direction:column; gap:10px; } .ct-f .campo { display:flex; flex-direction:column; gap:3px; }
+.ct-f input, .ct-f select { font:inherit; font-size:15px; padding:10px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--fg); width:100%; box-sizing:border-box; }
+.ct-sigs { display:flex; flex-direction:column; gap:10px; }
+.ct-s { display:flex; flex-direction:column; gap:6px; border:1px solid var(--line); border-left:5px solid; border-radius:12px; padding:10px; }
+.ct-sh { display:flex; justify-content:space-between; align-items:center; } .ct-chk { font-size:14px; display:flex; align-items:center; gap:6px; }
+.ct-chips { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; } .ct-chip { border:2px solid; border-radius:20px; padding:6px 12px; background:var(--panel); font:inherit; font-size:13px; font-weight:600; cursor:pointer; } .ct-chip.on { color:#fff; }
+.ct-pv { display:flex; flex-direction:column; gap:12px; margin:10px 0 14px; }
+.ct-pg { position:relative; box-shadow:0 2px 10px rgba(0,0,0,.15); background:#fff; } .ct-ov { position:absolute; inset:0; cursor:crosshair; }
+.ct-bx { position:absolute; border:2px dashed; border-radius:6px; background:rgba(255,255,255,.75); font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; box-sizing:border-box; }
+.ct-pn { position:absolute; right:6px; top:6px; font-size:11px; background:rgba(0,0,0,.55); color:#fff; padding:2px 6px; border-radius:6px; }
+.ct-l { display:flex; flex-wrap:wrap; gap:8px; align-items:center; } .ct-l b { flex:1 1 100%; }
 </style>
 </head>
 <body>
@@ -1855,6 +1867,112 @@ function abrirCashback() {
     bt.addEventListener('click', buscar); inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') buscar(); });
   });
 }
+// ---------- contrato para assinar pela ZapSign: selfie + assinaturas nos campos ----------
+const CT_COR = ['#5b4a7a', '#1e7a46', '#b0578d', '#2f6f9f', '#a85d00', '#7a4a6a'];
+function ctLib(src) { return new Promise((ok, no) => { if (document.querySelector('script[src="' + src + '"]')) return ok(); const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('Não consegui carregar o leitor de PDF.')); document.head.append(s); }); }
+function abrirContrato(rh) {
+  abrirDet('✍️ Contrato para assinar', (b) => {
+    const C = { b64: '', nome: '', pdf: null, pags: [], sig: [], pos: [], ativo: 0 };
+    const f = el('div', 'card ct-f'), lin = (rot, c) => { const w = el('label', 'campo'); w.append(el('div', 'sub', rot), c); return w; };
+    const conta = el('select'); (rh.zs || []).filter((z) => z.ok).forEach((z) => conta.append(new Option(z.loja + (z.loja === 'Cerâmica' ? ' (AMORATA LTDA)' : ''), z.loja)));
+    if (!conta.options.length) { f.append(el('div', 'card', 'Nenhuma conta ZapSign conectada. Conecte em RH › ZapSign.')); b.append(f); return; }
+    const tp = el('select'); ['Contrato', 'Outro'].forEach((t) => tp.append(new Option(t, t)));
+    const nm = el('input'); nm.placeholder = 'Nome do documento (ex.: Contrato de trabalho - Maria Silva)';
+    const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf';
+    f.append(lin('Conta ZapSign (empresa)', conta), lin('Tipo', tp), lin('Arquivo PDF', fi), lin('Nome do documento', nm));
+    const sgBox = el('div', 'ct-sigs'), addT = el('button', 'btn sm', '+ Testemunha');
+    f.append(el('b', '', 'Quem assina'), sgBox, addT);
+    const pvT = el('div', 'sub', ''), chips = el('div', 'ct-chips'), auto = el('button', 'btn sm', '🔍 Posicionar automático'), pv = el('div', 'ct-pv');
+    const env = el('button', 'btn pri big', 'Enviar para assinatura'), res = el('div');
+    b.append(f, el('h3', '', 'Onde cada um assina'), pvT, chips, auto, pv, env, res);
+    // signatários
+    const novo = (papel, selfie, d) => ({ papel: papel, nome: (d && d.nome) || '', email: (d && d.email) || '', cpf: (d && d.cpf) || '', selfie: selfie, usuario: (d && d.usuario) || '' });
+    C.sig = [novo('Funcionária', true), novo('Empresa', false)];
+    google.script.run.withSuccessHandler((d) => { const e = C.sig.find((x) => x.papel === 'Empresa'); if (e && !e.nome) { Object.assign(e, d); desenharSig(); } }).zsSignatarioEmpresa(S.token, conta.value);
+    conta.addEventListener('change', () => google.script.run.withSuccessHandler((d) => { const e = C.sig.find((x) => x.papel === 'Empresa'); if (e) { Object.assign(e, d); desenharSig(); } }).zsSignatarioEmpresa(S.token, conta.value));
+    function desenharSig() {
+      sgBox.replaceChildren();
+      C.sig.forEach((x, i) => {
+        const k = el('div', 'ct-s'); k.style.borderLeftColor = CT_COR[i % CT_COR.length];
+        const h = el('div', 'ct-sh'); h.append(el('b', '', x.papel)); if (i > 1 || x.papel !== 'Funcionária') { const rm = el('button', 'btn sm', 'Tirar'); rm.addEventListener('click', () => { C.sig.splice(i, 1); C.pos = C.pos.filter((p) => p.s !== i).map((p) => Object.assign(p, { s: p.s > i ? p.s - 1 : p.s })); desenharSig(); desenharPos(); }); h.append(rm); } k.append(h);
+        if (x.papel === 'Funcionária') { const ps = el('select'); ps.append(new Option('Nova contratação (ainda não está no app)', '')); (rh.pessoas || []).forEach((p) => ps.append(new Option(p.nome + ' · ' + (p.loja || ''), p.usuario))); ps.value = x.usuario || '';
+          ps.addEventListener('change', () => { x.usuario = ps.value; const p = (rh.pessoas || []).find((z) => z.usuario === ps.value); if (p) { x.nome = p.nomeCompleto || p.nome; x.email = p.email || x.email; x.cpf = p.cpf || x.cpf; } desenharSig(); }); k.append(ps); }
+        [['nome', 'Nome completo'], ['email', 'E-mail'], ['cpf', 'CPF']].forEach(([c, ph]) => { const inp = el('input'); inp.placeholder = ph; inp.value = x[c]; if (c === 'email') inp.type = 'email'; if (c === 'cpf') inp.inputMode = 'numeric'; inp.addEventListener('input', () => { x[c] = inp.value; }); k.append(inp); });
+        const sl = el('label', 'ct-chk'), cb = el('input'); cb.type = 'checkbox'; cb.checked = !!x.selfie; cb.addEventListener('change', () => { x.selfie = cb.checked; }); sl.append(cb, document.createTextNode(' pedir selfie na assinatura')); k.append(sl);
+        sgBox.append(k);
+      });
+      desenharChips();
+    }
+    addT.addEventListener('click', () => { const n = C.sig.filter((x) => /^Testemunha/.test(x.papel)).length; if (n >= 2) { toast('No máximo 2 testemunhas.'); return; } C.sig.push(novo('Testemunha ' + (n + 1), true)); desenharSig(); });
+    function desenharChips() {
+      chips.replaceChildren(); C.sig.forEach((x, i) => { const c = el('button', 'ct-chip' + (C.ativo === i ? ' on' : ''), (x.nome ? x.nome.split(' ')[0] : x.papel) + ' · ' + C.pos.filter((p) => p.s === i).length); c.style.borderColor = CT_COR[i % CT_COR.length]; if (C.ativo === i) c.style.background = CT_COR[i % CT_COR.length]; c.addEventListener('click', () => { C.ativo = i; desenharChips(); }); chips.append(c); });
+      pvT.textContent = C.pags.length ? 'Toque no nome de quem vai assinar e depois toque no documento onde fica a assinatura. Toque num quadro para tirar.' : 'Escolha o PDF para ver o documento.';
+    }
+    // PDF
+    fi.addEventListener('change', async () => {
+      const file = fi.files[0]; if (!file) return; if (file.size > 10 * 1024 * 1024) { toast('PDF maior que 10 MB.'); return; }
+      if (!nm.value) nm.value = file.name.replace(/\.pdf$/i, '');
+      pv.replaceChildren(el('div', 'sub', 'Abrindo o PDF…'));
+      try {
+        const buf = await file.arrayBuffer(); C.b64 = await new Promise((ok) => { const rd = new FileReader(); rd.onload = () => ok(rd.result); rd.readAsDataURL(file); });
+        await ctLib('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'); window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        C.pdf = await window.pdfjsLib.getDocument({ data: buf }).promise; C.pags = [];
+        pv.replaceChildren();
+        for (let n = 1; n <= C.pdf.numPages; n++) {
+          const pg = await C.pdf.getPage(n), vp0 = pg.getViewport({ scale: 1 }), larg = Math.min(640, (pv.clientWidth || 340)), vp = pg.getViewport({ scale: larg / vp0.width * 2 });
+          const wrap = el('div', 'ct-pg'), cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height; cv.style.width = '100%';
+          await pg.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+          const ov = el('div', 'ct-ov'); wrap.append(cv, ov, el('div', 'ct-pn', 'página ' + n + ' de ' + C.pdf.numPages)); pv.append(wrap);
+          const tc = await pg.getTextContent(); C.pags.push({ ov: ov, W: vp0.width, H: vp0.height, itens: tc.items.map((t) => ({ s: String(t.str || ''), x: t.transform[4], y: t.transform[5], w: t.width || 0, h: Math.abs(t.transform[3]) || 10 })) });
+          const idx = n - 1; ov.addEventListener('click', (ev) => { if (ev.target !== ov) return; const r = ov.getBoundingClientRect(), lx = (ev.clientX - r.left) / r.width * 100, by = 100 - (ev.clientY - r.top) / r.height * 100;
+            C.pos.push({ s: C.ativo, page: idx, left: Math.max(0, Math.min(100 - 19.55, lx - 9.77)), bottom: Math.max(0, Math.min(100 - 9.42, by - 4.71)), w: 19.55, h: 9.42 }); desenharPos(); });
+        }
+        autoPos(); 
+      } catch (e) { pv.replaceChildren(el('div', 'card', (e && e.message) || 'Não consegui abrir o PDF.')); }
+    });
+    function autoPos() {
+      if (!C.pags.length) return;
+      const reg = { 'Funcionária': /^(\(?A\)?\s*)?(EMPREGAD[OA](\(A\))?|CONTRATAD[OA](\(A\))?|FUNCION[ÁA]RI[OA]|COLABORADOR(A)?|TRABALHADOR(A)?)\b/i, 'Empresa': /^(EMPREGADOR(A)?|CONTRATANTE|EMPRESA|AMORATA|S\.?\s*LOBEU|T\s*A\s*T|REPRESENTANTE)/i, 'Testemunha': /^TESTEMUNHA/i };
+      const ach = { 'Funcionária': [], 'Empresa': [], 'Testemunha': [] };
+      C.pags.forEach((p, pi) => {
+        const und = p.itens.filter((t) => /_{6,}/.test(t.s));
+        p.itens.forEach((t) => { const tx = t.s.trim(); if (!tx || tx.length > 60 || /:\s*$/.test(tx)) return;
+          Object.keys(reg).forEach((k) => { if (!reg[k].test(tx)) return; if (k === 'Funcionária' && /EMPREGADOR|CONTRATANTE/i.test(tx)) return;
+            const cx = t.x + t.w / 2, l = und.filter((u2) => u2.y > t.y && u2.y - t.y < 45 && cx >= u2.x - 20 && cx <= u2.x + u2.w + 20).sort((a, b2) => a.y - b2.y)[0];
+            ach[k].push({ page: pi, cx: cx / p.W * 100, baseY: ((l ? l.y : t.y + t.h) + 2) / p.H * 100, temLinha: !!l, y: t.y }); }); });
+      });
+      // se houver rótulos com linha de assinatura, usa só esses (evita pegar a qualificação no começo do contrato)
+      Object.keys(ach).forEach((k) => { if (ach[k].some((a) => a.temLinha)) ach[k] = ach[k].filter((a) => a.temLinha); else { const ult = Math.max(-1, ...ach[k].map((a) => a.page)); ach[k] = ach[k].filter((a) => a.page === ult); } });
+      C.pos = []; const box = (s, a) => ({ s: s, page: a.page, left: Math.max(0, Math.min(100 - 19.55, a.cx - 9.77)), bottom: Math.max(0, Math.min(100 - 9.42, a.baseY)), w: 19.55, h: 9.42 });
+      C.sig.forEach((x, i) => { if (/^Testemunha/.test(x.papel)) { const n = Number(x.papel.slice(-1)) - 1; const porPag = {}; ach.Testemunha.sort((a, b2) => a.page - b2.page || b2.y - a.y || a.cx - b2.cx).forEach((a) => { (porPag[a.page] = porPag[a.page] || []).push(a); }); Object.keys(porPag).forEach((pg) => { const a = porPag[pg][n]; if (a) C.pos.push(box(i, a)); }); }
+        else (ach[x.papel] || []).forEach((a) => C.pos.push(box(i, a))); });
+      desenharPos();
+      const falta = C.sig.filter((x, i) => !C.pos.some((p) => p.s === i)).map((x) => x.papel);
+      if (falta.length) toast('Não achei no documento o campo de: ' + falta.join(', ') + '. Toque no nome e depois no lugar da assinatura.');
+    }
+    auto.addEventListener('click', autoPos);
+    function desenharPos() {
+      C.pags.forEach((p) => p.ov.replaceChildren());
+      C.pos.forEach((q, k) => { const p = C.pags[q.page]; if (!p) return; const x = C.sig[q.s], d = el('div', 'ct-bx', x ? (x.nome ? x.nome.split(' ')[0] : x.papel) : '?');
+        d.style.cssText = 'left:' + q.left + '%;bottom:' + q.bottom + '%;width:' + q.w + '%;height:' + q.h + '%;border-color:' + CT_COR[q.s % CT_COR.length] + ';color:' + CT_COR[q.s % CT_COR.length];
+        d.addEventListener('click', (ev) => { ev.stopPropagation(); C.pos.splice(k, 1); desenharPos(); }); p.ov.append(d); });
+      desenharChips();
+    }
+    desenharSig();
+    env.addEventListener('click', () => {
+      if (!C.b64) { toast('Escolha o PDF.'); return; }
+      const resumo = C.sig.map((x) => '• ' + x.papel + ': ' + x.nome + ' (' + x.email + ')' + (x.selfie ? ' — com selfie' : '') + ' — ' + C.pos.filter((p) => p.s === C.sig.indexOf(x)).length + ' assinatura(s)').join('\n');
+      if (!confirm('Enviar "' + (nm.value || 'documento') + '" pela ZapSign da ' + conta.value + '?\n\n' + resumo + '\n\nCada pessoa recebe o link por e-mail.')) return;
+      env.disabled = true; env.textContent = 'Enviando…';
+      google.script.run.withSuccessHandler((r) => {
+        env.textContent = 'Enviado ✅'; const e = C.sig.find((x) => x.papel === 'Empresa'); if (e) google.script.run.zsSalvarEmpresa(S.token, conta.value, e);
+        res.replaceChildren(el('div', 'card', r.posicionado ? '✅ Enviado. As assinaturas ficaram nos campos marcados.' : '⚠️ Enviado, mas a ZapSign não aceitou o posicionamento (' + r.posErro + '). Ajuste os campos na ZapSign.'));
+        r.links.forEach((l) => { const k = el('div', 'card ct-l'); k.append(el('b', '', l.papel + ': ' + l.nome)); if (l.link) { const cp = el('button', 'btn sm', 'Copiar link'), wa = el('a', 'btn sm', 'Mandar no WhatsApp'); cp.addEventListener('click', () => { try { navigator.clipboard.writeText(l.link); toast('Link copiado'); } catch (x) {} }); wa.href = 'https://wa.me/?text=' + encodeURIComponent('Olá! Segue o documento para assinar: ' + l.link); wa.target = '_blank'; k.append(cp, wa); } res.append(k); });
+      }).withFailureHandler((e) => { env.disabled = false; env.textContent = 'Enviar para assinatura'; toast(amigavel((e && e.message) || String(e))); })
+        .zsContratoEnviar(S.token, conta.value, C.b64, nm.value, C.sig.map((x) => ({ papel: x.papel, nome: x.nome, email: x.email, cpf: x.cpf, selfie: x.selfie, usuario: x.usuario })), C.pos, tp.value);
+    });
+  });
+}
 // ---------- menu em botões (tela inicial) e barra de atalhos ----------
 // gerente/admin: "Meus resultados" abre os cards do Início (fora dele, o Início mostra só o menu)
 function verResultados() { mudarAba('ini'); document.body.classList.add('ini-res'); try { window.scrollTo(0, 0); } catch (e) {} }
@@ -2239,7 +2357,7 @@ function ring(pct, size, cor, txt) {
   s.append(a); w.append(s, el('b', '', txt != null ? txt : pc(pct))); w.style.width = size + 'px'; w.style.height = size + 'px'; if (size < 70) w.lastChild.style.fontSize = '12px'; return w;
 }
 function barrasDia(dias, vals, metaDia, alt, comRotulo) {
-  const n = vals.length; if (!n) return el('div', 'sm', 'O gráfico usa o relatório de vendas do USE, que ainda não foi importado para este período.');
+  const n = vals.length; if (!n) return el('div', 'sm', 'Sem vendas importadas no período.');
   const W = Math.max(280, n * (comRotulo ? 18 : 9)), H = alt || 60, top = Math.max(1, ...vals, metaDia || 0) * 1.08, bw = W / n, s = sv('svg', { width: '100%', viewBox: '0 0 ' + W + ' ' + (H + (comRotulo ? 16 : 0)), preserveAspectRatio: 'none' });
   if (comRotulo) s.setAttribute('height', H + 16);
   vals.forEach((v, i) => { const h = v / top * H, ok = metaDia && v >= metaDia; s.append(sv('rect', { x: i * bw + bw * 0.15, y: H - h, width: bw * 0.7, height: Math.max(1, h), rx: Math.min(3, bw * 0.2), fill: ok ? '#1e7a46' : '#8c7bb0' })); if (comRotulo && (n <= 16 || i % 2 === 0)) { const t = sv('text', { x: i * bw + bw / 2, y: H + 12, 'text-anchor': 'middle', 'font-size': 9, fill: '#6b6862' }); t.textContent = dias[i].slice(8, 10); s.append(t); } });
@@ -2420,7 +2538,7 @@ function desenharCards() {
   const k = nivelCor(R.fechaPct, R.pct), h = card('full', r.multi ? 'Rede no período' : 'Loja no período', 'detalhar ›', () => abrirDet(r.multi ? 'Resultado da rede' : 'Resultado da loja', (b, mv) => {
     const top = el('div', 'card'), hh = el('div'); hh.style.cssText = 'display:flex;gap:16px;align-items:center';
     const tx = el('div'); tx.append(el('div', 'sm', 'Vendido'), el('div', 'big', rs(R.vendido)), el('div', 'sm', 'de ' + rs(R.meta) + (R.fecha != null ? ' · no ritmo fecha em ' + rs(R.fecha) : ''))); hh.append(ring(R.pct, 110, COR[k]), tx); top.append(hh); b.append(top);
-    if (serieTot.length && (r.serie.dias || []).length > 1) { const c = el('div', 'card'); c.append(el('b', '', '📊 Vendas por dia'), el('div', 'sm', 'barra verde = dia acima da meta diária (linha laranja)'), barrasDia(r.serie.dias, serieTot, metaDiaTot, 140, true)); b.append(c); }
+    if (serieTot.length) { const c = el('div', 'card'); c.append(el('b', '', '📊 Vendas por dia'), el('div', 'sm', 'barra verde = dia acima da meta diária (linha laranja)'), barrasDia(r.serie.dias, serieTot, metaDiaTot, 140, true)); b.append(c); }
     mv('i-res'); b.append($('i-res')); [ 'm-lojas-box', 'i-nota'].forEach((id) => { const n = mv(id); if (n) b.append(n); });
   }));
   const hr = el('div', 'hero'), tx = el('div', 'tx'); tx.append(el('div', 'big', rs(R.vendido)), el('div', 'sm', 'de ' + rs(R.meta) + ' · faltam ' + rs(Math.max(0, (R.meta || 0) - (R.vendido || 0)))));
@@ -2596,7 +2714,7 @@ function detLoja(l) {
   const r = INI; abrirDet(l.loja, (b) => {
     const kl = nivelCor(l.fechaPct, l.pct), top = el('div', 'card'), hh = el('div'); hh.style.cssText = 'display:flex;gap:16px;align-items:center';
     const tx = el('div'); tx.append(el('div', 'sm', 'Vendido'), el('div', 'big', rs(l.vendido)), el('div', 'sm', 'de ' + rs(l.meta) + (l.fecha != null ? ' · fecha em ' + rs(l.fecha) : ''))); if (l.fechaPct != null) tx.append(el('span', 'pill ' + kl, 'no ritmo fecha em ' + pc(l.fechaPct))); hh.append(ring(l.pct, 104, COR[kl]), tx); top.append(hh); b.append(top);
-    if (r.serie && r.serie.lojas[l.loja] && (r.serie.dias || []).length > 1) { const c = el('div', 'card'); c.append(el('b', '', '📊 Vendas por dia'), barrasDia(r.serie.dias, r.serie.lojas[l.loja], r.serie.metaDia[l.loja], 130, true)); b.append(c); }
+    if (r.serie && r.serie.lojas[l.loja]) { const c = el('div', 'card'); c.append(el('b', '', '📊 Vendas por dia'), barrasDia(r.serie.dias, r.serie.lojas[l.loja], r.serie.metaDia[l.loja], 130, true)); b.append(c); }
     const kp = el('div', 'kpis'), k2 = (v, t) => { const d = el('div', 'kpi'); d.append(el('div', 'v', v), el('div', 'l', t)); kp.append(d); };
     k2(pc(l.conv), 'conversão'); k2(pc(l.pctFila), 'pela fila'); k2(rs(l.ticket), 'ticket médio'); k2(String(l.at || 0), 'atendimentos'); k2(String(l.v || 0), 'vendas na fila'); k2(rs(l.perdasR$), 'perdas est.'); b.append(kp);
     if (l.atencoes.length) { const a = el('div', 'card'); a.append(el('b', '', '⚠️ Atenções')); l.atencoes.forEach((t) => a.append(el('div', 'sm', '• ' + t))); b.append(a); }
@@ -3422,6 +3540,7 @@ function abrirDocRH(d, aoAbrir) {
 const nomeRH = (u) => { const p = RH && RH.pessoas && RH.pessoas.find((x) => x.usuario === u); return p ? p.nome : u; };
 function desenharRHAdm(r) {
   RH = r; const g = $('g-rh'); g.replaceChildren();
+  { const c0 = el('div', 'card ct-card'); c0.style.marginTop = '12px'; c0.append(el('b', '', '✍️ Contrato para assinar (ZapSign com selfie)'), el('div', 'sub', 'Sobe o PDF, escolhe quem assina e o app posiciona as assinaturas nos campos do documento. Cada pessoa recebe o link por e-mail; quem já usa o app também vê no Meu RH.')); const b0 = el('button', 'btn pri', 'Montar envio'); b0.addEventListener('click', () => abrirContrato(r)); c0.append(b0); g.append(c0); }
   const card = el('div', 'card'); card.style.marginTop = '12px'; card.append(el('b', '', '📁 Enviar documento para o Meu RH'));
   const pes = el('select'); pes.append(new Option('Escolha a funcionária…', '')); let lj = null, og = null;
   (r.pessoas || []).forEach((p) => { if (p.loja !== lj) { lj = p.loja; og = document.createElement('optgroup'); og.label = lj || 'Sem loja'; pes.append(og); } og.append(new Option(p.nome + (p.pasta ? '' : ' (sem pasta)'), p.usuario)); });
