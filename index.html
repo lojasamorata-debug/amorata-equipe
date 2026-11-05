@@ -2357,7 +2357,7 @@ function ring(pct, size, cor, txt) {
   s.append(a); w.append(s, el('b', '', txt != null ? txt : pc(pct))); w.style.width = size + 'px'; w.style.height = size + 'px'; if (size < 70) w.lastChild.style.fontSize = '12px'; return w;
 }
 function barrasDia(dias, vals, metaDia, alt, comRotulo) {
-  const n = vals.length; if (!n) return el('div', 'sm', 'Sem vendas importadas no período.');
+  const n = vals.length; if (!n) return el('div', 'sm', 'O gráfico usa o relatório de vendas do USE, que ainda não foi importado para este período.');
   const W = Math.max(280, n * (comRotulo ? 18 : 9)), H = alt || 60, top = Math.max(1, ...vals, metaDia || 0) * 1.08, bw = W / n, s = sv('svg', { width: '100%', viewBox: '0 0 ' + W + ' ' + (H + (comRotulo ? 16 : 0)), preserveAspectRatio: 'none' });
   if (comRotulo) s.setAttribute('height', H + 16);
   vals.forEach((v, i) => { const h = v / top * H, ok = metaDia && v >= metaDia; s.append(sv('rect', { x: i * bw + bw * 0.15, y: H - h, width: bw * 0.7, height: Math.max(1, h), rx: Math.min(3, bw * 0.2), fill: ok ? '#1e7a46' : '#8c7bb0' })); if (comRotulo && (n <= 16 || i % 2 === 0)) { const t = sv('text', { x: i * bw + bw / 2, y: H + 12, 'text-anchor': 'middle', 'font-size': 9, fill: '#6b6862' }); t.textContent = dias[i].slice(8, 10); s.append(t); } });
@@ -2538,7 +2538,7 @@ function desenharCards() {
   const k = nivelCor(R.fechaPct, R.pct), h = card('full', r.multi ? 'Rede no período' : 'Loja no período', 'detalhar ›', () => abrirDet(r.multi ? 'Resultado da rede' : 'Resultado da loja', (b, mv) => {
     const top = el('div', 'card'), hh = el('div'); hh.style.cssText = 'display:flex;gap:16px;align-items:center';
     const tx = el('div'); tx.append(el('div', 'sm', 'Vendido'), el('div', 'big', rs(R.vendido)), el('div', 'sm', 'de ' + rs(R.meta) + (R.fecha != null ? ' · no ritmo fecha em ' + rs(R.fecha) : ''))); hh.append(ring(R.pct, 110, COR[k]), tx); top.append(hh); b.append(top);
-    if (serieTot.length) { const c = el('div', 'card'); c.append(el('b', '', '📊 Vendas por dia'), el('div', 'sm', 'barra verde = dia acima da meta diária (linha laranja)'), barrasDia(r.serie.dias, serieTot, metaDiaTot, 140, true)); b.append(c); }
+    if (serieTot.length && (r.serie.dias || []).length > 1) { const c = el('div', 'card'); c.append(el('b', '', '📊 Vendas por dia'), el('div', 'sm', 'barra verde = dia acima da meta diária (linha laranja)'), barrasDia(r.serie.dias, serieTot, metaDiaTot, 140, true)); b.append(c); }
     mv('i-res'); b.append($('i-res')); [ 'm-lojas-box', 'i-nota'].forEach((id) => { const n = mv(id); if (n) b.append(n); });
   }));
   const hr = el('div', 'hero'), tx = el('div', 'tx'); tx.append(el('div', 'big', rs(R.vendido)), el('div', 'sm', 'de ' + rs(R.meta) + ' · faltam ' + rs(Math.max(0, (R.meta || 0) - (R.vendido || 0)))));
@@ -2714,7 +2714,7 @@ function detLoja(l) {
   const r = INI; abrirDet(l.loja, (b) => {
     const kl = nivelCor(l.fechaPct, l.pct), top = el('div', 'card'), hh = el('div'); hh.style.cssText = 'display:flex;gap:16px;align-items:center';
     const tx = el('div'); tx.append(el('div', 'sm', 'Vendido'), el('div', 'big', rs(l.vendido)), el('div', 'sm', 'de ' + rs(l.meta) + (l.fecha != null ? ' · fecha em ' + rs(l.fecha) : ''))); if (l.fechaPct != null) tx.append(el('span', 'pill ' + kl, 'no ritmo fecha em ' + pc(l.fechaPct))); hh.append(ring(l.pct, 104, COR[kl]), tx); top.append(hh); b.append(top);
-    if (r.serie && r.serie.lojas[l.loja]) { const c = el('div', 'card'); c.append(el('b', '', '📊 Vendas por dia'), barrasDia(r.serie.dias, r.serie.lojas[l.loja], r.serie.metaDia[l.loja], 130, true)); b.append(c); }
+    if (r.serie && r.serie.lojas[l.loja] && (r.serie.dias || []).length > 1) { const c = el('div', 'card'); c.append(el('b', '', '📊 Vendas por dia'), barrasDia(r.serie.dias, r.serie.lojas[l.loja], r.serie.metaDia[l.loja], 130, true)); b.append(c); }
     const kp = el('div', 'kpis'), k2 = (v, t) => { const d = el('div', 'kpi'); d.append(el('div', 'v', v), el('div', 'l', t)); kp.append(d); };
     k2(pc(l.conv), 'conversão'); k2(pc(l.pctFila), 'pela fila'); k2(rs(l.ticket), 'ticket médio'); k2(String(l.at || 0), 'atendimentos'); k2(String(l.v || 0), 'vendas na fila'); k2(rs(l.perdasR$), 'perdas est.'); b.append(kp);
     if (l.atencoes.length) { const a = el('div', 'card'); a.append(el('b', '', '⚠️ Atenções')); l.atencoes.forEach((t) => a.append(el('div', 'sm', '• ' + t))); b.append(a); }
