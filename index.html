@@ -519,6 +519,12 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
   body.sheet-on #bnav { display:none !important; }
   body.logado #dia-fila { display:none; }
 }
+/* Início da gerência: só o menu; os cards ficam dentro de "Meus resultados" */
+body:not(.ini-res) #v-ini > #i-res-h, body:not(.ini-res) #v-ini > #i-filtro-box, body:not(.ini-res) #v-ini > #i-datas, body:not(.ini-res) #v-ini > #i-tit, body:not(.ini-res) #v-ini > #i-cards, body:not(.ini-res) #v-ini > #i-det, body:not(.ini-res) #v-ini > #m-des-box, body:not(.ini-res) #v-ini > #m-pre-box, body:not(.ini-res) #v-ini > #m-med-box { display:none !important; }
+body.ini-res #v-ini > #menu, body.ini-res #v-ini > #dia-blocos, body.ini-res[data-aba=ini] #pend, body.ini-res[data-aba=ini] #cmn-top { display:none !important; }
+#i-res-h { display:flex; align-items:center; gap:10px; margin:6px 0 4px; }
+#i-res-h h2 { margin:0; font-size:20px; }
+#i-res-h button { border:1px solid var(--line); background:var(--panel); color:var(--accent); font:inherit; font-size:14px; font-weight:600; padding:7px 12px; border-radius:999px; cursor:pointer; }
 @media (orientation:landscape) and (max-height:560px) { body.fila-v #bnav { display:none !important; } body.fila-v #eu { bottom:0; } }
 </style>
 </head>
@@ -622,6 +628,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
     </div>
 
     <div id="v-ini" class="hide">
+      <div id="i-res-h"><button type="button" id="i-res-v">‹ Menu</button><h2>📊 Meus resultados</h2></div>
       <div class="filtros" id="i-filtro-box"><select id="i-per"><option value="hoje">Hoje</option><option value="mes" selected>Mês atual</option><option value="mes_ant">Mês anterior</option><option value="ano">Ano</option><option value="custom">Personalizado…</option></select><select id="i-loja"></select></div><div class="datas hide" id="i-datas"><label>De <input type="date" id="i-de"></label><label>Até <input type="date" id="i-ate"></label><button class="btn sm pri" id="i-ok">Ver</button></div>
       <div class="sub" id="i-tit" style="margin-top:8px"></div>
       <div id="i-cards" class="dash"></div>
@@ -966,7 +973,7 @@ function abrir() {
   cabecalho(); protecao(true);
   const fazCaminho = S.cargo !== 'ADMIN' && S.cargo !== 'ESTOQUISTA' && !S.trocarSenha && !(typeof T !== 'undefined' && T) && caminhoPendente();
   if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirTermo(() => exigirApp(false)), 500); }
-  if (fazCaminho) { google.script.run.withSuccessHandler((o) => { ONTEM = o; }).withFailureHandler(() => { ONTEM = { semDados: true }; })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
+  if (fazCaminho) { ONTEM = null; ONTEM_OK = false; cardMetaLoja.pedida = cardMetaLoja.ok = false; cardMetaLoja.m = null; google.script.run.withSuccessHandler((o) => { ONTEM = o; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); }).withFailureHandler(() => { ONTEM = { semDados: true }; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
   setTimeout(checarAvisos, 2500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 3000); setTimeout(carregarStatus, 4500); setTimeout(carregarCampeas, 3500); setTimeout(carregarEstoqueInfo, 5000); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
   $('t-av').replaceChildren(...avatar(S.foto, S.nome).childNodes); if (!S.foto) $('t-av').textContent = (S.nome || '?').charAt(0);
@@ -1191,7 +1198,7 @@ function carregarPendencias() {
         const pb = el('div', 'pb'); [[true, 'Aprovar', 'ok'], [false, 'Recusar', 'bad']].forEach(([k, t, c]) => { const q = el('span', 'btn ' + c, t); q.addEventListener('click', (ev) => { ev.stopPropagation(); pendClique(x, q, 'decidirTroca', [S.token, p.id, k], k ? 'Troca aprovada. A escala já foi ajustada.' : 'Troca recusada'); }); pb.append(q); });
         x.append(pb); b.append(x); return;
       }
-      if (p.tipo === 'ritmo') { const x = el('button', ''); x.append(el('div', '', '⏱️ ' + (S.lojas.length > 1 ? p.loja + ': ' : '') + p.texto), el('span', '', 'Ver ›')); x.addEventListener('click', () => { mudarAba('ini'); setTimeout(() => $('i-ritmo-box').scrollIntoView({ behavior: 'smooth' }), 300); }); b.append(x); return; }
+      if (p.tipo === 'ritmo') { const x = el('button', ''); x.append(el('div', '', '⏱️ ' + (S.lojas.length > 1 ? p.loja + ': ' : '') + p.texto), el('span', '', 'Ver ›')); x.addEventListener('click', () => { verResultados(); setTimeout(() => $('i-ritmo-box').scrollIntoView({ behavior: 'smooth' }), 300); }); b.append(x); return; }
       if (p.tipo === 'check') { const x = el('button', ''); x.append(el('div', '', '✅ ' + (S.lojas.length > 1 ? p.loja + ': ' : '') + p.texto), el('span', '', 'Ver ›')); x.addEventListener('click', () => { if (S.lojas.length > 1) { loja = p.loja; $('sel-loja').value = loja; salvar(); atualizar(); } CK_T = 'ABERTURA'; mudarAba('fila'); carregarCk(); $('ck').open = true; $('ck').scrollIntoView({ behavior: 'smooth' }); }); b.append(x); return; }
       const x = el('button', p.grave ? 'grave' : ''); x.append(el('div', '', (p.tipo === 'metas' ? '🎯 ' : p.tipo === 'escala' ? '🗓️ ' : '📥 ') + (S.lojas.length > 1 ? p.loja + ': ' : '') + p.texto), el('span', '', p.tipo === 'metas' || p.tipo === 'escala' ? 'Cadastrar ›' : 'Importar ›'));
       x.addEventListener('click', () => { $('g-loja').value = p.loja; mudarAba('gest'); setTimeout(() => $(p.tipo === 'metas' ? 'sg-met' : p.tipo === 'escala' ? 'sg-esc' : 'sg-imp').click(), 50); });
@@ -1554,6 +1561,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) atua
 // ---------- relatórios ----------
 let aba = 'fila', aba0_ = '';
 function mudarAba(a) {
+  document.body.classList.remove('ini-res');
   aba = a; document.body.dataset.aba = a; document.body.classList.toggle('fila-v', a === 'fila' && !!S && !chefe()); ['ini', 'dia', 'fila', 'meta', 'mural', 'est', 'apr', 'gest', 'prod', 'rel'].forEach((x) => { $('tab-' + x).classList.toggle('on', a === x); $('v-' + x).classList.toggle('hide', a !== x); });
   $('sel-loja-box').classList.toggle('hide', a !== 'fila' || S.lojas.length < 2 || S.cargo === 'ADMIN');
   $('rede-fila').classList.toggle('hide', a !== 'fila' || S.cargo !== 'ADMIN'); if (a === 'fila' && S.cargo === 'ADMIN') carregarRedeFila();
@@ -1573,15 +1581,19 @@ function mudarAba(a) {
   desenharMenu(); if (a !== aba0_) { try { window.scrollTo(0, 0); } catch (e) {} } aba0_ = a;
 }
 // ---------- menu em botões (tela inicial) e barra de atalhos ----------
-const MENU_TXT = { dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
+// gerente/admin: "Meus resultados" abre os cards do Início (fora dele, o Início mostra só o menu)
+function verResultados() { mudarAba('ini'); document.body.classList.add('ini-res'); try { window.scrollTo(0, 0); } catch (e) {} }
+$('i-res-v').addEventListener('click', () => mudarAba('ini'));
+const MENU_TXT = { res: 'Meus resultados', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
 const NAV_TXT = { ini: 'Início', dia: 'Início', fila: 'Fila', meta: 'Metas', mural: 'Mural', est: 'Estoque', gest: 'Equipe', rh: 'Meu RH' };
 const casaAba_ = () => (chefe() ? 'ini' : 'dia');
-function abaVisivel_(k) { if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
-function irAba_(k) { if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
+function abaVisivel_(k) { if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
+function irAba_(k) { if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
 function menuSub_(k) {
   const rhN = (typeof RH !== 'undefined' && RH && RH.novos) || 0;
   if (k === 'rh') return rhN ? [rhN + (rhN === 1 ? ' novo para ver' : ' novos para ver'), 'al', rhN] : ['holerite, ponto, férias', ''];
   if (k === 'fila') { if (E && E.fila && S) { const p = chefe() ? null : E.fila.find((x) => x.usuario === S.usuario); if (p && p.pos) return [p.pos === 1 ? 'é a sua vez!' : 'você é a ' + p.pos + 'ª da vez', p.pos === 1 ? 'ok' : '']; return [E.fila.length ? E.fila.length + ' na fila' : 'ninguém na fila', '']; } return ['quem atende agora', '']; }
+  if (k === 'res') { const R = typeof INI !== 'undefined' && INI && INI.rede; if (R && R.meta && R.pct != null) return [pc(R.pct) + ' da meta' + (R.fechaPct != null && R.fechaPct < 1 ? ' · no ritmo ' + pc(R.fechaPct) : ''), R.pct >= 1 ? 'ok' : (R.fechaPct != null && R.fechaPct < 1 ? 'al' : '')]; return ['vendas, metas e equipe', '']; }
   if (k === 'meta') { if (MH && MH.batida) return ['meta do mês batida!', 'ok']; if (MH && !MH.loja && MH.pct != null) return [pc(MH.pct) + ' da meta do mês', '']; return ['metas do mês', '']; }
   const fixo = { dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
   return fixo[k] || ['', ''];
@@ -1592,9 +1604,9 @@ function desenharMenu() {
   let m = $('menu'); if (!m) { m = el('div'); m.id = 'menu'; }
   if (chefe()) { const v = $('v-ini'); if (m.parentNode !== v || v.firstElementChild !== m) v.prepend(m); }
   else { const ref = $('eu-meta'); if (ref && ref.parentNode && m.previousElementSibling !== ref) ref.after(m); }
-  const ks = ['dia', 'ini', 'fila', 'meta', 'est', 'mural', 'apr', 'gest', 'prod', 'rel', 'rh'].filter((k) => k !== casa && abaVisivel_(k));
+  const ks = ['res', 'dia', 'ini', 'fila', 'meta', 'est', 'mural', 'apr', 'gest', 'prod', 'rel', 'rh'].filter((k) => k !== casa && abaVisivel_(k));
   m.replaceChildren(...ks.map((k) => {
-    const [sub, cls, n] = menuSub_(k), b = el('button', 'mt'); b.type = 'button';
+    const [sub, cls, n] = menuSub_(k), b = el('button', 'mt'); b.type = 'button'; b.id = 'mt-' + k;
     const ic = el('span', 'mi'); ic.append(icoSvg(k)); const tx = el('span'); tx.append(el('b', '', MENU_TXT[k])); const sm = el('small', cls, sub); tx.append(sm);
     b.append(ic, tx); if (n) b.append(el('span', 'mn', String(n)));
     b.addEventListener('click', () => irAba_(k)); return b;
@@ -2321,7 +2333,7 @@ function carregarInicio() {
   if (chefe()) { carregarMetas(); carregarRitmo(); }
   $('i-tit').textContent = 'Carregando…';
   rodar('inicio', [S.token, $('i-loja').value].concat(perArgs('i')), (r) => {
-    INI = r; desenharCards();
+    INI = r; desenharCards(); desenharMenu();
     const R = r.rede;
     $('i-tit').textContent = textoPeriodo(r); setTimeout(() => infoVendasUI('i-tit'), 50);
     desenharResumo(r);
@@ -2750,10 +2762,10 @@ function desenharDiaPre() {
   const b = $('dia-pre'), ls = (MED && MED.premios) || []; b.replaceChildren(); b.classList.toggle('hide', !ls.length); if (!ls.length) return;
   const rec = ls.filter((p) => p.desbloqueado && !p.entregue), prox = ls.filter((p) => !p.desbloqueado).sort((a, c) => c.prog[0] / c.prog[1] - a.prog[0] / a.prog[1])[0];
   const x = el('button', 'pend-lk'); x.append(el('div', '', rec.length ? '🎉 ' + rec.length + (rec.length === 1 ? ' prêmio para receber: ' : ' prêmios para receber: ') + rec.map((p) => p.emoji + ' ' + p.titulo).join(', ') : '🎁 Próximo prêmio: ' + prox.emoji + ' ' + prox.titulo + ' · ' + Math.min(100, Math.round(prox.prog[0] / prox.prog[1] * 100)) + '% do caminho'), el('span', '', 'Ver ›'));
-  x.addEventListener('click', () => { mudarAba(chefe() ? 'ini' : 'meta'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); }); b.append(x);
+  x.addEventListener('click', () => { if (chefe()) verResultados(); else mudarAba('meta'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); }); b.append(x);
 }
 // ---------- caminho do dia: mood → recado → comunicados → fila ----------
-let ONTEM = null;
+let ONTEM = null, ONTEM_OK = false;
 const REFLEXOES = ['Cada cliente que entra é uma chance de fazer o dia de alguém mais bonito.', 'O sorriso abre a porta; a escuta fecha a venda.', 'Ninguém bate meta sozinha: hoje eu torço por cada uma de vocês.', 'Um dia ruim não define o mês. Bora recomeçar com tudo!', 'Atender bem é deixar a cliente com vontade de voltar.', 'Pequenas vendas somadas viram uma grande meta.', 'Quem planta atenção colhe cliente fiel.', 'Hoje eu escolho ter paciência, alegria e foco.', 'Gratidão pela equipe que faz a loja acontecer.', 'A melhor vitrine é uma equipe feliz.', 'Que hoje a gente venda com o coração e atenda com carinho.', 'Desafio bom é aquele que a gente vence junto.'];
 const DS3 = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 const chaveCaminho = () => 'amorata_cam_' + (S && S.usuario) + '_' + hojeStr();
@@ -2828,6 +2840,7 @@ function caminho() {
       if (!ONTEM && !tela.esperou) { tela.esperou = true; setTimeout(() => { if (passos[i] === 'dia' && $('caminho')) tela(); }, 2500); }
     }
   };
+  caminho.redesenhar = () => { if ($('caminho') === w && passos[i] === 'dia') tela(); };
   tela();
 }
 // tela do caminho para a gerente: último dia da loja + onde a equipe deve focar hoje
@@ -2842,7 +2855,8 @@ function telaGerente(c, r, fim) {
     c.append(q);
     const pts = focoLoja(o);
     const f = el('div', 'card cdia'); f.append(el('b', '', '🧭 Foco da equipe hoje')); const ul = el('div', 'cpts'); pts.slice(0, 4).forEach(([e, t]) => { const x = el('div'); x.append(el('i', '', e), el('span', '', t)); ul.append(x); }); f.append(ul); c.append(f);
-  } else c.append(el('p', 'lead', 'Ainda não há atendimentos recentes na fila desta loja. Bora começar o dia! 💪'));
+  } else if (!ONTEM_OK) c.append(el('p', 'lead', '⏳ Carregando o resumo da loja…'));
+  else c.append(el('p', 'lead', 'Ainda não há atendimentos recentes na fila desta loja. Bora começar o dia! 💪'));
   telaGerenteFim(c, r, fim, o);
 }
 function focoLoja(o) {
@@ -2859,14 +2873,20 @@ function focoLoja(o) {
     return pts;
 }
 function cardMetaLoja(o) {
-  const m = o && o.meta, mq = el('div', 'card cdia cmeta');
+  let m = o && o.meta; const mq = el('div', 'card cdia cmeta');
+  if (!m && cardMetaLoja.m) m = cardMetaLoja.m;
+  if (!m && ONTEM_OK && !cardMetaLoja.pedida && S) {
+    cardMetaLoja.pedida = true; const lj = (o && o.loja) || (S.lojas || [])[0];
+    google.script.run.withSuccessHandler((r) => { const lt = r && (r.lojas || []).find((x) => x.loja === lj) || (r && (r.lojas || [])[0]); if (lt && lt.meta) { cardMetaLoja.m = { pct: lt.pct, falta: lt.falta, porDia: lt.porDia, restam: lt.restam != null ? lt.restam : r.restam, fechaPct: lt.fechaPct }; if (ONTEM && !ONTEM.meta) ONTEM.meta = cardMetaLoja.m; } cardMetaLoja.ok = true; if (caminho.redesenhar) caminho.redesenhar(); }).withFailureHandler(() => { cardMetaLoja.ok = true; if (caminho.redesenhar) caminho.redesenhar(); }).metas(S.token, lj, 'mes', '', '');
+  }
+  if (!m && (!ONTEM_OK || (cardMetaLoja.pedida && !cardMetaLoja.ok))) { mq.append(el('div', 'sub', '🎯 Carregando a meta da loja…')); return mq; }
   if (m && m.pct >= 1) mq.append(el('b', '', '🏆 Loja já bateu a meta do mês!'), el('div', 'sub', 'Agora é rumo à meta desafio.'));
   else if (m && m.restam) mq.append(el('div', 'sub', '🎯 Meta da loja para hoje'), el('div', 'big', rs(m.porDia)), el('div', 'sub', pc(m.pct) + ' da meta do mês · faltam ' + rs(m.falta)));
   else mq.append(el('b', '', '🎯 Metas do mês ainda não cadastradas'), el('div', 'sub', 'Cadastre em Gestão › Metas para acompanhar o ritmo.'));
   return mq;
 }
 function telaGerenteFim(c, r, fim, o) {
-  c.append(cardMetaLoja(o));
+  c.append(cardMetaLoja(o)); if (o && !o.meta && cardMetaLoja.m) o.meta = cardMetaLoja.m;
   if (o && o.meta) { const en = el('button', 'btn big', '📤 Enviar o objetivo do dia no grupo'); en.style.marginTop = '10px'; en.addEventListener('click', () => objetivoDia(o.loja || (S.lojas || [])[0], o)); c.append(en); }
   const go = el('button', 'btn pri big', '👉 Começar o dia'); go.addEventListener('click', fim); r.append(go);
 }
@@ -2893,7 +2913,7 @@ function passosTour() {
   const ger = S.cargo !== 'ADMIN';
   return comum1.concat([
     { el: 'pend', aba: 'ini', t: '📌 Pendências', x: 'O que precisa da sua atenção hoje: vendas para importar, trocas de folga, feriados, escala, metas. Some sozinho quando você resolve.' },
-    { el: 'i-cards', aba: 'ini', t: '📊 Início', x: (ger ? 'Os resultados da sua loja' : 'Os resultados de todas as lojas') + ' em cards: meta com previsão de fechamento, ritmo de hoje, fila, motivos de perda, equipe e a conferência com o USE. Toque em qualquer card para detalhar.' },
+    { el: 'mt-res', aba: 'ini', t: '📊 Meus resultados', x: (ger ? 'Os resultados da sua loja' : 'Os resultados de todas as lojas') + ' em cards: meta com previsão de fechamento, ritmo de hoje, fila, motivos de perda, equipe e a conferência com o USE. Toque em qualquer card para detalhar.' },
   ], ger ? [{ el: 'tab-fila', aba: 'fila', t: '👥 Fila da vez', x: 'Acompanhe a fila ao vivo. Você pode mudar a ordem (com motivo) e incluir quem está de folga.' }] : [{ el: 'tab-fila', aba: 'fila', t: '👀 Filas das lojas', x: 'Supervisione a fila de todas as lojas ao vivo: quantas estão na fila, atendendo e em pausa. Toque numa loja para ver a fila completa dela.' }], [
     { el: 'tab-gest', aba: 'gest', t: '🛠️ Gestão', x: 'Importe as vendas do USE, cadastre metas, escala e checklist, cuide da equipe e dos planos individuais' + (ger ? '.' : ' e defina os prêmios.') },
     { el: 'tab-rel', aba: 'rel', t: '📈 Relatórios', x: 'Conversão, motivos de perda, horários de pico, retornos e avaliações das clientes.' },
@@ -2934,6 +2954,7 @@ function passosAba(a) {
   const P = {
     ini: [
       { el: 'pend', t: '📌 Pendências', x: 'O que precisa da sua atenção hoje: trocas de folga, feriados, checklist, tarefas, metas. Some sozinho quando você resolve.' },
+      { el: 'mt-res', t: '📊 Meus resultados', x: 'Toque aqui para ver os cards da loja: meta, ritmo de hoje, fila, equipe e conferência com o USE.' },
       { el: 'i-filtro-box', t: '📅 Período e loja', x: 'Escolha o período (Hoje, Mês atual, Mês anterior, Ano ou datas) e a loja. Todos os números da tela seguem essa escolha.' },
       { el: 'i-cards', t: '📊 Cards do resultado', x: 'Meta com previsão de fechamento, ritmo de hoje, fila, equipe, conferência com o USE. Toque em um card para ver o detalhe.' },
       { el: 'i-prec-box', t: '🤝 Quem precisa de você', x: 'Quem está mais longe da meta, com uma conversa sugerida para hoje.' },
@@ -4719,7 +4740,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { if (S.cargo === 'VENDEDORA') mudarAba('meta'); else verResultados(); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide'); blocoNotif(o);
 }));
@@ -5004,6 +5025,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && T)
     ajuda: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .9-1 1.7"/><circle cx="12" cy="17" r=".6"/>',
     sair: '<path d="M14 4h5v16h-5"/><path d="M10 8l-4 4 4 4M6 12h10"/>',
     dia: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
+    res: '<path d="M4 20V11M10 20V5M16 20v-6M21 20H3"/><path d="M4 8l6-4 6 5 5-4"/>',
     rh: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
   };
   const svg = (k) => { const d = document.createElement('span'); d.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + (I[k] || I.ini) + '</svg>'; return d.firstChild; };
