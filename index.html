@@ -4013,14 +4013,16 @@ function fcSec(g, y, t) { g.fillStyle = '#eee9e1'; g.fillRect(0, y, 540, 1); fcT
 function fcLinha(g, y, a, b, forte) { fcT(g, a, 28, y, 15, '#1f1e1d'); fcT(g, b, 512, y, forte ? 16 : 15, '#1f1e1d', forte ? 800 : 400, 'right'); }
 function fcBarra(g, y, pct, cor) { fcR(g, 28, y, 484, 8, 4, '#efebf5'); if (pct > 0) fcR(g, 28, y, Math.max(8, 484 * Math.min(1, pct)), 8, 4, cor || '#5b4a7a'); }
 function cardLoja(o, gerado) {
-  const temMeta = o.meta != null, hDest = (o.destaques || []).length ? 34 + o.destaques.length * 58 : 0;
-  const H = 270 + (temMeta ? 140 : 0) + 230 + (o.fila ? 138 : 0) + hDest + 50; const [c, g] = fcCanvas(H);
+  const temMeta = o.meta != null, F = o.fila, bat = o.bateram || [], mot = (F && F.motivos) || [];
+  const hDest = (o.destaques || []).length ? 34 + o.destaques.length * 58 : 0, hBat = bat.length ? 44 + Math.ceil(bat.length / 3) * 46 + 6 : 0;
+  const hFila = F ? 44 + 88 + 96 + (mot.length ? 40 : 0) + (o.confPct != null ? 28 : 0) + 10 : 0, hFoco = 44 + 76 + ((o.folgam || []).length ? 30 : 0);
+  const H = 270 + (temMeta ? 140 : 0) + 230 + hBat + hDest + hFila + hFoco + 50; const [c, g] = fcCanvas(H);
   fcTopo(g, 270, o.loja, 'Fechamento · ' + fcDia(o.data) + (o.parcial ? ' · ⏳ parcial (' + (o.importado || '') + ')' : ''));
   fcR(g, 28, 132, 484, 118, 16, 'rgba(255,255,255,.13)'); fcAnel(g, 92, 191, o.pct, temMeta ? fcPct(o.pct) : '—');
   fcT(g, 'Vendido no dia', 160, 170, 13, 'rgba(255,255,255,.85)'); fcT(g, rs(o.valor), 160, 204, 30, '#fff', 800);
   fcT(g, temMeta ? 'Objetivo ' + rs(o.objetivo) + (o.valor >= o.objetivo ? ' · +' + rs(o.valor - o.objetivo) + ' ✅' : ' · faltaram ' + rs(o.objetivo - o.valor)) : 'Meta do mês não cadastrada', 160, 228, 13, 'rgba(255,255,255,.92)', 600);
   let y = 270;
-  if (temMeta) { fcSec(g, y, '📅 Mês de ' + ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+o.data.slice(5, 7) - 1]); fcLinha(g, y + 60, 'Vendido no mês', rs(o.mesVendido), true); fcBarra(g, y + 72, o.mesPct); fcLinha(g, y + 104, 'Meta do mês · ' + fcPct(o.mesPct), rs(o.meta)); fcLinha(g, y + 128, o.faltaMes > 0 ? 'Objetivo de ' + (o.proxDia ? fcDia(o.proxDia).split(',')[0] + ' (' + isoBR(o.proxDia).slice(0, 5) + ')' : 'amanhã') : 'Meta do mês batida! 🎉', o.faltaMes > 0 && o.porDia ? rs(o.porDia) : '', true); y += 140; }
+  if (temMeta) { fcSec(g, y, '📅 Mês de ' + ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+o.data.slice(5, 7) - 1]); fcLinha(g, y + 60, 'Vendido no mês · ' + fcPct(o.mesPct), rs(o.mesVendido), true); fcBarra(g, y + 72, o.mesPct); fcLinha(g, y + 104, o.faltaMes > 0 ? 'Falta para a meta (' + rs(o.meta) + ')' : 'Meta do mês (' + rs(o.meta) + ')', o.faltaMes > 0 ? rs(o.faltaMes) : 'batida! 🎉'); fcLinha(g, y + 128, o.faltaMes > 0 ? 'Objetivo de ' + (o.proxDia ? fcDia(o.proxDia).split(',')[0] + ' (' + isoBR(o.proxDia).slice(0, 5) + ')' : 'amanhã') : '', o.faltaMes > 0 && o.porDia ? rs(o.porDia) : '', true); y += 140; }
   fcSec(g, y, '🧾 Indicadores do dia'); const kp = [
     ['Vendas · Peças', o.vendas + ' · ' + o.itens, '', ''],
     ['Ticket médio', o.tkm ? rs(o.tkm) : '—', o.tkmMes ? 'média do mês ' + rs(o.tkmMes) + (o.tkm >= o.tkmMes ? ' ✅' : ' ⚠️') : '', o.tkmMes && o.tkm >= o.tkmMes],
@@ -4028,8 +4030,25 @@ function cardLoja(o, gerado) {
     ['Online', rs(o.online), o.objetivoOnline ? fcPct(o.online / o.objetivoOnline) + ' de ' + rs(o.objetivoOnline) + (o.online >= o.objetivoOnline ? ' ✅' : ' ⚠️') : '', o.objetivoOnline && o.online >= o.objetivoOnline]];
   kp.forEach((k, i) => { const x = 28 + (i % 2) * 247, yy = y + 46 + Math.floor(i / 2) * 88; fcR(g, x, yy, 237, 78, 12, '#f7f6f3'); fcT(g, k[0], x + 12, yy + 22, 12, '#6b6862'); fcT(g, k[1], x + 12, yy + 48, 20, '#1f1e1d', 800); if (k[2]) fcT(g, k[2], x + 12, yy + 68, 12, k[3] ? '#1e7a46' : '#a85d00'); });
   y += 230;
-  if (o.fila) { fcSec(g, y, '👥 Fila da vez'); fcLinha(g, y + 60, 'Atendimentos · conversão', o.fila.at + ' · ' + fcPct(o.fila.conv), true); fcLinha(g, y + 88, 'Oportunidades perdidas', (o.fila.perdidas || 0) + (o.fila.perdidoValor ? ' · ~' + rs(o.fila.perdidoValor) : ''), true); fcLinha(g, y + 116, 'Mais perdeu por', o.fila.motivo ? '"' + o.fila.motivo + '" (' + o.fila.motivoN + ')' : '—', true); y += 138; }
+  if (hBat) { fcSec(g, y, '🏆 Bateram a meta do dia'); bat.forEach((n, i) => { const x = 28 + (i % 3) * 163, yy = y + 44 + Math.floor(i / 3) * 46; fcR(g, x, yy, 155, 38, 19, '#e8f4ec'); fcT(g, '🎉 ' + n, x + 77, yy + 25, 14, '#1e5b38', 800, 'center'); }); y += hBat; }
   if (hDest) { fcSec(g, y, '⭐ Destaques do dia'); o.destaques.forEach((d, i) => { const yy = y + 44 + i * 58; fcR(g, 28, yy, 484, 50, 12, '#fbf1e2'); g.font = '800 15px ' + FC_F; const nw = g.measureText('⭐ ' + d.nome).width; fcT(g, '⭐ ' + d.nome, 42, yy + 31, 15, '#1f1e1d', 800); fcT(g, '— ' + d.txt, 48 + nw, yy + 31, 14, '#1f1e1d'); }); y += hDest; }
+  if (F) {
+    fcSec(g, y, '👥 Fila da vez');
+    const kf = [['Atendimentos', String(F.at), ''], ['Conversão', fcPct(F.conv), F.v + (F.v === 1 ? ' venda' : ' vendas')]];
+    kf.forEach((k, i) => { const x = 28 + i * 247, yy = y + 44; fcR(g, x, yy, 237, 78, 12, '#f7f6f3'); fcT(g, k[0], x + 12, yy + 22, 12, '#6b6862'); fcT(g, k[1], x + 12, yy + 50, 22, '#1f1e1d', 800); if (k[2]) fcT(g, k[2], x + 12, yy + 68, 12, '#6b6862'); });
+    let yy = y + 132; fcR(g, 28, yy, 484, 86, 12, '#fdecea'); fcT(g, '💸 Oportunidades perdidas', 42, yy + 26, 13, '#8a2a1f', 700);
+    fcT(g, String(F.perdidas || 0), 42, yy + 66, 30, '#8a2a1f', 800); g.font = '800 30px ' + FC_F; const nw = g.measureText(String(F.perdidas || 0)).width;
+    fcT(g, (F.perdidas === 1 ? 'cliente saiu sem levar' : 'clientes saíram sem levar'), 50 + nw, yy + 50, 13, '#8a2a1f');
+    if (F.perdidoValor) fcT(g, '≈ ' + rs(F.perdidoValor) + ' em vendas (pelo ticket médio)', 50 + nw, yy + 70, 13, '#8a2a1f', 700);
+    yy += 96;
+    if (mot.length) { let x = 28; g.font = '600 13px ' + FC_F; mot.forEach((m) => { const t = m.motivo + ' · ' + m.n, w = g.measureText(t).width + 24; if (x + w > 512) return; fcR(g, x, yy, w, 30, 15, '#f3efe9'); fcT(g, t, x + 12, yy + 20, 13, '#3d3a36', 600); x += w + 8; }); yy += 40; }
+    if (F.trocas) { /* trocas não entram como perda */ }
+    if (o.confPct != null) { fcLinha(g, yy + 18, 'Vendas registradas na fila', fcPct(o.confPct) + (o.confPct >= 0.95 ? ' ✅' : ''), true); yy += 28; }
+    y += hFila;
+  }
+  fcSec(g, y, '👉 Amanhã'); fcR(g, 28, y + 44, 484, 66, 12, '#efebf5'); fcT(g, 'Foco', 42, y + 68, 12, '#5b4a7a', 700); fcWrap(g, o.foco ? o.foco.charAt(0).toUpperCase() + o.foco.slice(1) : 'Manter o ritmo', 42, y + 92, 456, 18, 15, '#1f1e1d', 800);
+  if ((o.folgam || []).length) fcT(g, '📅 Folgam: ' + o.folgam.join(', '), 28, y + 136, 13, '#6b6862');
+  y += hFoco;
   g.fillStyle = '#eee9e1'; g.fillRect(0, y, 540, 1); fcT(g, 'App Amorata Equipe · dados do USE e da fila', 28, y + 30, 11, '#9a968f'); fcT(g, String(gerado || '').slice(11, 16), 512, y + 30, 11, '#9a968f', 400, 'right');
   return c;
 }
