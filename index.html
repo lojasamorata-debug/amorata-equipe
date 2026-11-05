@@ -118,6 +118,8 @@ td.n { white-space:nowrap; font-variant-numeric:tabular-nums; }
 .mood { background:linear-gradient(135deg,#fff5fb,#f3f0ff); border:1px solid var(--line); border-radius:16px; padding:12px 14px; margin-top:12px; }
 .mood b { display:block; font-size:16px; } .mood .sub { margin-top:2px; }
 .tc { position:fixed; inset:0; z-index:8000; background:linear-gradient(160deg,#fff5fb,#f3f0ff 60%,#eef6ff); display:flex; flex-direction:column; padding:22px 18px 18px; overflow:auto; }
+#det { overscroll-behavior:contain; -webkit-overflow-scrolling:touch; transform:translateZ(0); will-change:transform; height:100%; height:100dvh; }
+html:has(#det), body:has(#det) { overflow:hidden; height:100%; }
 .tc .pas { display:flex; gap:6px; justify-content:center; margin-bottom:18px; } .tc .pas i { width:28px; height:5px; border-radius:3px; background:rgba(91,74,122,.18); } .tc .pas i.on { background:var(--accent); }
 .tc h1 { font-family:'Source Serif 4',Georgia,serif; font-weight:500; font-size:28px; line-height:1.15; margin:6px 0 6px; text-align:center; } .tc .lead { text-align:center; color:var(--muted); margin:0 0 18px; }
 .tc .corpo { flex:1; display:flex; flex-direction:column; max-width:460px; width:100%; margin:0 auto; } .tc .rod { max-width:460px; width:100%; margin:14px auto 0; display:grid; gap:8px; }
@@ -1914,7 +1916,7 @@ function abrirReposicao(desdeUlt) {
     }
     function carregar() { res.replaceChildren(el('div', 'sub', 'Buscando as vendas no USE…')); google.script.run.withSuccessHandler((r) => { RP = r; desenhar(); }).withFailureHandler((e) => res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || 'erro')))).reposicao.apply(null, args()); }
     function desenhar() {
-      const r = RP; res.replaceChildren(); if (!r) return;
+      const r = RP, scx = $('det'), stx = scx ? scx.scrollTop : 0; res.replaceChildren(); if (!r) return; requestAnimationFrame(() => { if (scx) scx.scrollTop = stx; });
       if (primeira && r.ultima && !de.value) { primeira = false; de.value = r.ultima.quando.slice(11, 16); carregar(); return; } primeira = false;
       if (r.semApi) { res.append(el('div', 'aviso-meta', 'A reposição pelo app funciona nas lojas ligadas à API do USE' + (r.lojasApi && r.lojasApi.length ? ' (hoje: ' + r.lojasApi.join(', ') + ')' : '') + '. Nas outras, continue pelo relatório de Reabastecimento do USE.')); return; }
       const top = el('div', 'motiva'); top.append(el('b', '', r.pendentes ? '🔄 ' + r.pendentes + (r.pendentes === 1 ? ' peça para repor' : ' peças para repor') : (r.total ? '✅ Tudo reposto!' : 'Nenhuma venda nesse horário.')));
