@@ -1,4 +1,3 @@
-function zzDebug(){ const c=CacheService.getScriptCache(); const ad=usuarios_().find(x=>x.cargo==='ADMIN'&&x.ativo); c.put('t_zzdbg', JSON.stringify({usuario:ad.usuario}), 120); try { ['Via Verde','Sumaúma','Via Norte'].forEach(l=>{ const a=relReuniao('zzdbg','loja:'+l,'mes'); Logger.log(l+' '+JSON.stringify((a.picos||[]).map(k=>[k.h,k.clientesDia,k.simultaneas,k.vendedoras,k.disponiveis,k.emPausa,k.baixa]))+' '+JSON.stringify(a.fracos.filter(x=>x.k==='Cobertura'))); }); } catch(e) { Logger.log('ERRO '+e.stack); } c.remove('t_zzdbg'); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
