@@ -1713,18 +1713,18 @@ function rrPaginas(r) {
   if (c.motivos && c.motivos.length) { p3.append(rrH('h3', '', 'Por que não vendeu (fila)')); const t3 = rrH('table', 'rr-tb'); c.motivos.forEach((x) => { const tr = rrH('tr'); tr.append(rrH('td', '', x.motivo), rrH('td', 'n', x.n + (x.n === 1 ? ' vez' : ' vezes'))); t3.append(tr); }); p3.append(t3); }
   if (r.picos && r.picos.length) {
     p3.append(rrH('h3', '', 'Horários de pico e cobertura da loja'));
-    const t4 = rrH('table', 'rr-tb'), h4 = rrH('tr'); ['Pico', 'Clientes/dia', 'Conversão', 'Na fila', 'Atendendo', 'Fora da fila', 'Cobertura'].concat(r.tipo === 'pessoa' ? ['Ela no pico'] : []).forEach((x, i) => h4.append(rrH('th', i ? 'n' : '', x))); t4.append(h4);
-    const pe = (x) => (x == null ? '—' : x.toFixed(1).replace('.', ',')); 
-    r.picos.forEach((k) => { const tr = rrH('tr'); tr.append(rrH('td', '', k.h + 'h–' + (k.h + 1) + 'h'), rrH('td', 'n', pe(k.atPorDia)), rrH('td', 'n', pc(k.conv)), rrH('td', 'n', pe(k.naFila)), rrH('td', 'n', pe(k.atendendo)), rrH('td', 'n', pe(k.pausa))); { const c = rrH('td', 'n ' + (k.baixa ? 'rr-dn' : 'rr-up'), k.baixa ? '⚠️ baixa' : '✅ ok'); tr.append(c); }
-      if (r.tipo === 'pessoa') tr.append(rrH('td', 'n', k.eu ? (k.eu.off >= 0.9 ? 'não estava' : pc(k.eu.fila + k.eu.atend) + ' na fila' + (k.eu.pausa >= 0.05 ? ' · ' + pc(k.eu.pausa) + ' pausa' : '')) : '—'));
+    const t4 = rrH('table', 'rr-tb'), h4 = rrH('tr'); ['Horário', 'Clientes atendidas', 'Vendedoras na loja', 'Disponíveis', 'Em pausa', 'Conversão', 'Cobertura'].concat(r.tipo === 'pessoa' ? ['Ela nesse horário'] : []).forEach((x, i) => h4.append(rrH('th', i ? 'n' : '', x))); t4.append(h4);
+    r.picos.forEach((k) => { const tr = rrH('tr'); tr.append(rrH('td', '', k.h + 'h às ' + (k.h + 1) + 'h'), rrH('td', 'n', k.clientesDia + ' por dia (' + k.total + ' no total)'), rrH('td', 'n', String(k.vendedoras)), rrH('td', 'n', String(k.disponiveis)), rrH('td', 'n', String(k.emPausa)), rrH('td', 'n', pc(k.conv)));
+      tr.append(rrH('td', 'n ' + (k.baixa ? 'rr-dn' : 'rr-up'), k.baixa ? '⚠️ baixa' : '✅ ok'));
+      if (r.tipo === 'pessoa') tr.append(rrH('td', 'n', k.eu ? (k.eu.off >= 0.9 ? 'não estava' : k.eu.pausa >= 0.25 ? 'em pausa boa parte' : 'na fila ou atendendo') : '—'));
       t4.append(tr); });
     p3.append(t4);
-    const nt = rrH('div', '', 'As 4 horas com mais clientes no período. Números = média de pessoas ao mesmo tempo em cada situação naquela hora. "Fora da fila" = em pausa (almoço, banheiro, estoque etc.).'); nt.style.cssText = 'font-size:11.5px;color:#6b6862;margin-top:4px'; p3.append(nt);
+    const nt = rrH('div', '', 'As 4 horas com mais clientes no período, com números por dia (média arredondada). Disponíveis = ficaram na fila ou atendendo pelo menos meia hora; em pausa = saíram da fila 15 minutos ou mais (almoço, banheiro, estoque etc.).'); nt.style.cssText = 'font-size:11.5px;color:#6b6862;margin-top:4px'; p3.append(nt);
     const bx = r.picos.filter((k) => k.baixa && k.sugestoes && k.sugestoes.length);
     if (bx.length && r.tipo !== 'pessoa') { const b = rrH('div', 'rr-bx'); b.style.cssText = 'margin-top:8px;border-color:#a85d00;background:#fbf1e2'; const t = rrH('b', '', '⚠️ Cobertura baixa — o que a gerente pode fazer'); t.style.color = '#a85d00'; b.append(t);
-      bx.forEach((k) => { const d = rrH('div', '', k.h + 'h–' + (k.h + 1) + 'h: ' + k.atPorDia.toFixed(1).replace('.', ',') + ' clientes por dia para ' + (k.naFila + k.atendendo).toFixed(1).replace('.', ',') + ' atendentes disponíveis' + (k.pausa >= 0.3 ? ' e ' + k.pausa.toFixed(1).replace('.', ',') + ' fora da fila' : '')); d.style.cssText = 'font-weight:600;margin-top:8px'; b.append(d); const u = rrH('ul'); k.sugestoes.forEach((x) => u.append(rrH('li', '', x))); b.append(u); });
+      bx.forEach((k) => { const d = rrH('div', '', k.h + 'h às ' + (k.h + 1) + 'h: ' + k.clientesDia + ' clientes por dia para ' + k.disponiveis + (k.disponiveis === 1 ? ' vendedora disponível' : ' vendedoras disponíveis') + (k.emPausa ? ' (' + k.emPausa + ' em pausa)' : '')); d.style.cssText = 'font-weight:600;margin-top:8px'; b.append(d); const u = rrH('ul'); k.sugestoes.forEach((x) => u.append(rrH('li', '', x))); b.append(u); });
       p3.append(b); }
-    const mz = r.picos.filter((k) => k.motivos && k.motivos.length).map((k) => k.h + 'h: ' + k.motivos.map((m) => m.motivo + ' (' + m.min + ' min)').join(', '));
+    const mz = r.picos.filter((k) => k.motivos && k.motivos.length).map((k) => k.h + 'h às ' + (k.h + 1) + 'h: ' + k.motivos.map((m) => m.motivo + ' (' + m.min + ' min)').join(', '));
     if (mz.length) { const b = rrH('div', 'rr-bx'); b.style.marginTop = '8px'; b.append(rrH('b', '', 'Por que estavam fora da fila no pico')); const u = rrH('ul'); mz.forEach((x) => u.append(rrH('li', '', x))); b.append(u); p3.append(b); }
   }
   const ob = r.objetivos; if (ob) { const nomeO = (o) => o.tipo === 'livre' ? o.texto : (ob.tipos[o.tipo] || [o.tipo])[0] + ': ' + o.alvo + ((ob.tipos[o.tipo] || [])[1] || '');
