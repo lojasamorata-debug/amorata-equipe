@@ -691,7 +691,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
           <button class="btn pri big hide" id="gt-ok" style="margin-top:8px">Importar</button>
         </div>
         <details class="card hide" id="ds-card" style="margin-top:12px"><summary><b>🔌 DS Connect · API do USE</b> <span class="sub" id="ds-sit"></span></summary>
-          <div class="sub" style="margin-top:6px">As lojas liberadas na chave puxam o estoque a cada 10 minutos (8h às 22h) e as vendas sozinhas pela API: de hora em hora das 10h às 21h (horário de Manaus) e a última às 22h, que fecha o dia, avisa a gerente e libera o status das campeãs. As outras lojas continuam pelo arquivo — quando você importar, o status é refeito com todas.</div>
+          <div class="sub" style="margin-top:6px">As lojas liberadas na chave puxam o estoque a cada 10 minutos (8h às 22h) e as vendas sozinhas pela API: de hora em hora das 10h às 21h, de 10 em 10 minutos das 22h às 22h20 (horário da loja) e, depois das 22h20, a última busca fecha o dia: a gerente recebe o aviso de relatório pronto, a conferência da fila é feita e sai o status das campeãs. As outras lojas continuam pelo arquivo — quando você importar, o status é refeito com todas.</div>
           <label class="sub" style="display:block;margin-top:8px">Endereço da API (começa com https://) <input id="ds-base" placeholder="https://..."></label>
           <label class="sub" style="display:block;margin-top:8px">Chave de acesso (X-Api-Key) <input id="ds-key" type="password" autocomplete="off" placeholder="cole a chave aqui"></label>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" id="ds-salvar">Salvar</button><button class="btn" id="ds-testar">Testar conexão</button><button class="btn" id="ds-sync">🔄 Buscar vendas agora</button><button class="btn hide" id="ds-off">Pausar automático</button></div>
@@ -1719,7 +1719,7 @@ function carregarMetas() {
   const pf = chefe() ? 'i' : 'm';
   rodar('metas', [S.token, $(pf + '-loja').value].concat(perArgs(pf)), (r) => {
     cartaoMeta.restam = r.restam; cartaoMeta.encerrado = r.encerrado;
-    $('m-tit').textContent = textoPeriodo(r);
+    $('m-tit').textContent = textoPeriodo(r); setTimeout(() => infoVendasUI('m-tit'), 50);
     const eu = $('m-eu'); eu.replaceChildren(); if (!chefe()) avisoSemMeta(eu, r);
     const minha = r.consultoras.find((c) => c.eu);
     if (minha) {
@@ -1927,7 +1927,7 @@ function desenharCards() {
     if (R.perdasR$) c.append(el('div', 'sm', '~' + rsK(R.perdasR$) + ' em perdas'));
   }
   // 4b. conferência fila × USE
-  { const c = card(r.multi ? 'meio' : '', '🔎 Conferência', 'abrir ›', abrirConferencia); c.append(el('div', 'sm', 'Vendas do USE (loja física) × "Vendeu" marcado na fila, por vendedora.'), el('div', 'big', '🧾 × 👥')); c.lastChild.style.fontSize = '22px'; }
+  { const c = card(r.multi ? 'meio' : '', '🔎 Conferência', 'abrir ›', abrirConferencia); c.id = 'i-conf'; c.append(el('div', 'sm', 'Vendas do USE (loja física) × "Vendeu" marcado na fila, por vendedora.'), el('div', 'big', '🧾 × 👥')); c.lastChild.style.fontSize = '22px'; }
   // 5. por que não vendemos
   if (r.perdasMotivos && r.perdasMotivos.length) { const c = card(r.multi ? 'meio' : '', '💸 Por que não vendemos', '', () => abrirDet('Por que não vendemos', (b, mv) => { b.append(mv('i-mot-box')); if (r.procurados && r.procurados.length) { const p = el('div', 'card'); p.append(el('b', '', '🛍️ O que procuraram e não acharam')); r.procurados.slice(0, 8).forEach((x) => p.append(el('div', 'sm', x.produto + ' · ' + x.n + 'x'))); b.append(p); } })); c.append(donut(r.perdasMotivos.slice(0, 3), 80)); }
   // 7. fechamento do mês anterior (primeira semana do mês)
@@ -2010,6 +2010,14 @@ function abrirFechamento(nm) {
     const pr = el('button', 'btn pri big', '🖨️ Salvar em PDF / imprimir'); pr.addEventListener('click', () => window.print()); b.append(pr);
   }));
 }
+// horário da última atualização das vendas + resumo da conferência automática (feita a cada importação do dia completo)
+function infoVendasUI(alvo) {
+  google.script.run.withSuccessHandler((r) => {
+    if (!r) return; const fmt = (x) => { const d = x.dia === diaISO(0) ? 'hoje' : x.dia === diaISO(-1) ? 'ontem' : isoBR(x.dia).slice(0, 5); return (S.lojas.length > 1 ? x.loja + ' ' : '') + d + ' · ' + x.quando.slice(8, 10) + '/' + x.quando.slice(5, 7) + ' ' + x.quando.slice(11, 16) + (x.api ? ' 🔌' : ''); };
+    const t = $(alvo); if (t && r.atual.length) { const old = t.parentNode.querySelector('.vd-at'); if (old) old.remove(); const d = el('div', 'sub vd-at', '🧾 Vendas do USE atualizadas: ' + r.atual.map(fmt).join(' · ')); t.after(d); }
+    const c = $('i-conf'); if (c && r.conf.length) { [...c.children].slice(1).forEach((n) => n.remove()); r.conf.slice(0, 3).forEach((k) => { const pc = k.pct != null ? Math.round(k.pct * 100) : null, ln = el('div', 'sm'); ln.append(el('b', '', (S.lojas.length > 1 ? k.loja + ' · ' : '') + isoBR(k.d).slice(0, 5) + ': ' + (pc != null ? pc + '%' : '—') + ' na fila'), document.createTextNode(' · ' + k.naFila + ' de ' + k.use + (k.fora.length ? ' · fora: ' + k.fora.map((x) => x.nome + ' ' + x.n).join(', ') : ' ✅'))); c.append(ln); }); }
+  }).withFailureHandler(() => {}).infoVendas(S.token);
+}
 function abrirConferencia() {
   toast('Conferindo com o USE…');
   rodar('conferenciaFila', [S.token, $('i-loja').value].concat(perArgs('i')), (r) => abrirDet('Conferência fila × USE', (b) => {
@@ -2055,7 +2063,7 @@ function carregarInicio() {
   rodar('inicio', [S.token, $('i-loja').value].concat(perArgs('i')), (r) => {
     INI = r; desenharCards();
     const R = r.rede;
-    $('i-tit').textContent = textoPeriodo(r);
+    $('i-tit').textContent = textoPeriodo(r); setTimeout(() => infoVendasUI('i-tit'), 50);
     desenharResumo(r);
     const topo = $('i-topo'); topo.replaceChildren(); avisoSemMeta(topo, r);
     cartaoMeta.restam = r.restam; cartaoMeta.encerrado = r.encerrado;
@@ -4052,7 +4060,7 @@ $('gt-ok').addEventListener('click', () => {
       const bx = el('div'); bx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px'; const br = el('button', 'btn pri', '🏬 Fechamento da rede'); br.addEventListener('click', () => fechamento('TODAS', d)); bx.append(br);
       lojas.forEach((lj) => { const b = el('button', 'btn', '📊 ' + lj); b.addEventListener('click', () => fechamento(lj, d)); bx.append(b); }); box.append(bx);
       $('fc-data').value = d; if (d >= ontemISO()) setTimeout(() => fechamento('TODAS', d), 600);
-      if (d >= diaISO(-3) && (d < diaISO(0) || new Date().getHours() >= 22) && res.some((x) => x.ok)) { if (parc.length) box.append(el('div', 'sub', '🎉 O status das campeãs será postado quando você importar o dia completo.')); else google.script.run.withSuccessHandler((r) => { if (r && r.postado) { toast('🎉 Status das campeãs postado (' + r.nomes.length + ')'); box.append(el('div', 'sub', '🎉 Status postado: ' + r.nomes.join(', '))); carregarStatus(); } else box.append(el('div', 'sub', '🎉 Ninguém bateu a meta do dia ' + isoBR(d) + ' — status não postado.')); }).withFailureHandler((e) => box.append(el('div', 'aviso-meta', '⚠️ Status: ' + ((e && e.message) || 'erro')))).postarMetaDiaAgora(S.token, d); }
+      if (d >= diaISO(-3) && (d < diaISO(0) || new Date().getHours() >= 22) && res.some((x) => x.ok)) { if (parc.length) box.append(el('div', 'sub', '🎉 O status das campeãs será postado quando você importar o dia completo.')); else google.script.run.withSuccessHandler((r) => { if (r && r.espera) { box.append(el('div', 'sub', '🎉 O status das campeãs sai quando todas as lojas tiverem o dia completo — falta: ' + r.espera.join(', '))); return; } if (r && r.postado) { toast('🎉 Status das campeãs postado (' + r.nomes.length + ')'); box.append(el('div', 'sub', '🎉 Status postado: ' + r.nomes.join(', '))); carregarStatus(); } else box.append(el('div', 'sub', '🎉 Ninguém bateu a meta do dia ' + isoBR(d) + ' — status não postado.')); }).withFailureHandler((e) => box.append(el('div', 'aviso-meta', '⚠️ Status: ' + ((e && e.message) || 'erro')))).postarMetaDiaAgora(S.token, d); }
       return; }
     const lj = lojas[i++]; st.textContent = 'Importando ' + lj + '… (' + i + ' de ' + lojas.length + ')';
     google.script.run.withSuccessHandler((r) => { const im = (r && r.importado) || {}; res.push({ ok: true, txt: '✅ ' + lj + ': ' + rs(im.total != null ? im.total : GT.por[lj].reduce((a, l) => a + l[2], 0)) + ' · ' + (im.linhas || 0) + ' lançamento(s)' + (parc.indexOf(lj) >= 0 ? ' · ⏳ PARCIAL (loja aberta até ' + fechaLoja(lj, d) + ')' : '') + (im.mesclagem ? ' · juntou com a importação anterior' : '') }); prox(); })
@@ -4355,7 +4363,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide'); blocoNotif(o);
 }));
