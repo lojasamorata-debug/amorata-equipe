@@ -1,4 +1,4 @@
-function zzDebug(){ const c=CacheService.getScriptCache(); const ad=usuarios_().find(x=>x.cargo==='ADMIN'&&x.ativo); c.put('t_zzdbg', JSON.stringify({usuario:ad.usuario}), 120); try { let t0=Date.now(); const r=cashbackBuscar('zzdbg','Sumaúma','maria'); Logger.log('ms '+(Date.now()-t0)+' clientes '+r.clientes.length+' mais '+r.mais+' top agora '+JSON.stringify(r.clientes.slice(0,3).map(x=>[x.agora,x.depois,x.itens.length,x.itens[0]]))); t0=Date.now(); const r2=cashbackBuscar('zzdbg','Sumaúma','ana'); Logger.log('cache ms '+(Date.now()-t0)+' '+r2.clientes.length); const q=dsGet_('/api/v1/clientes/cpfCnpj/00000000000',{loja:5}); Logger.log('cpf teste '+q.status+' '+String(q.texto).slice(0,150).replace(/[=&?]/g,'')); ['Via Verde','Cerâmica','Cruzeiro do Sul','Via Norte'].forEach(l=>{ const t1=Date.now(); const rr=cashbackBuscar('zzdbg',l,'maria'); Logger.log(l+' ms '+(Date.now()-t1)+' clientes '+rr.clientes.length); }); } catch(e) { Logger.log('ERRO '+e.stack); } c.remove('t_zzdbg'); }
+function zzDebug(){ const c=CacheService.getScriptCache(); const ad=usuarios_().find(x=>x.cargo==='ADMIN'&&x.ativo); CacheService.getScriptCache().remove("cbk_5"); CacheService.getScriptCache().remove("cbk_2"); c.put('t_zzdbg', JSON.stringify({usuario:ad.usuario}), 120); try { let t0=Date.now(); const r=cashbackBuscar('zzdbg','Sumaúma','maria'); Logger.log('ms '+(Date.now()-t0)+' clientes '+r.clientes.length+' mais '+r.mais+' top agora '+JSON.stringify(r.clientes.slice(0,3).map(x=>[x.agora,x.depois,x.itens.length,x.itens[0]]))); t0=Date.now(); const r2=cashbackBuscar('zzdbg','Sumaúma','ana'); Logger.log('cache ms '+(Date.now()-t0)+' '+r2.clientes.length); const q=dsGet_('/api/v1/clientes/cpfCnpj/00000000000',{loja:5}); Logger.log('cpf teste '+q.status+' '+String(q.texto).slice(0,150).replace(/[=&?]/g,'')); ['Via Verde','Cerâmica','Cruzeiro do Sul','Via Norte'].forEach(l=>{ const t1=Date.now(); const rr=cashbackBuscar('zzdbg',l,'maria'); Logger.log(l+' ms '+(Date.now()-t1)+' clientes '+rr.clientes.length); }); } catch(e) { Logger.log('ERRO '+e.stack); } c.remove('t_zzdbg'); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
@@ -4719,14 +4719,14 @@ function coberturaPico_(loja, de, ate, usuarioAlvo) {
 
 // ---------- cashback da cliente (consulta rápida no balcão) ----------
 // vem do USE pela DS Connect (/api/v1/ObterVouchers): o +Q1 grava o cashback como voucher (descrição "Q1_…", cashback = true)
-// utilizouVoucher: 1 = usado · 2 = ainda não usado. O filtro dataInicio/dataFim da API é pelo fim da validade.
+// utilizouVoucher: 1 = usado · 2 = ainda não usado. Busca os criados nos últimos 45 dias (o cashback vale 30) e fica 10 min guardado.
 function cashbackLista_(lojaNum) {
   const c = CacheService.getScriptCache(), mk = 'cbk_' + lojaNum, meta = c.get(mk);
   if (meta) { const n = +meta, ks = []; for (let i = 0; i < n; i++) ks.push(mk + '_' + i); const got = c.getAll(ks); if (ks.every((k) => got[k] != null)) return JSON.parse(ks.map((k) => got[k]).join('')); }
-  const tz = 'America/Manaus', h = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd'), fim = Utilities.formatDate(new Date(Date.now() + 60 * 864e5), tz, 'yyyy-MM-dd');
+  const tz = 'America/Manaus', h = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd'), ini = Utilities.formatDate(new Date(Date.now() - 45 * 864e5), tz, 'yyyy-MM-dd'), fim = Utilities.formatDate(new Date(Date.now() + 15 * 864e5), tz, 'yyyy-MM-dd');
   let it = [];
   for (let p = 1; p <= 20; p++) {
-    const r = dsGet_('/api/v1/ObterVouchers', { loja: lojaNum, dataInicio: h, dataFim: fim, itensPorPagina: 500, pagina: p });
+    const r = dsGet_('/api/v1/ObterVouchers', { loja: lojaNum, dataInicio: ini, dataFim: fim, itensPorPagina: 500, pagina: p });
     if (r.status === 204) break; if (r.status !== 200 || !r.json) throw new Error('Não consegui consultar o cashback no sistema agora. Tente de novo em instantes.');
     const xs = r.json.itens || []; it = it.concat(xs); if (!xs.length || it.length >= (r.json.totalitens || 0)) break;
   }
