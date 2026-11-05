@@ -1874,12 +1874,12 @@ function abrirContrato(rh) {
   abrirDet('✍️ Contrato para assinar', (b) => {
     const C = { b64: '', nome: '', pdf: null, pags: [], sig: [], pos: [], ativo: 0 };
     const f = el('div', 'card ct-f'), lin = (rot, c) => { const w = el('label', 'campo'); w.append(el('div', 'sub', rot), c); return w; };
-    const conta = el('select'); (rh.zs || []).filter((z) => z.ok).forEach((z) => conta.append(new Option(z.loja + (z.loja === 'Cerâmica' ? ' (AMORATA LTDA)' : ''), z.loja)));
+    const conta = el('select'); (rh.zs || []).filter((z) => z.ok).forEach((z) => conta.append(new Option(z.loja + (z.loja === 'Via Verde' ? ' (AMORATA LTDA)' : ''), z.loja)));
     if (!conta.options.length) { f.append(el('div', 'card', 'Nenhuma conta ZapSign conectada. Conecte em RH › ZapSign.')); b.append(f); return; }
     const tp = el('select'); ['Contrato', 'Outro'].forEach((t) => tp.append(new Option(t, t)));
-    const nm = el('input'); nm.placeholder = 'Nome do documento (ex.: Contrato de trabalho - Maria Silva)';
-    const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf';
-    f.append(lin('Conta ZapSign (empresa)', conta), lin('Tipo', tp), lin('Arquivo PDF', fi), lin('Nome do documento', nm));
+    const nm = el('input'); nm.placeholder = 'Nome do documento (ex.: Contrato de trabalho - Maria Silva)'; nm.addEventListener('input', () => { nm.dataset.auto = ''; });
+    const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf'; fi.multiple = true; const fiInfo = el('div', 'sub', 'Pode escolher vários PDFs de uma vez (contrato, acordo de banco de horas, regulamento…): eles viram um documento só, assinado de uma vez, na ordem em que foram escolhidos.');
+    f.append(lin('Conta ZapSign (empresa)', conta), lin('Tipo', tp), lin('Arquivos PDF', fi), fiInfo, lin('Nome do documento', nm));
     const sgBox = el('div', 'ct-sigs'), addT = el('button', 'btn sm', '+ Testemunha');
     f.append(el('b', '', 'Quem assina'), sgBox, addT);
     const pvT = el('div', 'sub', ''), chips = el('div', 'ct-chips'), auto = el('button', 'btn sm', '🔍 Posicionar automático'), pv = el('div', 'ct-pv');
@@ -1910,11 +1910,23 @@ function abrirContrato(rh) {
     }
     // PDF
     fi.addEventListener('change', async () => {
-      const file = fi.files[0]; if (!file) return; if (file.size > 10 * 1024 * 1024) { toast('PDF maior que 10 MB.'); return; }
-      if (!nm.value) nm.value = file.name.replace(/\.pdf$/i, '');
-      pv.replaceChildren(el('div', 'sub', 'Abrindo o PDF…'));
+      const files = [...fi.files]; if (!files.length) return;
+      if (files.reduce((a, x) => a + x.size, 0) > 10 * 1024 * 1024) { toast('Os PDFs passam de 10 MB juntos.'); return; }
+      const sem = (x) => x.name.replace(/\.pdf$/i, '');
+      if (!nm.value || nm.dataset.auto === '1') { nm.value = files.length > 1 ? sem(files[0]) + ' e mais ' + (files.length - 1) : sem(files[0]); nm.dataset.auto = '1'; }
+      C.b64 = ''; C.pos = []; C.pags = [];
+      pv.replaceChildren(el('div', 'sub', files.length > 1 ? 'Juntando os ' + files.length + ' PDFs…' : 'Abrindo o PDF…'));
       try {
-        const buf = await file.arrayBuffer(); C.b64 = await new Promise((ok) => { const rd = new FileReader(); rd.onload = () => ok(rd.result); rd.readAsDataURL(file); });
+        let blob = files[0];
+        if (files.length > 1) {
+          await ctLib('https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js');
+          const out = await window.PDFLib.PDFDocument.create();
+          for (const x of files) { let d; try { d = await window.PDFLib.PDFDocument.load(await x.arrayBuffer(), { ignoreEncryption: true }); } catch (e) { throw new Error('Não consegui ler "' + x.name + '". Confira se é um PDF.'); } (await out.copyPages(d, d.getPageIndices())).forEach((pg) => out.addPage(pg)); }
+          blob = new Blob([await out.save()], { type: 'application/pdf' });
+          if (blob.size > 10 * 1024 * 1024) throw new Error('O documento juntado passou de 10 MB.');
+        }
+        fiInfo.textContent = files.length > 1 ? '📎 ' + files.length + ' PDFs juntados em um documento só, nesta ordem: ' + files.map(sem).join(' → ') + '.' : 'Pode escolher vários PDFs de uma vez: eles viram um documento só, assinado de uma vez.';
+        const buf = await blob.arrayBuffer(); C.b64 = await new Promise((ok) => { const rd = new FileReader(); rd.onload = () => ok(rd.result); rd.readAsDataURL(blob); });
         await ctLib('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'); window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         C.pdf = await window.pdfjsLib.getDocument({ data: buf }).promise; C.pags = [];
         pv.replaceChildren();
