@@ -3252,7 +3252,47 @@ function bhAutoSaldos() {
   pr.setProperty('BH_AUTO', JSON.stringify(feitos)); if (log.length) pr.setProperty('BH_AUTO_LOG', agoraBR_() + ' · ' + log.join(' · '));
   return log.join('\n');
 }
-function bhGatilho_() { if (!ScriptApp.getProjectTriggers().some((g) => g.getHandlerFunction() === 'bhAutoSaldos')) ScriptApp.newTrigger('bhAutoSaldos').timeBased().everyDays(1).atHour(6).nearMinute(20).inTimezone('America/Rio_Branco').create(); }
+// saldo atual de cada vendedora (mesma regra da tela)
+function bhSaldos_() {
+  const mov = {}; abaBH_().getDataRange().getValues().slice(1).forEach((r) => { if (!r[0] || r[10]) return; const d = r[1] instanceof Date ? Utilities.formatDate(r[1], 'America/Rio_Branco', 'yyyy-MM-dd') : String(r[1]).slice(0, 10); (mov[r[3]] = mov[r[3]] || []).push([d, String(r[5]), Number(r[6]) || 0, Number(r[9]) || 0]); });
+  const out = {}; Object.keys(mov).forEach((k) => { let s2 = null; mov[k].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : (a[1] === 'SALDO' ? -1 : b[1] === 'SALDO' ? 1 : a[3] - b[3]))).forEach((m) => { s2 = m[1] === 'SALDO' ? m[2] : (s2 || 0) + m[2]; }); out[k] = s2; });
+  return out;
+}
+const hmTxt_ = (m) => (m < 0 ? '-' : '') + Math.floor(Math.abs(m) / 60) + 'h' + (Math.abs(m) % 60 ? String(Math.abs(m) % 60).padStart(2, '0') : '');
+// de hora em hora: (1) dia de movimento fraco entre 15h e 19h → sugere à gerente liberar mais cedo quem tem mais banco;
+// (2) segunda às 10h → lembrete semanal com quem está com mais horas para compensar
+function bhLembretes() {
+  const pr = PropertiesService.getScriptProperties(), sal = bhSaldos_(), us = usuarios_(), agoraD = new Date(), log = [];
+  const dados = SpreadsheetApp.openById(DADOS_ID), tzs = dados.getSpreadsheetTimeZone(); let at = null;
+  LOJAS.forEach((loja) => {
+    const tz = TZ[loja] || 'America/Rio_Branco', hoje = dia_(loja), agora = Utilities.formatDate(agoraD, tz, 'HH:mm'), hh = +agora.slice(0, 2), dow = +Utilities.formatDate(agoraD, tz, 'u');
+    const gerentes = us.filter((x) => x.ativo && x.cargo === 'GERENTE' && x.loja === loja); if (!gerentes.length) return;
+    const equipe = us.filter((x) => x.ativo && x.loja === loja && x.cargo !== 'GERENTE' && x.cargo !== 'ADMIN' && sal[x.usuario] != null);
+    // (2) lembrete semanal
+    if (dow === 1 && hh === 10 && pr.getProperty('BH_SEM_' + loja) !== hoje) {
+      const top = equipe.filter((x) => sal[x.usuario] >= 8 * 60).sort((a, b) => sal[b.usuario] - sal[a.usuario]).slice(0, 4);
+      if (top.length) { const msg = '⏱️ Banco de horas da equipe: ' + top.map((x) => primeiroNomeS_(x.nome) + ' ' + hmTxt_(sal[x.usuario])).join(', ') + '. Programe compensações nesta semana nos dias e horários de movimento mais fraco (Gestão › Banco de horas).'; gerentes.forEach((g) => avisar_(g.usuario, 'bh', msg, '', '')); log.push(loja + ': semanal'); }
+      pr.setProperty('BH_SEM_' + loja, hoje);
+    }
+    // (1) movimento fraco agora
+    if (hh < 15 || hh > 19 || pr.getProperty('BH_FRACO_' + loja) === hoje) return;
+    let cal = null; try { cal = calendarios_(loja); } catch (e) {}
+    const trabHoje = (x) => { if (!cal) return true; let pc = null, sc = 0; cal.pessoas.forEach((p) => { const z = similaridade_(p.nome, x.nome); if (z > sc) { sc = z; pc = p; } }); return !pc || sc < 2 || !pc.cobre[hoje] || !!pc.trab[hoje]; };
+    const hojeEq = equipe.filter(trabHoje); if (hojeEq.length < 2) return;
+    if (!at) at = dados.getSheetByName('Atendimentos').getDataRange().getValues().slice(1);
+    const datas = []; for (let i = 1; i <= 8; i++) datas.push(somaDia_(hoje, -7 * i)); const porDia = {}; datas.forEach((d) => { porDia[d] = { tot: 0, ate: 0 }; }); let atHoje = 0;
+    const hmx = (x) => { if (x instanceof Date) return Utilities.formatDate(x, tz, 'HH:mm'); const m = String(x).match(/(\d{2}):(\d{2})/); return m ? m[1] + ':' + m[2] : ''; };
+    at.forEach((r) => { if (r[1] !== loja) return; const d = r[0] instanceof Date ? Utilities.formatDate(r[0], tzs, 'yyyy-MM-dd') : String(r[0]).slice(0, 10); if (d === hoje) { atHoje++; return; } const o = porDia[d]; if (!o) return; o.tot++; const h = hmx(r[4]); if (h && h <= agora) o.ate++; });
+    const usados = datas.filter((d) => porDia[d].tot > 0); if (usados.length < 3) return;
+    const esperado = usados.reduce((a, d) => a + porDia[d].ate, 0) / usados.length; if (esperado < 6 || atHoje > esperado * 0.6) return;
+    const cand = hojeEq.filter((x) => sal[x.usuario] >= 2 * 60).sort((a, b) => sal[b.usuario] - sal[a.usuario]); if (!cand.length) return;
+    const p = cand[0], msg = '📉 Movimento fraco hoje: ' + atHoje + ' atendimento(s) até agora (o normal para este horário é ~' + Math.round(esperado) + '). Boa hora para compensar banco de horas: que tal liberar a ' + primeiroNomeS_(p.nome) + ' mais cedo? Ela tem ' + hmTxt_(sal[p.usuario]) + ' no banco' + (cand[1] ? ' (depois: ' + primeiroNomeS_(cand[1].nome) + ' ' + hmTxt_(sal[cand[1].usuario]) + ')' : '') + '. Lance em Gestão › Banco de horas › Marcar compensação.';
+    gerentes.forEach((g) => avisar_(g.usuario, 'bh', msg, '', '')); pr.setProperty('BH_FRACO_' + loja, hoje); log.push(loja + ': movimento fraco → ' + primeiroNomeS_(p.nome));
+  });
+  if (log.length) pr.setProperty('BH_LEMB_LOG', agoraBR_() + ' · ' + log.join(' · '));
+  return log.join('\n');
+}
+function bhGatilho_() { const g = ScriptApp.getProjectTriggers().map((x) => x.getHandlerFunction()); if (g.indexOf('bhAutoSaldos') < 0) ScriptApp.newTrigger('bhAutoSaldos').timeBased().everyDays(1).atHour(6).nearMinute(20).inTimezone('America/Rio_Branco').create(); if (g.indexOf('bhLembretes') < 0) ScriptApp.newTrigger('bhLembretes').timeBased().everyHours(1).create(); }
 function bhApagar(token, id, lojaVer) {
   const u = sessao_(token); if (!chefe_(u)) throw new Error('Só gerente e administração.');
   const sh = abaBH_(), v = sh.getDataRange().getValues(), i = v.findIndex((r, k) => k > 0 && String(r[0]) === String(id)); if (i < 1) throw new Error('Lançamento não encontrado.');
@@ -3380,7 +3420,7 @@ function urlDoApp() { return urlApp_(); }
 
 
 // ---------- API: o mesmo app hospedado fora do Google (GitHub Pages) chama as funções por aqui ----------
-const API_NEGADAS = ['bhAutoSaldos', 'dsEstoque10', 'dsFechamentoDia', 'dsSincronizar', 'postarMetaDia', 'rhImportarZapSign_', 'limparStatus', 'zsSincronizar', 'doGet', 'doPost', 'migrarVendasPlanilhas', 'prepararFotos', 'instalarResumo', 'resumoDiario', 'auditoriaMesAnterior', 'criarChaveImport', 'backupDiario', 'autorizarNotificacoes'];
+const API_NEGADAS = ['bhLembretes', 'bhAutoSaldos', 'dsEstoque10', 'dsFechamentoDia', 'dsSincronizar', 'postarMetaDia', 'rhImportarZapSign_', 'limparStatus', 'zsSincronizar', 'doGet', 'doPost', 'migrarVendasPlanilhas', 'prepararFotos', 'instalarResumo', 'resumoDiario', 'auditoriaMesAnterior', 'criarChaveImport', 'backupDiario', 'autorizarNotificacoes'];
 function api_(b) {
   const fn = String(b.fn || '');
   if (!/^[a-zA-Z]\w*$/.test(fn) || /_$/.test(fn) || API_NEGADAS.indexOf(fn) >= 0 || typeof globalThis[fn] !== 'function') throw new Error('Função não permitida.');
