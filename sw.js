@@ -1,12 +1,30 @@
-// Amorata Equipe: sempre busca a versão nova; usa a cópia guardada só quando estiver sem internet.
-const CACHE = 'amorata-equipe-v5';
+// Amorata Equipe: abre na hora com a cópia guardada e busca a versão nova por trás.
+// Quando a versão nova chega, o app mostra um aviso para atualizar. Sem internet, usa a cópia guardada.
+const CACHE = 'amorata-equipe-v6';
 const ARQS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARQS)).catch(() => {})); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
+const assinatura = (r) => (r && (r.headers.get('etag') || r.headers.get('last-modified') || r.headers.get('content-length'))) || '';
 self.addEventListener('fetch', (e) => {
   const u = new URL(e.request.url);
   if (e.request.method !== 'GET' || u.origin !== location.origin) return; // chamadas ao Apps Script passam direto
-  e.respondWith(fetch(e.request, { cache: 'no-cache' }).then((r) => { const cp = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, cp)); return r; }).catch(() => caches.match(e.request).then((r) => r || caches.match('./index.html'))));
+  const pagina = e.request.mode === 'navigate' || /\/(index\.html)?$/.test(u.pathname);
+  if (!pagina) {
+    e.respondWith(caches.match(e.request).then((c) => c || fetch(e.request).then((r) => { const cp = r.clone(); caches.open(CACHE).then((ca) => ca.put(e.request, cp)); return r; })));
+    return;
+  }
+  const chave = './index.html';
+  e.respondWith(caches.open(CACHE).then((ca) => ca.match(chave).then((guardada) => {
+    const rede = fetch(u.pathname + (u.search || ''), { cache: 'no-cache' }).then((r) => {
+      if (r && r.ok) {
+        const nova = assinatura(r) !== assinatura(guardada);
+        ca.put(chave, r.clone()).then(() => { if (guardada && nova) self.clients.matchAll({ type: 'window' }).then((cs) => cs.forEach((c) => c.postMessage({ tipo: 'nova-versao' }))); });
+      }
+      return r;
+    });
+    if (guardada) { e.waitUntil(rede.catch(() => {})); return guardada; }
+    return rede.catch(() => caches.match('./'));
+  })));
 });
 // notificações (Web Push): mostra o aviso e abre o app ao tocar
 self.addEventListener('push', (e) => {
