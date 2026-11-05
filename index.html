@@ -2036,7 +2036,7 @@ function cardReposicao(box) {
     const t = el('div', 'dt'); t.append(el('span', '', '🔄 Reposição de hoje'), el('span', '', 'abrir ›')); c.append(t); c.style.cursor = 'pointer'; c.addEventListener('click', () => abrirReposicao());
     ls.forEach((x) => {
       const w = el('div'); w.style.cssText = 'margin-top:10px'; const base = x.total || 0, feitas = x.feitas + x.sem, pc = base ? feitas / base : 1;
-      const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px;font-size:14px'; h.append(el('b', '', ls.length > 1 || (S.lojas || []).length > 1 ? x.loja : 'Peças vendidas hoje'), el('span', '', base ? x.feitas + ' de ' + base + ' repostas' + (x.sem ? ' · ' + x.sem + ' sem peça' : '') : 'nenhuma venda ainda'));
+      const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px;font-size:14px'; h.append(el('b', '', ls.length > 1 || (S.lojas || []).length > 1 ? x.loja : 'Peças vendidas hoje'), el('span', '', base ? x.feitas + ' de ' + base + ' repostas' + (x.sem ? ' · ' + x.sem + ' sem peça' : '') : 'nenhuma venda hoje ainda'));
       const bar = el('div'); bar.style.cssText = 'height:10px;border-radius:5px;background:#efebf5;margin-top:5px;overflow:hidden;display:flex'; const f1 = el('div'), f2 = el('div');
       f1.style.cssText = 'height:100%;background:#1e7a46;width:' + (base ? Math.round(x.feitas / base * 100) : 0) + '%'; f2.style.cssText = 'height:100%;background:#e8a29a;width:' + (base ? Math.round(x.sem / base * 100) : 0) + '%'; bar.append(f1, f2);
       w.append(h, bar);
@@ -2044,6 +2044,9 @@ function cardReposicao(box) {
       if (x.slots.length) { const sl = el('div'); sl.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;margin-top:6px';
         x.slots.forEach((z) => { const ch = el('span', 'sm', z.hora + ' ' + z.nome + ' ' + (z.st === 'feito' ? '✅ ' + z.quando : z.st === 'outra' ? '☑️ ' + z.por + ' fez' : z.st === 'pendente' ? '⚠️ não fez' : '🕘')); ch.style.cssText = 'padding:3px 8px;border-radius:12px;background:' + (z.st === 'feito' ? '#e8f4ec' : z.st === 'pendente' ? '#fdecea' : '#f3efe9'); sl.append(ch); }); w.append(sl); }
       else w.append(el('div', 'sm', '👤 Sem escala de reposição — monte na tela de Reposição.'));
+      if ((x.sessoes || []).length) { const hs = el('div'); hs.style.cssText = 'margin-top:6px;border-top:1px dashed var(--line);padding-top:6px'; hs.append(el('div', 'sm', '📋 Reposições feitas hoje'));
+        x.sessoes.forEach((z) => hs.append(el('div', 'sm', '• ' + (z.ini === z.fim ? z.ini : z.ini + '–' + z.fim) + ' · ' + z.nome + ' · ' + z.feitas + (z.feitas === 1 ? ' peça reposta' : ' peças repostas') + (z.sem ? ' · ' + z.sem + ' sem peça' : '')))); w.append(hs); }
+      else if (base) w.append(el('div', 'sm', '📋 Nenhuma reposição feita ainda hoje.'));
       w.addEventListener('click', (ev) => { ev.stopPropagation(); abrirReposicao(false, x.loja); }); c.append(w);
     });
   }).withFailureHandler(() => c.remove()).reposicaoPainel(S.token);
