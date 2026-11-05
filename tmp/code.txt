@@ -1160,16 +1160,16 @@ function fechamentoTexto_(t, loja, d) {
     L.push('🎯 Mês: ' + pct_(f.mesPct) + ' da meta' + (f.faltaMes > 0 ? ' · faltam ' + brl_(f.faltaMes) : ' · meta batida 🎉'));
     if (f.faltaMes > 0 && f.porDia && f.proxDia) L.push('➡️ ' + sem[new Date(f.proxDia + 'T12:00:00Z').getUTCDay()] + ' ' + f.proxDia.slice(8, 10) + '/' + f.proxDia.slice(5, 7) + ' precisa de ' + brl_(f.porDia));
   }
-  try { const b = quemBateuDia_(d).filter((p) => p.loja === loja); L.push(b.length ? '🏆 Bateram a meta do dia: ' + b.map((p) => primeiroNomeS_(p.nome)).join(', ') : '🏆 Ninguém bateu a meta do dia hoje'); } catch (e) {}
-  if (f.destaques && f.destaques.length) L.push('⭐ Destaques: ' + f.destaques.map((x) => x.nome + ' (' + x.txt + ')').join(' · '));
+  try { const b = quemBateuDia_(d).filter((p) => p.loja === loja); L.push(b.length ? '🏆 Bateram a meta do dia: ' + b.map((p) => primeiroNomeS_(p.nome)).join(', ') : '🏆 Ninguém bateu a meta do dia'); } catch (e) {}
+  if (f.destaques && f.destaques.length) L.push('⭐ Destaques: ' + f.destaques.map((x) => x.nome + ' — ' + x.txt).join(' · '));
   const F = f.fila;
   if (!F) L.push('👥 Fila: nenhum atendimento registrado.');
   else {
     L.push('👥 Fila: ' + F.at + ' atendimentos · ' + F.v + ' vendas · conversão ' + pct_(F.conv));
-    if (F.perdidas) L.push('💸 Oportunidades perdidas: ' + F.perdidas + (F.perdidoValor ? ' · cerca de ' + brl_(F.perdidoValor) + ' (pelo ticket médio)' : '') + (F.motivos.length ? ' · motivos: ' + F.motivos.map((m) => m.motivo + ' ' + m.n).join(', ') : ''));
+    if (F.perdidas) L.push('💸 Oportunidades perdidas: ' + F.perdidas + (F.perdidoValor ? ' · cerca de ' + brl_(F.perdidoValor) + ' (pelo ticket médio)' : '') + (F.motivos.length ? ' · motivos: ' + F.motivos.map((m) => m.motivo + ' ' + m.n).join(', ') : '') + (F.trocas ? ' · ' + F.trocas + (F.trocas === 1 ? ' troca' : ' trocas') + ' (não contam como perda)' : ''));
   }
   try { const c = JSON.parse(PropertiesService.getScriptProperties().getProperty('CONF_' + loja) || 'null'); if (c && c.d === d) L.push('🔎 Conferência: ' + c.naFila + ' de ' + c.use + ' vendas na fila (' + pct_(c.pct) + ')' + (c.fora.length ? ' · fora: ' + c.fora.map((x) => x.nome + ' ' + x.n).join(', ') : ' ✅')); } catch (e) {}
-  const foco = !F ? 'usar a fila em todos os atendimentos' : F.conv != null && F.conv < 0.4 ? 'conversão — convidar toda cliente para provar' : F.motivo ? 'reverter "' + F.motivo + '"' : f.pa && f.paMes && f.pa < f.paMes ? 'PA — oferecer a segunda peça' : 'manter o ritmo';
+  const foco = !F ? 'usar a fila em todos os atendimentos' : F.conv != null && F.conv < 0.4 ? 'conversão — convidar toda cliente para provar' : F.motivo === 'Só olhando' ? 'abordagem — transformar o "só olhando" em prova' : F.motivo ? 'reverter "' + F.motivo + '"' : f.pa && f.paMes && f.pa < f.paMes ? 'PA — oferecer a segunda peça' : 'manter o ritmo';
   L.push('👉 Amanhã: foco em ' + foco + '.');
   try {
     const am = somaDia_(d, 1), cal = calendarios_(loja), fol = cal.pessoas.filter((p) => p.cobre[am] && !p.trab[am]).map((p) => primeiroNomeS_(p.nome));
@@ -2758,9 +2758,9 @@ function fechamentoDia(token, lojaSel, d) {
     // fila do dia
     const fr = at.filter((r) => String(r[1]) === loja), v = fr.filter((r) => String(r[7]) === 'VENDEU').length, mot = {};
     fr.forEach((r) => { if (String(r[7]) !== 'VENDEU' && r[8]) mot[r[8]] = (mot[r[8]] || 0) + 1; });
-    const tm = Object.keys(mot).sort((a, b) => mot[b] - mot[a])[0];
-    const perd = fr.length - v, tkm = o.tkm || o.tkmMes || null;
-    o.fila = fr.length ? { at: fr.length, v: v, conv: v / fr.length, motivo: tm || '', motivoN: tm ? mot[tm] : 0, perdidas: perd, perdidoValor: tkm ? perd * tkm : null, motivos: Object.keys(mot).sort((a, b) => mot[b] - mot[a]).slice(0, 3).map((k) => ({ motivo: k, n: mot[k] })) } : null;
+    const tm = Object.keys(mot).filter((k) => !/troca|devolu/i.test(k)).sort((a, b) => mot[b] - mot[a])[0];
+    const perd = fr.filter((r) => String(r[7]) !== 'VENDEU' && !/troca|devolu/i.test(String(r[8]))).length, trocas = fr.filter((r) => String(r[7]) !== 'VENDEU' && /troca|devolu/i.test(String(r[8]))).length, tkm = o.tkm || o.tkmMes || null;
+    o.fila = fr.length ? { at: fr.length, v: v, conv: v / fr.length, motivo: tm || '', motivoN: tm ? mot[tm] : 0, perdidas: perd, trocas: trocas, perdidoValor: tkm ? perd * tkm : null, motivos: Object.keys(mot).filter((k) => !/troca|devolu/i.test(k)).sort((a, b) => mot[b] - mot[a]).slice(0, 3).map((k) => ({ motivo: k, n: mot[k] })) } : null;
     // destaques (só elogios, sem expor quem ficou para trás)
     const nomeU = {}; usuarios_().forEach((z) => { nomeU[z.usuario] = z.nome; });
     const pv = {}; dia.forEach((x) => { const k = x[8] || primeiro_(x[1]); const p = pv[k] = pv[k] || { nome: primeiroNomeS_(x[8] && nomeU[x[8]] ? nomeU[x[8]] : x[1]), valor: 0 }; p.valor += x[3]; });
