@@ -1711,6 +1711,18 @@ function rrPaginas(r) {
   two.append(lst('💪 Pontos fortes', '#1e7a46', r.fortes.map((x) => x.txt), 'Sem destaque no período.'), lst('🎯 A melhorar', '#a85d00', r.fracos.map((x) => x.txt), 'Nada abaixo do esperado.')); p3.append(two);
   if (r.foco.length) { p3.append(rrH('h3', '', 'Sugestões de foco')); const b = rrH('div', 'rr-bx'), u = rrH('ul'); r.foco.forEach((x) => u.append(rrH('li', '', x))); b.append(u); p3.append(b); }
   if (c.motivos && c.motivos.length) { p3.append(rrH('h3', '', 'Por que não vendeu (fila)')); const t3 = rrH('table', 'rr-tb'); c.motivos.forEach((x) => { const tr = rrH('tr'); tr.append(rrH('td', '', x.motivo), rrH('td', 'n', x.n + (x.n === 1 ? ' vez' : ' vezes'))); t3.append(tr); }); p3.append(t3); }
+  if (r.picos && r.picos.length) {
+    p3.append(rrH('h3', '', 'Horários de pico e cobertura da loja'));
+    const t4 = rrH('table', 'rr-tb'), h4 = rrH('tr'); ['Pico', 'Clientes/dia', 'Conversão', 'Na fila', 'Atendendo', 'Fora da fila'].concat(r.tipo === 'pessoa' ? ['Ela no pico'] : []).forEach((x, i) => h4.append(rrH('th', i ? 'n' : '', x))); t4.append(h4);
+    const pe = (x) => (x == null ? '—' : x.toFixed(1).replace('.', ',')); 
+    r.picos.forEach((k) => { const tr = rrH('tr'); tr.append(rrH('td', '', k.h + 'h–' + (k.h + 1) + 'h'), rrH('td', 'n', pe(k.atPorDia)), rrH('td', 'n', pc(k.conv)), rrH('td', 'n', pe(k.naFila)), rrH('td', 'n', pe(k.atendendo)), rrH('td', 'n', pe(k.pausa)));
+      if (r.tipo === 'pessoa') tr.append(rrH('td', 'n', k.eu ? (k.eu.off >= 0.9 ? 'não estava' : pc(k.eu.fila + k.eu.atend) + ' na fila' + (k.eu.pausa >= 0.05 ? ' · ' + pc(k.eu.pausa) + ' pausa' : '')) : '—'));
+      t4.append(tr); });
+    p3.append(t4);
+    const nt = rrH('div', '', 'As 4 horas com mais clientes no período. Números = média de pessoas ao mesmo tempo em cada situação naquela hora. "Fora da fila" = em pausa (almoço, banheiro, estoque etc.).'); nt.style.cssText = 'font-size:11.5px;color:#6b6862;margin-top:4px'; p3.append(nt);
+    const mz = r.picos.filter((k) => k.motivos && k.motivos.length).map((k) => k.h + 'h: ' + k.motivos.map((m) => m.motivo + ' (' + m.min + ' min)').join(', '));
+    if (mz.length) { const b = rrH('div', 'rr-bx'); b.style.marginTop = '8px'; b.append(rrH('b', '', 'Por que estavam fora da fila no pico')); const u = rrH('ul'); mz.forEach((x) => u.append(rrH('li', '', x))); b.append(u); p3.append(b); }
+  }
   const ob = r.objetivos; if (ob) { const nomeO = (o) => o.tipo === 'livre' ? o.texto : (ob.tipos[o.tipo] || [o.tipo])[0] + ': ' + o.alvo + ((ob.tipos[o.tipo] || [])[1] || '');
     const at = (o) => o.atual == null ? '' : ' (hoje: ' + (o.tipo === 'tkm' ? rrBRL(o.atual) : o.tipo === 'pa' ? rrN1(o.atual) : Math.round(o.atual) + ((ob.tipos[o.tipo] || [])[1] === '%' ? '%' : '')) + ')';
     if (ob.anteriores.length) { p3.append(rrH('h3', '', 'Combinados do mês passado')); const b = rrH('div', 'rr-bx'), u = rrH('ul'); ob.anteriores.forEach((o) => u.append(rrH('li', '', (o.ok ? '✅ Cumprido: ' : '❌ Não cumprido: ') + nomeO(o) + at(o)))); b.append(u); p3.append(b); }
