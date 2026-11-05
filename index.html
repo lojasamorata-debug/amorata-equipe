@@ -3966,7 +3966,7 @@ $('gi-arq').addEventListener('change', (e) => { if (e.target.files[0]) lerPedido
 // ---------- ADMIN: um arquivo com todas as lojas ----------
 const COD_LOJA = { '1': 'Cerâmica', '2': 'Via Verde', '3': 'Cruzeiro do Sul', '4': 'Via Norte', '5': 'Sumaúma' };
 const TZ_LOJA = { 'Via Norte': 'America/Manaus', 'Sumaúma': 'America/Manaus' };
-const fechaLoja = (lj, d) => { const wd = new Date(d + 'T12:00:00Z').getUTCDay(), shop = ['Via Verde', 'Via Norte', 'Sumaúma'].indexOf(lj) >= 0; return shop ? (wd === 0 ? '21:00' : '22:00') : (wd === 0 ? '13:00' : '19:00'); };
+const fechaLoja = (lj, d) => { const wd = new Date(d + 'T12:00:00Z').getUTCDay(), shop = ['Via Verde', 'Via Norte', 'Sumaúma'].indexOf(lj) >= 0; if (shop) return wd === 0 ? '21:00' : '22:00'; if (lj === 'Cruzeiro do Sul') return wd === 6 ? '17:00' : '18:00'; if (lj === 'Cerâmica') return '17:30'; return wd === 0 ? '13:00' : '19:00'; };
 // a loja ainda não fechou o dia d? (no fuso da loja)
 function lojaAberta(lj, d) {
   try { const f = new Intl.DateTimeFormat('sv-SE', { timeZone: TZ_LOJA[lj] || 'America/Rio_Branco', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date()); const dia = f.slice(0, 10), hm = f.slice(11, 16); return dia < d || (dia === d && hm < fechaLoja(lj, d)); } catch (e) { return false; }
