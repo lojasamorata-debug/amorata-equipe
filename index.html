@@ -526,6 +526,43 @@ body.ini-res #v-ini > #menu, body.ini-res #v-ini > #dia-blocos, body.ini-res[dat
 #i-res-h h2 { margin:0; font-size:20px; }
 #i-res-h button { border:1px solid var(--line); background:var(--panel); color:var(--accent); font:inherit; font-size:14px; font-weight:600; padding:7px 12px; border-radius:999px; cursor:pointer; }
 @media (orientation:landscape) and (max-height:560px) { body.fila-v #bnav { display:none !important; } body.fila-v #eu { bottom:0; } }
+
+/* relatório para reunião */
+.rr-card { display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+.rr-card .rr-t { font-size:18px; font-weight:700; }
+.rr-l { display:flex; flex-direction:column; gap:4px; font-size:13px; font-weight:600; color:var(--muted); }
+.rr-l select { font:inherit; font-size:15px; font-weight:500; color:var(--fg); padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel); }
+.rr-bar { position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; gap:8px; padding:10px 0; background:var(--bg); }
+.rr-bar .btn { flex:1 1 160px; }
+.rr-wrap { overflow:hidden; }
+.rr-pgs { transform-origin:0 0; display:flex; flex-direction:column; gap:16px; width:794px; }
+.rr-pg { width:794px; min-height:1123px; box-sizing:border-box; background:#fff; color:#1f1e1d; font-family:Inter, system-ui, sans-serif; padding:44px 48px; box-shadow:0 2px 14px rgba(0,0,0,.12); position:relative; font-size:14px; line-height:1.4; }
+.rr-hd { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #5b4a7a; padding-bottom:10px; margin-bottom:18px; }
+.rr-hd .mk { font-family:Georgia,'Times New Roman',serif; letter-spacing:5px; color:#5b4a7a; font-size:15px; }
+.rr-hd h1 { margin:4px 0 0; font-size:22px; } .rr-hd .rp { text-align:right; font-size:12px; color:#6b6862; }
+.rr-pg h3 { margin:20px 0 8px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:#5b4a7a; }
+.rr-mapa { position:relative; width:698px; height:900px; }
+.rr-mapa svg { position:absolute; inset:0; }
+.rr-no { position:absolute; width:232px; box-sizing:border-box; border-radius:16px; padding:12px 14px; border:2px solid; background:#fff; }
+.rr-no b { display:block; font-size:14px; margin-bottom:6px; letter-spacing:.03em; text-transform:uppercase; }
+.rr-no div { font-size:12.5px; margin:3px 0; }
+.rr-cen { position:absolute; left:254px; top:365px; width:190px; height:170px; box-sizing:border-box; border-radius:90px; background:#5b4a7a; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:12px; }
+.rr-cen .n { font-size:20px; font-weight:700; } .rr-cen .v { font-size:24px; font-weight:800; margin-top:6px; } .rr-cen .s { font-size:12px; opacity:.9; margin-top:2px; }
+.rr-tb { width:100%; border-collapse:collapse; font-size:13px; }
+.rr-tb th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#6b6862; border-bottom:1px solid #e4e1da; padding:6px 6px; }
+.rr-tb td { border-bottom:1px solid #f0ede7; padding:7px 6px; } .rr-tb td.n, .rr-tb th.n { text-align:right; white-space:nowrap; }
+.rr-up { color:#1e7a46; font-weight:600; } .rr-dn { color:#b3261e; font-weight:600; }
+.rr-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.rr-bx { border:1px solid #e4e1da; border-radius:12px; padding:12px 14px; }
+.rr-bx ul { margin:4px 0 0; padding-left:18px; } .rr-bx li { margin:4px 0; }
+.rr-kp { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.rr-kp div { border:1px solid #e4e1da; border-radius:12px; padding:10px 12px; } .rr-kp b { display:block; font-size:19px; } .rr-kp span { font-size:11.5px; color:#6b6862; }
+.rr-ln { border-bottom:1px solid #bdb8ae; height:30px; }
+.rr-ass { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-top:44px; font-size:12px; color:#6b6862; text-align:center; } .rr-ass div { border-top:1px solid #6b6862; padding-top:6px; }
+.rr-ft { position:absolute; left:48px; right:48px; bottom:22px; font-size:10.5px; color:#9a968e; display:flex; justify-content:space-between; }
+.rr-cb { display:flex; flex-direction:column; gap:10px; }
+.rr-cb .lin { display:grid; grid-template-columns:1fr 110px; gap:8px; }
+.rr-cb select, .rr-cb input, .rr-cb textarea { font:inherit; padding:10px; border:1px solid var(--line); border-radius:10px; }
 </style>
 </head>
 <body>
@@ -840,6 +877,15 @@ body.ini-res #v-ini > #menu, body.ini-res #v-ini > #dia-blocos, body.ini-res[dat
     </div>
 
     <div id="v-rel" class="hide">
+      <div class="card rr-card" id="rr-card">
+        <div class="rr-t">📄 Relatório para reunião</div>
+        <div class="sub">Monte um PDF para a reunião de feedback: mapa mental, resultados, comparação com o período anterior, projeção do mês, pontos fortes e o que melhorar.</div>
+        <label class="rr-l">Quem<select id="rr-quem"><option value="">Carregando…</option></select></label>
+        <label class="rr-l">Período<select id="rr-per"><option value="hoje">Hoje</option><option value="semana">Esta semana</option><option value="mes" selected>Este mês</option><option value="mes_ant">Mês passado</option><option value="custom">Escolher datas…</option></select></label>
+        <div class="datas hide" id="rr-datas"><label>De <input type="date" id="rr-de"></label><label>Até <input type="date" id="rr-ate"></label></div>
+        <button class="btn pri big" id="rr-gerar">Gerar relatório</button>
+      </div>
+      <h2 style="margin-top:26px"><span>Números na tela</span></h2>
       <div class="filtros">
         <select id="f-per"><option value="hoje">Hoje</option><option value="7d">Últimos 7 dias</option><option value="mes" selected>Mês atual</option><option value="mes_ant">Mês anterior</option><option value="ano">Ano</option><option value="custom">Personalizado…</option></select>
         <select id="f-loja"></select>
@@ -964,7 +1010,7 @@ function entrar() {
     .login($('lu').value, $('ls').value);
 }
 function sair(msg) {
-  document.body.classList.remove('fila-v'); { const sb = $('st-bolha'); if (sb) sb.remove(); const cb = $('camp-bolha'); if (cb) cb.remove(); } CAMP = null; S = null; protecao(false); E = null; MH = null; clearInterval(timerPoll); clearInterval(timerExtra); $('pend').replaceChildren(); $('pend').classList.add('hide'); $('cmn-top').replaceChildren();
+  document.body.classList.remove('fila-v'); { const sb = $('st-bolha'); if (sb) sb.remove(); const cb = $('camp-bolha'); if (cb) cb.remove(); } CAMP = null; S = null; RR_P = null; RR = null; protecao(false); E = null; MH = null; clearInterval(timerPoll); clearInterval(timerExtra); $('pend').replaceChildren(); $('pend').classList.add('hide'); $('cmn-top').replaceChildren();
   try { localStorage.removeItem('amorata_fila'); Object.keys(localStorage).filter((k) => k.indexOf('amc_') === 0).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
   $('v-app').classList.add('hide'); $('v-login').classList.remove('hide'); $('lerr').textContent = msg || '';
 }
@@ -1569,7 +1615,7 @@ function mudarAba(a) {
   $('mood-fila').classList.add('hide'); $('cmn-top').classList.toggle('hide', !(a === 'dia' || a === 'ini'));
   if (a === 'dia') { desenharDiaPre(); carregarReuniao(); }
   if (a === 'ini' && S && S.cargo !== 'VENDEDORA') carregarReuniao();
-  if (a === 'rel') carregarRel();
+  if (a === 'rel') { carregarRel(); carregarRelPessoas(); }
   if (a === 'meta') carregarMetas();
   if (a === 'ini') carregarInicio();
   if (a === 'prod') carregarProdutos();
@@ -1579,6 +1625,163 @@ function mudarAba(a) {
   if (a === 'apr') carregarAprender();
   if (a === 'gest') carregarGestao();
   desenharMenu(); if (a !== aba0_) { try { window.scrollTo(0, 0); } catch (e) {} } aba0_ = a;
+}
+// ---------- relatório para reunião: PDF com mapa mental ----------
+let RR_P = null, RR = null;
+function carregarRelPessoas() {
+  if (RR_P) return; google.script.run.withSuccessHandler((r) => {
+    RR_P = r; const sel = $('rr-quem'); sel.replaceChildren();
+    if (!chefe()) { sel.append(new Option('Meu relatório', 'pessoa:' + S.usuario)); return; }
+    (r.lojas || []).forEach((l) => {
+      const g = document.createElement('optgroup'); g.label = l; g.append(new Option('🏬 Loja ' + l + ' (toda a equipe)', 'loja:' + l));
+      r.pessoas.filter((p) => p.loja === l).forEach((p) => g.append(new Option((p.cargo === 'GERENTE' ? '👩‍💼 ' : '') + p.nome + (p.cargo === 'GERENTE' ? ' (gerente)' : ''), 'pessoa:' + p.usuario)));
+      sel.append(g);
+    });
+  }).withFailureHandler((e) => { $('rr-quem').replaceChildren(new Option('Não consegui carregar — toque em Relatórios de novo', '')); RR_P = null; }).relPessoas(S.token);
+}
+$('rr-per').addEventListener('change', () => $('rr-datas').classList.toggle('hide', $('rr-per').value !== 'custom'));
+$('rr-gerar').addEventListener('click', () => {
+  const a = $('rr-quem').value; if (!a) { toast('Escolha quem.'); return; }
+  const per = $('rr-per').value, de = per === 'custom' ? $('rr-de').value : '', ate = per === 'custom' ? $('rr-ate').value : '';
+  const b = $('rr-gerar'); b.disabled = true; b.textContent = 'Montando o relatório…';
+  rodar('relReuniao', [S.token, a, per, de, ate], (r) => { b.disabled = false; b.textContent = 'Gerar relatório'; RR = { r: r, alvo: a, per: per, de: de, ate: ate }; abrirRelReuniao(r); }, () => { b.disabled = false; b.textContent = 'Gerar relatório'; });
+});
+const rrBRL = (x) => (x == null ? '—' : BRL.format(x)), rrN1 = (x) => (x == null ? '—' : x.toFixed(1).replace('.', ',')), rrMin = (x) => (x == null ? '—' : Math.round(x) + ' min');
+const rrH = (t, c, x) => { const e = el(t, c); if (x != null) e.textContent = x; return e; };
+function rrDelta(a, b, menorMelhor) { if (a == null || b == null || !b) return rrH('span', '', '—'); const d = (a - b) / Math.abs(b), bom = menorMelhor ? d < 0 : d > 0; return rrH('span', Math.abs(d) < 0.005 ? '' : bom ? 'rr-up' : 'rr-dn', (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + Math.abs(Math.round(d * 100)) + '%'); }
+function rrCab(r, sub) {
+  const h = rrH('div', 'rr-hd'), e = rrH('div'); e.append(rrH('div', 'mk', 'AMORATA'), rrH('h1', '', sub)); const d = rrH('div', 'rp');
+  d.append(rrH('div', '', (r.tipo === 'loja' ? 'Loja ' + r.loja : r.nome + ' · ' + r.loja)), rrH('div', '', r.per.titulo)); h.append(e, d); return h;
+}
+function rrRod(r, n, t) { const f = rrH('div', 'rr-ft'); f.append(rrH('span', '', 'Gerado por ' + r.geradoPor + ' em ' + r.geradoEm + ' · uso interno'), rrH('span', '', 'Página ' + n + ' de ' + t)); return f; }
+function rrNome(r) { return r.tipo === 'loja' ? 'Loja ' + r.loja : primeiroNome(r.nome); }
+function rrMapa(r) {
+  const c = r.cur, p = r.prev, m = r.meta, W = 698, box = rrH('div', 'rr-mapa');
+  const ramos = [
+    { t: 'Resultados', cor: '#5b4a7a', x: 0, y: 0, l: ['Vendido: ' + rrBRL(c.valor), 'Vendas: ' + (c.vendas || 0) + ' · ticket ' + rrBRL(c.ticket), 'Peças por venda: ' + rrN1(c.pa), 'Fila: ' + c.at + ' atendimentos · conversão ' + pc(c.conv)] },
+    { t: 'Comparação', cor: '#2f6f9f', x: W - 232, y: 0, l: ['Contra ' + r.per.tituloPrev + ':', 'Vendido ' + rrBRL(p.valor) + ' → ' + rrBRL(c.valor), 'Conversão ' + pc(p.conv) + ' → ' + pc(c.conv), 'Ticket ' + rrBRL(p.ticket) + ' → ' + rrBRL(c.ticket)] },
+    { t: 'Pontos fortes', cor: '#1e7a46', x: 0, y: 330, l: (r.fortes.length ? r.fortes.map((x) => x.txt) : ['Ainda sem destaque no período']).slice(0, 4) },
+    { t: 'A melhorar', cor: '#a85d00', x: W - 232, y: 330, l: (r.fracos.length ? r.fracos.map((x) => x.txt) : ['Nada abaixo do esperado no período']).slice(0, 4) },
+    { t: 'Projeção do mês', cor: '#7a4a6a', x: 0, y: 640, l: m && m.meta ? ['Meta: ' + rrBRL(m.meta), 'Feito: ' + rrBRL(m.vendido) + ' (' + pc(m.pct) + ')', m.proj != null ? 'No ritmo atual fecha em ' + rrBRL(m.proj) + ' (' + pc(m.fechaPct) + ')' : 'Mês encerrado', m.falta ? 'Faltam ' + rrBRL(m.falta) + (m.porDia ? ' · ' + rrBRL(m.porDia) + ' por dia' : '') : 'Meta batida! 🏆'] : ['Sem meta cadastrada para o mês'] },
+    { t: 'Foco e combinados', cor: '#b0578d', x: W - 232, y: 640, l: (r.objetivos && r.objetivos.atuais.length ? r.objetivos.atuais.map((o) => (o.ok ? '✅ ' : '⏳ ') + (o.tipo === 'livre' ? o.texto : (r.objetivos.tipos[o.tipo] || [o.tipo])[0] + ': ' + o.alvo + ((r.objetivos.tipos[o.tipo] || [])[1] || ''))) : []).concat(r.foco).slice(0, 4).concat(r.foco.length || (r.objetivos && r.objetivos.atuais.length) ? [] : ['Combinar 2 ou 3 objetivos nesta reunião']) },
+  ];
+  const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg'); svg.setAttribute('width', W); svg.setAttribute('height', 900); svg.setAttribute('viewBox', '0 0 ' + W + ' 900');
+  const cx = W / 2, cy = 450; box.append(svg);
+  ramos.forEach((g) => {
+    const n = rrH('div', 'rr-no'); n.style.left = g.x + 'px'; n.style.top = g.y + 'px'; n.style.borderColor = g.cor; const t = rrH('b', '', g.t); t.style.color = g.cor; n.append(t); g.l.forEach((x) => n.append(rrH('div', '', x))); box.append(n);
+    const ax = g.x < cx ? g.x + 232 : g.x, ay = g.y + 70, pa = document.createElementNS(ns, 'path');
+    pa.setAttribute('d', 'M' + cx + ' ' + cy + ' C ' + (cx + (ax - cx) * 0.5) + ' ' + cy + ', ' + (cx + (ax - cx) * 0.5) + ' ' + ay + ', ' + ax + ' ' + ay); pa.setAttribute('fill', 'none'); pa.setAttribute('stroke', g.cor); pa.setAttribute('stroke-width', '3'); pa.setAttribute('stroke-linecap', 'round'); svg.append(pa);
+  });
+  const ce = rrH('div', 'rr-cen'); ce.append(rrH('div', 'n', rrNome(r)), rrH('div', 'v', rrBRL(c.valor)), rrH('div', 's', r.per.titulo)); if (r.ranking && r.ranking.pos) ce.append(rrH('div', 's', r.ranking.pos + 'º lugar em vendas na loja (de ' + r.ranking.de + ')')); box.append(ce);
+  return box;
+}
+function rrGrafico(r) {
+  const s = r.serie || [], W = 698, H = 190, ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg'); svg.setAttribute('width', W); svg.setAttribute('height', H + 26);
+  const mx = Math.max(1, ...s.map((x) => Math.max(x.v || 0, x.ant || 0))), bw = W / Math.max(1, s.length);
+  const mk = (t, a) => { const e = document.createElementNS(ns, t); Object.keys(a).forEach((k) => e.setAttribute(k, a[k])); svg.append(e); return e; };
+  mk('line', { x1: 0, y1: H, x2: W, y2: H, stroke: '#e4e1da' });
+  s.forEach((x, i) => { const h = (x.v || 0) / mx * (H - 10); mk('rect', { x: i * bw + bw * 0.15, y: H - h, width: bw * 0.7, height: h, rx: 3, fill: '#5b4a7a' }); if (s.length <= 16 || i % Math.ceil(s.length / 12) === 0) { const t = mk('text', { x: i * bw + bw / 2, y: H + 16, 'font-size': 10, 'text-anchor': 'middle', fill: '#6b6862' }); t.textContent = x.dia.slice(8, 10) + '/' + x.dia.slice(5, 7); } });
+  const pts = s.map((x, i) => x.ant == null ? null : (i * bw + bw / 2) + ',' + (H - (x.ant || 0) / mx * (H - 10))).filter(Boolean);
+  if (pts.length > 1) mk('polyline', { points: pts.join(' '), fill: 'none', stroke: '#e08a3c', 'stroke-width': 2.5, 'stroke-dasharray': '6 4' });
+  const w = rrH('div'); w.append(svg); const lg = rrH('div', '', ''); lg.style.cssText = 'font-size:11.5px;color:#6b6862;margin-top:4px'; lg.textContent = '■ vendido por dia neste período   - - - ' + r.per.tituloPrev; w.append(lg); return w;
+}
+function rrPaginas(r) {
+  const c = r.cur, p = r.prev, L = r.lojaMedia, pgs = [];
+  // 1. mapa mental
+  const p1 = rrH('div', 'rr-pg'); p1.append(rrCab(r, 'Mapa da reunião'), rrMapa(r)); pgs.push(p1);
+  // 2. números
+  const p2 = rrH('div', 'rr-pg'); p2.append(rrCab(r, 'Resultados e comparação'));
+  const kp = rrH('div', 'rr-kp'); [[rrBRL(c.valor), 'vendido'], [pc(c.conv), 'conversão da fila'], [rrBRL(c.ticket), 'ticket médio'], [rrN1(c.pa), 'peças por venda']].forEach(([v, l]) => { const d = rrH('div'); d.append(rrH('b', '', v), rrH('span', '', l)); kp.append(d); }); p2.append(kp);
+  p2.append(rrH('h3', '', 'Comparação com ' + r.per.tituloPrev));
+  const tb = rrH('table', 'rr-tb'), th = rrH('tr'); ['Indicador', 'Neste período', 'Anterior', 'Variação'].concat(L ? ['Média da loja'] : []).forEach((x, i) => th.append(rrH('th', i ? 'n' : '', x))); tb.append(th);
+  const linhas = [['Vendido', rrBRL(c.valor), rrBRL(p.valor), [c.valor, p.valor], L ? rrBRL(L.valorMedio) + ' por consultora' : null], ['Vendas no caixa', c.vendas, p.vendas, [c.vendas, p.vendas], null], ['Ticket médio', rrBRL(c.ticket), rrBRL(p.ticket), [c.ticket, p.ticket], L ? rrBRL(L.ticket) : null], ['Peças por venda', rrN1(c.pa), rrN1(p.pa), [c.pa, p.pa], L ? rrN1(L.pa) : null],
+    ['Vendido online', rrBRL(c.online), rrBRL(p.online), [c.online, p.online], null], ['Atendimentos na fila', c.at, p.at, [c.at, p.at], null], ['Conversão da fila', pc(c.conv), pc(p.conv), [c.conv, p.conv], L ? pc(L.conv) : null], ['Tempo por atendimento', rrMin(c.tempo), rrMin(p.tempo), null, L ? rrMin(L.tempo) : null],
+    ['Fora da vez', pc(c.fdv), pc(p.fdv), [c.fdv, p.fdv, true], L ? pc(L.fdv) : null], ['Avaliação das clientes', c.avN ? rrN1(c.avMedia) + ' (' + c.avN + ')' : '—', p.avN ? rrN1(p.avMedia) + ' (' + p.avN + ')' : '—', [c.avMedia, p.avMedia], L && L.avN ? rrN1(L.avMedia) : null], ['Retornos de clientes feitos', c.retornos, p.retornos, [c.retornos, p.retornos], null]];
+  linhas.forEach((x) => { const tr = rrH('tr'); tr.append(rrH('td', '', x[0]), rrH('td', 'n', String(x[1])), rrH('td', 'n', String(x[2]))); const td = rrH('td', 'n'); td.append(x[3] ? rrDelta(x[3][0], x[3][1], x[3][2]) : rrH('span', '', '—')); tr.append(td); if (L) tr.append(rrH('td', 'n', x[4] == null ? '—' : x[4])); tb.append(tr); });
+  p2.append(tb);
+  if ((r.serie || []).length > 1) { p2.append(rrH('h3', '', 'Vendas dia a dia')); p2.append(rrGrafico(r)); }
+  const m = r.meta; if (m && m.meta) { p2.append(rrH('h3', '', 'Meta e projeção do mês (' + m.mes + ')')); const b = rrH('div', 'rr-bx');
+    [['Meta do mês', rrBRL(m.meta)], ['Vendido até agora', rrBRL(m.vendido) + ' · ' + pc(m.pct)], ['Projeção no ritmo atual', m.proj != null ? rrBRL(m.proj) + ' · ' + pc(m.fechaPct) : 'mês encerrado'], ['Falta', m.falta ? rrBRL(m.falta) + (m.restam ? ' · ' + m.restam + ' dias de trabalho · ' + rrBRL(m.porDia) + ' por dia' : '') : 'meta batida! 🏆']].concat(m.metaDesafio ? [['Meta desafio', rrBRL(m.metaDesafio) + ' · ' + pc(m.pctDesafio)]] : []).forEach(([a, v]) => { const d = rrH('div'); d.style.cssText = 'display:flex;justify-content:space-between;padding:4px 0'; d.append(rrH('span', '', a), rrH('b', '', v)); b.append(d); }); p2.append(b); }
+  if (r.ranking && r.ranking.pos) { const d = rrH('div', 'rr-bx'); d.style.marginTop = '12px'; d.textContent = '🏅 ' + r.ranking.pos + 'º lugar em vendas na loja neste período, entre ' + r.ranking.de + ' consultoras.'; p2.append(d); }
+  if (r.equipe && r.equipe.length) { p2.append(rrH('h3', '', 'Equipe no período')); const t2 = rrH('table', 'rr-tb'), h2 = rrH('tr'); ['Consultora', 'Vendido', 'Conversão'].forEach((x, i) => h2.append(rrH('th', i ? 'n' : '', x))); t2.append(h2); r.equipe.slice(0, 12).forEach((q) => { const tr = rrH('tr'); tr.append(rrH('td', '', q.nome), rrH('td', 'n', rrBRL(q.valor)), rrH('td', 'n', pc(q.conv))); t2.append(tr); }); p2.append(t2); }
+  pgs.push(p2);
+  // 3. análise e combinados
+  const p3 = rrH('div', 'rr-pg'); p3.append(rrCab(r, 'Análise e combinados'));
+  const two = rrH('div', 'rr-2'), lst = (t, cor, it, vaz) => { const b = rrH('div', 'rr-bx'); const h = rrH('b', '', t); h.style.color = cor; b.append(h); const u = rrH('ul'); (it.length ? it : [vaz]).forEach((x) => u.append(rrH('li', '', x))); b.append(u); return b; };
+  two.append(lst('💪 Pontos fortes', '#1e7a46', r.fortes.map((x) => x.txt), 'Sem destaque no período.'), lst('🎯 A melhorar', '#a85d00', r.fracos.map((x) => x.txt), 'Nada abaixo do esperado.')); p3.append(two);
+  if (r.foco.length) { p3.append(rrH('h3', '', 'Sugestões de foco')); const b = rrH('div', 'rr-bx'), u = rrH('ul'); r.foco.forEach((x) => u.append(rrH('li', '', x))); b.append(u); p3.append(b); }
+  if (c.motivos && c.motivos.length) { p3.append(rrH('h3', '', 'Por que não vendeu (fila)')); const t3 = rrH('table', 'rr-tb'); c.motivos.forEach((x) => { const tr = rrH('tr'); tr.append(rrH('td', '', x.motivo), rrH('td', 'n', x.n + (x.n === 1 ? ' vez' : ' vezes'))); t3.append(tr); }); p3.append(t3); }
+  const ob = r.objetivos; if (ob) { const nomeO = (o) => o.tipo === 'livre' ? o.texto : (ob.tipos[o.tipo] || [o.tipo])[0] + ': ' + o.alvo + ((ob.tipos[o.tipo] || [])[1] || '');
+    const at = (o) => o.atual == null ? '' : ' (hoje: ' + (o.tipo === 'tkm' ? rrBRL(o.atual) : o.tipo === 'pa' ? rrN1(o.atual) : Math.round(o.atual) + ((ob.tipos[o.tipo] || [])[1] === '%' ? '%' : '')) + ')';
+    if (ob.anteriores.length) { p3.append(rrH('h3', '', 'Combinados do mês passado')); const b = rrH('div', 'rr-bx'), u = rrH('ul'); ob.anteriores.forEach((o) => u.append(rrH('li', '', (o.ok ? '✅ Cumprido: ' : '❌ Não cumprido: ') + nomeO(o) + at(o)))); b.append(u); p3.append(b); }
+    p3.append(rrH('h3', '', 'Combinados deste mês')); const b = rrH('div', 'rr-bx'); if (ob.atuais.length) { const u = rrH('ul'); ob.atuais.forEach((o) => u.append(rrH('li', '', (o.ok ? '✅ ' : '⏳ ') + nomeO(o) + at(o)))); b.append(u); } else b.append(rrH('div', '', 'Nenhum combinado anotado ainda.')); p3.append(b); }
+  if (r.conversas && r.conversas.length) { p3.append(rrH('h3', '', 'Últimas conversas')); const b = rrH('div', 'rr-bx'); r.conversas.forEach((x) => { const d = rrH('div'); d.style.margin = '4px 0'; d.append(rrH('b', '', x.quando + ' · ' + x.por + ': ')); d.append(document.createTextNode(x.texto)); b.append(d); }); p3.append(b); }
+  p3.append(rrH('h3', '', 'Anotações da reunião')); for (let i = 0; i < 5; i++) p3.append(rrH('div', 'rr-ln'));
+  const as = rrH('div', 'rr-ass'); as.append(rrH('div', '', r.tipo === 'loja' ? 'Gerente' : primeiroNome(r.nome)), rrH('div', '', r.geradoPor)); p3.append(as);
+  pgs.push(p3);
+  pgs.forEach((g, i) => g.append(rrRod(r, i + 1, pgs.length)));
+  return pgs;
+}
+function abrirRelReuniao(r) {
+  const d0 = $('det'); if (d0) d0.querySelector('.dhead button').click();
+  abrirDet('📄 ' + rrNome(r) + ' · ' + r.per.titulo, (b) => {
+    const bar = rrH('div', 'rr-bar'), pdf = el('button', 'btn pri', '📤 Baixar / enviar PDF'); bar.append(pdf);
+    if (r.podeCombinar) { const cb = el('button', 'btn', '✍️ Anotar combinados'); cb.addEventListener('click', () => rrCombinados(r)); bar.append(cb); }
+    const wrap = rrH('div', 'rr-wrap'), pg = rrH('div', 'rr-pgs'); rrPaginas(r).forEach((x) => pg.append(x)); wrap.append(pg); b.append(bar, wrap);
+    const ajusta = () => { const w = wrap.clientWidth || (window.innerWidth - 32), z = Math.min(1, w / 794); pg.style.transform = 'scale(' + z + ')'; wrap.style.height = (pg.scrollHeight * z) + 'px'; };
+    requestAnimationFrame(ajusta); window.addEventListener('resize', ajusta);
+    pdf.addEventListener('click', () => rrPDF(r, pg, pdf));
+  });
+}
+function rrLib(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('Não consegui carregar o gerador de PDF. Confira a internet.')); document.head.append(s); }); }
+async function rrPDF(r, pg, btn) {
+  const t0 = btn.textContent; btn.disabled = true; btn.textContent = 'Gerando PDF…';
+  try {
+    if (!window.html2canvas) await rrLib('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    if (!window.jspdf) await rrLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    const tr = pg.style.transform, wr = pg.parentNode, wh = wr.style.height; pg.style.transform = 'none'; wr.style.height = 'auto'; wr.style.overflow = 'visible';
+    const pdf = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', compress: true }), W = pdf.internal.pageSize.getWidth();
+    const pags = [...pg.querySelectorAll('.rr-pg')];
+    for (let i = 0; i < pags.length; i++) {
+      const cv = await window.html2canvas(pags[i], { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
+      const h = W * cv.height / cv.width; if (i) pdf.addPage([W, Math.max(h, 841.89)]); else if (h > 841.89 + 1) { pdf.deletePage(1); pdf.addPage([W, h]); }
+      pdf.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, W, h);
+    }
+    pg.style.transform = tr; wr.style.height = wh; wr.style.overflow = '';
+    const nome = ('Reuniao-' + rrNome(r) + '-' + r.per.de + (r.per.ate !== r.per.de ? '_a_' + r.per.ate : '')).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w.-]+/g, '-') + '.pdf';
+    const blob = pdf.output('blob'), file = new File([blob], nome, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: nome }); } catch (e) { if (e && e.name !== 'AbortError') throw e; } }
+    else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000); }
+  } catch (e) { toast((e && e.message) || 'Não consegui gerar o PDF.'); }
+  btn.disabled = false; btn.textContent = t0;
+}
+function rrCombinados(r) {
+  const ob = r.objetivos || { atuais: [], tipos: {} }, livres = Math.max(0, 3 - ob.atuais.length);
+  abrirDet('✍️ Combinados com ' + primeiroNome(r.nome), (b) => {
+    const f = rrH('div', 'rr-cb card');
+    f.append(rrH('div', 'sub', 'Anote o que ficou combinado. Os objetivos entram no acompanhamento do mês: o app mede sozinho e o próximo relatório mostra se foram cumpridos.'));
+    const tx = el('textarea'); tx.rows = 4; tx.placeholder = 'Resumo da conversa e do que foi combinado'; f.append(rrH('b', '', 'Resumo da reunião'), tx);
+    const lins = [];
+    if (livres) { f.append(rrH('b', '', 'Objetivos do mês (até ' + livres + (livres === 1 ? ' novo' : ' novos') + ')'));
+      for (let i = 0; i < livres; i++) { const l = rrH('div', 'lin'), sel = el('select'); sel.append(new Option('— sem objetivo —', '')); Object.keys(ob.tipos).forEach((k) => sel.append(new Option(ob.tipos[k][0] + (ob.tipos[k][1] ? ' (' + ob.tipos[k][1] + ')' : ''), k)));
+        const al = el('input'); al.placeholder = 'alvo'; al.inputMode = 'decimal'; sel.addEventListener('change', () => { al.placeholder = sel.value === 'livre' ? 'descreva' : 'alvo'; al.inputMode = sel.value === 'livre' ? 'text' : 'decimal'; l.style.gridTemplateColumns = sel.value === 'livre' ? '1fr' : '1fr 110px'; });
+        l.append(sel, al); f.append(l); lins.push([sel, al]); } }
+    else f.append(rrH('div', 'sub', 'Ela já tem 3 objetivos neste mês (o máximo).'));
+    const ok = el('button', 'btn pri big', 'Salvar combinados'); f.append(ok); b.append(f);
+    ok.addEventListener('click', async () => {
+      const obs = lins.map(([s, a]) => ({ tipo: s.value, v: a.value.trim() })).filter((x) => x.tipo);
+      if (!tx.value.trim() && !obs.length) { toast('Escreva o resumo ou escolha um objetivo.'); return; }
+      for (const o of obs) if (o.tipo !== 'livre' && !(Number(o.v.replace(',', '.')) > 0)) { toast('Informe o alvo de cada objetivo (número).'); return; }
+      ok.disabled = true; ok.textContent = 'Salvando…';
+      const run = (fn, args) => new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](...args));
+      try {
+        if (tx.value.trim()) await run('registrarConversa', [S.token, r.loja, r.nome, tx.value.trim()]);
+        for (const o of obs) await run('salvarObjetivo', [S.token, r.loja, { usuario: r.usuarioAlvo, tipo: o.tipo, alvo: o.tipo === 'livre' ? '' : o.v.replace(',', '.'), texto: o.tipo === 'livre' ? o.v : '' }]);
+        toast('Combinados salvos ✅'); const d = $('det'); if (d) d.querySelector('.dhead button').click();
+        if (RR) rodar('relReuniao', [S.token, RR.alvo, RR.per, RR.de, RR.ate], (r2) => { RR.r = r2; abrirRelReuniao(r2); });
+      } catch (e) { ok.disabled = false; ok.textContent = 'Salvar combinados'; toast(amigavel((e && e.message) || String(e))); }
+    });
+  });
 }
 // ---------- menu em botões (tela inicial) e barra de atalhos ----------
 // gerente/admin: "Meus resultados" abre os cards do Início (fora dele, o Início mostra só o menu)
