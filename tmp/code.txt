@@ -3195,13 +3195,13 @@ function bhLista(token, loja) {
   const pes = usuarios_().filter((x) => x.ativo && lojas.indexOf(x.loja) >= 0 && x.cargo !== 'ADMIN' && x.cargo !== 'GERENTE');
   const mov = {}; abaBH_().getDataRange().getValues().slice(1).forEach((r) => { if (!r[0] || r[10]) return; const d = r[1] instanceof Date ? Utilities.formatDate(r[1], 'America/Rio_Branco', 'yyyy-MM-dd') : String(r[1]).slice(0, 10);
     (mov[r[3]] = mov[r[3]] || []).push({ id: String(r[0]), data: d, tipo: String(r[5]), min: Number(r[6]) || 0, obs: String(r[7] || ''), por: String(r[8] || ''), criado: Number(r[9]) || 0 }); });
-  const nomes = {}; usuarios_().forEach((x) => { nomes[x.usuario] = primeiroNomeS_(x.nome); });
+  const nomes = {}; usuarios_().forEach((x) => { nomes[x.usuario] = primeiroNomeS_(x.nome); }); const HOR = horarios_();
   const out = pes.map((p) => {
     const ms = (mov[p.usuario] || []).sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : (a.tipo === 'SALDO' ? -1 : b.tipo === 'SALDO' ? 1 : a.criado - b.criado)));
     let saldo = null, base = null; const hist = [];
     ms.forEach((m) => { if (m.tipo === 'SALDO') { saldo = m.min; base = { data: m.data, min: m.min }; } else saldo = (saldo || 0) + m.min; hist.push(Object.assign({}, m, { saldo: saldo, porNome: nomes[m.por] || m.por, meu: m.por === u.usuario })); });
     const comp30 = ms.filter((m) => m.tipo === 'COMP' && m.data >= somaDia_(Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd'), -30)).reduce((a, m) => a - m.min, 0);
-    return { usuario: p.usuario, nome: primeiroNomeS_(p.nome), loja: p.loja, saldo: saldo, base: base, comp30: comp30, hist: hist.slice(-40).reverse() };
+    const hr = HOR[p.usuario] || {}; return { usuario: p.usuario, nome: primeiroNomeS_(p.nome), loja: p.loja, saldo: saldo, base: base, comp30: comp30, hist: hist.slice(-40).reverse(), horario: Object.keys(hr).map((d) => ({ dow: +d, entrada: hr[d].entrada, saida: hr[d].saida, fonte: hr[d].fonte })) };
   }).sort((a, b) => (b.saldo || 0) - (a.saldo || 0));
   return { lojas: lojas, admin: u.cargo === 'ADMIN', pessoas: out, total: out.reduce((a, p) => a + Math.max(0, p.saldo || 0), 0), auto: u.cargo === 'ADMIN' ? (PropertiesService.getScriptProperties().getProperty('BH_AUTO_LOG') || '') : '' };
 }
@@ -3232,15 +3232,75 @@ function bhLerEspelho_(texto) {
   const per = t.match(/Per\.?\s*de\s*Ref\.?\s*:?\s*(\d{2})\/(\d{2})\/(\d{4})\s*(?:à|a|até)\s*(\d{2})\/(\d{2})\/(\d{4})/i);
   return { min: (m[1] ? -1 : 1) * ((+m[2]) * 60 + (+m[3])), data: per ? per[6] + '-' + per[5] + '-' + per[4] : '' };
 }
+// horário de cada dia da semana tirado do "Quadro de Horários" do espelho de ponto (entrada e saída previstas)
+const H_HOR = ['usuario', 'loja', 'dow', 'entrada', 'saida', 'fonte', 'ref', 'atualizado'];
+function bhLerHorarios_(texto) {
+  const t = String(texto || '').replace(/\s+/g, ' '), i0 = t.search(/ESPELHO DO CART/i), esp = i0 >= 0 ? t.slice(i0) : t, fim = esp.search(/RESUMO/i), corpo = fim > 0 ? esp.slice(0, fim) : esp;
+  const DOW = { Dom: 0, Seg: 1, Ter: 2, Qua: 3, Qui: 4, Sex: 5, Sab: 6, 'Sáb': 6 }, re = /(Dom|Seg|Ter|Qua|Qui|Sex|Sab|Sáb) (\d{2}\/\d{2})/g, idx = []; let m;
+  while ((m = re.exec(corpo))) idx.push([m.index, DOW[m[1]]]);
+  const mi = (x) => +x.slice(0, 2) * 60 + +x.slice(3), cont = {};
+  idx.forEach(([pos, dw], k) => {
+    const seg = corpo.slice(pos, k + 1 < idx.length ? idx[k + 1][0] : corpo.length); if (/\b(FOL|DOM|FER|FALTA|ATEST)/.test(seg.slice(10))) return;
+    const ts = (seg.slice(10).match(/\b\d{2}:\d{2}\b/g) || []); let q = null;
+    const ok = (a) => a.every((x, j) => !j || mi(x) > mi(a[j - 1])) && mi(a[a.length - 1]) - mi(a[0]) >= 240 && mi(a[a.length - 1]) - mi(a[0]) <= 660;
+    if (ts.length >= 6 && ok(ts.slice(-4))) q = ts.slice(-4); else if (ts.length >= 4 && ok(ts.slice(-2))) q = ts.slice(-2);
+    if (!q) return; const kk = dw + '|' + q[0] + '|' + q[q.length - 1]; cont[kk] = (cont[kk] || 0) + 1;
+  });
+  const out = {}; Object.keys(cont).forEach((kk) => { const [dw, a, b] = kk.split('|'); if (!out[dw] || cont[kk] > out[dw].n) out[dw] = { entrada: a, saida: b, n: cont[kk] }; });
+  return out;
+}
+function horariosGravar_(usuario, loja, hor, fonte, ref) {
+  const sh = aba_('Horarios', H_HOR); sh.getRange('D:E').setNumberFormat('@'); const v = sh.getDataRange().getValues();
+  for (let i = v.length - 1; i >= 1; i--) if (v[i][0] === usuario && (fonte === 'gerente' || v[i][5] !== 'gerente')) sh.deleteRow(i + 1);
+  const linhas = Object.keys(hor).map((dw) => [usuario, loja, +dw, hor[dw].entrada || '', hor[dw].saida, fonte, ref || '', agoraBR_()]);
+  if (linhas.length) sh.getRange(sh.getLastRow() + 1, 1, linhas.length, H_HOR.length).setValues(linhas);
+  CacheService.getScriptCache().remove('horarios');
+}
+// {usuario: {dow: {entrada, saida, fonte}}} — o que a gerente definiu vale mais que o do espelho
+function horarios_() {
+  const c = CacheService.getScriptCache(), hit = c.get('horarios'); if (hit) return JSON.parse(hit);
+  const o = {}; try { aba_('Horarios', H_HOR).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (!r[0] || !/^\d{2}:\d{2}$/.test(r[4])) return; const u = o[r[0]] = o[r[0]] || {}; if (!u[r[2]] || r[5] === 'gerente') u[r[2]] = { entrada: r[3], saida: r[4], fonte: r[5] }; }); } catch (e) {}
+  try { c.put('horarios', JSON.stringify(o), 3600); } catch (e) {} return o;
+}
+// gerente define a saída padrão (todos os dias de trabalho) de uma vendedora; '' volta para o do espelho
+function salvarSaida(token, usuario, saida) {
+  const u = sessao_(token); if (!chefe_(u)) throw new Error('Só gerente e administração.');
+  const p = usuarios_().find((x) => x.usuario === usuario); if (!p || !pode_(u, p.loja)) throw new Error('Funcionária não encontrada nesta loja.');
+  saida = String(saida || '').trim();
+  if (!saida) { const sh = aba_('Horarios', H_HOR), v = sh.getDataRange().getValues(); for (let i = v.length - 1; i >= 1; i--) if (v[i][0] === usuario && v[i][5] === 'gerente') sh.deleteRow(i + 1); CacheService.getScriptCache().remove('horarios'); return true; }
+  if (!/^\d{2}:\d{2}$/.test(saida)) throw new Error('Use o formato 22:00.');
+  const h = {}; [0, 1, 2, 3, 4, 5, 6].forEach((d) => { h[d] = { entrada: '', saida: saida }; }); horariosGravar_(usuario, p.loja, h, 'gerente', u.usuario); return true;
+}
+// a cada 10 min: avisa a consultora 15 min antes da saída para sair da fila; se ela continuar na fila 10 min depois do horário, avisa a gerente
+function filaSaida() {
+  const H = horarios_(), us = usuarios_(), c = CacheService.getScriptCache(), agoraD = new Date(), log = [];
+  LOJAS.forEach((loja) => {
+    let e; try { e = ler_(loja); } catch (er) { return; } if (!e || !(e.fila || []).length) return;
+    const tz = TZ[loja] || 'America/Rio_Branco', hoje = dia_(loja), agora = Utilities.formatDate(agoraD, tz, 'HH:mm'), dw = +Utilities.formatDate(agoraD, tz, 'u') % 7, mi = (x) => +x.slice(0, 2) * 60 + +x.slice(3), now = mi(agora);
+    const gerentes = us.filter((x) => x.ativo && x.cargo === 'GERENTE' && x.loja === loja);
+    e.fila.forEach((id) => {
+      const h = H[id] && H[id][dw]; if (!h) return; const fim = mi(h.saida), p = us.find((x) => x.usuario === id); if (!p) return; const nm = primeiroNomeS_(p.nome);
+      if (now >= fim - 15 && now < fim + 10 && !c.get('saida1_' + id + hoje)) { avisar_(id, 'saida', '⏰ ' + nm + ', seu expediente termina às ' + h.saida + '. Termine o atendimento e saia da fila de atendimento no app para não passar do horário.', '', ''); c.put('saida1_' + id + hoje, '1', 21600); log.push(loja + ': aviso ' + nm); }
+      if (now >= fim + 10 && now <= fim + 180 && !c.get('saida2_' + id + hoje)) { gerentes.forEach((g) => avisar_(g.usuario, 'saida', '⚠️ ' + nm + ' continua na fila de atendimento depois do horário dela (saída ' + h.saida + '). Confira se ela precisa sair da fila — a hora a mais vai para o banco de horas.', '', '')); c.put('saida2_' + id + hoje, '1', 21600); log.push(loja + ': gerente avisada de ' + nm); }
+    });
+  });
+  if (log.length) PropertiesService.getScriptProperties().setProperty('FILA_SAIDA_LOG', agoraBR_() + ' · ' + log.join(' · '));
+  return log.join('\n');
+}
 // gatilho diário: procura os PDFs de "Banco de horas + Folha de ponto" no RH de cada vendedora e lança o saldo do mês
 function bhAutoSaldos() {
   const pr = PropertiesService.getScriptProperties(); let feitos = {}; try { feitos = JSON.parse(pr.getProperty('BH_AUTO') || '{}'); } catch (e) {}
   const sh = abaBH_(), ja = {}; sh.getDataRange().getValues().slice(1).forEach((r) => { if (!r[10] && r[5] === 'SALDO') ja[r[3] + '|' + (r[1] instanceof Date ? Utilities.formatDate(r[1], 'America/Rio_Branco', 'yyyy-MM-dd') : String(r[1]).slice(0, 10))] = 1; });
   const us = {}; usuarios_().forEach((x) => { us[x.usuario] = x; }); const log = [];
-  const docs = aba_('RH Docs', H_RH).getDataRange().getDisplayValues().slice(1).filter((r) => r[6] && !r[12] && /banco de horas/i.test(r[4] + ' ' + r[7]) && us[r[2]] && !feitos[r[6]]);
+  let feitosH = {}; try { feitosH = JSON.parse(pr.getProperty('BH_HOR') || '{}'); } catch (e) {}
+  const ord = (r) => (/^\d{2}\/\d{4}$/.test(r[5]) ? r[5].slice(3) + r[5].slice(0, 2) : '000000');
+  const docs = aba_('RH Docs', H_RH).getDataRange().getDisplayValues().slice(1).filter((r) => r[6] && !r[12] && /banco de horas|folha de ponto|ponto/i.test(r[4] + ' ' + r[7]) && us[r[2]] && (!feitos[r[6]] || !feitosH[r[6]])).sort((a, b) => (ord(a) < ord(b) ? -1 : 1));
   docs.slice(0, 40).forEach((r) => {
     try {
-      const e = bhLerEspelho_(pdfTexto_(r[6])); feitos[r[6]] = e ? 'ok' : 'sem saldo';
+      const txt = pdfTexto_(r[6]);
+      if (!feitosH[r[6]]) { const hor = bhLerHorarios_(txt); feitosH[r[6]] = Object.keys(hor).length ? 'ok' : 'sem'; if (Object.keys(hor).length) { horariosGravar_(r[2], us[r[2]].loja, hor, 'espelho', r[5]); log.push(r[2] + ': horário ' + Object.keys(hor).map((d) => 'DSTQQSS'[d] + ' ' + hor[d].saida).join(' ')); } }
+      if (feitos[r[6]]) return;
+      const e = bhLerEspelho_(txt); feitos[r[6]] = e ? 'ok' : 'sem saldo';
       if (!e) { log.push(r[2] + ': saldo não encontrado'); return; }
       const d = e.data || (r[5] && /^\d{2}\/\d{4}$/.test(r[5]) ? Utilities.formatDate(new Date(+r[5].slice(3), +r[5].slice(0, 2), 0, 12), 'America/Rio_Branco', 'yyyy-MM-dd') : '');
       if (!d) { log.push(r[2] + ': sem período'); return; }
@@ -3249,7 +3309,7 @@ function bhAutoSaldos() {
       log.push(r[2] + ' ' + d + ': ' + (e.min < 0 ? '-' : '') + Math.floor(Math.abs(e.min) / 60) + 'h' + String(Math.abs(e.min) % 60).padStart(2, '0'));
     } catch (er) { log.push(r[2] + ': ' + er.message); }
   });
-  pr.setProperty('BH_AUTO', JSON.stringify(feitos)); if (log.length) pr.setProperty('BH_AUTO_LOG', agoraBR_() + ' · ' + log.join(' · '));
+  pr.setProperty('BH_AUTO', JSON.stringify(feitos)); pr.setProperty('BH_HOR', JSON.stringify(feitosH)); if (log.length) pr.setProperty('BH_AUTO_LOG', agoraBR_() + ' · ' + log.join(' · '));
   return log.join('\n');
 }
 // saldo atual de cada vendedora (mesma regra da tela)
@@ -3292,7 +3352,7 @@ function bhLembretes() {
   if (log.length) pr.setProperty('BH_LEMB_LOG', agoraBR_() + ' · ' + log.join(' · '));
   return log.join('\n');
 }
-function bhGatilho_() { const g = ScriptApp.getProjectTriggers().map((x) => x.getHandlerFunction()); if (g.indexOf('bhAutoSaldos') < 0) ScriptApp.newTrigger('bhAutoSaldos').timeBased().everyDays(1).atHour(6).nearMinute(20).inTimezone('America/Rio_Branco').create(); if (g.indexOf('bhLembretes') < 0) ScriptApp.newTrigger('bhLembretes').timeBased().everyHours(1).create(); }
+function bhGatilho_() { const g = ScriptApp.getProjectTriggers().map((x) => x.getHandlerFunction()); if (g.indexOf('bhAutoSaldos') < 0) ScriptApp.newTrigger('bhAutoSaldos').timeBased().everyDays(1).atHour(6).nearMinute(20).inTimezone('America/Rio_Branco').create(); if (g.indexOf('bhLembretes') < 0) ScriptApp.newTrigger('bhLembretes').timeBased().everyHours(1).create(); if (g.indexOf('filaSaida') < 0) ScriptApp.newTrigger('filaSaida').timeBased().everyMinutes(10).create(); }
 function bhApagar(token, id, lojaVer) {
   const u = sessao_(token); if (!chefe_(u)) throw new Error('Só gerente e administração.');
   const sh = abaBH_(), v = sh.getDataRange().getValues(), i = v.findIndex((r, k) => k > 0 && String(r[0]) === String(id)); if (i < 1) throw new Error('Lançamento não encontrado.');
@@ -3420,7 +3480,7 @@ function urlDoApp() { return urlApp_(); }
 
 
 // ---------- API: o mesmo app hospedado fora do Google (GitHub Pages) chama as funções por aqui ----------
-const API_NEGADAS = ['bhLembretes', 'bhAutoSaldos', 'dsEstoque10', 'dsFechamentoDia', 'dsSincronizar', 'postarMetaDia', 'rhImportarZapSign_', 'limparStatus', 'zsSincronizar', 'doGet', 'doPost', 'migrarVendasPlanilhas', 'prepararFotos', 'instalarResumo', 'resumoDiario', 'auditoriaMesAnterior', 'criarChaveImport', 'backupDiario', 'autorizarNotificacoes'];
+const API_NEGADAS = ['filaSaida', 'bhLembretes', 'bhAutoSaldos', 'dsEstoque10', 'dsFechamentoDia', 'dsSincronizar', 'postarMetaDia', 'rhImportarZapSign_', 'limparStatus', 'zsSincronizar', 'doGet', 'doPost', 'migrarVendasPlanilhas', 'prepararFotos', 'instalarResumo', 'resumoDiario', 'auditoriaMesAnterior', 'criarChaveImport', 'backupDiario', 'autorizarNotificacoes'];
 function api_(b) {
   const fn = String(b.fn || '');
   if (!/^[a-zA-Z]\w*$/.test(fn) || /_$/.test(fn) || API_NEGADAS.indexOf(fn) >= 0 || typeof globalThis[fn] !== 'function') throw new Error('Função não permitida.');
