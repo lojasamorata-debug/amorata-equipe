@@ -1967,22 +1967,74 @@ function abrirReposicao(desdeUlt, lojaIni) {
     carregar();
   });
 }
-// ---------- entradas de mercadoria da semana ----------
+// ---------- entradas de mercadoria: lista do período, conferência com divergências e termo assinado ----------
 function abrirEntradas(ref) {
-  abrirDet('📦 Entradas da semana', (b) => {
-    const fx = el('div'); fx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:center'; const sl = el('select'), res = el('div'); res.style.marginTop = '10px';
-    let semRef = ref || diaISO(0); const sb = (t, k) => { const x = el('button', 'btn sm', t); x.addEventListener('click', () => { const d = new Date(semRef + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + k * 7); semRef = d.toISOString().slice(0, 10); carregar(); }); return x; };
-    fx.append(sb('‹ semana anterior', -1), sb('próxima ›', 1)); b.append(fx, res);
-    sl.addEventListener('change', carregar);
-    function carregar() { res.replaceChildren(el('div', 'sub', 'Buscando as entradas no USE…')); google.script.run.withSuccessHandler(desenhar).withFailureHandler((e) => res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || 'erro')))).entradasSemana(S.token, sl.value || '', semRef); }
-    function desenhar(r) {
-      res.replaceChildren(); if (r.lojas.length > 1 && !sl.options.length) { r.lojas.forEach((l) => sl.append(new Option(l, l))); fx.prepend(sl); } sl.value = r.loja;
-      const top = el('div', 'motiva'); top.append(el('b', '', r.pecas ? '📦 ' + r.pecas + ' peças · ' + r.modelos.length + ' modelos' : 'Nenhuma mercadoria entrou nesta semana'), el('div', 'sub', r.loja + ' · ' + isoBR(r.de).slice(0, 5) + ' a ' + isoBR(r.ate).slice(0, 5))); res.append(top);
-      if (r.notas.length) { const dn = el('details', 'card'); dn.style.marginTop = '8px'; dn.append(el('summary', '', '🧾 Notas (' + r.notas.length + ')')); r.notas.forEach((n) => dn.append(el('div', 'sm', isoBR(n.data).slice(0, 5) + ' · ' + (n.transf ? '🔁 Transferência ' : '') + n.fornecedor + ' · nº ' + n.documento + ' · ' + n.pecas + ' peças'))); res.append(dn); }
+  abrirDet('📦 Entradas de mercadoria', (b) => {
+    const fx = el('div'); fx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:end'; const sl = el('select'), res = el('div'); res.style.marginTop = '10px';
+    const de = el('input'), ate = el('input'); de.type = ate.type = 'date';
+    const lab = (t, i) => { const l = el('label', 'sub', t); l.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex:1;min-width:120px'; l.append(i); return l; };
+    const bConf = el('button', 'btn sm', '⏱️ Desde a última conferência'); bConf.addEventListener('click', () => { de.value = ''; ate.value = ''; refAt = ''; carregar(); });
+    fx.append(lab('De', de), lab('Até', ate)); const fx2 = el('div'); fx2.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:6px'; fx2.append(bConf); b.append(fx, fx2, res);
+    let refAt = ref || '', R = null, M = {}, modoConf = false, tSalvar = null;
+    [de, ate].forEach((x) => x.addEventListener('change', () => { if (de.value && ate.value) { refAt = ''; carregar(); } }));
+    sl.addEventListener('change', () => { de.value = ''; ate.value = ''; carregar(); });
+    function carregar() { res.replaceChildren(el('div', 'sub', 'Buscando os lançamentos no USE…')); google.script.run.withSuccessHandler((r) => { R = r; M = r.rascunho || {}; desenhar(); }).withFailureHandler((e) => res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || 'erro')))).entradasSemana(S.token, sl.value || '', refAt, de.value, ate.value); }
+    const chave = (m, cor, t) => (m.ref || m.nome) + '|' + cor + '|' + t;
+    const itens = () => { const o = []; R.modelos.forEach((m) => Object.keys(m.cores).forEach((cor) => Object.keys(m.cores[cor]).forEach((t) => o.push([chave(m, cor, t), m.cores[cor][t]])))); return o; };
+    const salvarDepois = () => { clearTimeout(tSalvar); tSalvar = setTimeout(() => google.script.run.withFailureHandler(() => {}).confSalvar(S.token, R.loja, R.de, R.ate, M), 1500); };
+    function desenhar() {
+      const r = R; res.replaceChildren(); if (r.lojas.length > 1 && !sl.options.length) { r.lojas.forEach((l) => sl.append(new Option(l, l))); fx.prepend(lab('Loja', sl)); } sl.value = r.loja;
+      if (!de.value) de.value = r.de; if (!ate.value) ate.value = r.ate;
+      const top = el('div', 'motiva'); top.append(el('b', '', r.pecas ? '📦 ' + r.pecas + ' peças · ' + r.modelos.length + ' modelos · ' + r.notas.length + (r.notas.length === 1 ? ' nota' : ' notas') : 'Nenhum lançamento nesse período'));
+      top.append(el('div', 'sub', r.loja + ' · ' + (r.primeiro ? 'lançamentos de ' + isoBR(r.primeiro).slice(0, 5) + ' a ' + isoBR(r.ultimo).slice(0, 5) : isoBR(r.de).slice(0, 5) + ' a ' + isoBR(r.ate).slice(0, 5)) + (r.modo === 'conf' ? (r.ultimaConf ? ' · desde a última conferência (' + isoBR(r.ultimaConf.ate).slice(0, 5) + ', ' + primeiroNome(r.ultimaConf.nome) + ')' : ' · últimos 14 dias (ainda sem conferência)') : '')));
+      res.append(top);
+      if (r.notas.length) { const dn = el('details', 'card'); dn.style.marginTop = '8px'; dn.append(el('summary', '', '🧾 Notas (' + r.notas.length + ')')); r.notas.forEach((n) => dn.append(el('div', 'sm', isoBR(n.data).slice(0, 5) + ' · ' + (n.transf ? '🔁 ' : '') + n.fornecedor + ' · nº ' + n.documento + ' · ' + n.pecas + ' peças'))); res.append(dn); }
+      const its = itens(), feitos = its.filter(([k]) => M[k] && M[k].rec != null), div = feitos.filter(([k, q]) => +M[k].rec !== q);
+      if (r.pecas && r.podeConferir) {
+        const bx = el('div', 'card'); bx.style.cssText = 'margin-top:8px;padding:10px 12px';
+        if (!modoConf) { const bc = el('button', 'btn pri big', feitos.length ? '🔎 Continuar a conferência (' + feitos.length + ' de ' + its.length + ')' : '🔎 Conferir mercadoria'); bc.style.width = '100%'; bc.addEventListener('click', () => { modoConf = true; desenhar(); }); bx.append(bc, el('div', 'sub', 'Confira peça por peça o que chegou. Onde a quantidade não bater, marque a divergência. No final você assina o termo de fidelidade no próprio app.')); }
+        else { const pc = its.length ? feitos.length / its.length : 0; bx.append(el('b', '', '🔎 Conferência: ' + feitos.length + ' de ' + its.length + ' itens' + (div.length ? ' · ⚠️ ' + div.length + ' divergência(s)' : '')));
+          const bar = el('div'); bar.style.cssText = 'height:8px;border-radius:4px;background:#efebf5;margin-top:6px;overflow:hidden'; const f1 = el('div'); f1.style.cssText = 'height:100%;background:#1e7a46;width:' + Math.round(pc * 100) + '%'; bar.append(f1); bx.append(bar, el('div', 'sub', 'Toque no tamanho: 1 toque = ✓ chegou certo · tocar de novo = informar a quantidade que chegou (divergência).'));
+          const ops = el('div'); ops.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px';
+          const fin = el('button', 'btn pri', '✍️ Finalizar e assinar'); fin.disabled = feitos.length < its.length; fin.addEventListener('click', assinar);
+          const sai = el('button', 'btn', 'Sair (fica salvo)'); sai.addEventListener('click', () => { modoConf = false; desenhar(); }); ops.append(fin, sai); bx.append(ops); }
+        if (r.ultimaConf && r.ultimaConf.url && S.cargo === 'ADMIN') { const a = el('a', 'sub', '📄 Última conferência assinada (' + primeiroNome(r.ultimaConf.nome) + ', ' + r.ultimaConf.quando.slice(0, 10) + ')'); a.href = r.ultimaConf.url; a.target = '_blank'; a.style.display = 'block'; a.style.marginTop = '6px'; bx.append(a); }
+        res.append(bx);
+      }
       r.modelos.forEach((m) => { const c = el('div', 'card'); c.style.cssText = 'margin-top:8px;padding:10px 12px';
         const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px'; h.append(el('b', '', m.nome), el('b', '', m.pecas + ' pç')); c.append(h, el('div', 'sub', 'Ref. ' + m.ref + (m.preco ? ' · ' + rs(m.preco) : '')));
-        Object.keys(m.cores).forEach((cor) => { const ln = el('div'); ln.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px'; ln.append(el('span', 'sm', cor)); Object.keys(m.cores[cor]).forEach((t) => { const ch = el('span', 'sm', t + ' · ' + m.cores[cor][t]); ch.style.cssText = 'padding:2px 8px;border-radius:10px;background:#efebf5;font-weight:700'; ln.append(ch); }); c.append(ln); });
+        Object.keys(m.cores).forEach((cor) => { const ln = el('div'); ln.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px'; ln.append(el('span', 'sm', cor));
+          Object.keys(m.cores[cor]).forEach((t) => { const q = m.cores[cor][t], k = chave(m, cor, t), mk = M[k], ok = mk && mk.rec != null, dv = ok && +mk.rec !== q;
+            const ch = el(modoConf ? 'button' : 'span', 'sm', t + ' · ' + q + (dv ? ' → ' + mk.rec : '') + (ok && !dv ? ' ✓' : '')); ch.style.cssText = 'padding:' + (modoConf ? '6px 10px' : '2px 8px') + ';border-radius:12px;border:0;font-weight:700;background:' + (dv ? '#fdecea;color:#a3271b' : ok ? '#e8f4ec;color:#1e5b38' : '#efebf5');
+            if (modoConf) ch.addEventListener('click', () => { if (!ok) M[k] = { rec: q }; else { const v = prompt('Quantas peças de ' + m.nome + ' ' + cor + ' ' + t + ' chegaram? (lançado: ' + q + ')', String(mk.rec)); if (v === null) return; const n = parseInt(v, 10); if (isNaN(n) || n < 0) { toast('Digite um número.'); return; } const o = n !== q ? prompt('Observação da divergência (opcional): ex. veio cor trocada, peça com defeito', mk.obs || '') : ''; M[k] = { rec: n, obs: o || '' }; } salvarDepois(); desenhar(); });
+            ln.append(ch); });
+          c.append(ln); });
+        if (modoConf) { const all = el('button', 'btn sm', '✓ Modelo inteiro chegou certo'); all.style.marginTop = '6px'; all.addEventListener('click', () => { Object.keys(m.cores).forEach((cor) => Object.keys(m.cores[cor]).forEach((t) => { const k = chave(m, cor, t); if (!M[k] || M[k].rec == null) M[k] = { rec: m.cores[cor][t] }; })); salvarDepois(); desenhar(); }); c.append(all); }
         res.append(c); });
+    }
+    function assinar() {
+      const its = itens(), div = its.filter(([k, q]) => +M[k].rec !== q);
+      google.script.run.withSuccessHandler((termo) => abrirDet('✍️ Termo de fidelidade', (b2) => {
+        const tl = its.reduce((a, x) => a + x[1], 0), tr = its.reduce((a, [k]) => a + +M[k].rec, 0);
+        b2.append(el('div', 'motiva', R.loja + ' · lançado ' + tl + ' peças · recebido ' + tr + ' · ' + (div.length ? '⚠️ ' + div.length + ' divergência(s)' : '✅ sem divergência')));
+        div.forEach(([k, q]) => { const p = k.split('|'); b2.append(el('div', 'sm', '• Ref. ' + p[0] + ' ' + p[1] + ' ' + p[2] + ': lançado ' + q + ', chegou ' + M[k].rec + (M[k].obs ? ' — ' + M[k].obs : ''))); });
+        const tx = el('p', 'sm', termo.replace('{LOJA}', R.loja).replace('{DE}', isoBR(R.de)).replace('{ATE}', isoBR(R.ate))); tx.style.cssText = 'text-align:justify;background:#f7f6f3;padding:10px;border-radius:10px;margin-top:10px'; b2.append(tx);
+        const nm = el('input'); nm.placeholder = 'Seu nome completo'; const cp = el('input'); cp.placeholder = 'Seu CPF'; cp.inputMode = 'numeric';
+        const cv = el('canvas'); cv.width = 600; cv.height = 200; cv.style.cssText = 'width:100%;height:140px;border:1px dashed #8a7fa6;border-radius:12px;background:#fff;touch-action:none;margin-top:4px';
+        const g = cv.getContext('2d'); g.lineWidth = 3; g.lineCap = 'round'; g.strokeStyle = '#1f1e1d'; let des = false, tracos = 0;
+        const pt = (e) => { const r2 = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return [(t.clientX - r2.left) * cv.width / r2.width, (t.clientY - r2.top) * cv.height / r2.height]; };
+        const ini = (e) => { e.preventDefault(); des = true; const [x, y] = pt(e); g.beginPath(); g.moveTo(x, y); }, mov = (e) => { if (!des) return; e.preventDefault(); const [x, y] = pt(e); g.lineTo(x, y); g.stroke(); tracos++; }, fim = () => { des = false; };
+        ['mousedown', 'touchstart'].forEach((ev) => cv.addEventListener(ev, ini, { passive: false })); ['mousemove', 'touchmove'].forEach((ev) => cv.addEventListener(ev, mov, { passive: false })); ['mouseup', 'mouseleave', 'touchend'].forEach((ev) => cv.addEventListener(ev, fim));
+        const limpa = el('button', 'btn sm', 'Limpar assinatura'); limpa.addEventListener('click', () => { g.clearRect(0, 0, cv.width, cv.height); tracos = 0; });
+        const ac = el('label', 'sm'); ac.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-top:10px'; const ck = el('input'); ck.type = 'checkbox'; ck.style.width = 'auto'; ac.append(ck, document.createTextNode('Li e concordo com o termo acima e confirmo que as informações são verdadeiras.'));
+        const ok = el('button', 'btn pri big', '✍️ Assinar'); ok.style.cssText = 'width:100%;margin-top:10px';
+        ok.addEventListener('click', () => { if (!ck.checked) { toast('Marque que leu e concorda com o termo.'); return; } if (tracos < 15) { toast('Faça a sua assinatura no quadro.'); return; }
+          ok.disabled = true; ok.textContent = 'Assinando…';
+          google.script.run.withSuccessHandler((x) => { const ds = document.querySelectorAll('#det'); if (ds.length > 1) ds[ds.length - 1].remove(); modoConf = false; toast('Conferência assinada ✅'); res.prepend(el('div', 'motiva', '✅ Termo nº ' + x.id + ' assinado · recebido ' + x.recebido + ' de ' + x.lancado + ' peças' + (x.divergencias ? ' · ' + x.divergencias + ' divergência(s) — a gerência foi avisada' : ''))); carregar(); })
+            .withFailureHandler((e) => { ok.disabled = false; ok.textContent = '✍️ Assinar'; toast((e && e.message) || 'erro'); }).confAssinar(S.token, R.loja, R.de, R.ate, M, nm.value, cp.value, cv.toDataURL('image/png'), navigator.userAgent); });
+        const l2 = (t, i) => { const l = el('label', 'sub', t); l.style.cssText = 'display:block;margin-top:8px'; l.append(i); return l; };
+        b2.append(l2('Nome completo', nm), l2('CPF', cp), l2('Assinatura (com o dedo)', cv), limpa, ac, ok);
+      })).withFailureHandler((e) => toast((e && e.message) || 'erro')).confTermo(S.token);
     }
     carregar();
   });
