@@ -581,6 +581,9 @@ html, body { overflow-x:hidden; }
   .top > div:last-child { flex-shrink:0; gap:5px !important; }
   .top .btn.sm.ico { padding-left:8px; padding-right:8px; }
 }
+
+.ck-cf { display:inline-block; width:100%; margin-top:3px; font-size:12px; font-weight:600; text-decoration:none; } .ck-cf.ok { color:var(--ok); } .ck-cf.bad { color:var(--bad); } .ck-cf.esp { color:var(--warn); }
+.ck-cfb { display:inline-flex; width:100%; gap:6px; margin-top:6px; } .ck-cfb .btn { flex:1; white-space:nowrap; text-decoration:none; }
 </style>
 </head>
 <body>
@@ -1054,12 +1057,18 @@ let CK = null, CK_T = null;
 const turnoAgora = () => (new Date().getHours() < 15 ? 'ABERTURA' : 'FECHAMENTO');
 function carregarCk() { if (S && loja) google.script.run.withSuccessHandler(desenharCk).withFailureHandler(() => {}).checklist(S.token, loja); }
 const TURNO_TXT = { ABERTURA: '☀️ abertura', DIA: '🕐 durante o dia', FECHAMENTO: '🌙 fechamento' };
-function listaTarefas(box, r, marcarT) {
+function listaTarefas(box, r, marcarT, conferir) {
   const ts = r.tarefas || []; if (!ts.length) return;
   ts.slice().sort((a, b) => (b.minha - a.minha) || (['ABERTURA', 'DIA', 'FECHAMENTO'].indexOf(a.turno) - ['ABERTURA', 'DIA', 'FECHAMENTO'].indexOf(b.turno))).forEach((t) => {
     const d = el('div', 'ck-it' + (t.feito ? ' ok' : '')); if (t.minha && !t.feito) d.style.background = 'var(--accentbg)';
     const tx = el('span', 't'); tx.append(document.createTextNode(t.texto)); const sb = el('small', '', (t.respNome ? '👤 ' + (t.minha ? 'você' : t.respNome) : '👥 qualquer pessoa') + ' · ' + (TURNO_TXT[t.turno] || '')); sb.style.cssText = 'display:block;opacity:.75'; tx.append(sb);
     d.append(el('i', '', t.feito ? '✓' : ''), tx); if (t.feito) d.append(el('small', '', t.feito.nome + ' ' + t.feito.hora));
+    // conferência da gerente
+    const cf = t.conf; if (cf) { const st = el('small', 'ck-cf ' + (cf.status === 'CONFERIDO' ? 'ok' : cf.status === 'REFAZER' ? 'bad' : 'esp'), cf.status === 'CONFERIDO' ? '✅ conferido por ' + cf.nome + ' ' + cf.hora : cf.status === 'REFAZER' ? '↩️ refazer (' + cf.nome + '): ' + cf.motivo : '🔎 aguardando conferência'); tx.append(st);
+      if (conferir && r.podeEditar && cf.status === 'AGUARDANDO') { const bx = el('span', 'ck-cfb'), ok = el('button', 'btn sm ok', '✅ Conferido'), nv = el('button', 'btn sm', '↩️ Refazer');
+        ok.addEventListener('click', (ev) => { ev.stopPropagation(); conferir(t.id, true, ''); });
+        nv.addEventListener('click', (ev) => { ev.stopPropagation(); const m = prompt('O que precisa refazer? (ela recebe um aviso)'); if (m && m.trim()) conferir(t.id, false, m.trim()); });
+        bx.append(ok, nv); tx.append(bx); } }
     d.addEventListener('click', () => marcarT(t.id, !t.feito)); box.append(d);
   });
 }
@@ -1074,7 +1083,8 @@ function desenharCk(r) {
   $('ck').classList.toggle('hide', !ts.length); $('ck-tit').textContent = '📋 Tarefas de hoje';
   const n = $('ck-n'); n.textContent = f + '/' + ts.length; n.classList.toggle('ok', ts.length && f === ts.length); $('ck-box').replaceChildren(); $('ck-box').classList.add('ck-l');
   listaTarefas($('ck-box'), r, (id, feito) => { const t = (CK.tarefas || []).find((x) => x.id === id), ant = t ? t.feito : null; if (t) { const d = new Date(); t.feito = feito ? { nome: primeiroNome(S.nome), hora: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') } : null; desenharCk(CK); }
-    rodar('marcarTarefa', [S.token, loja, id, feito], desenharCk, () => { if (t) { t.feito = ant; desenharCk(CK); } }); });
+    rodar('marcarTarefa', [S.token, loja, id, feito], desenharCk, () => { if (t) { t.feito = ant; desenharCk(CK); } }); },
+    (id, ok, motivo) => rodar('conferirTarefa', [S.token, loja, id, ok, motivo], (r2) => { desenharCk(r2); toast(ok ? 'Tarefa conferida ✅' : 'Pedido de refazer enviado ↩️'); if (typeof carregarPendencias === 'function') setTimeout(carregarPendencias, 300); }));
   const minhas = ts.filter((t) => t.minha && !t.feito).length; if (minhas) $('ck-tit').textContent += ' · ' + minhas + (minhas === 1 ? ' sua' : ' suas');
 }
 // ---------- atualizar o app ----------
@@ -1821,7 +1831,7 @@ function rrCombinados(r) {
 function abrirCashback() {
   abrirDet('💰 Cashback da cliente', (b) => {
     const f = el('div', 'card cb-f'), inp = el('input'); inp.type = 'search'; inp.placeholder = 'Nome da cliente ou CPF'; inp.autocomplete = 'off'; inp.enterKeyHint = 'search';
-    const bt = el('button', 'btn pri big', 'Consultar'); f.append(inp, bt, el('div', 'sub', 'Mostra o cashback ainda não usado e dentro da validade, direto do sistema.'));
+    const bt = el('button', 'btn pri big', 'Consultar'); f.append(inp, bt, el('div', 'sub', 'Mostra o cashback ainda não usado e dentro da validade, de todas as lojas (a cliente pode usar em qualquer uma), direto do sistema.'));
     const res = el('div', 'cb-res'); b.append(f, res); setTimeout(() => inp.focus(), 200);
     const fmtD = (d) => d ? d.slice(8, 10) + '/' + d.slice(5, 7) : '';
     const buscar = () => {
