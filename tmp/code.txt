@@ -1,4 +1,4 @@
-function zzDebug(){ const t0=Date.now(); const r=coberturaPico_('Via Verde','2026-10-01','2026-11-05',''); Logger.log(JSON.stringify(r).replace(/[=&?]/g,'')); Logger.log('ms '+(Date.now()-t0)); }
+function zzDebug(){ const c=CacheService.getScriptCache(); const ad=usuarios_().find(x=>x.cargo==='ADMIN'&&x.ativo); c.put('t_zzdbg', JSON.stringify({usuario:ad.usuario}), 300); try { let t0=Date.now(); const a=relReuniao('zzdbg','loja:Via Verde','mes'); Logger.log('loja ms '+(Date.now()-t0)+' '+JSON.stringify({cur:a.cur,meta:a.meta,fortes:a.fortes,fracos:a.fracos,foco:a.foco,picos:a.picos,equipe:a.equipe}).replace(/[=&?]/g,'')); const v=usuarios_().find(x=>x.cargo==='VENDEDORA'&&x.ativo&&x.loja==='Via Verde'); t0=Date.now(); const b=relReuniao('zzdbg','pessoa:'+v.usuario,'semana'); Logger.log('pessoa ms '+(Date.now()-t0)+' '+JSON.stringify({per:b.per,cur:b.cur,prev:b.prev,ranking:b.ranking,meta:b.meta,fortes:b.fortes,fracos:b.fracos,objetivos:b.objetivos,picos:b.picos}).replace(/[=&?]/g,'')); } catch(e) { Logger.log('ERRO '+e.stack); } c.remove('t_zzdbg'); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
@@ -4641,7 +4641,7 @@ function relReuniao(token, alvo, per, deX, ateX) {
   const serie = dias.map((d, i) => ({ dia: d, v: cur.serie[d] || 0, ant: diasP[i] ? prev.serie[diasP[i]] || 0 : null }));
   delete cur.serie; delete prev.serie; delete lj.serie;
   let picos = null; try { picos = coberturaPico_(loja, P.de, P.ate, pessoa ? p.usuario : ''); } catch (e) {}
-  if (picos && !pessoa) { const ruim = picos.filter((x) => x.pausa >= 0.8 && x.pausa >= (x.naFila + x.atendendo) * 0.4).sort((a, b) => b.pausa - a.pausa)[0]; if (ruim) { fracos.push({ k: 'Pico', txt: 'Pico de ' + ruim.dia + ' ' + ruim.h + 'h: em média ' + num(ruim.naFila + ruim.atendendo) + ' na fila/atendendo e ' + num(ruim.pausa) + ' fora da fila' }); foco.push(DICA.Pico); } else if (picos[0]) fortes.push({ k: 'Pico', txt: 'Pico de ' + picos[0].dia + ' ' + picos[0].h + 'h bem coberto: ' + num(picos[0].naFila + picos[0].atendendo) + ' pessoas na fila/atendendo' }); }
+  if (picos && !pessoa) { const ruim = picos.filter((x) => x.pausa >= 0.8 && x.pausa >= (x.naFila + x.atendendo) * 0.4).sort((a, b) => b.pausa - a.pausa)[0]; if (ruim) { fracos.push({ k: 'Pico', txt: 'Pico das ' + ruim.h + 'h: em média ' + num(ruim.naFila + ruim.atendendo) + ' na fila/atendendo e ' + num(ruim.pausa) + ' fora da fila' }); foco.push(DICA.Pico); } else if (picos[0]) fortes.push({ k: 'Pico', txt: 'Pico das ' + picos[0].h + 'h bem coberto: ' + num(picos[0].naFila + picos[0].atendendo) + ' pessoas na fila/atendendo' }); }
   if (picos && pessoa) { const ps = picos.filter((x) => x.eu); if (ps.length) { const f = ps.reduce((a, x) => a + x.eu.fila + x.eu.atend, 0) / ps.length, pz = ps.reduce((a, x) => a + x.eu.pausa, 0) / ps.length; if (f >= 0.75) fortes.push({ k: 'Pico', txt: 'Nos horários de pico ficou na fila ou atendendo ' + pctS(f) + ' do tempo' }); else if (pz >= 0.25) { fracos.push({ k: 'Pico', txt: 'Nos horários de pico ficou ' + pctS(pz) + ' do tempo fora da fila (pausa)' }); foco.push(DICA.Pico); } } }
   return { tipo: tipo, loja: loja, nome: p ? p.nome : loja, cargo: p ? p.cargo : 'LOJA', per: P, cur: cur, prev: prev, lojaMedia: pessoa ? lj : null,
     ranking: pessoa ? { pos: pos, de: rank.length } : null, equipe: !pessoa && chefe_(u) ? rank.map((q) => ({ nome: primeiroNomeS_(q.nome), valor: q.valor, conv: q.at ? q.v / q.at : null })) : null,
@@ -4657,8 +4657,8 @@ function coberturaPico_(loja, de, ate, usuarioAlvo) {
   if (!at.length) return null;
   const ev = ss.getSheetByName('Eventos').getDataRange().getValues().slice(1).filter((r) => String(r[1]) === loja).map((r) => ({ t: msDe(r[0]), dia: diaDe(r[0]), u: String(r[2]), nome: String(r[3]), tipo: String(r[4]), motivo: String(r[5] || '') })).filter((r) => r.t != null && r.dia >= de && r.dia <= ate).sort((a, b) => a.t - b.t);
   // picos: dia da semana × hora com mais atendimentos
-  const heat = {}; at.forEach((a) => { const d = new Date(a.ini), k = d.getUTCDay() + '|' + d.getUTCHours(); const h = heat[k] = heat[k] || { at: 0, v: 0, dias: {} }; h.at++; if (a.vendeu) h.v++; h.dias[a.dia] = 1; });
-  const picos = Object.keys(heat).map((k) => ({ wd: +k.split('|')[0], h: +k.split('|')[1], at: heat[k].at, v: heat[k].v, nd: Object.keys(heat[k].dias).length })).filter((x) => x.at >= 3).sort((a, b) => (b.at / b.nd) - (a.at / a.nd)).slice(0, 4);
+  const heat = {}, comDados = {}; at.forEach((a) => { comDados[a.dia] = 1; const d = new Date(a.ini), k = d.getUTCHours(); const h = heat[k] = heat[k] || { at: 0, v: 0, dias: {} }; h.at++; if (a.vendeu) h.v++; h.dias[a.dia] = 1; });
+  const nDias = Object.keys(comDados).length; const picos = Object.keys(heat).map((k) => ({ h: +k, at: heat[k].at, v: heat[k].v })).filter((x) => x.at >= 3).sort((a, b) => b.at - a.at).slice(0, 4);
   if (!picos.length) return null;
   // linha do tempo de cada pessoa por dia: fila / pausa (motivo) / fora (antes de entrar ou depois do fim do turno); atendimento por cima
   const pessoas = {}; const linha = (dia, u, nome) => { const k = dia + '|' + u; return pessoas[k] = pessoas[k] || { dia: dia, u: u, nome: nome, ev: [], at: [] }; };
@@ -4679,7 +4679,7 @@ function coberturaPico_(loja, de, ate, usuarioAlvo) {
   };
   const DS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
   const out = picos.map((pk) => {
-    const dias = []; for (let d = de; d <= ate; d = somaDia_(d, 1)) if (new Date(d + 'T12:00:00Z').getUTCDay() === pk.wd && heat[pk.wd + '|' + pk.h].dias[d]) dias.push(d);
+    const dias = Object.keys(comDados).sort();
     let fila = 0, atend = 0, pausa = 0, pres = 0; const mot = {}, eu = { fila: 0, atend: 0, pausa: 0, off: 0 };
     dias.forEach((d) => {
       const a = Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10), pk.h), b = Math.min(a + 3600000, fimDia(d)); if (b <= a) return;
@@ -4691,7 +4691,7 @@ function coberturaPico_(loja, de, ate, usuarioAlvo) {
       pres += Object.keys(vistos).length;
     });
     const n = dias.length || 1, euTot = eu.fila + eu.atend + eu.pausa + eu.off;
-    return { dia: DS[pk.wd], h: pk.h, atPorDia: pk.at / n, conv: pk.at ? pk.v / pk.at : null, dias: dias.length, naFila: fila / n, atendendo: atend / n, pausa: pausa / n, pessoas: pres / n,
+    return { dia: '', h: pk.h, atPorDia: pk.at / n, conv: pk.at ? pk.v / pk.at : null, dias: dias.length, naFila: fila / n, atendendo: atend / n, pausa: pausa / n, pessoas: pres / n,
       motivos: Object.keys(mot).sort((x, y) => mot[y] - mot[x]).slice(0, 3).map((m) => ({ motivo: m, min: Math.round(mot[m] / n) })),
       eu: usuarioAlvo && euTot ? { fila: eu.fila / euTot, atend: eu.atend / euTot, pausa: eu.pausa / euTot, off: eu.off / euTot } : null };
   });
