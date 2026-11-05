@@ -2300,7 +2300,7 @@ function estoqueInfo(token) { sessao_(token); let l = []; try { l = aba_('Estoqu
 function estoqueBuscar(token, termo, loja, todos, pagina) {
   const u = sessao_(token), info = estoqueInfo(token).lojas; loja = loja && info.indexOf(loja) >= 0 ? loja : (info.indexOf(u.loja) >= 0 ? u.loja : info[0]);
   if (!loja) return { lojas: info, itens: [], msg: 'O estoque ainda não está disponível para a sua loja.' };
-  const L = estoqueLinhas_(loja), t = norm_(String(termo || '')).replace(/[^a-z0-9 ]/g, ' ').trim(), ws = t.split(/\s+/).filter(Boolean), cust = chefe_(u);
+  const L = estoqueLinhas_(loja), t = norm_(String(termo || '')).replace(/[^a-z0-9 ]/g, ' ').trim(), ws = t.split(/\s+/).filter(Boolean), cust = u.cargo === 'ADMIN'; // custo só para a administração
   // busca por parte do nome: cada palavra pode ser só um pedaço ("vest", "mid", "ser"), aceita plural ("vestidos") e,
   // se nenhum modelo tiver todas as palavras, mostra os que têm mais delas
   const casa = (h, w) => h.indexOf(w) >= 0 || (w.length > 3 && /s$/.test(w) && h.indexOf(w.slice(0, -1)) >= 0) || (w.length > 4 && /(oes|aes|ais|eis)$/.test(w) && h.indexOf(w.slice(0, -3)) >= 0);

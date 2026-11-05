@@ -1918,7 +1918,7 @@ function abrirReposicao(desdeUlt) {
       if (primeira && r.ultima && !de.value) { primeira = false; de.value = r.ultima.quando.slice(11, 16); carregar(); return; } primeira = false;
       if (r.semApi) { res.append(el('div', 'aviso-meta', 'A reposição pelo app funciona nas lojas ligadas à API do USE' + (r.lojasApi && r.lojasApi.length ? ' (hoje: ' + r.lojasApi.join(', ') + ')' : '') + '. Nas outras, continue pelo relatório de Reabastecimento do USE.')); return; }
       const top = el('div', 'motiva'); top.append(el('b', '', r.pendentes ? '🔄 ' + r.pendentes + (r.pendentes === 1 ? ' peça para repor' : ' peças para repor') : (r.total ? '✅ Tudo reposto!' : 'Nenhuma venda nesse horário.')));
-      top.append(el('div', 'sub', (r.de !== '00:00' || r.ate !== '23:59' ? 'Vendas das ' + r.de + ' às ' + (r.ate === '23:59' ? r.agora : r.ate) + ' · ' : '') + r.total + ' peça(s) para repor' + (r.semEstoque ? ' · ' + r.semEstoque + ' vendida(s) sem estoque para repor (não aparecem)' : '') + (r.ultima ? ' · última reposição às ' + r.ultima.quando.slice(11, 16) + ' (' + r.ultima.nome + ')' : '')));
+      top.append(el('div', 'sub', (r.de !== '00:00' || r.ate !== '23:59' ? 'Vendas das ' + r.de + ' às ' + (r.ate === '23:59' ? r.agora : r.ate) + ' · ' : '') + r.total + ' peça(s) na lista' + (r.semEstoque ? ' · ' + r.semEstoque + ' sem estoque (fora da lista)' : '') + (r.ultima ? ' · última reposição às ' + r.ultima.quando.slice(11, 16) + ' (' + r.ultima.nome + ')' : '')));
       res.append(top);
       if (r.chefe) {
         const DN = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'], sl0 = (r.cfg && r.cfg.slots) || [];
