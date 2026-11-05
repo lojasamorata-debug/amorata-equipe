@@ -4014,7 +4014,7 @@ function fcLinha(g, y, a, b, forte) { fcT(g, a, 28, y, 15, '#1f1e1d'); fcT(g, b,
 function fcBarra(g, y, pct, cor) { fcR(g, 28, y, 484, 8, 4, '#efebf5'); if (pct > 0) fcR(g, 28, y, Math.max(8, 484 * Math.min(1, pct)), 8, 4, cor || '#5b4a7a'); }
 function cardLoja(o, gerado) {
   const temMeta = o.meta != null, hDest = (o.destaques || []).length ? 34 + o.destaques.length * 58 : 0;
-  const H = 270 + (temMeta ? 140 : 0) + 230 + (o.fila ? 110 : 0) + hDest + 50; const [c, g] = fcCanvas(H);
+  const H = 270 + (temMeta ? 140 : 0) + 230 + (o.fila ? 138 : 0) + hDest + 50; const [c, g] = fcCanvas(H);
   fcTopo(g, 270, o.loja, 'Fechamento · ' + fcDia(o.data) + (o.parcial ? ' · ⏳ parcial (' + (o.importado || '') + ')' : ''));
   fcR(g, 28, 132, 484, 118, 16, 'rgba(255,255,255,.13)'); fcAnel(g, 92, 191, o.pct, temMeta ? fcPct(o.pct) : '—');
   fcT(g, 'Vendido no dia', 160, 170, 13, 'rgba(255,255,255,.85)'); fcT(g, rs(o.valor), 160, 204, 30, '#fff', 800);
@@ -4028,7 +4028,7 @@ function cardLoja(o, gerado) {
     ['Online', rs(o.online), o.objetivoOnline ? fcPct(o.online / o.objetivoOnline) + ' de ' + rs(o.objetivoOnline) + (o.online >= o.objetivoOnline ? ' ✅' : ' ⚠️') : '', o.objetivoOnline && o.online >= o.objetivoOnline]];
   kp.forEach((k, i) => { const x = 28 + (i % 2) * 247, yy = y + 46 + Math.floor(i / 2) * 88; fcR(g, x, yy, 237, 78, 12, '#f7f6f3'); fcT(g, k[0], x + 12, yy + 22, 12, '#6b6862'); fcT(g, k[1], x + 12, yy + 48, 20, '#1f1e1d', 800); if (k[2]) fcT(g, k[2], x + 12, yy + 68, 12, k[3] ? '#1e7a46' : '#a85d00'); });
   y += 230;
-  if (o.fila) { fcSec(g, y, '👥 Fila da vez'); fcLinha(g, y + 60, 'Atendimentos · conversão', o.fila.at + ' · ' + fcPct(o.fila.conv), true); fcLinha(g, y + 88, 'Mais perdeu por', o.fila.motivo ? '"' + o.fila.motivo + '" (' + o.fila.motivoN + ')' : '—', true); y += 110; }
+  if (o.fila) { fcSec(g, y, '👥 Fila da vez'); fcLinha(g, y + 60, 'Atendimentos · conversão', o.fila.at + ' · ' + fcPct(o.fila.conv), true); fcLinha(g, y + 88, 'Oportunidades perdidas', (o.fila.perdidas || 0) + (o.fila.perdidoValor ? ' · ~' + rs(o.fila.perdidoValor) : ''), true); fcLinha(g, y + 116, 'Mais perdeu por', o.fila.motivo ? '"' + o.fila.motivo + '" (' + o.fila.motivoN + ')' : '—', true); y += 138; }
   if (hDest) { fcSec(g, y, '⭐ Destaques do dia'); o.destaques.forEach((d, i) => { const yy = y + 44 + i * 58; fcR(g, 28, yy, 484, 50, 12, '#fbf1e2'); g.font = '800 15px ' + FC_F; const nw = g.measureText('⭐ ' + d.nome).width; fcT(g, '⭐ ' + d.nome, 42, yy + 31, 15, '#1f1e1d', 800); fcT(g, '— ' + d.txt, 48 + nw, yy + 31, 14, '#1f1e1d'); }); y += hDest; }
   g.fillStyle = '#eee9e1'; g.fillRect(0, y, 540, 1); fcT(g, 'App Amorata Equipe · dados do USE e da fila', 28, y + 30, 11, '#9a968f'); fcT(g, String(gerado || '').slice(11, 16), 512, y + 30, 11, '#9a968f', 400, 'right');
   return c;
