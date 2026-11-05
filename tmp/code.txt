@@ -1,4 +1,3 @@
-function zzDebug(){ const c=CacheService.getScriptCache(); const ad=usuarios_().find(x=>x.cargo==='ADMIN'&&x.ativo); c.put('t_zzdbg', JSON.stringify({usuario:ad.usuario}), 300); try { let t0=Date.now(); const a=relReuniao('zzdbg','loja:Via Verde','mes'); Logger.log('loja ms '+(Date.now()-t0)+' '+JSON.stringify({cur:a.cur,meta:a.meta,fortes:a.fortes,fracos:a.fracos,foco:a.foco,picos:a.picos,equipe:a.equipe}).replace(/[=&?]/g,'')); const v=usuarios_().find(x=>x.cargo==='VENDEDORA'&&x.ativo&&x.loja==='Via Verde'); t0=Date.now(); const b=relReuniao('zzdbg','pessoa:'+v.usuario,'semana'); Logger.log('pessoa ms '+(Date.now()-t0)+' '+JSON.stringify({per:b.per,cur:b.cur,prev:b.prev,ranking:b.ranking,meta:b.meta,fortes:b.fortes,fracos:b.fracos,objetivos:b.objetivos,picos:b.picos}).replace(/[=&?]/g,'')); } catch(e) { Logger.log('ERRO '+e.stack); } c.remove('t_zzdbg'); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
@@ -4615,8 +4614,9 @@ function relReuniao(token, alvo, per, deX, ateX) {
   const fortes = [], fracos = [], foco = [], pctS = (x) => Math.round(x * 100) + '%', num = (x) => Utilities.formatString('%.1f', x).replace('.', ',');
   const comp = (nome, a, b, ref, fmt, maior) => { if (a == null || b == null || !b) return; const d = (a - b) / b; if (Math.abs(d) < 0.05) return; const bom = maior ? d > 0 : d < 0; (bom ? fortes : fracos).push({ k: nome, txt: nome + ': ' + fmt(a) + ' — ' + (d > 0 ? 'acima' : 'abaixo') + ' ' + ref + ' (' + fmt(b) + ')' }); };
   const refL = pessoa ? 'da média da loja' : 'do período anterior', base = pessoa ? lj : prev;
-  if (pessoa) { comp('Conversão', cur.conv, lj.conv, refL, pctS, true); comp('Ticket médio', cur.ticket, lj.ticket, refL, brl_, true); comp('Peças por venda', cur.pa, lj.pa, refL, num, true); comp('Vendido', cur.valor, lj.valorMedio, 'da média por consultora', brl_, true); }
-  else { comp('Conversão', cur.conv, prev.conv, refL, pctS, true); comp('Ticket médio', cur.ticket, prev.ticket, refL, brl_, true); comp('Peças por venda', cur.pa, prev.pa, refL, num, true); comp('Vendido', cur.valor, prev.valor, refL, brl_, true); }
+  const okAt = cur.at >= 10, okV = cur.vendas >= 3;
+  if (pessoa) { if (okAt) comp('Conversão', cur.conv, lj.conv, refL, pctS, true); if (okV) { comp('Ticket médio', cur.ticket, lj.ticket, refL, brl_, true); comp('Peças por venda', cur.pa, lj.pa, refL, num, true); } comp('Vendido', cur.valor, lj.valorMedio, 'da média por consultora', brl_, true); }
+  else { if (okAt) comp('Conversão', cur.conv, prev.conv, refL, pctS, true); if (okV) { comp('Ticket médio', cur.ticket, prev.ticket, refL, brl_, true); comp('Peças por venda', cur.pa, prev.pa, refL, num, true); } comp('Vendido', cur.valor, prev.valor, refL, brl_, true); }
   if (pessoa && prev.valor > 0) comp('Evolução de vendas', cur.valor, prev.valor, 'do ' + P.tituloPrev, brl_, true);
   if (cur.fdv != null && cur.at >= 5) { if (cur.fdv >= 0.1) fracos.push({ k: 'Fora da vez', txt: 'Atendimentos fora da vez: ' + pctS(cur.fdv) }); else if (cur.fdv === 0) fortes.push({ k: 'Fora da vez', txt: 'Respeitou a fila: nenhum atendimento fora da vez' }); }
   if (meta && meta.meta && meta.diasTotal) { const tempo = meta.diasPassados / meta.diasTotal; if (meta.pct >= 1) fortes.push({ k: 'Meta', txt: 'Meta do mês batida (' + pctS(meta.pct) + ')' }); else if (meta.pct >= tempo) fortes.push({ k: 'Meta', txt: 'Meta no ritmo: ' + pctS(meta.pct) + ' da meta com ' + pctS(tempo) + ' do mês' }); else fracos.push({ k: 'Meta', txt: 'Meta atrás do ritmo: ' + pctS(meta.pct) + ' da meta com ' + pctS(tempo) + ' do mês' }); }
@@ -4687,12 +4687,11 @@ function coberturaPico_(loja, de, ate, usuarioAlvo) {
       Object.keys(pessoas).filter((k) => k.indexOf(d + '|') === 0).forEach((k) => { const p = pessoas[k], o = minutos(p, a, b); const tot = o.fila + o.atend + o.pausa;
         fila += o.fila / janela; atend += o.atend / janela; pausa += o.pausa / janela; if (tot > 1) vistos[p.u] = 1; Object.keys(o.motivos).forEach((m) => { mot[m] = (mot[m] || 0) + o.motivos[m]; });
         if (usuarioAlvo && p.u === usuarioAlvo) { eu.fila += o.fila; eu.atend += o.atend; eu.pausa += o.pausa; eu.off += Math.max(0, janela - tot); } });
-      if (usuarioAlvo && !pessoas[d + '|' + usuarioAlvo]) eu.off += janela;
       pres += Object.keys(vistos).length;
     });
     const n = dias.length || 1, euTot = eu.fila + eu.atend + eu.pausa + eu.off;
     return { dia: '', h: pk.h, atPorDia: pk.at / n, conv: pk.at ? pk.v / pk.at : null, dias: dias.length, naFila: fila / n, atendendo: atend / n, pausa: pausa / n, pessoas: pres / n,
-      motivos: Object.keys(mot).sort((x, y) => mot[y] - mot[x]).slice(0, 3).map((m) => ({ motivo: m, min: Math.round(mot[m] / n) })),
+      motivos: Object.keys(mot).sort((x, y) => mot[y] - mot[x]).map((m) => ({ motivo: m, min: Math.round(mot[m] / n) })).filter((m) => m.min >= 1).slice(0, 3),
       eu: usuarioAlvo && euTot ? { fila: eu.fila / euTot, atend: eu.atend / euTot, pausa: eu.pausa / euTot, off: eu.off / euTot } : null };
   });
   return out;
