@@ -446,6 +446,7 @@ body.fila-v #camp-bolha { bottom:calc(178px + env(safe-area-inset-bottom)); } bo
 @keyframes campFlut { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } } @keyframes campIn { from { transform:translateY(40px); opacity:0; } to { transform:none; opacity:1; } }
 #es-scan { position:fixed; inset:0; z-index:200; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:20px; } #es-scan .cx { position:relative; width:100%; max-width:520px; } #es-scan video { display:block; width:100%; max-height:58vh; object-fit:contain; border-radius:14px; background:#111; } #es-scan .mira { position:absolute; left:8%; right:8%; top:36%; bottom:36%; border:3px solid #f5c84c; border-radius:12px; pointer-events:none; } #es-scan .tx { color:#fff; text-align:center; font-size:14px; } #es-scan .btn { max-width:320px; width:100%; } #es-scan { gap:10px; overflow:auto; }
 .av-dest .av-big { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin:6px 0 4px; } .av-dest .av-n { font-family:Georgia,serif; font-size:40px; line-height:1; color:#1f1e1d; } .av-dest .av-st { color:#f2b01e; font-size:20px; letter-spacing:2px; } .av-dest .av-st.sm2 { font-size:14px; letter-spacing:1px; } .av-dest .av-sec { margin-top:12px; font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; } .av-lojas { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:6px; margin-top:8px; } .av-lj { background:#fbf6e9; border-radius:12px; padding:8px 10px; } .av-top { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; text-align:center; } .av-p { background:#fbf6e9; border-radius:14px; padding:10px 6px; position:relative; } .av-p .av { margin:0 auto 4px; width:46px; height:46px; box-shadow:0 0 0 2px #fff, 0 0 0 4px #f2b01e; } .av-p .av-md { position:absolute; top:4px; left:6px; font-size:16px; } .av-q { margin-top:8px; padding:10px 12px; background:#f6f2fb; border-left:3px solid #f2b01e; border-radius:10px; font-size:14px; font-style:italic; } .av-q span { display:block; margin-top:4px; font-style:normal; font-size:11px; color:var(--muted); }
+.bh-h { display:flex; justify-content:space-between; align-items:center; gap:8px; } .bh-s { font-family:Georgia,serif; font-size:26px; color:#1e7a46; white-space:nowrap; } .bh-s.bx { color:#a85d00; } .bh-s.neg { color:#c0392b; } .bh-s.z { font-size:13px; color:var(--muted); font-family:inherit; } .bh-hist { margin-top:8px; border-top:1px solid rgba(0,0,0,.06); } .bh-ln { display:flex; gap:8px; align-items:baseline; padding:6px 0; border-bottom:1px solid rgba(0,0,0,.05); font-size:13px; } .bh-ln .d { flex:none; color:var(--muted); width:40px; } .bh-ln .tx { flex:1; } .bh-ln .sd { flex:none; } .bh-ln .xb { border:0; background:none; color:var(--muted); font-size:16px; cursor:pointer; } .bh-ov { position:fixed; inset:0; z-index:150; background:rgba(0,0,0,.35); display:flex; align-items:flex-end; justify-content:center; padding:12px; } .bh-ov .card { width:100%; max-width:460px; margin-bottom:env(safe-area-inset-bottom); } .bh-ov input, .bh-ov select { width:100%; margin-top:4px; }
 .es-m { margin-top:10px; } .es-h { display:flex; justify-content:space-between; gap:8px; align-items:baseline; } .es-pr { font-weight:700; color:var(--accent); white-space:nowrap; } .es-cor { display:flex; gap:8px; align-items:flex-start; margin-top:8px; } .es-cn { flex:0 0 92px; font-size:12px; color:var(--muted); padding-top:3px; text-transform:capitalize; } .es-tz { display:flex; flex-wrap:wrap; gap:4px; } .es-t { font-size:12px; padding:3px 8px; border-radius:999px; background:#efe9f6; color:#4b3d68; font-weight:600; } .es-t.z { background:#f2f0ec; color:#aaa59c; font-weight:400; }
 #st-bolha .xb { border:0; background:none; color:var(--muted); font-size:16px; padding:0 0 0 2px; cursor:pointer; }
 @keyframes stentra { from { transform:translateY(20px) scale(.8); opacity:0; } to { transform:none; opacity:1; } }
@@ -678,7 +679,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
 
     <div id="v-gest" class="hide">
       <div class="filtros um"><select id="g-loja"></select></div>
-      <div class="seg"><button id="sg-imp" class="on">📥 Vendas do USE</button><button id="sg-met">🎯 Metas</button><button id="sg-ck">📋 Tarefas</button><button id="sg-esc">🗓️ Escala</button><button id="sg-eq">👥 Equipe</button><button id="sg-pla">🌱 Planos</button><button id="sg-pre" class="hide">🎁 Prêmios</button><button id="sg-rh" class="hide">📁 RH</button></div>
+      <div class="seg"><button id="sg-imp" class="on">📥 Vendas do USE</button><button id="sg-met">🎯 Metas</button><button id="sg-ck">📋 Tarefas</button><button id="sg-esc">🗓️ Escala</button><button id="sg-bh">⏱️ Banco de horas</button><button id="sg-eq">👥 Equipe</button><button id="sg-pla">🌱 Planos</button><button id="sg-pre" class="hide">🎁 Prêmios</button><button id="sg-rh" class="hide">📁 RH</button></div>
 
       <div id="g-imp">
         <div class="card hide" id="gt-card" style="margin-top:12px;border:2px solid var(--accent)">
@@ -763,6 +764,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
       <div id="g-pre" class="hide"></div>
       <div id="g-pla" class="hide"></div>
       <div id="g-rh" class="hide"></div>
+      <div id="g-bh" class="hide"></div>
     </div>
 
     <div id="v-est" class="hide">
@@ -3528,8 +3530,54 @@ let G_ABA = 'imp', GI = null, GM = null, GE = null;
 const isoBR = (d) => d ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) : '';
 const diaISO = (k) => { const d = new Date(Date.now() + k * 864e5); return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 const ontemISO = () => { const d = new Date(Date.now() - 864e5); return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
-function abaGest(q) { G_ABA = q; ['imp', 'met', 'ck', 'esc', 'eq', 'pre', 'pla', 'rh'].forEach((x) => { $('sg-' + x).classList.toggle('on', x === q); $('g-' + x).classList.toggle('hide', x !== q); }); carregarGestao(); }
-['imp', 'met', 'ck', 'esc', 'eq', 'pre', 'pla', 'rh'].forEach((x) => $('sg-' + x).addEventListener('click', () => abaGest(x)));
+// ---------- banco de horas ----------
+let BH = { loja: '', r: null, aberto: {} };
+const hm = (m) => { if (m == null) return '—'; const s = m < 0 ? '−' : '', a = Math.abs(Math.round(m)), h = Math.floor(a / 60), mi = a % 60; return s + h + 'h' + (mi ? String(mi).padStart(2, '0') : ''); };
+const lerHoras = (t) => { t = String(t || '').trim().toLowerCase().replace(/\s/g, ''); let m; if ((m = t.match(/^(\d+)(?:h|:)(\d{1,2})?(?:min)?$/))) return (+m[1]) * 60 + (+(m[2] || 0)); if ((m = t.match(/^(\d+)min$/))) return +m[1]; if ((m = t.match(/^(\d+(?:[.,]\d+)?)$/))) return Math.round(parseFloat(m[1].replace(',', '.')) * 60); return null; };
+const BH_TIPO = { COMP: ['➖', 'Compensação'], CRED: ['➕', 'Hora extra'], SALDO: ['📝', 'Saldo do DPATEC'] };
+function desenharBH(r) {
+  BH.r = r; const b = $('g-bh'); b.replaceChildren();
+  const top = el('div', 'card'); top.append(el('b', '', '⏱️ Banco de horas das vendedoras'), el('div', 'sub', 'O saldo parte do último fechamento do DPATEC (lançado pela administração). A gerente marca as compensações — folga, saída antes ou entrada mais tarde — e o saldo vai baixando aqui. O banco não pode ficar negativo: o que passar é descontado na folha.'));
+  if (r.admin) { const sl = el('select'); sl.style.marginTop = '8px'; [['TODAS', 'Todas as lojas']].concat(LOJAS_TODAS.map((l) => [l, l])).forEach(([v, t]) => { const o = new Option(t, v); if (v === BH.loja) o.selected = true; sl.append(o); }); sl.addEventListener('change', () => { BH.loja = sl.value; rodar('bhLista', [S.token, BH.loja], desenharBH); }); top.append(sl); }
+  top.append(el('div', 'sub', '👥 ' + r.pessoas.length + ' vendedora(s) · saldo total ' + hm(r.total))); b.append(top);
+  if (!r.pessoas.length) { b.append(el('div', 'vazio', 'Nenhuma vendedora ativa nesta loja.')); return; }
+  r.pessoas.forEach((p) => {
+    const c = el('div', 'card bh-p'), h = el('div', 'bh-h'), sd = el('div', 'bh-s' + (p.saldo == null ? ' z' : p.saldo < 0 ? ' neg' : p.saldo < 120 ? ' bx' : ''), p.saldo == null ? 'sem saldo' : hm(p.saldo));
+    const nm = el('div'); nm.append(el('b', '', p.nome + (r.lojas.length > 1 ? ' · ' + p.loja : '')), el('div', 'sub', p.base ? 'DPATEC ' + isoBR(p.base.data).slice(0, 5) + ': ' + hm(p.base.min) + (p.comp30 ? ' · compensou ' + hm(p.comp30) + ' em 30 dias' : '') : 'falta lançar o saldo do DPATEC'));
+    h.append(nm, sd); c.append(h);
+    // evolução do saldo (do mais antigo ao atual)
+    const pts = p.hist.slice().reverse().map((x) => x.saldo).filter((x) => x != null);
+    if (pts.length > 1) { const W = 300, H = 46, mx = Math.max(...pts, 60), mn = Math.min(0, ...pts), X = (i) => 4 + i * (W - 8) / (pts.length - 1), Y = (v) => H - 6 - (v - mn) / (mx - mn || 1) * (H - 12);
+      const sg = sv('svg', { viewBox: '0 0 ' + W + ' ' + H, width: '100%', height: H }); sg.append(sv('polyline', { points: pts.map((v, i) => X(i) + ',' + Y(v)).join(' '), fill: 'none', stroke: '#5b4a7a', 'stroke-width': 2 })); if (mn < 0) sg.append(sv('line', { x1: 0, x2: W, y1: Y(0), y2: Y(0), stroke: '#c0392b', 'stroke-dasharray': '3 3' })); sg.append(sv('circle', { cx: X(pts.length - 1), cy: Y(pts[pts.length - 1]), r: 3.5, fill: '#5b4a7a' })); c.append(sg); }
+    const ops = el('div'); ops.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px';
+    const bc = el('button', 'btn sm pri', '➖ Marcar compensação'); bc.addEventListener('click', () => formBH(p, 'COMP')); ops.append(bc);
+    const be = el('button', 'btn sm', '➕ Hora extra'); be.addEventListener('click', () => formBH(p, 'CRED')); ops.append(be);
+    if (r.admin) { const bs = el('button', 'btn sm', '📝 Saldo do DPATEC'); bs.addEventListener('click', () => formBH(p, 'SALDO')); ops.append(bs); }
+    const bv = el('button', 'btn sm', (BH.aberto[p.usuario] ? 'Esconder' : 'Ver') + ' histórico (' + p.hist.length + ')'); bv.addEventListener('click', () => { BH.aberto[p.usuario] = !BH.aberto[p.usuario]; desenharBH(BH.r); }); if (p.hist.length) ops.append(bv); c.append(ops);
+    if (BH.aberto[p.usuario]) { const l = el('div', 'bh-hist'); p.hist.forEach((x) => { const ln = el('div', 'bh-ln'), t = BH_TIPO[x.tipo] || ['•', x.tipo]; ln.append(el('span', 'd', isoBR(x.data).slice(0, 5)), el('span', 'tx', t[0] + ' ' + t[1] + (x.tipo === 'SALDO' ? ' ' + hm(x.min) : ' ' + hm(Math.abs(x.min))) + (x.obs ? ' · ' + x.obs : '') + ' · ' + x.porNome), el('b', 'sd', hm(x.saldo)));
+      if (r.admin || (x.meu && x.tipo !== 'SALDO')) { const a = el('button', 'xb', '×'); a.title = 'Apagar'; a.addEventListener('click', () => { if (confirm('Apagar este lançamento?')) rodar('bhApagar', [S.token, x.id, BH.loja], (rr) => { desenharBH(rr); toast('Lançamento apagado'); }); }); ln.append(a); } l.append(ln); }); c.append(l); }
+    b.append(c);
+  });
+}
+function formBH(p, tipo) {
+  const t = BH_TIPO[tipo], f = el('div', 'card'); f.id = 'bh-form';
+  const dt = el('input'); dt.type = 'date'; dt.value = new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+  const hr = el('input'); hr.placeholder = tipo === 'SALDO' ? 'saldo, ex.: 12:30' : 'horas, ex.: 2:00 ou 1,5'; hr.inputMode = 'decimal';
+  const mot = el('select'); (tipo === 'COMP' ? ['Folga (dia inteiro)', 'Saída antecipada', 'Entrada mais tarde', 'Intervalo maior', 'Outro'] : tipo === 'CRED' ? ['Hora extra', 'Evento / inventário', 'Domingo / feriado', 'Outro'] : ['Fechamento do mês no DPATEC']).forEach((x) => mot.append(new Option(x, x)));
+  const obs = el('input'); obs.placeholder = 'observação (opcional)'; obs.maxLength = 80;
+  const vai = el('button', 'btn pri', 'Salvar'), nao = el('button', 'btn', 'Cancelar');
+  vai.addEventListener('click', () => { const m = lerHoras(hr.value); if (m == null || (tipo !== 'SALDO' && m <= 0)) { toast('Informe as horas (ex.: 2:00, 1h30 ou 1,5)'); return; }
+    if (tipo === 'COMP' && p.saldo != null && m > p.saldo && !confirm('A compensação (' + hm(m) + ') é maior que o saldo (' + hm(p.saldo) + '). O que passar vai ser descontado na folha. Salvar mesmo assim?')) return;
+    vai.disabled = true; rodar('bhSalvar', [S.token, { usuario: p.usuario, data: dt.value, tipo: tipo, minutos: m, obs: (mot.value + (obs.value.trim() ? ' — ' + obs.value.trim() : '')), lojaVer: BH.loja }], (rr) => { escolherFechar(); desenharBH(rr); toast(t[0] + ' ' + t[1] + ' de ' + p.nome + ' salva'); }, () => { vai.disabled = false; }); });
+  nao.addEventListener('click', escolherFechar);
+  const lab = (x, i) => { const l = el('label', 'sub', x); l.style.cssText = 'display:block;margin-top:8px'; l.append(i); return l; };
+  f.append(el('b', '', t[0] + ' ' + t[1] + ' · ' + p.nome), el('div', 'sub', 'Saldo atual: ' + hm(p.saldo)), lab('Data', dt), lab(tipo === 'SALDO' ? 'Saldo no DPATEC (horas)' : 'Horas', hr), lab(tipo === 'SALDO' ? 'Origem' : 'Motivo', mot), lab('Observação', obs));
+  const bx = el('div'); bx.style.cssText = 'display:flex;gap:8px;margin-top:10px'; bx.append(vai, nao); f.append(bx);
+  const ov = el('div', 'bh-ov'); ov.id = 'bh-ov'; ov.append(f); ov.addEventListener('click', (e) => { if (e.target === ov) escolherFechar(); }); document.body.append(ov); setTimeout(() => hr.focus(), 100);
+}
+function escolherFechar() { const o = $('bh-ov'); if (o) o.remove(); }
+function abaGest(q) { G_ABA = q; ['imp', 'met', 'ck', 'esc', 'bh', 'eq', 'pre', 'pla', 'rh'].forEach((x) => { $('sg-' + x).classList.toggle('on', x === q); $('g-' + x).classList.toggle('hide', x !== q); }); carregarGestao(); }
+['imp', 'met', 'ck', 'esc', 'bh', 'eq', 'pre', 'pla', 'rh'].forEach((x) => $('sg-' + x).addEventListener('click', () => abaGest(x)));
 ['ABERTURA', 'FECHAMENTO'].forEach((t) => $('gc-ok-' + t).addEventListener('click', () => rodar('salvarChecklist', [S.token, $('g-loja').value, t, $('gc-' + t).value.split('\n')], (r) => { desenharCkEd(r); toast('Checklist salvo ✅'); if ($('g-loja').value === loja) desenharCk(r); })));
 function desenharCkEd(r) { r.turnos.forEach((t) => { $('gc-' + t.turno).value = t.itens.map((x) => x.texto).join('\n'); }); CKE = r; desenharTarefasEd(r); }
 let CKE = null; const DS_C = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -3570,6 +3618,7 @@ function carregarGestao() {
   if (G_ABA === 'imp') { if (!$('gi-data').value) $('gi-data').value = ontemISO(); $('gt-card').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('fc-rede').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); carregarDS(); if (!$('fc-data').value) $('fc-data').value = ontemISO(); if (!$('gt-data').value) $('gt-data').value = ontemISO(); rodar('statusVendas', [S.token, lj], desenharStatusVendas); }
   if (G_ABA === 'met') { prepMeses(); rodar('metasDoMes', [S.token, lj, $('gm-mes').value], desenharMetasEd); rodar('distribuicaoMeta', [S.token, lj, $('gm-mes').value], desenharDistrib); }
   if (G_ABA === 'ck') rodar('checklist', [S.token, lj], desenharCkEd);
+  if (G_ABA === 'bh') { BH.loja = S.cargo === 'ADMIN' ? (BH.loja || 'TODAS') : lj; rodar('bhLista', [S.token, BH.loja], desenharBH); }
   if (G_ABA === 'esc') { rodar('escala', [S.token, lj], desenharEscala); rodar('feriados', [S.token, lj], desenharFeriados); }
   if (G_ABA === 'eq') { if (!HOSPEDADO && !URL_APP) google.script.run.withSuccessHandler((u) => { URL_APP = u; }).withFailureHandler(() => {}).urlDoApp(); rodar('equipe', [S.token, lj], desenharEquipe); }
 }
