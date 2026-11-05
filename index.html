@@ -1538,7 +1538,7 @@ function prepararFiltros() {
   g.value = f.value; g.classList.toggle('hide', S.lojas.length < 2); $('m-filtro-box').classList.toggle('um', S.lojas.length < 2);
   const gi = $('i-loja'); gi.replaceChildren(...ops.map((l) => new Option(l === 'TODAS' ? 'Todas as lojas' : l, l)));
   gi.value = f.value; gi.classList.toggle('hide', S.lojas.length < 2); $('i-filtro-box').classList.toggle('um', S.lojas.length < 2);
-  $('tab-ini').classList.toggle('hide', !chefe()); $('tab-dia').classList.toggle('hide', chefe()); $('tab-fila').classList.toggle('hide', S.cargo === 'ESTOQUISTA'); document.body.classList.toggle('estq', S.cargo === 'ESTOQUISTA'); $('b-rh').classList.toggle('hide', S.cargo === 'ADMIN'); document.body.classList.toggle('adm', S.cargo === 'ADMIN');
+  $('tab-ini').classList.toggle('hide', !chefe()); $('tab-dia').classList.toggle('hide', chefe()); $('tab-fila').classList.toggle('hide', S.cargo === 'ESTOQUISTA'); document.body.classList.toggle('estq', S.cargo === 'ESTOQUISTA'); $('en-card').classList.toggle('hide', !(chefe() || S.cargo === 'ESTOQUISTA')); // entradas de mercadoria: só estoque, gerência e administração $('b-rh').classList.toggle('hide', S.cargo === 'ADMIN'); document.body.classList.toggle('adm', S.cargo === 'ADMIN');
   // gerente/admin: os blocos do "Meu dia" ficam no topo do Início
   if (chefe()) { const v = $('v-ini'); v.insertBefore($('dia-blocos'), $('i-cards').nextSibling); } else $('v-dia').insertBefore($('dia-blocos'), $('dia-fila'));
   unirInicio(chefe());
