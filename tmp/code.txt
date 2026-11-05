@@ -1,4 +1,3 @@
-function zzDebug(){ const c=CacheService.getScriptCache(); const ad=usuarios_().find(x=>x.cargo==='ADMIN'&&x.ativo); c.put('t_zzdbg', JSON.stringify({usuario:ad.usuario}), 120); try { ['Via Verde','Cerâmica','Sumaúma'].forEach(l=>{ const a=relReuniao('zzdbg','loja:'+l,'mes'); Logger.log(l+' '+JSON.stringify({picos:(a.picos||[]).map(k=>({h:k.h,at:k.atPorDia,fila:k.naFila,atend:k.atendendo,pausa:k.pausa,pp:k.porPessoa,baixa:k.baixa,sg:k.sugestoes})),fracos:a.fracos,foco:a.foco}).replace(/[=&?]/g,'')); }); } catch(e) { Logger.log('ERRO '+e.stack); } c.remove('t_zzdbg'); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
@@ -4651,7 +4650,7 @@ function relReuniao(token, alvo, per, deX, ateX) {
     if (k.pausa >= 0.3 && tem(/almo|lanche/i)) sg.push('Tirar almoço e lanche do horário das ' + hh(k.h) + (k.calmas && k.calmas.length ? ': marcar nos horários mais calmos (' + k.calmas.map(hh).join(' ou ') + ')' : '') + ', uma de cada vez');
     if (k.pausa >= 0.3 && tem(/reuni|estoque|arruma|vitrine|organiz/i)) sg.push('Não marcar reunião, estoque ou arrumação entre ' + hh(k.h) + ' e ' + hh(k.h + 1) + '; deixar para o horário mais calmo');
     if (k.pausa >= 0.3 && !tem(/almo|lanche|reuni|estoque|arruma|vitrine|organiz/i)) sg.push('Combinar com a equipe: no pico das ' + hh(k.h) + ', pausas só em caso de necessidade e uma pessoa por vez');
-    if (k.pessoas < 3 || disp < 1.5) sg.push('Rever a escala: colocar mais uma consultora cobrindo as ' + hh(k.h) + ' (ex.: escalonar entradas para uma chegar mais tarde e ficar até o fechamento)');
+    if (k.pessoas < 3 || disp < 1.5) { const meio = (abreLoja_(loja) + +String(fechaLoja_(loja, P.ate) || '22:00').slice(0, 2)) / 2; sg.push('Rever a escala: colocar mais uma consultora cobrindo as ' + hh(k.h) + (k.h < meio ? ' (ex.: uma entra mais cedo, para já estar na loja nesse horário)' : ' (ex.: escalonar entradas para uma chegar mais tarde e ficar até o fechamento)')); }
     sg.push('No pico, a gerente entra na fila e atende junto; a estoquista apoia no provador, na reposição rápida e no caixa');
     if (k.conv != null && lj.conv != null && k.conv < lj.conv - 0.05) sg.push('A conversão nesse horário (' + pctS(k.conv) + ') fica abaixo da média da loja (' + pctS(lj.conv) + '): dar as boas-vindas a toda cliente que entra, mesmo atendendo outra, e chamar a próxima da fila na hora');
     sg.push('Deixar provadores, araras e peças de reposição prontos antes das ' + hh(k.h) + ' para o atendimento render mais');
