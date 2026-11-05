@@ -2186,23 +2186,23 @@ function dsEstoque10() {
   if (log.length) pr.setProperty('DS_ESTQ', agoraBR_() + ' · ' + log.join(' · '));
   return log.join('\n');
 }
-// fim do dia: das 22h às 22h20 (hora da loja) busca as vendas de 5 em 5 minutos (venda que passa um pouco das 22h entra);
-// a partir das 22h18 faz o fechamento do dia (aviso à gerente, conferência e status das campeãs), uma vez por loja
+// fim do dia: das 22h às 22h20 (hora da loja) busca as vendas de 10 em 10 minutos (venda que passa um pouco das 22h entra);
+// a partir das 22h20 faz a última busca e o fechamento do dia (aviso à gerente: relatório pronto, conferência e status das campeãs), uma vez por loja
 function dsFim5() {
   const c = dsCfg_(); if (!c.base || !c.key) return 'sem configuração';
   const pr = PropertiesService.getScriptProperties(), agora = new Date(), log = []; let lojas = []; try { lojas = dsLojas_(); } catch (e) { return e.message; }
   lojas.forEach((ln) => {
     const tz = TZ[LOJA_COD[ln]] || 'America/Rio_Branco', hh = +Utilities.formatDate(agora, tz, 'H'), mm = +Utilities.formatDate(agora, tz, 'm'), hoje = dia_(LOJA_COD[ln]);
     if (pr.getProperty('DS_FECHOU_' + ln) === hoje) return;
-    if (hh === 22 && mm < 18) { try { const r = dsImportarDia_(ln, hoje, true); log.push(LOJA_COD[ln] + ' 22h' + String(mm).padStart(2, '0') + ': ' + r.linhas + ' vendedora(s)'); } catch (e) { log.push(LOJA_COD[ln] + ': ' + e.message); } }
-    else if ((hh === 22 && mm >= 18) || hh === 23) log.push(dsFechamentoDia([ln]));
+    if (hh === 22 && mm < 20) { try { const r = dsImportarDia_(ln, hoje, true); log.push(LOJA_COD[ln] + ' 22h' + String(mm).padStart(2, '0') + ': ' + r.linhas + ' vendedora(s)'); } catch (e) { log.push(LOJA_COD[ln] + ': ' + e.message); } }
+    else if ((hh === 22 && mm >= 20) || hh === 23) log.push(dsFechamentoDia([ln]));
   });
   if (log.length) pr.setProperty('DS_SYNC', agoraBR_() + ' · ' + log.join(' · '));
   return log.join('\n');
 }
 function dsGatilho_(ligar) {
   ScriptApp.getProjectTriggers().filter((g) => ['dsSincronizar', 'dsFechamentoDia', 'dsEstoque10', 'dsFim5'].indexOf(g.getHandlerFunction()) >= 0).forEach((g) => ScriptApp.deleteTrigger(g));
-  if (ligar) { ScriptApp.newTrigger('dsEstoque10').timeBased().everyMinutes(10).create(); ScriptApp.newTrigger('dsSincronizar').timeBased().everyHours(1).create(); ScriptApp.newTrigger('dsFim5').timeBased().everyMinutes(5).create(); }
+  if (ligar) { ScriptApp.newTrigger('dsEstoque10').timeBased().everyMinutes(10).create(); ScriptApp.newTrigger('dsSincronizar').timeBased().everyHours(1).create(); ScriptApp.newTrigger('dsFim5').timeBased().everyMinutes(10).create(); }
 }
 // ADMIN: buscar agora / ligar ou desligar a sincronização automática
 function dsSincronizarAgora(token) { const u = sessao_(token); if (u.cargo !== 'ADMIN') throw new Error('Só a administração.'); dsGatilho_(true); let r = dsSincronizar(); try { dsLojas_().forEach((ln) => { r += '\n' + LOJA_COD[ln] + ' estoque: ' + dsEstoqueSync_(ln) + ' itens'; }); } catch (e) { r += '\nestoque: ' + e.message; } return Object.assign({ log: r }, dsStatus(token)); }
