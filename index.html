@@ -3964,20 +3964,35 @@ function objetivoDia(loja, on) {
   });
 }
 function cardObjetivo(o, y, foco) {
-  const hY = y ? 150 + ((y.destaques || []).length ? 30 + y.destaques.length * 26 : 0) : 0, hF = foco.length ? 50 + foco.length * 56 : 0;
-  const H = 270 + 140 + hY + hF + 92; const [c, g] = fcCanvas(H);
+  const pes = o.metasHoje || [], n2 = (x) => x.toFixed(2).replace('.', ',');
+  // indicadores para melhorar: compara ontem com a média do mês; o alvo de hoje é a média do mês (se ontem ficou abaixo) ou superar ontem
+  const ind = [];
+  if (y) {
+    const add = (nome, ont, mes, fmt, alvoFmt) => { if (ont == null && mes == null) return; const ruim = ont != null && mes != null && ont < mes, alvo = ruim ? mes : Math.max(ont || 0, mes || 0); ind.push({ nome: nome, ont: ont != null ? fmt(ont) : '—', mes: mes != null ? fmt(mes) : '—', alvo: alvoFmt(alvo), ruim: ruim }); };
+    add('Ticket médio', y.tkm, y.tkmMes, rs, (v) => 'acima de ' + rs(Math.ceil(v / 10) * 10));
+    add('Peças por venda', y.pa, y.paMes, n2, (v) => 'acima de ' + n2(Math.ceil(v * 10) / 10));
+    if (y.fila) add('Conversão', y.fila.conv, y.convMes, fcPct, (v) => 'acima de ' + Math.min(95, Math.ceil(v * 20) * 5) + '%');
+    ind.sort((p, q) => q.ruim - p.ruim);
+  }
+  // dicas: motivo que mais fez perder ontem + pontos de foco da loja (sem citar ninguém)
+  const dic = []; const mt = y && y.fila && y.fila.motivo, cc = mt && typeof COACH !== 'undefined' ? COACH[mt] : null;
+  if (cc) { dic.push(['💡', 'Ontem a loja mais perdeu por “' + mt + '”. ' + cc.d[0]]); if (cc.f) dic.push(['🗣️', 'Experimente falar: ' + cc.f]); }
+  (foco || []).filter((x) => ['🤝', '📉', '🚀', '💜', '💡'].indexOf(x[0]) < 0).forEach((x) => dic.push(x));
+  ind.filter((x) => x.ruim).forEach((x) => { if (x.nome === 'Peças por venda') dic.push(['👗', 'Desafio do dia: oferecer a peça que completa o look em todo atendimento.']); if (x.nome === 'Ticket médio') dic.push(['💎', 'Apresente primeiro as peças de maior valor e mostre o look completo.']); if (x.nome === 'Conversão') dic.push(['🎯', 'Leve sempre 2 opções ao provador e convide toda cliente para provar.']); });
+  if (!dic.length) dic.push(['💜', 'Atenda cada cliente como única: sorriso, escuta e o look completo.']);
+  const D = dic.slice(0, 3), mg = document.createElement('canvas').getContext('2d'); mg.font = '400 13px ' + FC_F;
+  const nL = (t) => { let l = '', n = 0; t.split(' ').forEach((p) => { const tt = l ? l + ' ' + p : p; if (mg.measureText(tt).width > 420 && l) { n++; l = p; } else l = tt; }); return n + (l ? 1 : 0); };
+  const hDi = D.map(([, t]) => Math.max(58, 22 + nL(t) * 18)), hP = pes.length ? 44 + Math.ceil(pes.length / 2) * 52 + 4 : 0, hI = ind.length ? 44 + 112 + 6 : 0, hD = 44 + hDi.reduce((a, x) => a + x + 8, 0);
+  const H = 270 + hP + hI + hD + 92; const [c, g] = fcCanvas(H);
   fcTopo(g, 270, o.loja, 'Objetivo do dia · ' + fcDia(o.data));
   fcR(g, 28, 132, 484, 118, 16, 'rgba(255,255,255,.13)'); fcT(g, '🎯', 70, 210, 48, '#fff', 400, 'center');
-  fcT(g, 'Objetivo de hoje', 128, 170, 13, 'rgba(255,255,255,.85)'); fcT(g, rs(o.objetivo), 128, 206, 32, '#fff', 800);
+  fcT(g, 'Meta da loja hoje', 128, 170, 13, 'rgba(255,255,255,.85)'); fcT(g, rs(o.objetivo), 128, 206, 32, '#fff', 800);
   fcT(g, (o.especial ? '⭐ ' + o.especial.nome + ' · ' : '') + (o.objetivoOnline ? 'dentro dele, online: ' + rs(o.objetivoOnline) : 'Bora juntas! 💜'), 128, 230, 13, 'rgba(255,255,255,.92)', 600);
-  let yy = 270; const MES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+o.data.slice(5, 7) - 1];
-  const vend = o.mesVendido - o.valor, pctM = o.meta ? vend / o.meta : 0;
-  fcSec(g, yy, '📅 Mês de ' + MES); fcLinha(g, yy + 60, 'Vendido até ontem', rs(vend), true); fcBarra(g, yy + 72, pctM); fcLinha(g, yy + 104, 'Meta do mês · ' + fcPct(pctM), rs(o.meta)); fcLinha(g, yy + 128, 'Falta para a meta', rs(Math.max(0, o.meta - vend)), true); yy += 140;
-  if (y) { fcSec(g, yy, '📊 Ontem · ' + fcDia(y.data).split(',')[0]); fcLinha(g, yy + 60, 'Vendido', rs(y.valor) + (y.pct ? ' · ' + fcPct(y.pct) + ' do objetivo' + (y.pct >= 1 ? ' ✅' : '') : ''), true);
-    fcLinha(g, yy + 88, 'Vendas · peças · ticket', y.vendas + ' · ' + y.itens + ' · ' + (y.tkm ? rs(y.tkm) : '—')); if (y.fila) fcLinha(g, yy + 116, 'Fila: atendimentos · conversão', y.fila.at + ' · ' + fcPct(y.fila.conv));
-    let k = yy + 150; if ((y.destaques || []).length) { fcT(g, '⭐ Destaques de ontem', 28, k, 13, '#a85d00', 700); y.destaques.forEach((d, i) => fcT(g, d.nome + ' — ' + d.txt, 28, k + 24 + i * 26, 14, '#1f1e1d')); } yy += hY; }
-  if (foco.length) { fcSec(g, yy, '🧭 Foco de hoje'); foco.forEach(([e, t], i) => { fcR(g, 28, yy + 44 + i * 56, 484, 48, 12, '#f7f6f3'); fcT(g, e, 44, yy + 74 + i * 56, 18); const n = fcWrap(g, t.length > 110 ? t.slice(0, 107) + '…' : t, 76, yy + 64 + i * 56, 424, 17, 13, '#1f1e1d'); void n; }); yy += hF; }
-  fcR(g, 28, yy + 14, 484, 44, 12, '#efebf5'); fcT(g, '💜 Bora fazer acontecer, equipe!', 270, yy + 42, 15, '#5b4a7a', 800, 'center'); yy += 72;
+  let yy = 270;
+  if (hP) { fcSec(g, yy, '👩 Meta de hoje de cada uma'); pes.forEach((p, i) => { const x = 28 + (i % 2) * 247, y2 = yy + 44 + Math.floor(i / 2) * 52; fcR(g, x, y2, 237, 44, 12, p.batida ? '#e8f4ec' : '#f7f6f3'); fcT(g, p.nome, x + 14, y2 + 28, 15, '#1f1e1d', 700); fcT(g, p.batida ? 'mês batido 🏆' : rs(p.meta), x + 223, y2 + 28, p.batida ? 13 : 16, p.batida ? '#1e5b38' : '#5b4a7a', 800, 'right'); }); yy += hP; }
+  if (hI) { fcSec(g, yy, '📈 Indicadores para melhorar hoje'); ind.forEach((k, i) => { const w = 154, x = 28 + i * (w + 11), y2 = yy + 44; fcR(g, x, y2, w, 104, 12, k.ruim ? '#fff4e5' : '#f7f6f3'); fcT(g, k.nome + (k.ruim ? ' ⚠️' : ' ✅'), x + 12, y2 + 22, 12, '#6b6862', 700); fcT(g, 'Ontem ' + k.ont, x + 12, y2 + 46, 13, '#1f1e1d'); fcT(g, 'Mês ' + k.mes, x + 12, y2 + 66, 13, '#6b6862'); fcT(g, k.alvo, x + 12, y2 + 92, 14, k.ruim ? '#a85d00' : '#1e7a46', 800); }); yy += hI; }
+  fcSec(g, yy, '💡 Dicas para hoje'); let yd = yy + 44; D.forEach(([e, t], i) => { const h = hDi[i]; fcR(g, 28, yd, 484, h, 12, '#efebf5'); fcT(g, e, 46, yd + h / 2 + 7, 20); const nl = nL(t); fcWrap(g, t, 78, yd + h / 2 - (nl - 1) * 9 + 5, 420, 18, 13, '#1f1e1d'); yd += h + 8; }); yy += hD;
+  fcR(g, 28, yy + 14, 484, 44, 12, '#5b4a7a'); fcT(g, '💜 Bora fazer acontecer, equipe!', 270, yy + 42, 15, '#fff', 800, 'center'); yy += 72;
   g.fillStyle = '#eee9e1'; g.fillRect(0, yy, 540, 1); fcT(g, 'App Amorata Equipe', 28, yy + 14, 11, '#9a968f');
   return c;
 }
