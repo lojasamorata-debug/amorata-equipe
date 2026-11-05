@@ -1,4 +1,3 @@
-function zzDebug(){ const tz='America/Manaus'; const ini=Utilities.formatDate(new Date(Date.now()-45*864e5),tz,'yyyy-MM-dd'), fim=Utilities.formatDate(new Date(Date.now()+15*864e5),tz,'yyyy-MM-dd'); let it=[]; for(let p=1;p<10;p++){ const q=dsGet_('/api/v1/ObterVouchers',{loja:1,dataInicio:ini,dataFim:fim,itensPorPagina:500,pagina:p}).json||{}; if(!(q.itens||[]).length) break; it=it.concat(q.itens); if(it.length>=q.totalitens) break; } const t={}; it.forEach(x=>{ const k='excl='+JSON.stringify(x.voucherClienteExcluido)+' u='+x.utilizouVoucher; t[k]=(t[k]||0)+1; }); Logger.log('total '+it.length+' '+JSON.stringify(t)); it.filter(x=>Number(x.cliente)===2866).forEach(x=>Logger.log('2866 '+JSON.stringify({cod:x.voucherCodigo,ini:x.periodoInicio,fim:x.periodoFim,valor:x.valor,u:x.utilizouVoucher,excl:x.voucherClienteExcluido,usado:x.valorUtilizado,inc:x.dataHoraInclusaoVoucherCliente,alt:x.dataUltAltVoucherCliente}).replace(/[=&?]/g,''))); const r2=dsGet_('/api/v1/ObterVouchers',{loja:1,dataInicio:ini,dataFim:'2026-12-31',itensPorPagina:500,pagina:1}).json||{}; Logger.log('ate dez total '+r2.totalitens); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
@@ -4719,11 +4718,12 @@ function coberturaPico_(loja, de, ate, usuarioAlvo) {
 
 // ---------- cashback da cliente (consulta rápida no balcão) ----------
 // vem do USE pela DS Connect (/api/v1/ObterVouchers): o +Q1 grava o cashback como voucher (descrição "Q1_…", cashback = true)
-// utilizouVoucher: 1 = usado · 2 = ainda não usado. Busca os criados nos últimos 45 dias (o cashback vale 30) e fica 10 min guardado.
+// utilizouVoucher: 1 = usado · 2 = não usado; voucherClienteExcluido: 1 = excluído · 2 = ativo (conferido com o USE em 05/11).
+// O filtro dataInicio/dataFim da API é pelo fim da validade: pega de 45 dias atrás até 45 dias à frente. Fica 10 min guardado.
 function cashbackLista_(lojaNum) {
-  const c = CacheService.getScriptCache(), mk = 'cbk2_' + lojaNum, meta = c.get(mk);
+  const c = CacheService.getScriptCache(), mk = 'cbk3_' + lojaNum, meta = c.get(mk);
   if (meta) { const n = +meta, ks = []; for (let i = 0; i < n; i++) ks.push(mk + '_' + i); const got = c.getAll(ks); if (ks.every((k) => got[k] != null)) return JSON.parse(ks.map((k) => got[k]).join('')); }
-  const tz = 'America/Manaus', h = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd'), ini = Utilities.formatDate(new Date(Date.now() - 45 * 864e5), tz, 'yyyy-MM-dd'), fim = Utilities.formatDate(new Date(Date.now() + 15 * 864e5), tz, 'yyyy-MM-dd');
+  const tz = 'America/Manaus', h = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd'), ini = Utilities.formatDate(new Date(Date.now() - 45 * 864e5), tz, 'yyyy-MM-dd'), fim = Utilities.formatDate(new Date(Date.now() + 45 * 864e5), tz, 'yyyy-MM-dd');
   let it = [];
   for (let p = 1; p <= 20; p++) {
     const r = dsGet_('/api/v1/ObterVouchers', { loja: lojaNum, dataInicio: ini, dataFim: fim, itensPorPagina: 500, pagina: p });
@@ -4731,7 +4731,7 @@ function cashbackLista_(lojaNum) {
     const xs = r.json.itens || []; it = it.concat(xs); if (!xs.length || it.length >= (r.json.totalitens || 0)) break;
   }
   // [lojaCliente, cliente, nome, valor, liberaEm, valeAte, compraMinima]
-  const out = it.filter((x) => x.cashback && Number(x.utilizouVoucher) !== 1 && String(x.periodoFim).slice(0, 10) >= h && Number(x.valor) > 0)
+  const out = it.filter((x) => x.cashback && Number(x.utilizouVoucher) !== 1 && Number(x.voucherClienteExcluido) !== 1 && String(x.periodoFim).slice(0, 10) >= h && Number(x.valor) > 0)
     .map((x) => [Number(x.clienteLoja) || 0, Number(x.cliente) || 0, String(x.nomeCliente || '').trim(), Number(x.valor) || 0, String(x.periodoInicio).slice(0, 10), String(x.periodoFim).slice(0, 10), Number(x.valorMinimoProdutosVenda) || 0]);
   try { const s = JSON.stringify(out), parts = []; for (let i = 0; i < s.length; i += 90000) parts.push(s.slice(i, i + 90000)); const o = {}; parts.forEach((p, i) => { o[mk + '_' + i] = p; }); c.putAll(o, 600); c.put(mk, String(parts.length), 600); } catch (e) {}
   return out;
