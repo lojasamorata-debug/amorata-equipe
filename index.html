@@ -1117,7 +1117,7 @@ function pedirTrocaUI(r) {
 function carregarMetaHoje() { if (S) google.script.run.withSuccessHandler((m) => { MH = m; desenharMetaHoje(); }).withFailureHandler(() => {}).minhaMetaHoje(S.token); }
 function desenharMetaHoje() {
   const b = $('eu-meta'); if (!b) return;
-  if (!MH) { b.classList.add('hide'); return; }
+  if (!MH || MH.loja) { b.classList.add('hide'); return; } // gerente sem meta individual: a meta da loja já está no Início
   b.classList.remove('hide'); b.replaceChildren();
   if (MH.folga) { b.textContent = '🌴 Hoje é sua folga — bom descanso! Você está com ' + pc(MH.pct) + ' da meta do mês' + (MH.restam ? ' · ' + MH.restam + (MH.restam === 1 ? ' dia de trabalho restante' : ' dias de trabalho restantes') : '') + '.'; return; }
   if (MH.batida) { b.textContent = '🏆 Meta do mês batida! Agora é rumo à meta desafio.'; return; }
@@ -2738,8 +2738,8 @@ function caminho() {
       const mq = el('div', 'card cdia cmeta');
       if (!MH && !tela.mhPedida) { tela.mhPedida = true; mq.append(el('div', 'sub', '🎯 Carregando sua meta de hoje…')); google.script.run.withSuccessHandler((m) => { MH = m; desenharMetaHoje(); if ($('caminho') && passos[i] === 'dia') tela(); }).withFailureHandler(() => {}).minhaMetaHoje(S.token); }
       else if (MH && MH.folga) mq.append(el('b', '', '🌴 Hoje é sua folga'), el('div', 'sub', 'Bom descanso! Você está com ' + pc(MH.pct) + ' da meta do mês. A meta do dia volta no seu próximo dia de trabalho.'));
-      else if (MH && MH.batida) mq.append(el('b', '', '🏆 Meta do mês batida!'), el('div', 'sub', 'Agora é rumo à meta desafio.'));
-      else if (MH && MH.restam && MH.porDia) { const n = MH.tkm ? Math.ceil(MH.porDia / MH.tkm) : null; mq.append(el('div', 'sub', '🎯 Sua meta de hoje'), el('div', 'big', rs(MH.porDia)), el('div', 'sub', (n && n <= 30 ? 'cerca de ' + n + (n === 1 ? ' venda' : ' vendas') + ' no seu ticket médio · ' : '') + pc(MH.pct) + ' da meta do mês')); }
+      else if (MH && MH.batida) mq.append(el('b', '', MH.loja ? '🏆 A loja já bateu a meta do mês!' : '🏆 Meta do mês batida!'), el('div', 'sub', 'Agora é rumo à meta desafio.'));
+      else if (MH && MH.restam && MH.porDia) { const n = MH.tkm ? Math.ceil(MH.porDia / MH.tkm) : null; mq.append(el('div', 'sub', MH.loja ? '🎯 Meta da loja hoje' : '🎯 Sua meta de hoje'), el('div', 'big', rs(MH.porDia)), el('div', 'sub', (n && n <= 30 ? 'cerca de ' + n + (n === 1 ? ' venda' : ' vendas') + ' no seu ticket médio · ' : '') + pc(MH.pct) + ' da meta do mês')); }
       else mq.append(el('b', '', '🎯 Meta do mês ainda não cadastrada'), el('div', 'sub', 'Assim que a gerente cadastrar, ela aparece aqui.'));
       c.append(mq);
       const av = el('div', 'avis'), add = (t2, fn) => { const b = el('button'); b.append(el('div', '', t2), el('span', '', 'Abrir ›')); b.addEventListener('click', () => { fim(); fn(); }); av.append(b); };

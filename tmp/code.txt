@@ -2988,6 +2988,8 @@ function minhaMetaHoje(token) {
   else try {
     const m = metas(token, u.loja && u.loja !== 'TODAS' ? u.loja : 'TODAS', 'mes'), x = m.consultoras.find((c2) => c2.eu);
     if (x && x.meta) out = { pct: x.pct, falta: x.falta, porDia: x.porDia, restam: x.restam, tkm: x.tkm, metaOnline: x.metaOnline, porDiaOnline: x.porDiaOnline, batida: x.pct >= 1 };
+    // gerente sem meta individual: mostra a meta da loja
+    else if (u.cargo === 'GERENTE') { const lt = (m.lojas || [])[0]; if (lt && lt.meta) out = { loja: true, pct: lt.pct, falta: lt.falta, porDia: lt.porDia, restam: lt.restam, batida: lt.pct >= 1 }; }
   } catch (e) {}
   if (!hit) c.put(k, JSON.stringify(out), 900);
   // folga hoje (escala): não sugere meta do dia
