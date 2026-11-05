@@ -1888,7 +1888,7 @@ function linhasPct(lista, max) {
 // detalhe em tela cheia: move os blocos já desenhados para dentro e devolve ao fechar
 // ---------- reposição: lista do que vendeu (por horário) para repor na arara; marca ✓ reposto / ✗ sem peça ----------
 let RP = null;
-function abrirReposicao() {
+function abrirReposicao(desdeUlt) {
   const LS = (S && S.lojas) || [], lj = LS.length > 1 && LS.indexOf('Sumaúma') >= 0 ? 'Sumaúma' : (LS.indexOf(loja) >= 0 ? loja : LS[0] || 'Sumaúma');
   abrirDet('🔄 Reposição', (b) => {
     const hoje = diaISO(0), fx = el('div'); fx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:end';
@@ -1907,10 +1907,25 @@ function abrirReposicao() {
     function carregar() { res.replaceChildren(el('div', 'sub', 'Buscando as vendas no USE…')); google.script.run.withSuccessHandler((r) => { RP = r; desenhar(); }).withFailureHandler((e) => res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || 'erro')))).reposicao.apply(null, args()); }
     function desenhar() {
       const r = RP; res.replaceChildren(); if (!r) return;
+      if (primeira && r.ultima && !de.value) { primeira = false; de.value = r.ultima.quando.slice(11, 16); carregar(); return; } primeira = false;
       if (r.semApi) { res.append(el('div', 'aviso-meta', 'A reposição pelo app funciona nas lojas ligadas à API do USE' + (r.lojasApi && r.lojasApi.length ? ' (hoje: ' + r.lojasApi.join(', ') + ')' : '') + '. Nas outras, continue pelo relatório de Reabastecimento do USE.')); return; }
       const top = el('div', 'motiva'); top.append(el('b', '', r.pendentes ? '🔄 ' + r.pendentes + (r.pendentes === 1 ? ' peça para repor' : ' peças para repor') : (r.total ? '✅ Tudo reposto!' : 'Nenhuma venda nesse horário.')));
       top.append(el('div', 'sub', (r.de !== '00:00' || r.ate !== '23:59' ? 'Vendas das ' + r.de + ' às ' + (r.ate === '23:59' ? r.agora : r.ate) + ' · ' : '') + r.total + ' peça(s) vendida(s)' + (r.ultima ? ' · última reposição às ' + r.ultima.quando.slice(11, 16) + ' (' + r.ultima.nome + ')' : '')));
       res.append(top);
+      if (r.chefe) {
+        const dz = el('details', 'card'); dz.style.marginTop = '8px'; dz.append(el('summary', '', '👤 Quem repõe: ' + (r.cfg.nome ? r.cfg.nome + (r.cfg.horas.length ? ' · ' + r.cfg.horas.join(', ') : '') : 'ninguém designado')));
+        const ps = el('select'); ps.append(new Option('— ninguém —', '')); r.equipe.forEach((x) => ps.append(new Option(x.nome, x.usuario))); ps.value = r.cfg.usuario || '';
+        const hs = el('input'); hs.placeholder = 'horários, ex.: 14:00, 18:00, 21:30'; hs.value = (r.cfg.horas || []).join(', ');
+        const sv = el('button', 'btn pri', 'Salvar'), ag = el('button', 'btn', '📤 Mandar a lista agora');
+        const go = (agora) => { const hh = (hs.value.match(/\d{1,2}[:h]\d{2}|\b\d{1,2}\b/g) || []).map((t) => { const m = t.replace('h', ':').split(':'); return String(+m[0]).padStart(2, '0') + ':' + (m[1] || '00').padStart(2, '0'); });
+          if (agora && !ps.value) { toast('Escolha quem vai repor.'); return; }
+          google.script.run.withSuccessHandler((x) => { RP.cfg = { usuario: x.cfg.usuario, nome: ps.value ? ps.options[ps.selectedIndex].text : '', horas: x.cfg.horas }; toast(x.enviado ? 'Lista enviada para ' + RP.cfg.nome + ' (' + x.enviado.pendentes + ' peças) ✅' : 'Salvo ✅'); desenhar(); }).withFailureHandler((e) => toast((e && e.message) || 'erro')).reposicaoDesignar(S.token, sl.value, ps.value, hh, agora); };
+        sv.addEventListener('click', () => go(false)); ag.addEventListener('click', () => go(true));
+        const bx = el('div'); bx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px'; bx.append(sv, ag);
+        const lab2 = (t, i) => { const l = el('label', 'sub', t); l.style.cssText = 'display:block;margin-top:8px'; l.append(i); return l; };
+        dz.append(lab2('Responsável pela reposição', ps), lab2('Horários (ela recebe a lista sozinha nesses horários)', hs), bx, el('div', 'sub', 'No horário marcado, ela recebe um aviso no celular com o que vendeu desde a última reposição. "Mandar agora" envia na hora.'));
+        res.append(dz);
+      }
       const pend = r.lista.filter((x) => !x.status);
       if (pend.length > 1) { const all = el('button', 'btn pri', '✓ Marcar todas como repostas (' + r.pendentes + ')'); all.style.marginTop = '8px'; all.addEventListener('click', () => { if (confirm('Marcar as ' + r.pendentes + ' peças como repostas?')) marcar([].concat(...pend.map((x) => x.linhas)), 'FEITO'); }); res.append(all); }
       r.lista.forEach((x) => {
@@ -1925,6 +1940,7 @@ function abrirReposicao() {
         c.append(ops); res.append(c);
       });
     }
+    let primeira = !!desdeUlt; const carregar0 = carregar;
     carregar();
   });
 }
@@ -4502,7 +4518,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { mudarAba(S.cargo === 'VENDEDORA' ? 'meta' : 'ini'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide'); blocoNotif(o);
 }));

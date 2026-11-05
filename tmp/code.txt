@@ -2140,7 +2140,35 @@ function reposicao(token, lojaSel, d, de, ate) {
   const lista = Object.keys(g).map((k) => { const o = g[k], e = porProd[o.k] || porRef[norm_(o.ref + '|' + o.cor + '|' + o.tam)]; o.saldo = e ? e[4] : null; o.horas.sort(); o.status = o.feito >= o.qtd ? 'FEITO' : o.sem && o.feito + o.sem >= o.qtd ? 'SEM' : ''; return o; })
     .sort((a, b) => (a.status ? 1 : 0) - (b.status ? 1 : 0) || a.horas[0].localeCompare(b.horas[0]));
   let upd = ''; try { upd = (est[0] || [])[8] || ''; } catch (e) {}
-  return { loja: loja, d: d, de: de, ate: ate, lista: lista, pendentes: lista.filter((x) => !x.status).reduce((a, x) => a + x.qtd, 0), total: lista.reduce((a, x) => a + x.qtd, 0), ultima: ultima, estoqueEm: upd, agora: Utilities.formatDate(new Date(), TZ[loja] || 'America/Rio_Branco', 'HH:mm') };
+  const cfg = repoCfg_(loja), resp = cfg.usuario ? (usuarios_().find((x) => x.usuario === cfg.usuario) || {}).nome : '';
+  return { loja: loja, d: d, de: de, ate: ate, chefe: chefe_(u), cfg: { usuario: cfg.usuario, nome: resp ? primeiroNomeS_(resp) : '', horas: cfg.horas }, equipe: chefe_(u) ? usuarios_().filter((x) => x.ativo && x.loja === loja && x.cargo !== 'ADMIN').map((x) => ({ usuario: x.usuario, nome: primeiroNomeS_(x.nome) })) : [], lista: lista, pendentes: lista.filter((x) => !x.status).reduce((a, x) => a + x.qtd, 0), total: lista.reduce((a, x) => a + x.qtd, 0), ultima: ultima, estoqueEm: upd, agora: Utilities.formatDate(new Date(), TZ[loja] || 'America/Rio_Branco', 'HH:mm') };
+}
+// quem repõe e em que horários (definido pela gerente) — por loja
+function repoCfg_(loja) { try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('REPO_CFG_' + loja) || 'null') || { usuario: '', horas: [] }; } catch (e) { return { usuario: '', horas: [] }; } }
+function repoMandar_(loja, usuario, de, por) {
+  const t = Utilities.getUuid(); CacheService.getScriptCache().put('t_' + t, JSON.stringify({ usuario: usuario }), 300);
+  const r = reposicao(t, loja, '', de || '', ''), pend = r.lista.filter((x) => !x.status);
+  const msg = pend.length ? '🔄 Hora da reposição! ' + r.pendentes + (r.pendentes === 1 ? ' peça vendida' : ' peças vendidas') + (de && de !== '00:00' ? ' desde ' + de : ' hoje') + ' para repor: ' + pend.slice(0, 4).map((x) => x.nome.replace(/^\d+\s*/, '') + ' ' + x.tam).join(', ') + (pend.length > 4 ? '…' : '') + '. Toque para abrir a lista e marcar ✓.' : '🔄 Hora da reposição: nada pendente agora ✅';
+  avisar_(usuario, 'repo', msg, r.d, por || ''); return { pendentes: r.pendentes };
+}
+// tela: a gerente define quem repõe e os horários; "mandar agora" envia a lista na hora
+function reposicaoDesignar(token, lojaSel, usuario, horas, agora) {
+  const u = sessao_(token), loja = lojaCanon_(lojaSel); if (!chefe_(u) || !loja || !pode_(u, loja)) throw new Error('Só a gerente e a administração.');
+  const p = usuario ? usuarios_().find((x) => x.ativo && x.usuario === usuario && x.loja === loja) : null; if (usuario && !p) throw new Error('Funcionária não encontrada nesta loja.');
+  const hs = [...new Set((horas || []).map(String).filter((h) => /^\d{2}:\d{2}$/.test(h)))].sort().slice(0, 8);
+  PropertiesService.getScriptProperties().setProperty('REPO_CFG_' + loja, JSON.stringify({ usuario: usuario || '', horas: hs, por: u.usuario }));
+  let env = null; if (agora && p) { const ult = reposicao(token, loja, '', '', '').ultima; env = repoMandar_(loja, p.usuario, ult ? ult.quando.slice(11, 16) : '', u.usuario); }
+  return { cfg: repoCfg_(loja), enviado: env };
+}
+// a cada 10 min (junto com o estoque): no horário marcado, a responsável recebe a lista do que vendeu desde a última reposição
+function repoAvisos_() {
+  const pr = PropertiesService.getScriptProperties(), agora = new Date();
+  LOJAS.forEach((loja) => {
+    const c = repoCfg_(loja); if (!c.usuario || !c.horas.length) return;
+    const tz = TZ[loja] || 'America/Rio_Branco', hm = Utilities.formatDate(agora, tz, 'HH:mm'), d = Utilities.formatDate(agora, tz, 'yyyy-MM-dd'), m = (x) => +x.slice(0, 2) * 60 + +x.slice(3, 5);
+    c.horas.forEach((h) => { const dif = m(hm) - m(h), k = 'REPO_ENV_' + loja + '_' + d + '_' + h; if (dif < 0 || dif >= 30 || pr.getProperty(k)) return;
+      pr.setProperty(k, '1'); try { let ult = null; aba_('Reposicao', H_REP).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (String(r[0]).slice(0, 10) === d && r[1] === loja && r[3] === 'FEITO' && (!ult || r[6] > ult)) ult = r[6]; }); repoMandar_(loja, c.usuario, ult ? ult.slice(11, 16) : '', ''); } catch (e) {} });
+  });
 }
 // marca peças como repostas (FEITO), sem peça no estoque (SEM) ou desfaz ('')
 function reposicaoMarcar(token, lojaSel, d, chaves, status, de, ate) {
@@ -2286,6 +2314,7 @@ function estoqueBuscar(token, termo, loja, todos, pagina) {
 
 // estoque a cada 10 minutos, das 8h às 22h no horário da loja (1 crédito por consulta)
 function dsEstoque10() {
+  try { repoAvisos_(); } catch (e) {}
   const c = dsCfg_(); if (!c.base || !c.key) return 'sem configuração';
   const pr = PropertiesService.getScriptProperties(), agora = new Date(), log = []; let lojas = []; try { lojas = dsLojas_(); } catch (e) { return e.message; }
   lojas.forEach((ln) => { const hh = +Utilities.formatDate(agora, TZ[LOJA_COD[ln]] || 'America/Rio_Branco', 'H'); if (hh < 8 || hh >= 22) return;
