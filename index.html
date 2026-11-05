@@ -1954,7 +1954,7 @@ function abrirReposicao(desdeUlt, lojaIni) {
       r.lista.forEach((x) => {
         const c = el('div', 'card'); c.style.cssText = 'margin-top:8px;padding:10px 12px;' + (x.status === 'FEITO' ? 'background:#eef7f0;border-left:4px solid #1e7a46;' : x.status === 'SEM' ? 'border-left:4px solid #c0392b;' : '');
         const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:flex-start';
-        const info = el('div'); info.append(el('b', '', x.nome), el('div', 'sub', (x.cor ? x.cor.split('-')[0] : '') + ' · tam ' + x.tam + ' · ref ' + x.ref), el('div', 'sub', '🕘 vendida às ' + x.horas.join(', ')));
+        const info = el('div'); info.append(el('b', '', x.nome), el('div', 'sub', (x.cor ? x.cor.split('-')[0] : '') + ' · tam ' + x.tam + ' · ref ' + x.ref), el('div', 'sub', (x.ontem ? '📅 ficou de ' + isoBR(x.ontem).slice(0, 5) + ' · vendida às ' : '🕘 vendida às ') + x.horas.join(', ')));
         const q = el('div'); q.style.cssText = 'text-align:right;white-space:nowrap'; q.append(el('div', 'big', '×' + x.qtd)); q.append(el('div', 'sub', x.saldo == null ? 'estoque —' : x.saldo > 0 ? 'estoque ' + x.saldo : '⚠️ estoque 0'));
         h.append(info, q); c.append(h);
         const ops = el('div'); ops.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap';
