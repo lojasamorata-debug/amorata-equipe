@@ -689,6 +689,9 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
           <label class="sub" style="display:block;margin-top:8px">Dia das vendas <input type="date" id="gt-data"></label>
           <div id="gt-prev" style="margin-top:8px"></div>
           <button class="btn pri big hide" id="gt-ok" style="margin-top:8px">Importar</button>
+          <label class="sub" style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="gt-final" style="width:auto"> ✅ É o relatório <b>final do dia</b> (as lojas já fecharam / não vão vender mais)</label>
+          <button class="btn" id="gt-marcar" style="margin-top:8px">✅ Já importei: marcar o dia como final</button>
+          <div id="gt-marcar-res" class="sub" style="margin-top:6px"></div>
         </div>
         <details class="card hide" id="ds-card" style="margin-top:12px"><summary><b>🔌 DS Connect · API do USE</b> <span class="sub" id="ds-sit"></span></summary>
           <div class="sub" style="margin-top:6px">As lojas liberadas na chave puxam o estoque a cada 10 minutos (8h às 22h) e as vendas sozinhas pela API: de hora em hora das 10h às 21h, de 10 em 10 minutos das 22h às 22h20 (horário da loja) e, depois das 22h20, a última busca fecha o dia: a gerente recebe o aviso de relatório pronto, a conferência da fila é feita e sai o status das campeãs. As outras lojas continuam pelo arquivo — quando você importar, o status é refeito com todas.</div>
@@ -4085,15 +4088,27 @@ function cardRede(r) {
 }
 $('gt-arq').addEventListener('change', (e) => { if (e.target.files[0]) lerTodasLojas(e.target.files[0]); });
 $('gt-data').addEventListener('change', () => { const f = $('gt-arq').files[0]; if (f && GT) lerTodasLojas(f); });
+function statusFinalTxt(r) {
+  const st = r && r.status; let t = '✅ Final do dia marcado: ' + ((r && r.lojas) || []).join(', ') + '. A gerente recebe o fechamento completo.';
+  if (st && st.espera) t += ' 🎉 Status das campeãs espera: ' + st.espera.join(', ') + '.'; else if (st && st.postado) { t += ' 🎉 Status das campeãs postado (' + st.nomes.join(', ') + ').'; try { carregarStatus(); } catch (e) {} } else if (st && st.postado === 0) t += ' Ninguém bateu a meta do dia.';
+  return t;
+}
+$('gt-marcar').addEventListener('click', () => {
+  const d = $('gt-data').value || diaISO(0); if (!confirm('Marcar as vendas de ' + isoBR(d) + ' como o relatório FINAL do dia em todas as lojas já importadas?')) return;
+  $('gt-marcar').disabled = true; $('gt-marcar-res').textContent = 'Marcando…';
+  google.script.run.withSuccessHandler((r) => { $('gt-marcar').disabled = false; $('gt-marcar-res').textContent = statusFinalTxt(r); try { carregarPendencias(); } catch (e) {} })
+    .withFailureHandler((e) => { $('gt-marcar').disabled = false; $('gt-marcar-res').textContent = '⚠️ ' + ((e && e.message) || 'erro'); }).marcarFinalDia(S.token, [], d);
+});
 $('gt-ok').addEventListener('click', () => {
   if (!GT) return; const d = $('gt-data').value; if (!d) { toast('Escolha o dia.'); return; }
-  const lojas = Object.keys(GT.por), res = [], parc = lojas.filter((lj) => lojaAberta(lj, d)); let i = 0; $('gt-ok').disabled = true;
+  const fin = $('gt-final').checked, lojas = Object.keys(GT.por), res = [], parc = fin ? [] : lojas.filter((lj) => lojaAberta(lj, d)); let i = 0; $('gt-ok').disabled = true;
   const box = $('gt-prev'), st = el('div', 'motiva', 'Importando…'); box.prepend(st);
   const prox = () => {
     if (i >= lojas.length) { $('gt-ok').disabled = false; $('gt-ok').classList.add('hide'); $('gt-arq').value = ''; GT = null; box.replaceChildren(el('b', '', '✅ Importação do dia ' + isoBR(d))); res.forEach((x) => box.append(el('div', x.ok ? 'sub' : 'aviso-meta', x.txt))); toast('Vendas importadas ✅'); try { carregarPendencias(); carregarGestao(); } catch (e) {}
       const bx = el('div'); bx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px'; const br = el('button', 'btn pri', '🏬 Fechamento da rede'); br.addEventListener('click', () => fechamento('TODAS', d)); bx.append(br);
       lojas.forEach((lj) => { const b = el('button', 'btn', '📊 ' + lj); b.addEventListener('click', () => fechamento(lj, d)); bx.append(b); }); box.append(bx);
       $('fc-data').value = d; if (d >= ontemISO()) setTimeout(() => fechamento('TODAS', d), 600);
+      if (fin && res.some((x) => x.ok)) { $('gt-final').checked = false; google.script.run.withSuccessHandler((r) => box.append(el('div', 'sub', statusFinalTxt(r)))).withFailureHandler((e) => box.append(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || 'erro')))).marcarFinalDia(S.token, lojas, d); return; }
       if (d >= diaISO(-3) && (d < diaISO(0) || new Date().getHours() >= 22) && res.some((x) => x.ok)) { if (parc.length) box.append(el('div', 'sub', '🎉 O status das campeãs será postado quando você importar o dia completo.')); else google.script.run.withSuccessHandler((r) => { if (r && r.espera) { box.append(el('div', 'sub', '🎉 O status das campeãs sai quando todas as lojas tiverem o dia completo — falta: ' + r.espera.join(', '))); return; } if (r && r.postado) { toast('🎉 Status das campeãs postado (' + r.nomes.length + ')'); box.append(el('div', 'sub', '🎉 Status postado: ' + r.nomes.join(', '))); carregarStatus(); } else box.append(el('div', 'sub', '🎉 Ninguém bateu a meta do dia ' + isoBR(d) + ' — status não postado.')); }).withFailureHandler((e) => box.append(el('div', 'aviso-meta', '⚠️ Status: ' + ((e && e.message) || 'erro')))).postarMetaDiaAgora(S.token, d); }
       return; }
     const lj = lojas[i++]; st.textContent = 'Importando ' + lj + '… (' + i + ' de ' + lojas.length + ')';
