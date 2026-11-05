@@ -1891,8 +1891,8 @@ function linhasPct(lista, max) {
 // detalhe em tela cheia: move os blocos já desenhados para dentro e devolve ao fechar
 // ---------- reposição: lista do que vendeu (por horário) para repor na arara; marca ✓ reposto / ✗ sem peça ----------
 let RP = null;
-function abrirReposicao(desdeUlt) {
-  const LS = (S && S.lojas) || [], lj = LS.length > 1 && LS.indexOf('Sumaúma') >= 0 ? 'Sumaúma' : (LS.indexOf(loja) >= 0 ? loja : LS[0] || 'Sumaúma');
+function abrirReposicao(desdeUlt, lojaIni) {
+  const LS = (S && S.lojas) || [], lj = lojaIni && LS.indexOf(lojaIni) >= 0 ? lojaIni : LS.length > 1 && LS.indexOf('Sumaúma') >= 0 ? 'Sumaúma' : (LS.indexOf(loja) >= 0 ? loja : LS[0] || 'Sumaúma');
   abrirDet('🔄 Reposição', (b) => {
     const hoje = diaISO(0), fx = el('div'); fx.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:end';
     const sl = el('select'); (LS.length > 1 ? LS : [lj]).forEach((x) => sl.append(new Option(x, x))); sl.value = lj;
@@ -2018,6 +2018,8 @@ function desenharCards() {
     const nm = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][(new Date().getMonth() + 11) % 12];
     const c = card('full', '📅 Fechamento de ' + nm, 'abrir ›', () => abrirFechamento(nm)); c.append(el('div', 'sm', 'O resumo do mês que passou: resultado, ranking das lojas, destaques da equipe. Dá para salvar em PDF e apresentar na reunião.')); box.insertBefore(c, box.children[1]);
   }
+  // reposição de hoje (lojas ligadas à API)
+  cardReposicao(box);
   // 7. avaliações das clientes (destaque)
   cardAvaliacoes(box);
   // 6. equipe
@@ -2028,6 +2030,25 @@ function desenharCards() {
   }
 }
 // ⭐ avaliações das clientes em destaque (cards do Início e de Metas)
+function cardReposicao(box) {
+  const c = el('div', 'dc full'); c.append(el('div', 'sub', '🔄 Carregando a reposição de hoje…')); box.append(c);
+  google.script.run.withSuccessHandler((r) => {
+    c.replaceChildren(); const ls = ((r && r.lojas) || []).filter((x) => !x.fechada && !x.erro); if (!ls.length) { c.remove(); return; }
+    const t = el('div', 'dt'); t.append(el('span', '', '🔄 Reposição de hoje'), el('span', '', 'abrir ›')); c.append(t); c.style.cursor = 'pointer'; c.addEventListener('click', () => abrirReposicao());
+    ls.forEach((x) => {
+      const w = el('div'); w.style.cssText = 'margin-top:10px'; const base = x.total || 0, feitas = x.feitas + x.sem, pc = base ? feitas / base : 1;
+      const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px;font-size:14px'; h.append(el('b', '', ls.length > 1 || (S.lojas || []).length > 1 ? x.loja : 'Peças vendidas hoje'), el('span', '', base ? x.feitas + ' de ' + base + ' repostas' + (x.sem ? ' · ' + x.sem + ' sem peça' : '') : 'nenhuma venda ainda'));
+      const bar = el('div'); bar.style.cssText = 'height:10px;border-radius:5px;background:#efebf5;margin-top:5px;overflow:hidden;display:flex'; const f1 = el('div'), f2 = el('div');
+      f1.style.cssText = 'height:100%;background:#1e7a46;width:' + (base ? Math.round(x.feitas / base * 100) : 0) + '%'; f2.style.cssText = 'height:100%;background:#e8a29a;width:' + (base ? Math.round(x.sem / base * 100) : 0) + '%'; bar.append(f1, f2);
+      w.append(h, bar);
+      const st = el('div', 'sm'); st.style.marginTop = '4px'; st.textContent = (x.pendentes ? '⏳ ' + x.pendentes + ' para repor agora' : base ? '✅ tudo reposto' : '') + (x.ultima ? ' · última às ' + x.ultima.quando.slice(11, 16) + ' (' + x.ultima.nome + ')' : '') + (base && pc >= 1 ? '' : ''); w.append(st);
+      if (x.slots.length) { const sl = el('div'); sl.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;margin-top:6px';
+        x.slots.forEach((z) => { const ch = el('span', 'sm', z.hora + ' ' + z.nome + ' ' + (z.st === 'feito' ? '✅ ' + z.quando : z.st === 'outra' ? '☑️ ' + z.por + ' fez' : z.st === 'pendente' ? '⚠️ não fez' : '🕘')); ch.style.cssText = 'padding:3px 8px;border-radius:12px;background:' + (z.st === 'feito' ? '#e8f4ec' : z.st === 'pendente' ? '#fdecea' : '#f3efe9'); sl.append(ch); }); w.append(sl); }
+      else w.append(el('div', 'sm', '👤 Sem escala de reposição — monte na tela de Reposição.'));
+      w.addEventListener('click', (ev) => { ev.stopPropagation(); abrirReposicao(false, x.loja); }); c.append(w);
+    });
+  }).withFailureHandler(() => c.remove()).reposicaoPainel(S.token);
+}
 function cardAvaliacoes(box, cls) {
   const c = el('div', 'dc full av-dest ' + (cls || '')); c.append(el('div', 'sub', '⭐ Carregando avaliações…')); box.append(c);
   google.script.run.withSuccessHandler((r) => {
