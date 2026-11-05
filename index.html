@@ -571,6 +571,16 @@ body.ini-res #v-ini > #menu, body.ini-res #v-ini > #dia-blocos, body.ini-res[dat
 .cb-h { display:flex; justify-content:space-between; align-items:center; gap:10px; } .cb-h b { font-size:16px; }
 .cb-v { font-size:22px; font-weight:800; color:var(--muted); white-space:nowrap; } .cb-v.ok { color:var(--ok); }
 .cb-i { font-size:14px; padding:6px 10px; border-radius:8px; background:var(--bg); } .cb-i.al { background:var(--warnbg); color:var(--warn); font-weight:600; }
+
+/* celular: o topo não pode passar da largura da tela */
+html, body { overflow-x:hidden; }
+.top > div:first-child { min-width:0; } .top > div:first-child > div:last-child { min-width:0; }
+.top h1, .top .sub { overflow:hidden; text-overflow:ellipsis; }
+@media (max-width:1099px) {
+  body.logado #b-rh, body.logado #b-ajuda { display:none !important; } /* Meu RH e Como usar ficam no menu e no botão "Como usar" */
+  .top > div:last-child { flex-shrink:0; gap:5px !important; }
+  .top .btn.sm.ico { padding-left:8px; padding-right:8px; }
+}
 </style>
 </head>
 <body>
@@ -1811,8 +1821,7 @@ function rrCombinados(r) {
 function abrirCashback() {
   abrirDet('💰 Cashback da cliente', (b) => {
     const f = el('div', 'card cb-f'), inp = el('input'); inp.type = 'search'; inp.placeholder = 'Nome da cliente ou CPF'; inp.autocomplete = 'off'; inp.enterKeyHint = 'search';
-    let sel = null; if (S.lojas.length > 1) { sel = el('select'); S.lojas.forEach((l) => sel.append(new Option(l, l))); sel.value = S.lojas.indexOf(loja) >= 0 ? loja : S.lojas[0]; f.append(sel); }
-    const bt = el('button', 'btn pri big', 'Consultar'); f.append(inp, bt, el('div', 'sub', 'Mostra o cashback ainda não usado e dentro da validade, direto do sistema da loja.'));
+    const bt = el('button', 'btn pri big', 'Consultar'); f.append(inp, bt, el('div', 'sub', 'Mostra o cashback ainda não usado e dentro da validade, direto do sistema.'));
     const res = el('div', 'cb-res'); b.append(f, res); setTimeout(() => inp.focus(), 200);
     const fmtD = (d) => d ? d.slice(8, 10) + '/' + d.slice(5, 7) : '';
     const buscar = () => {
@@ -1820,18 +1829,18 @@ function abrirCashback() {
       google.script.run.withSuccessHandler((r) => {
         bt.disabled = false; bt.textContent = 'Consultar'; res.replaceChildren();
         if (r.aviso) { res.append(el('div', 'card', r.aviso)); return; }
-        if (!r.clientes.length) { res.append(el('div', 'card', 'Nenhum cashback disponível para "' + r.termo + '" em ' + r.loja + '.')); return; }
+        if (!r.clientes.length) { res.append(el('div', 'card', 'Nenhum cashback disponível para "' + r.termo + '".')); return; }
         r.clientes.forEach((c) => {
           const k = el('div', 'card cb-c'), h = el('div', 'cb-h'); h.append(el('b', '', c.nome || 'Cliente'));
           const v = el('div', 'cb-v ' + (c.agora ? 'ok' : ''), c.agora ? BRL.format(c.agora) : 'R$ 0,00'); h.append(v); k.append(h);
           k.append(el('div', 'sub', c.agora ? 'disponível para usar hoje' : 'nada liberado ainda'));
           c.itens.forEach((x) => { const l = el('div', 'cb-i' + (!x.liberaEm && x.dias <= 5 ? ' al' : ''));
-            l.textContent = BRL.format(x.valor) + ' · ' + (x.liberaEm ? 'libera em ' + fmtD(x.liberaEm) : x.dias <= 0 ? 'vence hoje' : x.dias <= 5 ? 'vence em ' + x.dias + (x.dias === 1 ? ' dia' : ' dias') + ' (' + fmtD(x.valeAte) + ')' : 'vale até ' + fmtD(x.valeAte)) + (x.minimo ? ' · compra mínima ' + BRL.format(x.minimo) : '');
+            l.textContent = BRL.format(x.valor) + ' · ' + (x.liberaEm ? 'libera em ' + fmtD(x.liberaEm) : x.dias <= 0 ? 'vence hoje' : x.dias <= 5 ? 'vence em ' + x.dias + (x.dias === 1 ? ' dia' : ' dias') + ' (' + fmtD(x.valeAte) + ')' : 'vale até ' + fmtD(x.valeAte)) + (x.minimo ? ' · compra mínima ' + BRL.format(x.minimo) : '') + (x.loja ? ' · gerado na ' + x.loja : '');
             k.append(l); });
           res.append(k);
         });
         if (r.mais) res.append(el('div', 'sub', 'Mais ' + r.mais + ' clientes com esse nome. Digite o nome completo ou o CPF.'));
-      }).withFailureHandler((e) => { bt.disabled = false; bt.textContent = 'Consultar'; res.replaceChildren(el('div', 'card', amigavel((e && e.message) || String(e)))); }).cashbackBuscar(S.token, sel ? sel.value : loja, t);
+      }).withFailureHandler((e) => { bt.disabled = false; bt.textContent = 'Consultar'; res.replaceChildren(el('div', 'card', amigavel((e && e.message) || String(e)))); }).cashbackBuscar(S.token, loja, t);
     };
     bt.addEventListener('click', buscar); inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') buscar(); });
   });
