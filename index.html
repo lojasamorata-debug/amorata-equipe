@@ -2030,7 +2030,7 @@ function desenharCards() {
 }
 // ⭐ avaliações das clientes em destaque (cards do Início e de Metas)
 function cardReposicao(box) {
-  const c = el('div', 'dc full'); c.append(el('div', 'sub', '🔄 Carregando a reposição de hoje…')); box.append(c);
+  const c = el('div', 'dc full'); c.append(el('div', 'sub', '🔄 Carregando a reposição de hoje…')); if (box.children.length > 1) box.insertBefore(c, box.children[1]); else box.append(c); // logo no topo do Início
   google.script.run.withSuccessHandler((r) => {
     c.replaceChildren(); const ls = ((r && r.lojas) || []).filter((x) => !x.fechada && !x.erro); if (!ls.length) { c.remove(); return; }
     const t = el('div', 'dt'); t.append(el('span', '', '🔄 Reposição de hoje'), el('span', '', 'abrir ›')); c.append(t); c.style.cursor = 'pointer'; c.addEventListener('click', () => abrirReposicao());
@@ -4046,7 +4046,8 @@ $('ds-off').addEventListener('click', () => rodar('dsDesligar', [S.token], (r) =
 $('ds-testar').addEventListener('click', () => { $('ds-res').textContent = 'Testando…'; rodar('dsTestar', [S.token], (r) => { const b = $('ds-res'); b.replaceChildren(el('div', r.ok ? 'motiva' : 'aviso-meta', r.msg)); if (r.amostra) { const pre = el('div', 'sub', 'Resposta: ' + r.amostra); pre.style.wordBreak = 'break-all'; b.append(pre); } carregarDS(); }, () => { $('ds-res').textContent = ''; }); });
 $('fc-loja').addEventListener('click', () => fechamento($('g-loja').value, $('fc-data').value));
 $('fc-rede').addEventListener('click', () => fechamento('TODAS', $('fc-data').value));
-$('rp-abrir').addEventListener('click', abrirReposicao);
+$('rp-abrir').addEventListener('click', () => abrirReposicao());
+$('tab-est').addEventListener('click', () => { if (!chefe()) return; const box = $('rp-prog'); if (!box) { const d = el('div'); d.id = 'rp-prog'; $('rp-card').after(d); } const b2 = $('rp-prog'); b2.replaceChildren(); cardReposicao(b2); });
 $('fc-obj').addEventListener('click', () => objetivoDia($('g-loja').value, ONTEM && ONTEM.loja === $('g-loja').value ? ONTEM : null));
 // ---------- vínculo código do USE → pessoa (ADMIN) ----------
 function carregarCodUse() { const lj = $('g-loja').value; if (!lj || lj === 'TODAS') return; rodar('codigosUSE', [S.token, lj], desenharCodUse); }
