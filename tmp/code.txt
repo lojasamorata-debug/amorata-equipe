@@ -2236,7 +2236,7 @@ function repoAvisos_() {
     const tz = TZ[loja] || 'America/Rio_Branco', hm = Utilities.formatDate(agora, tz, 'HH:mm'), d = Utilities.formatDate(agora, tz, 'yyyy-MM-dd'), wd = new Date(d + 'T12:00:00Z').getUTCDay(), m = (x) => +x.slice(0, 2) * 60 + +x.slice(3, 5);
     c.slots.forEach((sl) => { if (sl.dias.indexOf(wd) < 0) return; const dif = m(hm) - m(sl.hora), k = 'REPO_ENV_' + loja + '_' + d + '_' + sl.hora;
       try { repoAcompanhar_(loja, d, sl, dif); } catch (e) {}
-      if (dif < 0 || dif >= 30 || pr.getProperty(k)) return;
+      if (dif < -10 || dif >= 30 || pr.getProperty(k)) return; // sai até 10 min antes (a rotina roda a cada 10 min), para chegar no máximo no horário
       pr.setProperty(k, '1');
       try {
         let ult = null; aba_('Reposicao', H_REP).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (String(r[0]).slice(0, 10) === d && r[1] === loja && r[3] === 'FEITO' && (!ult || r[6] > ult)) ult = r[6]; });
