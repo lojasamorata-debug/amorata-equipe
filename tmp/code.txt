@@ -4645,10 +4645,10 @@ function relReuniao(token, alvo, per, deX, ateX) {
   // cobertura baixa no pico: muitas clientes para poucas atendentes disponíveis → sugestões para a gerente
   if (picos) picos.forEach((k) => {
     const disp = k.naFila + k.atendendo, porPessoa = k.atPorDia / Math.max(0.5, disp), hh = (x) => String((x + 24) % 24).padStart(2, '0') + 'h';
-    k.porPessoa = porPessoa; k.baixa = k.atPorDia >= 3 && (porPessoa >= 2.5 || disp < 1.5 || k.pausa >= 0.5);
+    k.porPessoa = porPessoa; k.baixa = k.atPorDia >= 3 && (porPessoa >= 1.8 || disp < 1.2 || (k.pausa >= 0.5 && porPessoa >= 1.5));
     if (!k.baixa) return;
     const sg = [], mot = (k.motivos || []).map((m) => m.motivo), tem = (re) => mot.some((m) => re.test(m));
-    if (k.pausa >= 0.3 && tem(/almo|lanche/i)) sg.push('Tirar almoço e lanche do horário das ' + hh(k.h) + ': marcar antes das ' + hh(k.h - 1) + ' ou depois das ' + hh(k.h + 1) + ', uma de cada vez');
+    if (k.pausa >= 0.3 && tem(/almo|lanche/i)) sg.push('Tirar almoço e lanche do horário das ' + hh(k.h) + (k.calmas && k.calmas.length ? ': marcar nos horários mais calmos (' + k.calmas.map(hh).join(' ou ') + ')' : '') + ', uma de cada vez');
     if (k.pausa >= 0.3 && tem(/reuni|estoque|arruma|vitrine|organiz/i)) sg.push('Não marcar reunião, estoque ou arrumação entre ' + hh(k.h) + ' e ' + hh(k.h + 1) + '; deixar para o horário mais calmo');
     if (k.pausa >= 0.3 && !tem(/almo|lanche|reuni|estoque|arruma|vitrine|organiz/i)) sg.push('Combinar com a equipe: no pico das ' + hh(k.h) + ', pausas só em caso de necessidade e uma pessoa por vez');
     if (k.pessoas < 3 || disp < 1.5) sg.push('Rever a escala: colocar mais uma consultora cobrindo as ' + hh(k.h) + ' (ex.: escalonar entradas para uma chegar mais tarde e ficar até o fechamento)');
@@ -4676,7 +4676,8 @@ function coberturaPico_(loja, de, ate, usuarioAlvo) {
   const ev = ss.getSheetByName('Eventos').getDataRange().getValues().slice(1).filter((r) => String(r[1]) === loja).map((r) => ({ t: msDe(r[0]), dia: diaDe(r[0]), u: String(r[2]), nome: String(r[3]), tipo: String(r[4]), motivo: String(r[5] || '') })).filter((r) => r.t != null && r.dia >= de && r.dia <= ate).sort((a, b) => a.t - b.t);
   // picos: dia da semana × hora com mais atendimentos
   const heat = {}, comDados = {}; at.forEach((a) => { comDados[a.dia] = 1; const d = new Date(a.ini), k = d.getUTCHours(); const h = heat[k] = heat[k] || { at: 0, v: 0, dias: {} }; h.at++; if (a.vendeu) h.v++; h.dias[a.dia] = 1; });
-  const nDias = Object.keys(comDados).length; const picos = Object.keys(heat).map((k) => ({ h: +k, at: heat[k].at, v: heat[k].v })).filter((x) => x.at >= 3).sort((a, b) => b.at - a.at).slice(0, 4);
+  const nDias = Object.keys(comDados).length; const todasH = Object.keys(heat).map((k) => ({ h: +k, at: heat[k].at, v: heat[k].v })); const picos = todasH.filter((x) => x.at >= 3).sort((a, b) => b.at - a.at).slice(0, 4);
+  const ab = abreLoja_(loja), fc = +String(fechaLoja_(loja, ate) || '22:00').slice(0, 2), ph = picos.map((x) => x.h), calmas = []; for (let hx = ab + 1; hx < fc - 1; hx++) if (ph.indexOf(hx) < 0) calmas.push({ h: hx, at: (heat[hx] || { at: 0 }).at }); calmas.sort((a, b) => a.at - b.at || a.h - b.h); const calmasH = calmas.slice(0, 2).map((x) => x.h).sort((a, b) => a - b);
   if (!picos.length) return null;
   // linha do tempo de cada pessoa por dia: fila / pausa (motivo) / fora (antes de entrar ou depois do fim do turno); atendimento por cima
   const pessoas = {}; const linha = (dia, u, nome) => { const k = dia + '|' + u; return pessoas[k] = pessoas[k] || { dia: dia, u: u, nome: nome, ev: [], at: [] }; };
@@ -4708,7 +4709,7 @@ function coberturaPico_(loja, de, ate, usuarioAlvo) {
       pres += Object.keys(vistos).length;
     });
     const n = dias.length || 1, euTot = eu.fila + eu.atend + eu.pausa + eu.off;
-    return { dia: '', h: pk.h, atPorDia: pk.at / n, conv: pk.at ? pk.v / pk.at : null, dias: dias.length, naFila: fila / n, atendendo: atend / n, pausa: pausa / n, pessoas: pres / n,
+    return { dia: '', h: pk.h, calmas: calmasH, atPorDia: pk.at / n, conv: pk.at ? pk.v / pk.at : null, dias: dias.length, naFila: fila / n, atendendo: atend / n, pausa: pausa / n, pessoas: pres / n,
       motivos: Object.keys(mot).sort((x, y) => mot[y] - mot[x]).map((m) => ({ motivo: m, min: Math.round(mot[m] / n) })).filter((m) => m.min >= 1).slice(0, 3),
       eu: usuarioAlvo && euTot ? { fila: eu.fila / euTot, atend: eu.atend / euTot, pausa: eu.pausa / euTot, off: eu.off / euTot } : null };
   });
