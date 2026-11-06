@@ -2582,12 +2582,14 @@ function desenharCards() {
   const hr = el('div', 'hero'), tx = el('div', 'tx'); tx.append(el('div', 'big', rs(R.vendido)), el('div', 'sm', 'de ' + rs(R.meta) + ' · faltam ' + rs(Math.max(0, (R.meta || 0) - (R.vendido || 0)))));
   if (R.fechaPct != null && !r.encerrado) tx.append(el('span', 'pill ' + k, (R.fechaPct >= 1 ? '🚀 ' : k === 'r' ? '⚠️ ' : '') + 'no ritmo fecha em ' + pc(R.fechaPct)));
   if (R.comp) tx.append(el('div', 'sm', (R.comp.var >= 0 ? '▲ ' : '▼ ') + PCT.format(Math.abs(R.comp.var)) + ' vs mesmo período do mês passado'));
-  hr.append(ring(R.pct, 92, COR[k]), tx); h.append(hr); if (serieTot.length) { const m = barrasDia(r.serie.dias, serieTot, metaDiaTot, 46); m.style.marginTop = '10px'; h.append(m); }
+  hr.append(ring(R.pct, 92, COR[k]), tx); h.append(hr); if (serieTot.length > 1) { const m = barrasDia(r.serie.dias, serieTot, metaDiaTot, 46); m.style.marginTop = '10px'; h.append(m); }
   // 2. lojas
   if (r.multi) r.lojas.forEach((l) => {
     const kl = nivelCor(l.fechaPct, l.pct), c = card('', l.loja, l.nivel ? (l.nivel > 1 ? '🔴' : '🟡') : '🟢', () => detLoja(l));
     const lj = el('div', 'lj'), t = el('div'); t.append(el('div', 'nm', rsK(l.vendido)), el('div', 'sm', l.fechaPct != null ? 'fecha em ' + pc(l.fechaPct) : 'de ' + rsK(l.meta))); lj.append(ring(l.pct, 54, COR[kl]), t); c.append(lj);
-    if (r.serie && r.serie.lojas[l.loja]) { const m = barrasDia(r.serie.dias, r.serie.lojas[l.loja], r.serie.metaDia[l.loja], 26); m.style.marginTop = '8px'; c.append(m); }
+    { const sl = r.serie && r.serie.lojas[l.loja]; // gráfico por dia só faz sentido com mais de um dia; num dia só mostra quanto falta
+      if (sl && sl.length > 1) { const m = barrasDia(r.serie.dias, sl, r.serie.metaDia[l.loja], 26); m.style.marginTop = '8px'; c.append(m); }
+      else if (l.meta) { const f = (l.meta || 0) - (l.vendido || 0), d = el('div', 'sm', f > 0 ? 'faltam ' + rs(f) : '✅ meta batida' + (f < 0 ? ' · +' + rs(-f) : '')); d.style.cssText = 'margin-top:8px;font-weight:600;color:' + (f > 0 ? 'var(--warn)' : 'var(--ok)'); c.append(d); } }
   });
   // 3. ritmo de hoje
   if (RIT && RIT.lojas && RIT.lojas.length) {
