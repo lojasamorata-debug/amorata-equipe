@@ -410,6 +410,8 @@ body.fila-v #eu > .sub:first-child, body.fila-v #eu-dica { display:none !importa
 body.fila-v #eu-estado { font-family:Inter,system-ui,sans-serif; font-size:15px; font-weight:600; margin:0; display:inline; } body.fila-v #eu-det { display:inline; margin-left:6px; font-size:12.5px; }
 body.fila-v #eu-acoes { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; } body.fila-v #eu-acoes .btn { flex:1 1 40%; margin:0; padding:13px 10px; }
 body.fila-v .toast { bottom:180px; }
+/* botões principais da fila grandes no celular: dá para acertar com a cliente na frente */
+@media (max-width:1099px) { body.fila-v #eu-acoes .btn.big.ok, body.fila-v #eu-acoes .btn.big.bad, body.fila-v #eu-acoes .btn.big.pri { min-height:76px; font-size:20px; font-weight:700; border-radius:16px; } body.fila-v #eu-acoes .btn.big.pri, body.fila-v #eu-acoes .btn.big.pulse { flex-basis:100%; } body.fila-v #v-fila { padding-bottom:230px; } }
 body.fila-v #eu-acoes .btn.lk { flex:1 1 auto; padding:6px 8px; font-size:13px; background:none; border:0; color:var(--accent); }
 .btn.pulse { animation:pulso 1.4s infinite; } @keyframes pulso { 0% { box-shadow:0 0 0 0 rgba(30,122,70,.55); } 70% { box-shadow:0 0 0 14px rgba(30,122,70,0); } 100% { box-shadow:0 0 0 0 rgba(30,122,70,0); } }
 @media (orientation:landscape) and (max-height:560px) {
@@ -1479,7 +1481,7 @@ function trocarSenhaUI(atual, forcado) {
   $('sheet').classList.remove('hide'); setTimeout(() => (atual ? n1 : a).focus(), 60);
 }
 function escolher(titulo, sub, opcoes) {
-  $('sh-t').textContent = titulo; $('sh-s').textContent = sub || '';
+  $('sh-t').textContent = titulo; $('sh-s').textContent = sub || ''; $('sh-s').style.whiteSpace = /\n/.test(sub || '') ? 'pre-line' : '';
   const o = $('sh-o'); o.replaceChildren();
   opcoes.forEach(([txt, cls, fn]) => { const b = el('button', 'btn big ' + (cls || ''), txt); b.addEventListener('click', fn); o.append(b); });
   const c = el('button', 'btn big', 'Cancelar'); c.addEventListener('click', fechar); o.append(c);
@@ -1583,7 +1585,7 @@ function desenhar(e) {
       $('eu-det').firstChild.dataset.ini = at.inicio;
       const cl = at.clientes || [at.inicio];
       if (cl.length > 1) { $('eu-estado').textContent = 'Atendendo ' + cl.length + ' clientes'; cl.forEach((ini, i) => { const b = bt('Encerrar cliente ' + (i + 1) + ' · ', 'pri big', () => encerrar(at, i)); const t = el('span', 'timer', mmss(agora() - ini)); t.dataset.ini = ini; t.style.color = 'inherit'; b.append(t); ac.append(b); }); }
-      else if (!chefe()) { ac.append(bt('Vendeu', 'ok big', () => encerrar(at, 0, 'v')), bt('Não vendeu', 'bad big', () => encerrar(at, 0, 'n'))); }
+      else if (!chefe()) { ac.append(bt('✅ Vendeu', 'ok big', () => encerrar(at, 0, 'v')), bt('✖️ Não vendeu', 'bad big', () => encerrar(at, 0, 'n'))); }
       else ac.append(bt('Encerrar atendimento', 'pri big', () => encerrar(at, 0)));
       ac.append(bt('👥 + Outra cliente', chefe() ? 'big' : 'lk', () => maisCli(at)));
       if (!chefe() && cl.length === 1) ac.append(bt('Mais opções', 'lk', () => encerrar(at, 0)));
@@ -2014,19 +2016,27 @@ function abrirContrato(rh) {
 // gerente/admin: "Meus resultados" abre os cards do Início (fora dele, o Início mostra só o menu)
 function verResultados() { mudarAba('ini'); document.body.classList.add('ini-res'); try { window.scrollTo(0, 0); } catch (e) {} }
 $('i-res-v').addEventListener('click', () => mudarAba('ini'));
-const MENU_TXT = { aj: 'Ajuda e senha', cb: 'Cashback', res: 'Meus resultados', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
+const MENU_TXT = { sd: 'Check-up do app', aj: 'Ajuda e senha', cb: 'Cashback', res: 'Meus resultados', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
 const NAV_TXT = { ini: 'Início', dia: 'Início', fila: 'Fila', meta: 'Metas', mural: 'Mural', est: 'Estoque', gest: 'Gestão', rh: 'Meu RH' };
 const casaAba_ = () => (chefe() ? 'ini' : S && S.cargo === 'AUXILIAR' ? 'fila' : 'dia');
-function abaVisivel_(k) { if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
-function irAba_(k) { if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
+function abaVisivel_(k) { if (k === 'sd') return !!S && S.cargo === 'ADMIN'; if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
+function irAba_(k) { if (k === 'sd') { abrirCheckup(); return; } if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
 function menuSub_(k) {
   const rhN = (typeof RH !== 'undefined' && RH && RH.novos) || 0;
   if (k === 'rh') return rhN ? [rhN + (rhN === 1 ? ' novo para ver' : ' novos para ver'), 'al', rhN] : ['holerite, ponto, férias', ''];
   if (k === 'fila') { if (E && E.fila && S) { const p = chefe() ? null : E.fila.find((x) => x.usuario === S.usuario); if (p && p.pos) return [p.pos === 1 ? 'é a sua vez!' : 'você é a ' + p.pos + 'ª da vez', p.pos === 1 ? 'ok' : '']; return [E.fila.length ? E.fila.length + ' na fila' : 'ninguém na fila', '']; } return ['quem atende agora', '']; }
   if (k === 'res') { const R = typeof INI !== 'undefined' && INI && INI.rede; if (R && R.meta && R.pct != null) return [pc(R.pct) + ' da meta' + (R.fechaPct != null && R.fechaPct < 1 ? ' · no ritmo ' + pc(R.fechaPct) : ''), R.pct >= 1 ? 'ok' : (R.fechaPct != null && R.fechaPct < 1 ? 'al' : '')]; return ['vendas, metas e equipe', '']; }
   if (k === 'meta') { if (MH && MH.batida) return ['meta do mês batida!', 'ok']; if (MH && !MH.loja && MH.pct != null) return [pc(MH.pct) + ' da meta do mês', '']; return ['metas do mês', '']; }
-  const fixo = { aj: ['tour, guia, notificações e trocar senha', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
+  const fixo = { sd: ['saúde do sistema: limites, rotinas e Drive', ''], aj: ['tour, guia, notificações e trocar senha', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
   return fixo[k] || ['', ''];
+}
+// 🩺 check-up do app (ADMIN): roda agora e mostra o que está bem e o que precisa de atenção
+function abrirCheckup() {
+  toast('Fazendo o check-up…');
+  rodar('checkupApp', [S.token], (r) => {
+    const linhas = (r.alerta.length ? r.alerta.map((x) => '⚠️ ' + x) : ['✅ Nada precisando de atenção.']).concat(r.ok.length ? ['', 'Tudo certo: ' + r.ok.join(' · ')] : []);
+    escolher('🩺 Check-up do app · ' + r.quando, linhas.join('\n'), []);
+  });
 }
 function desenharMenu() {
   if (!S || typeof icoSvg !== 'function') return;
@@ -2034,7 +2044,7 @@ function desenharMenu() {
   let m = $('menu'); if (!m) { m = el('div'); m.id = 'menu'; }
   if (chefe()) { const v = $('v-ini'); if (m.parentNode !== v || v.firstElementChild !== m) v.prepend(m); }
   else { const ref = $('eu-meta'); if (ref && ref.parentNode && m.previousElementSibling !== ref) ref.after(m); }
-  const ks = ['res', 'dia', 'ini', 'fila', 'cb', 'meta', 'est', 'mural', 'apr', 'gest', 'prod', 'rel', 'rh', 'aj'].filter((k) => k !== casa && abaVisivel_(k));
+  const ks = ['res', 'dia', 'ini', 'fila', 'cb', 'meta', 'est', 'mural', 'apr', 'gest', 'prod', 'rel', 'rh', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k));
   m.replaceChildren(...ks.map((k) => {
     const [sub, cls, n] = menuSub_(k), b = el('button', 'mt'); b.type = 'button'; b.id = 'mt-' + k;
     const ic = el('span', 'mi'); ic.append(icoSvg(k)); const tx = el('span'); tx.append(el('b', '', MENU_TXT[k])); const sm = el('small', cls, sub); tx.append(sm);
@@ -5205,7 +5215,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { if (S.cargo === 'VENDEDORA') mudarAba('meta'); else if (S.cargo === 'ESTOQUISTA') mudarAba('mural'); else verResultados(); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba(casaAba_()); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'saude') { abrirCheckup(); return; } if (a.tipo === 'avaliacao_baixa') { if (chefe()) verResultados(); else mudarAba(casaAba_()); return; } if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { if (S.cargo === 'VENDEDORA') mudarAba('meta'); else if (S.cargo === 'ESTOQUISTA') mudarAba('mural'); else verResultados(); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba(casaAba_()); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide'); blocoNotif(o);
 }));
@@ -5493,6 +5503,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && T)
     res: '<path d="M4 20V11M10 20V5M16 20v-6M21 20H3"/><path d="M4 8l6-4 6 5 5-4"/>',
     rh: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     aj: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/>',
+    sd: '<path d="M3 12h4l2-5 4 10 2-5h6"/>',
     cb: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .9 3 2-1.3 2-3 2c-1.4 0-2.6-.6-3-1.6M12 6.5V8M12 16v1.5"/>',
   };
   const svg = (k) => { const d = document.createElement('span'); d.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + (I[k] || I.ini) + '</svg>'; return d.firstChild; };
