@@ -155,6 +155,8 @@ body.adm #eu, body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fil
 .legenda { display:grid; gap:3px; font-size:12px; margin-top:6px; } .legenda div { display:flex; align-items:center; gap:6px; } .legenda i { width:10px; height:10px; border-radius:3px; flex:none; }
 .funil { display:grid; gap:5px; margin-top:8px; } .funil div { height:22px; border-radius:7px; display:flex; align-items:center; padding:0 8px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap; }
 .tc .pv-lista { margin-top:8px; border-top:1px solid var(--line); } .pv-it { padding:10px 2px; border-bottom:1px solid var(--line); } .pv-l1 { display:flex; justify-content:space-between; gap:10px; align-items:baseline; } .pv-l1 b { font-weight:600; font-size:14px; min-width:0; overflow-wrap:anywhere; } .pv-q { font-weight:800; white-space:nowrap; } .pv-l2 { font-size:12px; color:var(--muted); margin-top:2px; overflow-wrap:anywhere; } .pv-l3 { display:flex; justify-content:space-between; gap:10px; font-size:12.5px; margin-top:3px; } .pv-l3 span:last-child { color:var(--muted); text-align:right; }
+#reg-ov { position:fixed; left:50%; top:42%; transform:translate(-50%,-50%); z-index:9500; display:none; align-items:center; gap:10px; background:#1f1e1d; color:#fff; border-radius:16px; padding:16px 20px; font-size:17px; box-shadow:0 10px 30px rgba(0,0,0,.3); max-width:86vw; } #reg-ov.ok { background:#1e7a46; } #reg-ov b { font-weight:700; } #reg-ov .spin { width:20px; height:20px; border:3px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:regsp .8s linear infinite; flex:none; } @keyframes regsp { to { transform:rotate(360deg); } }
+body.ocupado #eu-acoes .btn, body.ocupado .fila-ac .btn { opacity:.55; pointer-events:none; }
 #agora:empty, body.ini-res #agora { display:none !important; } .agora { margin-top:6px; }
 .ag-hero { background:#5b4a7a; color:#fff; border-radius:18px; padding:16px; margin-top:6px; } .ag-hero.sua { background:#1e7a46; }
 .ag-hero .k { font-size:12px; font-weight:700; letter-spacing:.06em; opacity:.8; } .ag-hero .t { font-size:24px; font-weight:800; margin:4px 0 2px; line-height:1.2; } .ag-hero .s { font-size:13px; opacity:.9; }
@@ -1010,11 +1012,12 @@ if (HOSPEDADO) {
   const chamar = (fn, args, ok, falha) => {
     // limite de 90 s: sem isso um servidor travado deixava botões em "Enviando…" por minutos
     const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, tm = ctl ? setTimeout(() => ctl.abort(), 90000) : null;
-    fetch(API, { method: 'POST', body: JSON.stringify({ fn: fn, args: args }), redirect: 'follow', signal: ctl ? ctl.signal : undefined })
+    fetch(API, { method: 'POST', body: JSON.stringify({ fn: fn, args: args, pq: 1 }), redirect: 'follow', signal: ctl ? ctl.signal : undefined })
       .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
       .then((t) => { let j; try { j = JSON.parse(t); } catch (x) { throw new Error('HTTP 5 resposta inválida'); } return j; })
       .then((j) => { if (tm) clearTimeout(tm);
         if (!j.ok) { if (falha) falha(new Error(j.e)); return; }
+        if (j.r && j.r._pq) { try { fetch(API, { method: 'POST', body: JSON.stringify({ fn: 'pushFila', args: [j.r._pq] }), redirect: 'follow', keepalive: true }).catch(() => {}); } catch (x) {} }
         // erro ao desenhar a tela não é "sem conexão": registra e não desfaz o que o servidor já gravou
         if (ok) try { ok(j.r); } catch (x) { try { logErro('tela ' + fn, String((x && x.stack) || x).slice(0, 300)); } catch (y) {} console.error(x); } })
       .catch((e) => { if (tm) clearTimeout(tm); if (falha) falha(new Error(e && e.name === 'AbortError' ? 'O sistema demorou demais para responder. Tente de novo.' : /HTTP 5/.test(e.message) ? 'O sistema está muito ocupado agora. Espere um minutinho e tente de novo.' : 'Sem conexão com a internet. Confira o Wi-Fi ou os dados e tente de novo.')); });
@@ -1376,9 +1379,21 @@ function atualizar() { if (!S || ocupado) return; rodar('estado', [S.token, loja
 let ULT_BT = null, ULT_BT_T = 0;
 document.addEventListener('pointerdown', (e) => { const b = e.target && e.target.closest && e.target.closest('button, .btn'); if (b) { ULT_BT = b; ULT_BT_T = Date.now(); } }, true);
 function marcarCarregando() { const b = Date.now() - ULT_BT_T < 1500 ? ULT_BT : null; if (!b || !b.isConnected || b.classList.contains('carregando')) return () => {}; b.classList.add('carregando'); const sp = el('span', 'spin'); b.prepend(sp); return () => { b.classList.remove('carregando'); sp.remove(); }; }
+const REG_TXT = { atender: 'Registrando o atendimento…', encerrar: 'Registrando…', entrar: 'Entrando na fila…', pausa: 'Saindo da fila…', mais: 'Abrindo mais uma cliente…', cancelar: 'Desfazendo…', mover: 'Mudando a ordem…' };
+function regAviso_(txt, ok) { // aviso grande no meio da tela: a vendedora vê na hora que o toque foi recebido
+  let r = $('reg-ov'); if (!r) { r = el('div'); r.id = 'reg-ov'; document.body.append(r); }
+  r.className = ok ? 'ok' : ''; r.replaceChildren(el('span', ok ? '' : 'spin'), el('b', '', txt)); r.style.display = 'flex';
+  clearTimeout(r._t); if (ok) r._t = setTimeout(() => { r.style.display = 'none'; }, 900);
+}
+function regFim_() { const r = $('reg-ov'); if (r) { clearTimeout(r._t); r.style.display = 'none'; } }
 function fazer(tipo, alvo, dados, msg) {
-  if (ocupado) return; const fim = marcarCarregando(); ocupado = true; fechar();
-  rodar('acao', [S.token, loja, tipo, alvo, dados || {}], (e) => { fim(); ocupado = false; desenhar(e); if (msg && alvo === S.usuario) { const t = typeof msg === 'function' ? msg(e) : msg; if (t) toast(t); } }, fim);
+  if (ocupado) { try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} return; }
+  const fim = marcarCarregando(); ocupado = true; fechar(); document.body.classList.add('ocupado');
+  try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} regAviso_(REG_TXT[tipo] || 'Registrando…');
+  const solta = () => { fim(); ocupado = false; document.body.classList.remove('ocupado'); };
+  rodar('acao', [S.token, loja, tipo, alvo, dados || {}], (e) => { solta(); desenhar(e);
+    if (e && e.repetido) { regAviso_('✅ Já estava registrado', true); return; } regAviso_('✅ Pronto!', true);
+    if (msg && alvo === S.usuario) { const t = typeof msg === 'function' ? msg(e) : msg; if (t) toast(t); } }, (er) => { solta(); regFim_(); if (typeof er !== 'undefined') {} });
 }
 // ---------- mensagens, dicas e guia ----------
 const DICAS = [
@@ -5554,7 +5569,7 @@ let T = null, TE = null, tOcup = false, tPoll = null, tPollX = null, wake = null
 try { T = JSON.parse(localStorage.getItem('amorata_tablet') || 'null'); } catch (e) {}
 function trodar(fn, args, ok) {
   google.script.run.withSuccessHandler(ok).withFailureHandler((e) => {
-    const m = (e && e.message) || String(e); tOcup = false;
+    const m = (e && e.message) || String(e); tOcup = false; try { regFim_(); } catch (x) {}
     if (/TABLET_INVALIDO/.test(m)) { tabletDesligar(true); toast('O modo tablet foi desligado. A gerente precisa entrar e ligar de novo.'); return; }
     if (/FORA_DA_VEZ/.test(m)) { try { toast('A fila mudou agora há pouco. Confira de quem é a vez e toque de novo.'); } catch (x) {} return; }
     toast(m);
@@ -5589,8 +5604,9 @@ function tabletDesligar(semServidor) {
 function tAtualizar() { if (!T || tOcup) return; trodar('tabletEstado', [T.chave], tDesenhar); }
 function tExtras() { if (T) trodar('tabletExtras', [T.chave], tDesenharX); }
 function tFazer(tipo, p, dados, msg) {
-  tOcup = true; fechar();
-  trodar('tabletAcao', [T.chave, tipo, p.usuario, dados || {}], (e) => { tOcup = false; tDesenhar(e); const t = typeof msg === 'function' ? msg(e) : msg; if (t) toast(t); });
+  if (tOcup) { try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} return; } // toque duplo no tablet não cria outro atendimento
+  tOcup = true; fechar(); regAviso_((REG_TXT[tipo] || 'Registrando…').replace('…', '') + ' · ' + primeiroNome(p.nome) + '…');
+  trodar('tabletAcao', [T.chave, tipo, p.usuario, dados || {}], (e) => { tOcup = false; tDesenhar(e); regAviso_(e && e.repetido ? '✅ Já estava registrado' : '✅ Pronto!', true); const t = typeof msg === 'function' ? msg(e) : msg; if (t) toast(t); });
 }
 const tMotivo = (lista, titulo, sub, fn) => escolher(titulo, sub, T.motivos[lista].map((m) => [m, '', () => fn(m)]));
 function tAtender(p, i) {
