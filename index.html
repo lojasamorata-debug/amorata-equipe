@@ -58,7 +58,7 @@ th { font-size:12px; color:var(--muted); font-weight:500; } .n { text-align:righ
 .login { max-width:360px; margin:10vh auto 0; }
 .err { color:var(--bad); font-size:13px; min-height:18px; margin:6px 0; }
 .hide { display:none !important; }
-.sheet-bg { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:flex-end; justify-content:center; z-index:80; overscroll-behavior:contain; touch-action:none; }
+.sheet-bg { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:flex-end; justify-content:center; z-index:8100; overscroll-behavior:contain; touch-action:none; }
 .sheet { background:var(--panel); width:100%; max-width:640px; border-radius:18px 18px 0 0; padding:18px 16px calc(26px + env(safe-area-inset-bottom)); max-height:85vh; max-height:85dvh; overflow:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-y; }
 body.sheet-on { overflow:hidden; } body.sheet-on #eu { display:none !important; }
 .toast { z-index:9900 !important; }
@@ -232,7 +232,7 @@ body.adm #eu, body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fil
 .chips button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
 textarea { font:inherit; width:100%; min-height:70px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; resize:vertical; }
 .badge-n { position:absolute; top:-6px; right:-6px; background:var(--bad); color:#fff; border-radius:999px; font-size:11px; min-width:18px; height:18px; line-height:18px; padding:0 5px; }
-.seg { display:flex; gap:6px; margin-top:12px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; } .seg::-webkit-scrollbar { display:none; }
+.seg { display:flex; gap:6px; margin-top:12px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; -webkit-mask-image:linear-gradient(90deg,#000 88%,transparent); mask-image:linear-gradient(90deg,#000 88%,transparent); padding-right:24px; } .seg::-webkit-scrollbar { display:none; }
 .seg button { flex:1 0 auto; white-space:nowrap; border:1px solid var(--line); background:#fff; border-radius:10px; padding:9px 12px; font:inherit; font-weight:500; cursor:pointer; }
 .seg button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
 .coms { border-top:1px solid var(--line); padding:8px 12px; background:#faf9f6; }
@@ -619,7 +619,7 @@ html, body { overflow-x:hidden; }
   <div id="v-tab" class="hide">
     <div class="tt">
       <div style="display:flex;gap:12px;align-items:center"><img id="tb-logo" alt="" style="width:46px;height:46px"><div><h1 id="tb-loja">—</h1><div class="sub">Fila da vez · toque no seu nome para agir</div></div></div>
-      <div style="display:flex;gap:10px;align-items:center"><div class="relogio" id="tb-hora">--:--</div><button class="btn sm" id="tb-atu" title="Atualizar">⟳</button><button class="btn sm" id="tb-ck">✅ Checklist</button><button class="btn sm" id="tb-tela" title="Tela cheia">⛶</button><button class="btn sm" id="tb-sair">Sair do tablet</button></div>
+      <div style="display:flex;gap:10px;align-items:center"><div class="relogio" id="tb-hora">--:--</div><button class="btn sm" id="tb-atu" title="Atualizar">⟳</button><button class="btn sm" id="tb-ck">✅ Tarefas</button><button class="btn sm" id="tb-tela" title="Tela cheia">⛶</button><button class="btn sm" id="tb-sair">Sair do tablet</button></div>
     </div>
     <div class="tgrid">
       <div class="tcol"><h2><span>Na fila</span><span id="tb-nf"></span></h2><div id="tb-fila"></div></div>
@@ -660,7 +660,7 @@ html, body { overflow-x:hidden; }
     <div class="card pla-c hide" id="plano-card"></div>
     <div id="dia-pre" class="hide"></div>
     <div id="des-fila"></div>
-    <details class="card dob ck hide" id="ck"><summary><span id="ck-tit">✅ Checklist</span><span class="ck-n" id="ck-n"></span></summary><div id="ck-box"></div></details>
+    <details class="card dob ck hide" id="ck"><summary><span id="ck-tit">✅ Tarefas</span><span class="ck-n" id="ck-n"></span></summary><div id="ck-box"></div></details>
     <details class="card dob ck hide" id="cart"><summary><span>📞 Minhas clientes</span><span class="ck-n" id="cart-n"></span></summary><div id="cart-box"></div></details>
     <details class="card dob ck hide" id="me"><summary><span>🗓️ Minha escala</span><span class="sub" id="me-n"></span></summary><div id="me-box"></div></details>
     </div>
@@ -820,7 +820,7 @@ html, body { overflow-x:hidden; }
         <div id="gi-falta"></div>
         <div class="card" style="margin-top:12px">
           <b>📊 Fechamento do dia para o grupo</b>
-          <div class="sub" style="margin-top:4px">Gera a imagem do fechamento com os números do USE e da fila para mandar no grupo do WhatsApp. Quando a administração importa as vendas do dia, a gerente recebe o aviso e é só gerar e enviar.</div>
+          <div class="sub" style="margin-top:4px">Gera a imagem do fechamento com os números do USE e da fila para mandar no grupo do WhatsApp. Quando as vendas do dia entram no app, a gerente recebe o aviso e é só gerar e enviar.</div>
           <label class="sub" style="display:block;margin-top:8px">Dia <input type="date" id="fc-data"></label>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" id="fc-obj">🎯 Objetivo de hoje</button><button class="btn pri" id="fc-loja">📊 Fechamento da loja</button><button class="btn hide" id="fc-rede">🏬 Fechamento da rede</button></div>
         </div>
@@ -974,19 +974,27 @@ const HOSPEDADO = !(window.google && google.script && google.script.run);
 if (HOSPEDADO) {
   const API = window.API_URL || 'https://script.google.com/macros/s/AKfycbzLVCL9V3HFNC1oovEF80GHdZbCNIsIdBqm8CFZ3ZBSjFAeXrarzUg19-z9go2MgGJuUw/exec';
   const chamar = (fn, args, ok, falha) => {
-    fetch(API, { method: 'POST', body: JSON.stringify({ fn: fn, args: args }), redirect: 'follow' })
-      .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then((j) => { if (j.ok) { if (ok) ok(j.r); } else if (falha) falha(new Error(j.e)); })
-      .catch((e) => { if (falha) falha(new Error(/HTTP 5/.test(e.message) ? 'O sistema está muito ocupado agora. Espere um minutinho e tente de novo.' : 'Sem conexão com a internet. Confira o Wi-Fi ou os dados e tente de novo.')); });
+    // limite de 90 s: sem isso um servidor travado deixava botões em "Enviando…" por minutos
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, tm = ctl ? setTimeout(() => ctl.abort(), 90000) : null;
+    fetch(API, { method: 'POST', body: JSON.stringify({ fn: fn, args: args }), redirect: 'follow', signal: ctl ? ctl.signal : undefined })
+      .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then((t) => { let j; try { j = JSON.parse(t); } catch (x) { throw new Error('HTTP 5 resposta inválida'); } return j; })
+      .then((j) => { if (tm) clearTimeout(tm);
+        if (!j.ok) { if (falha) falha(new Error(j.e)); return; }
+        // erro ao desenhar a tela não é "sem conexão": registra e não desfaz o que o servidor já gravou
+        if (ok) try { ok(j.r); } catch (x) { try { logErro('tela ' + fn, String((x && x.stack) || x).slice(0, 300)); } catch (y) {} console.error(x); } })
+      .catch((e) => { if (tm) clearTimeout(tm); if (falha) falha(new Error(e && e.name === 'AbortError' ? 'O sistema demorou demais para responder. Tente de novo.' : /HTTP 5/.test(e.message) ? 'O sistema está muito ocupado agora. Espere um minutinho e tente de novo.' : 'Sem conexão com a internet. Confira o Wi-Fi ou os dados e tente de novo.')); });
   };
   // abertura mais rápida: telas de leitura mostram na hora o último resultado de hoje guardado no aparelho
   // e logo em seguida trocam pelo dado novo do servidor (nada é gravado a partir dessa cópia)
-  const LEVE = /^(minhaMetaHoje|comunicados|minhaEscala|meusRetornos|meuPlano|checklist|inicio|metas|pendencias)$/;
+  const LEVE = /^(minhaMetaHoje|comunicados|minhaEscala|meuPlano|inicio|metas)$/; let ABRINDO_ = true; setTimeout(() => { ABRINDO_ = false; }, 15000);
+  const LEITURA = /^(estado|minha|comunicados|minhaEscala|meus|meuPlano|checklist|inicio|metas|pendencias|avisos|rh|estoque|relatorio|rel|produtos|mural|cashback|equipe|desafios|filasRede|reposicao|entradas|perfil|status|campeas|planos|bh|zs|ds|link|tablet|quiz|aprender|statusVendas|metasDoMes|distribuicao|premios|feriados|escala|supervisao|conf)/;
   const chave = (fn, args) => { try { const tk = S && S.token; if (!tk) return ''; return 'amc_' + fn + '_' + JSON.stringify(args.map((a) => (a === tk ? (S.usuario || '') : a))); } catch (e) { return ''; } };
   const hoje = () => new Date().toDateString();
   const chamar0 = chamar;
   const chamarC = (fn, args, ok, falha) => {
-    if (!LEVE.test(fn) || !ok) return chamar0(fn, args, ok, falha);
+    if (!LEITURA.test(fn)) { ABRINDO_ = false; try { Object.keys(localStorage).filter((k) => k.indexOf('amc_') === 0).forEach((k) => localStorage.removeItem(k)); } catch (e) {} } // gravou algo: a cópia deixa de valer
+    if (!LEVE.test(fn) || !ok || !ABRINDO_) return chamar0(fn, args, ok, falha);
     const k = chave(fn, args); let chegou = false;
     if (k) { try { const c = JSON.parse(localStorage.getItem(k) || 'null'); if (c && c.d === hoje()) setTimeout(() => { if (chegou) return; window.__DO_CACHE = true; try { ok(c.r); } catch (e) {} window.__DO_CACHE = false; }, 0); } catch (e) {} }
     chamar0(fn, args, (r) => { chegou = true; if (k) { try { const t = JSON.stringify({ d: hoje(), r: r }); if (t.length < 300000) localStorage.setItem(k, t); } catch (e) {} } ok(r); }, falha);
@@ -1025,6 +1033,7 @@ function rodar(fn, args, ok, erro) {
     prog(-1);
     const m = (e && e.message) || String(e);
     if (/SESSAO_EXPIRADA/.test(m)) { sair('Sua sessão expirou. Entre de novo.'); return; }
+    if (/FORA_DA_VEZ/.test(m)) { ocupado = false; if (erro) try { erro(e); } catch (x) {} toast('A fila mudou agora há pouco. Confira de quem é a vez e toque de novo.'); setTimeout(atualizar, 100); return; }
     if (tecnico(m) || /too many|quota|Lock|Timeout/i.test(m)) logErro(fn, m);
     ocupado = false; toast(amigavel(m)); if (erro) erro(m);
   })[fn].apply(null, args);
@@ -1035,6 +1044,7 @@ function tirarSplash() { const sp = $('splash'); if (sp && !sp.classList.contain
 
 // ---------- login ----------
 function entrar() {
+  if ($('lbtn').disabled) return;
   $('lerr').textContent = 'Entrando…'; $('lbtn').disabled = true; SENHA_TMP = $('ls').value;
   google.script.run.withSuccessHandler((s) => {
     S = s; if (S.moodHoje) S.moodDia = hojeStr(); $('lbtn').disabled = false; $('lerr').textContent = ''; $('ls').value = '';
@@ -1046,6 +1056,7 @@ function entrar() {
 function sair(msg) {
   document.body.classList.remove('fila-v'); { const sb = $('st-bolha'); if (sb) sb.remove(); const cb = $('camp-bolha'); if (cb) cb.remove(); } CAMP = null; S = null; RR_P = null; RR = null; protecao(false); E = null; MH = null; clearInterval(timerPoll); clearInterval(timerExtra); $('pend').replaceChildren(); $('pend').classList.add('hide'); $('cmn-top').replaceChildren();
   try { localStorage.removeItem('amorata_fila'); Object.keys(localStorage).filter((k) => k.indexOf('amc_') === 0).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
+  document.querySelectorAll('.tc, #gate, #strec, #tour').forEach((x) => x.remove()); try { AV_N = null; } catch (e) {} try { clearInterval(window.__REU_POLL); } catch (e) {}
   $('v-app').classList.add('hide'); $('v-login').classList.remove('hide'); $('lerr').textContent = msg || '';
 }
 function abrir() {
@@ -1104,7 +1115,9 @@ function desenharCk(r) {
 let URL_APP = '';
 function atualizarApp() {
   toast('Atualizando…');
-  if (HOSPEDADO) { try { navigator.serviceWorker && navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.update())); } catch (e) {} setTimeout(() => location.reload(), 300); return; }
+  if (HOSPEDADO) { try { navigator.serviceWorker && navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.update())); } catch (e) {}
+    // o service worker baixa a versão nova por trás quando a página é pedida; espera um pouco para ela entrar antes de recarregar
+    try { fetch('./index.html?atu=' + Date.now()).catch(() => {}); } catch (e) {} setTimeout(() => location.reload(), 2500); return; }
   const go = (u) => { if (u) { const a = document.createElement('a'); a.href = u; a.target = '_top'; document.body.append(a); a.click(); } else location.reload(); };
   if (URL_APP) go(URL_APP); else google.script.run.withSuccessHandler((u) => { URL_APP = u; go(u); }).withFailureHandler(() => location.reload()).urlDoApp();
 }
@@ -1286,7 +1299,7 @@ function carregarPendencias() {
         x.append(pb); b.append(x); return;
       }
       if (p.tipo === 'ritmo') { const x = el('button', ''); x.append(el('div', '', '⏱️ ' + (S.lojas.length > 1 ? p.loja + ': ' : '') + p.texto), el('span', '', 'Ver ›')); x.addEventListener('click', () => { verResultados(); setTimeout(() => $('i-ritmo-box').scrollIntoView({ behavior: 'smooth' }), 300); }); b.append(x); return; }
-      if (p.tipo === 'check') { const x = el('button', ''); x.append(el('div', '', '✅ ' + (S.lojas.length > 1 ? p.loja + ': ' : '') + p.texto), el('span', '', 'Ver ›')); x.addEventListener('click', () => { if (S.lojas.length > 1) { loja = p.loja; $('sel-loja').value = loja; salvar(); atualizar(); } CK_T = 'ABERTURA'; mudarAba('fila'); carregarCk(); $('ck').open = true; $('ck').scrollIntoView({ behavior: 'smooth' }); }); b.append(x); return; }
+      if (p.tipo === 'check') { const x = el('button', ''); x.append(el('div', '', '✅ ' + (S.lojas.length > 1 ? p.loja + ': ' : '') + p.texto), el('span', '', 'Ver ›')); x.addEventListener('click', () => { if (S.lojas.length > 1) { loja = p.loja; $('sel-loja').value = loja; salvar(); atualizar(); } CK_T = 'ABERTURA'; mudarAba(casaAba_()); carregarCk(); $('ck').open = true; $('ck').scrollIntoView({ behavior: 'smooth' }); }); b.append(x); return; }
       const x = el('button', p.grave ? 'grave' : ''); x.append(el('div', '', (p.tipo === 'metas' ? '🎯 ' : p.tipo === 'escala' ? '🗓️ ' : '📥 ') + (S.lojas.length > 1 ? p.loja + ': ' : '') + p.texto), el('span', '', p.tipo === 'metas' || p.tipo === 'escala' ? 'Cadastrar ›' : 'Importar ›'));
       x.addEventListener('click', () => { $('g-loja').value = p.loja; mudarAba('gest'); setTimeout(() => $(p.tipo === 'metas' ? 'sg-met' : p.tipo === 'escala' ? 'sg-esc' : 'sg-imp').click(), 50); });
       b.append(x);
@@ -1328,7 +1341,7 @@ let ULT_BT = null, ULT_BT_T = 0;
 document.addEventListener('pointerdown', (e) => { const b = e.target && e.target.closest && e.target.closest('button, .btn'); if (b) { ULT_BT = b; ULT_BT_T = Date.now(); } }, true);
 function marcarCarregando() { const b = Date.now() - ULT_BT_T < 1500 ? ULT_BT : null; if (!b || !b.isConnected || b.classList.contains('carregando')) return () => {}; b.classList.add('carregando'); const sp = el('span', 'spin'); b.prepend(sp); return () => { b.classList.remove('carregando'); sp.remove(); }; }
 function fazer(tipo, alvo, dados, msg) {
-  const fim = marcarCarregando(); ocupado = true; fechar();
+  if (ocupado) return; const fim = marcarCarregando(); ocupado = true; fechar();
   rodar('acao', [S.token, loja, tipo, alvo, dados || {}], (e) => { fim(); ocupado = false; desenhar(e); if (msg && alvo === S.usuario) { const t = typeof msg === 'function' ? msg(e) : msg; if (t) toast(t); } }, fim);
 }
 // ---------- mensagens, dicas e guia ----------
@@ -1548,6 +1561,7 @@ const bt = (txt, cls, fn) => { const b = el('button', 'btn sm ' + (cls || ''), t
 
 function desenhar(e) {
   tirarSplash();
+  if (e && e.loja && loja && e.loja !== loja && S && S.lojas.length > 1) return; // resposta atrasada de outra loja
   E = e; if (S && aba === casaAba_()) setTimeout(desenharMenu, 0); skew = e.agora - Date.now();
   const _p = e.fila.find((x) => x.usuario === S.usuario); const posAnt = desenhar.pos; desenhar.pos = _p ? _p.pos : 0;
   cabecalho(e.loja);
@@ -1639,7 +1653,8 @@ setInterval(() => { document.querySelectorAll('.timer[data-ini]').forEach((t) =>
 
 $('lbtn').addEventListener('click', entrar);
 $('ls').addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
-$('b-sair').addEventListener('click', () => sair(''));
+try { if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone) { const ai = $('a-inst'); if (ai) ai.style.display = 'none'; } } catch (e) {}
+$('b-sair').addEventListener('click', () => { if (confirm('Sair da sua conta neste aparelho?')) sair(''); });
 $('b-rh').addEventListener('click', abrirMeuRH);
 $('b-ajuda').addEventListener('click', () => escolher('❓ Ajuda', 'Conheça o app', [['🧭 Tour pelo app', 'pri', () => { fechar(); iniciarTour(); }], ['📖 Guia rápido', '', () => { fechar(); mostrarGuia(true); }], ['🔔 Notificações', '', () => { fechar(); verNotificacoes(); }], ['📜 Termo de uso', '', () => { fechar(); mostrarTermo(null); }]]));
 $('sel-loja').addEventListener('change', (e) => { loja = e.target.value; salvar(); E = null; atualizar(); carregarCk(); });
@@ -1786,8 +1801,8 @@ function abrirRelReuniao(r) {
     if (r.podeCombinar) { const cb = el('button', 'btn', '✍️ Anotar combinados'); cb.addEventListener('click', () => rrCombinados(r)); bar.append(cb); }
     const wrap = rrH('div', 'rr-wrap'), pg = rrH('div', 'rr-pgs'); rrPaginas(r).forEach((x) => pg.append(x)); wrap.append(pg); b.append(bar, wrap);
     const ajusta = () => { const w = wrap.clientWidth || (window.innerWidth - 32), z = Math.min(1, w / 794); pg.style.transform = 'scale(' + z + ')'; wrap.style.height = (pg.scrollHeight * z) + 'px'; };
-    requestAnimationFrame(ajusta); window.addEventListener('resize', ajusta);
-    pdf.addEventListener('click', () => rrPDF(r, pg, pdf));
+    requestAnimationFrame(ajusta); if (window.__RR_AJ) window.removeEventListener('resize', window.__RR_AJ); window.__RR_AJ = ajusta; window.addEventListener('resize', ajusta);
+    pdf.addEventListener('click', () => { if (!pdf.onclick) rrPDF(r, pg, pdf); });
   });
 }
 function rrLib(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('Não consegui carregar o gerador de PDF. Confira a internet.')); document.head.append(s); }); }
@@ -1807,8 +1822,12 @@ async function rrPDF(r, pg, btn) {
     pg.style.transform = tr; wr.style.height = wh; wr.style.overflow = '';
     const nome = ('Reuniao-' + rrNome(r) + '-' + r.per.de + (r.per.ate !== r.per.de ? '_a_' + r.per.ate : '')).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w.-]+/g, '-') + '.pdf';
     const blob = pdf.output('blob'), file = new File([blob], nome, { type: 'application/pdf' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: nome }); } catch (e) { if (e && e.name !== 'AbortError') throw e; } }
-    else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000); }
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      btn.disabled = false; btn.textContent = '📤 PDF pronto — toque para enviar';
+      btn.onclick = async (ev) => { ev.stopImmediatePropagation(); try { await navigator.share({ files: [file], title: nome }); } catch (e) { if (e && e.name !== 'AbortError') { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000); } } };
+      return;
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
   } catch (e) { toast((e && e.message) || 'Não consegui gerar o PDF.'); }
   btn.disabled = false; btn.textContent = t0;
 }
@@ -1828,12 +1847,12 @@ function rrCombinados(r) {
     ok.addEventListener('click', async () => {
       const obs = lins.map(([s, a]) => ({ tipo: s.value, v: a.value.trim() })).filter((x) => x.tipo);
       if (!tx.value.trim() && !obs.length) { toast('Escreva o resumo ou escolha um objetivo.'); return; }
-      for (const o of obs) if (o.tipo !== 'livre' && !(Number(o.v.replace(',', '.')) > 0)) { toast('Informe o alvo de cada objetivo (número).'); return; }
+      for (const o of obs) if (o.tipo !== 'livre' && !(numBR(o.v) > 0)) { toast('Informe o alvo de cada objetivo (número).'); return; }
       ok.disabled = true; ok.textContent = 'Salvando…';
       const run = (fn, args) => new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](...args));
       try {
-        if (tx.value.trim()) await run('registrarConversa', [S.token, r.loja, r.nome, tx.value.trim()]);
-        for (const o of obs) await run('salvarObjetivo', [S.token, r.loja, { usuario: r.usuarioAlvo, tipo: o.tipo, alvo: o.tipo === 'livre' ? '' : o.v.replace(',', '.'), texto: o.tipo === 'livre' ? o.v : '' }]);
+        if (tx.value.trim() && !ok.__conv) { await run('registrarConversa', [S.token, r.loja, r.nome, tx.value.trim()]); ok.__conv = true; } // se só o objetivo falhar, tentar de novo não duplica a conversa
+        for (const o of obs) await run('salvarObjetivo', [S.token, r.loja, { usuario: r.usuarioAlvo, tipo: o.tipo, alvo: o.tipo === 'livre' ? '' : String(numBR(o.v)), texto: o.tipo === 'livre' ? o.v : '' }]);
         toast('Combinados salvos ✅'); const d = $('det'); if (d) d.querySelector('.dhead button').click();
         if (RR) rodar('relReuniao', [S.token, RR.alvo, RR.per, RR.de, RR.ate], (r2) => { RR.r = r2; abrirRelReuniao(r2); });
       } catch (e) { ok.disabled = false; ok.textContent = 'Salvar combinados'; toast(amigavel((e && e.message) || String(e))); }
@@ -1980,7 +1999,7 @@ function abrirContrato(rh) {
       google.script.run.withSuccessHandler((r) => {
         env.textContent = 'Enviado ✅'; const e = C.sig.find((x) => x.papel === 'Empresa'); if (e) google.script.run.zsSalvarEmpresa(S.token, conta.value, e);
         res.replaceChildren(el('div', 'card', r.posicionado ? '✅ Enviado. As assinaturas ficaram nos campos marcados.' : '⚠️ Enviado, mas a ZapSign não aceitou o posicionamento (' + r.posErro + '). Ajuste os campos na ZapSign.'));
-        r.links.forEach((l) => { const k = el('div', 'card ct-l'); k.append(el('b', '', l.papel + ': ' + l.nome)); if (l.link) { const cp = el('button', 'btn sm', 'Copiar link'), wa = el('a', 'btn sm', 'Mandar no WhatsApp'); cp.addEventListener('click', () => { try { navigator.clipboard.writeText(l.link); toast('Link copiado'); } catch (x) {} }); wa.href = 'https://wa.me/?text=' + encodeURIComponent('Olá! Segue o documento para assinar: ' + l.link); wa.target = '_blank'; k.append(cp, wa); } res.append(k); });
+        r.links.forEach((l) => { const k = el('div', 'card ct-l'); k.append(el('b', '', l.papel + ': ' + l.nome)); if (l.link) { const cp = el('button', 'btn sm', 'Copiar link'), wa = el('a', 'btn sm', 'Mandar no WhatsApp'); cp.addEventListener('click', () => { try { navigator.clipboard.writeText(l.link).then(() => toast('Link copiado'), () => toast('Não consegui copiar. Segure o link para copiar.')); } catch (x) { toast('Não consegui copiar. Segure o link para copiar.'); } }); wa.href = 'https://wa.me/?text=' + encodeURIComponent('Olá! Segue o documento para assinar: ' + l.link); wa.target = '_blank'; k.append(cp, wa); } res.append(k); });
       }).withFailureHandler((e) => { env.disabled = false; env.textContent = 'Enviar para assinatura'; toast(amigavel((e && e.message) || String(e))); })
         .zsContratoEnviar(S.token, conta.value, C.b64, nm.value, C.sig.map((x) => ({ papel: x.papel, nome: x.nome, email: x.email, cpf: x.cpf, selfie: x.selfie, usuario: x.usuario })), C.pos, tp.value);
     });
@@ -1990,18 +2009,18 @@ function abrirContrato(rh) {
 // gerente/admin: "Meus resultados" abre os cards do Início (fora dele, o Início mostra só o menu)
 function verResultados() { mudarAba('ini'); document.body.classList.add('ini-res'); try { window.scrollTo(0, 0); } catch (e) {} }
 $('i-res-v').addEventListener('click', () => mudarAba('ini'));
-const MENU_TXT = { cb: 'Cashback', res: 'Meus resultados', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
-const NAV_TXT = { ini: 'Início', dia: 'Início', fila: 'Fila', meta: 'Metas', mural: 'Mural', est: 'Estoque', gest: 'Equipe', rh: 'Meu RH' };
+const MENU_TXT = { aj: 'Ajuda e senha', cb: 'Cashback', res: 'Meus resultados', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
+const NAV_TXT = { ini: 'Início', dia: 'Início', fila: 'Fila', meta: 'Metas', mural: 'Mural', est: 'Estoque', gest: 'Gestão', rh: 'Meu RH' };
 const casaAba_ = () => (chefe() ? 'ini' : 'dia');
-function abaVisivel_(k) { if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
-function irAba_(k) { if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
+function abaVisivel_(k) { if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
+function irAba_(k) { if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
 function menuSub_(k) {
   const rhN = (typeof RH !== 'undefined' && RH && RH.novos) || 0;
   if (k === 'rh') return rhN ? [rhN + (rhN === 1 ? ' novo para ver' : ' novos para ver'), 'al', rhN] : ['holerite, ponto, férias', ''];
   if (k === 'fila') { if (E && E.fila && S) { const p = chefe() ? null : E.fila.find((x) => x.usuario === S.usuario); if (p && p.pos) return [p.pos === 1 ? 'é a sua vez!' : 'você é a ' + p.pos + 'ª da vez', p.pos === 1 ? 'ok' : '']; return [E.fila.length ? E.fila.length + ' na fila' : 'ninguém na fila', '']; } return ['quem atende agora', '']; }
   if (k === 'res') { const R = typeof INI !== 'undefined' && INI && INI.rede; if (R && R.meta && R.pct != null) return [pc(R.pct) + ' da meta' + (R.fechaPct != null && R.fechaPct < 1 ? ' · no ritmo ' + pc(R.fechaPct) : ''), R.pct >= 1 ? 'ok' : (R.fechaPct != null && R.fechaPct < 1 ? 'al' : '')]; return ['vendas, metas e equipe', '']; }
   if (k === 'meta') { if (MH && MH.batida) return ['meta do mês batida!', 'ok']; if (MH && !MH.loja && MH.pct != null) return [pc(MH.pct) + ' da meta do mês', '']; return ['metas do mês', '']; }
-  const fixo = { cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
+  const fixo = { aj: ['tour, guia, notificações e trocar senha', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
   return fixo[k] || ['', ''];
 }
 function desenharMenu() {
@@ -2010,7 +2029,7 @@ function desenharMenu() {
   let m = $('menu'); if (!m) { m = el('div'); m.id = 'menu'; }
   if (chefe()) { const v = $('v-ini'); if (m.parentNode !== v || v.firstElementChild !== m) v.prepend(m); }
   else { const ref = $('eu-meta'); if (ref && ref.parentNode && m.previousElementSibling !== ref) ref.after(m); }
-  const ks = ['res', 'dia', 'ini', 'fila', 'cb', 'meta', 'est', 'mural', 'apr', 'gest', 'prod', 'rel', 'rh'].filter((k) => k !== casa && abaVisivel_(k));
+  const ks = ['res', 'dia', 'ini', 'fila', 'cb', 'meta', 'est', 'mural', 'apr', 'gest', 'prod', 'rel', 'rh', 'aj'].filter((k) => k !== casa && abaVisivel_(k));
   m.replaceChildren(...ks.map((k) => {
     const [sub, cls, n] = menuSub_(k), b = el('button', 'mt'); b.type = 'button'; b.id = 'mt-' + k;
     const ic = el('span', 'mi'); ic.append(icoSvg(k)); const tx = el('span'); tx.append(el('b', '', MENU_TXT[k])); const sm = el('small', cls, sub); tx.append(sm);
@@ -2257,7 +2276,7 @@ function fimMetas(r) {
       const tr = el('tr'); tr.append(el('td', '', c.nome + (r.lojas.length > 1 ? ' · ' + c.loja : '')), el('td', 'n', rs(c.venda)), el('td', 'n', pc(c.pct)), el('td', 'n', c.falta > 0 ? rs(c.porDia) : '—'), el('td', 'n', rs(c.online)), el('td', 'n', pc(c.pctOnline)), el('td', 'n', rs(c.fila.porAt)));
       const td = el('td'); td.append(el('span', sitCls(c.situacao), c.situacao || '—')); tr.append(td); tb.append(tr);
     });
-    $('m-nota-t').textContent = 'Vendas: relatório do USE importado pela gerente (até o último dia importado). Meta por dia: conta só os dias de trabalho de cada consultora (escala, folgas e feriados). Em período personalizado a meta é proporcional aos dias. R$ por atendimento = venda ÷ atendimentos na fila.';
+    $('m-nota-t').textContent = 'Vendas: vendas do USE que já entraram no app (até o último dia com vendas). Meta por dia: conta só os dias de trabalho de cada consultora (escala, folgas e feriados). Em período personalizado a meta é proporcional aos dias. R$ por atendimento = venda ÷ atendimentos na fila.';
 }
 const DSEM = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
 function desenharHeat(box, heat) {
@@ -2325,7 +2344,7 @@ $('r-av-qr').addEventListener('click', () => {
     const o = $('sh-o'); o.replaceChildren();
     const img = el('img', 'qr'); img.alt = 'QR code'; img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=10&data=' + encodeURIComponent(r.url); o.append(img);
     const lk = el('input'); lk.value = r.url; lk.readOnly = true; o.append(lk);
-    const cp = el('button', 'btn big', 'Copiar link'); cp.addEventListener('click', () => { try { navigator.clipboard.writeText(r.url); toast('Link copiado'); } catch (e) { lk.select(); } }); o.append(cp);
+    const cp = el('button', 'btn big', 'Copiar link'); cp.addEventListener('click', () => { try { navigator.clipboard.writeText(r.url).then(() => toast('Link copiado'), () => { lk.select(); toast('Segure o link para copiar.'); }); } catch (e) { lk.select(); } }); o.append(cp);
     const im = el('button', 'btn pri big', 'Imprimir cartaz'); im.addEventListener('click', () => { const w = window.open('', '_blank'); if (!w) { toast('Permita pop-ups para imprimir.'); return; } w.document.write('<html><body style="font-family:Arial;text-align:center;padding:40px"><h1 style="font-family:Georgia;font-weight:normal">Como foi seu atendimento?</h1><p style="font-size:20px">Aponte a câmera do celular e avalie em 10 segundos 💜</p><img src="' + img.src + '" style="width:360px;height:360px"><p style="font-size:18px">Amorata ' + r.loja + '</p><script>setTimeout(function(){print()},800)<\/script></body></html>'); w.document.close(); }); o.append(im);
     const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
     $('sheet').classList.remove('hide');
@@ -2778,7 +2797,7 @@ $('tab-apr').addEventListener('click', () => mudarAba('apr'));
 $('tab-est').addEventListener('click', () => mudarAba('est'));
 // ---------- estoque (pela API do USE): consulta de disponibilidade por modelo, cor e tamanho ----------
 let ESQ = { t: null, n: 0 };
-function carregarEstoqueInfo() { if (!S) return; google.script.run.withSuccessHandler((r) => { const l = (r && r.lojas) || [], tem = S.cargo === 'ADMIN' ? l.length > 0 : l.some((x) => S.lojas.indexOf(x) >= 0); $('tab-est').classList.toggle('hide', !tem); const sl = $('es-loja'); const mx = S.cargo === 'ADMIN' ? l : l.filter((x) => S.lojas.indexOf(x) >= 0); sl.replaceChildren(...mx.map((x) => new Option(x, x))); sl.classList.toggle('hide', mx.length < 2); }).withFailureHandler(() => {}).estoqueInfo(S.token); }
+function carregarEstoqueInfo() { if (!S) return; google.script.run.withSuccessHandler((r) => { const l = (r && r.lojas) || [], tem = S.cargo === 'ADMIN' ? l.length > 0 : l.some((x) => S.lojas.indexOf(x) >= 0); $('tab-est').classList.toggle('hide', !tem); setTimeout(desenharMenu, 0); const sl = $('es-loja'); const mx = S.cargo === 'ADMIN' ? l : l.filter((x) => S.lojas.indexOf(x) >= 0); sl.replaceChildren(...mx.map((x) => new Option(x, x))); sl.classList.toggle('hide', mx.length < 2); }).withFailureHandler(() => {}).estoqueInfo(S.token); }
 function buscarEstoque(pg) {
   const q = $('es-q').value.trim(), n = ++ESQ.n; pg = pg || 0; if (!pg) $('es-tit').textContent = 'Buscando…';
   google.script.run.withSuccessHandler((r) => { if (n !== ESQ.n) return; desenharEstoque(r, q, pg); }).withFailureHandler((e) => { $('es-tit').textContent = '⚠️ ' + ((e && e.message) || 'erro'); }).estoqueBuscar(S.token, q, $('es-loja').value, $('es-zero').checked, pg);
@@ -3074,14 +3093,14 @@ async function gravarStatus(tipo) {
   cont.append(tmp); rod.append(rec, el('div', 'sub', 'Toque no botão para começar e de novo para parar.')); rod.lastChild.style.color = '#ccc';
   w.append(top, cont, rod); document.body.append(w);
   const desligar = () => stream.getTracks().forEach((t) => t.stop());
-  let mr = null, pedacos = [], ini = 0, tk = null;
+  let mr = null, pedacos = [], ini = 0, tk = null, cancelado = false;
   const fim = () => { if (mr && mr.state !== 'inactive') mr.stop(); clearInterval(tk); };
-  x.addEventListener('click', () => { fim(); desligar(); w.remove(); });
+  x.addEventListener('click', () => { cancelado = true; fim(); desligar(); w.remove(); });
   rec.addEventListener('click', () => {
     if (mr && mr.state === 'recording') { fim(); return; }
     const mt = tipoGrav(video); try { mr = new MediaRecorder(stream, Object.assign(mt ? { mimeType: mt } : {}, video ? { videoBitsPerSecond: 800000, audioBitsPerSecond: 64000 } : { audioBitsPerSecond: 64000 })); } catch (e) { mr = new MediaRecorder(stream); }
     pedacos = []; mr.ondataavailable = (ev) => { if (ev.data && ev.data.size) pedacos.push(ev.data); };
-    mr.onstop = () => { desligar(); const tipoB = (mr.mimeType || mt || (video ? 'video/mp4' : 'audio/mp4')).split(';')[0]; const bl = new Blob(pedacos, { type: tipoB }); const dur = Math.min(30, Math.round((Date.now() - ini) / 1000)); w.remove(); previaStatus(tipo, bl, null, dur); };
+    mr.onstop = () => { desligar(); if (cancelado) { w.remove(); return; } const tipoB = (mr.mimeType || mt || (video ? 'video/mp4' : 'audio/mp4')).split(';')[0]; const bl = new Blob(pedacos, { type: tipoB }); const dur = Math.min(30, Math.round((Date.now() - ini) / 1000)); w.remove(); previaStatus(tipo, bl, null, dur); };
     mr.start(500); ini = Date.now(); rec.classList.add('on');
     tk = setInterval(() => { const s2 = 30 - Math.floor((Date.now() - ini) / 1000); tmp.textContent = '0:' + String(Math.max(0, s2)).padStart(2, '0'); if (s2 <= 0) fim(); }, 250);
   });
@@ -3169,6 +3188,7 @@ $('tab-dia').addEventListener('click', () => mudarAba('dia'));
 function desenharDiaPre() {
   const b = $('dia-pre'), ls = (MED && MED.premios) || []; b.replaceChildren(); b.classList.toggle('hide', !ls.length); if (!ls.length) return;
   const rec = ls.filter((p) => p.desbloqueado && !p.entregue), prox = ls.filter((p) => !p.desbloqueado).sort((a, c) => c.prog[0] / c.prog[1] - a.prog[0] / a.prog[1])[0];
+  if (!rec.length && !prox) { b.classList.add('hide'); return; }
   const x = el('button', 'pend-lk'); x.append(el('div', '', rec.length ? '🎉 ' + rec.length + (rec.length === 1 ? ' prêmio para receber: ' : ' prêmios para receber: ') + rec.map((p) => p.emoji + ' ' + p.titulo).join(', ') : '🎁 Próximo prêmio: ' + prox.emoji + ' ' + prox.titulo + ' · ' + Math.min(100, Math.round(prox.prog[0] / prox.prog[1] * 100)) + '% do caminho'), el('span', '', 'Ver ›'));
   x.addEventListener('click', () => { if (chefe()) verResultados(); else mudarAba('meta'); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); }); b.append(x);
 }
@@ -3329,11 +3349,16 @@ function passosTour() {
 }
 function iniciarTour(lista) {
   if (!S) return; fechar(); const ant = $('tour'); if (ant) ant.remove();
-  const passos = Array.isArray(lista) ? lista.filter((p) => { const e = typeof p.el === 'function' ? p.el() : $(p.el); return e && e.offsetParent !== null; }) : passosTour(); let i = 0;
+  const cel = window.matchMedia('(max-width:1099px)').matches, casa = casaAba_();
+  const mapa = (p) => { if (!cel || typeof p.el !== 'string') return p; const m = p.el.match(/^tab-(\w+)$/); if (m) return m[1] === casa ? Object.assign({}, p, { el: 'bnav', aba: casa }) : Object.assign({}, p, { el: 'mt-' + m[1], aba: casa }); if (p.el === 'b-rh') return Object.assign({}, p, { el: 'mt-rh', aba: casa }); if (p.el === 'b-ajuda') return Object.assign({}, p, { el: 'mt-aj', aba: casa, x: 'Quer ver este tour de novo, o guia ou trocar a senha? É neste botão. Bom trabalho! 💪' }); return p; };
+  let base = Array.isArray(lista) ? lista : passosTour().map(mapa);
+  if (S.cargo === 'ESTOQUISTA') base = base.filter((p) => ['fila', 'meta'].indexOf(p.aba) < 0 && !/^(tab|mt)-(fila|meta)$/.test(String(p.el)));
+  const vis = (p) => { const e = typeof p.el === 'function' ? p.el() : $(p.el); return !!e && (Array.isArray(lista) ? e.offsetParent !== null : true); };
+  const passos = base.filter(vis); let i = 0;
   if (!passos.length) { toast('Nada para mostrar nesta tela agora.'); return; }
   const w = el('div'); w.id = 'tour'; const hole = el('div', 'hole'), tip = el('div', 'tip'); w.append(hole, tip); document.body.append(w);
   const alvo = (p) => { const e = typeof p.el === 'function' ? p.el() : $(p.el); return e && e.offsetParent !== null && e.getBoundingClientRect().height > 0 ? e : null; };
-  const fim = () => { w.remove(); if (!Array.isArray(lista)) try { localStorage.setItem('amorata_tour_' + S.usuario, '1'); } catch (e) {} };
+  const fim = () => { w.remove(); if (!Array.isArray(lista)) { try { localStorage.setItem('amorata_tour_' + S.usuario, '1'); } catch (e) {} try { mudarAba(casaAba_()); } catch (e) {} } };
   const ir = (dir) => {
     i += dir; if (i < 0) i = 0; if (i >= passos.length) { fim(); return; }
     const p = passos[i]; if (p.aba) { try { mudarAba(p.aba); } catch (e) {} }
@@ -3586,7 +3611,7 @@ function desenharRHAdm(r) {
   // ZapSign: uma conta por loja
   if (r.zs) {
     const zc = el('details', 'card dob'); zc.style.marginTop = '12px'; const sm = el('summary'); sm.append(el('b', '', '✍️ ZapSign — documentos para assinar'), el('span', 'sub', ' · ' + r.zs.filter((z) => z.ok).length + ' de ' + r.zs.length + ' lojas conectadas')); zc.append(sm);
-    zc.append(el('div', 'sub', 'Cole o token da API da ZapSign de cada loja (ZapSign › Configurações › Integrações › API ZapSign). A cada 10 minutos o app busca os documentos enviados para assinatura: eles aparecem no Meu RH da funcionária com o botão ✍️ Assinar e, depois de assinados, o PDF assinado vai para a pasta dela no Drive.'));
+    zc.append(el('div', 'sub', 'Cole o token da API da ZapSign de cada loja (ZapSign › Configurações › Integrações › API ZapSign). O app busca os documentos enviados para assinatura (na hora, com o aviso automático abaixo; sem ele, a cada 30 minutos): eles aparecem no Meu RH da funcionária com o botão ✍️ Assinar e, depois de assinados, o PDF assinado vai para a pasta dela no Drive.'));
     zc.lastChild.style.margin = '8px 0';
     r.zs.forEach((z) => {
       const ln = el('div'); ln.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0;padding-top:8px;border-top:1px solid var(--line)';
@@ -3598,6 +3623,17 @@ function desenharRHAdm(r) {
       zc.append(ln);
     });
     if (r.zs.some((z) => z.ok)) { const sy = el('button', 'btn sm', '🔄 Buscar agora'); sy.addEventListener('click', () => { sy.disabled = true; rodar('zsSincronizarAgora', [S.token], (r2) => { toast(r2.sinc ? 'ZapSign: ' + r2.sinc : 'Busca feita'); desenharRHAdm(r2); }, () => { sy.disabled = false; }); }); zc.append(sy); }
+    if (r.zs.some((z) => z.ok)) {
+      const wh = el('div'); wh.style.cssText = 'margin-top:12px;padding-top:10px;border-top:1px solid var(--line)';
+      wh.append(el('b', '', '⚡ Aviso automático (webhook)'), el('div', 'sub', 'Com o aviso ligado, a ZapSign avisa o app na hora em que alguém assina, e o app não precisa ficar perguntando. Copie o endereço e cole na ZapSign: Configurações › Integrações › Webhooks › adicionar (método POST, marque os eventos de documento assinado). Faça isso em cada conta ZapSign conectada.'));
+      const bw = el('button', 'btn sm', '🔗 Mostrar endereço do aviso'); wh.append(bw);
+      bw.addEventListener('click', () => { bw.disabled = true; rodar('zsWebhookUrl', [S.token], (w) => {
+        bw.remove(); const ip = el('input'); ip.readOnly = true; ip.value = w.url; ip.style.cssText = 'width:100%;margin:8px 0 6px;font-size:12px';
+        const cp = el('button', 'btn sm pri', '📋 Copiar endereço'); cp.addEventListener('click', () => { ip.select(); try { navigator.clipboard.writeText(w.url).then(() => toast('Endereço copiado ✅'), () => { document.execCommand('copy'); toast('Endereço copiado ✅'); }); } catch (e) { document.execCommand('copy'); toast('Endereço copiado ✅'); } });
+        wh.append(ip, cp, el('div', 'sub', w.ult ? '🟢 último aviso recebido: ' + w.ult : '⚪ nenhum aviso recebido ainda: depois de colar na ZapSign, o primeiro documento assinado já aparece aqui.'));
+      }, () => { bw.disabled = false; }); });
+      zc.append(wh);
+    }
     g.append(zc);
   }
   if (RH_SEL) { const lb = el('div'); lb.style.marginTop = '14px'; g.append(lb); desenharRH(lb, r, true); const h = el('h2'); h.append(el('span', '', 'Documentos de ' + primeiroNome(nomeRH(RH_SEL))), el('span', '', String(r.docs.length))); lb.prepend(h); }
@@ -3616,7 +3652,7 @@ function cardHolerites(r) {
   pes.forEach((p) => { const ln = el('div', 'pess eq'), x = el('div'); x.append(el('b', '', p.nome + ' · ' + (p.loja || '')), el('span', '', p.nomeCompleto && p.email ? '✅ ' + p.nomeCompleto + ' · ' + p.email + (p.cpf ? '' : ' · CPF ela digita na assinatura') : '⚠️ falta ' + [!p.nomeCompleto && 'nome completo', !p.email && 'e-mail'].filter(Boolean).join(' e ')));
     const e = el('button', 'btn sm', 'Editar'); e.addEventListener('click', () => abrirDet('Dados de ' + primeiroNome(p.nome), (b) => b.append(formDadosRH({ nome: p.nomeCompleto, cpf: p.cpf, email: p.email }, (nm, cp, em, fim) => rodar('rhSalvarDados', [S.token, p.usuario, nm, cp, em], (r2) => { toast('Dados salvos ✅'); const d0 = $('det'); if (d0) d0.querySelector('.dhead button').click(); desenharRHAdm(r2); }, fim))))); const ops = el('div', 'ops'); ops.append(e); ln.append(x, ops); dd.append(ln); });
   if (semDados.length) { const zb = el('button', 'btn sm pri', '⬇️ Puxar os dados da ZapSign'); zb.style.cssText = 'margin:8px 8px 0 0'; zb.addEventListener('click', () => { zb.disabled = true; zb.textContent = 'Buscando na ZapSign… (pode levar 1 a 3 minutos)'; rodar('rhImportarZapSign', [S.token], (r2) => { const im = r2.importado || {}; toast('ZapSign: ' + im.atualizadas + ' cadastro(s) completados'); desenharRHAdm(r2); if (im.faltam && im.faltam.length) setTimeout(() => toast('Ainda faltam dados de: ' + im.faltam.join(', ')), 3800); }, () => { zb.disabled = false; zb.textContent = '⬇️ Puxar os dados da ZapSign'; }); }); dd.append(zb); }
-  if (semDados.length) { const lb = el('button', 'btn sm', '📣 Pedir para as ' + semDados.length + ' completarem no Meu RH'); lb.style.marginTop = '8px'; lb.addEventListener('click', () => { lb.disabled = true; rodar('rhLembrarDados', [S.token], (x) => { lb.textContent = '✓ Aviso enviado para ' + x.enviados; }); }); dd.append(lb); }
+  if (semDados.length) { const lb = el('button', 'btn sm', '📣 Pedir para as ' + semDados.length + ' completarem no Meu RH'); lb.style.marginTop = '8px'; lb.addEventListener('click', () => { lb.disabled = true; rodar('rhLembrarDados', [S.token], (x) => { lb.textContent = '✓ Aviso enviado para ' + x.enviados; }, () => { lb.disabled = false; }); }); dd.append(lb); }
   c.append(dd);
   const mes = el('input'); mes.type = 'month'; const d0 = new Date(); d0.setDate(1); d0.setMonth(d0.getMonth() - 1); mes.value = d0.toISOString().slice(0, 7); mes.style.cssText = 'width:100%;box-sizing:border-box;margin-top:6px;max-width:420px;display:block';
   const fi = el('input'); fi.type = 'file'; fi.accept = 'application/pdf'; fi.multiple = true; fi.style.cssText = 'width:100%;box-sizing:border-box;margin-top:6px;max-width:520px;display:block';
@@ -3638,7 +3674,7 @@ function abrirAcompanhamento(mes) {
       const k = el('div', 'dash'); [['✅ Assinaram', r.assinados], ['👀 Viram, falta assinar', r.viram], ['⏳ Ainda não abriram', r.total - r.assinados - r.viram]].forEach(([t, n]) => { const d = el('div', 'dc'); d.append(el('div', 'sm', t), el('div', 'big', String(n))); k.append(d); }); box.append(k);
       r.lista.forEach((x) => { const d = el('div', 'pess eq'), i = el('div'); i.append(el('b', '', x.nome + (x.loja ? ' · ' + x.loja : '')), el('span', '', x.titulo + ' · enviado ' + x.enviado.slice(0, 5) + ' · ' + (x.assinado ? '✅ assinou' + (x.assinouEm ? ' em ' + x.assinouEm : '') : x.visualizou ? '👀 viu' + (x.viuEm ? ' em ' + x.viuEm : '') + (x.vezes > 1 ? ' (' + x.vezes + 'x)' : '') + ' · falta assinar' : '⏳ ainda não abriu'))); d.append(i); box.append(d); });
       const pend = r.lista.filter((x) => !x.assinado).length;
-      if (pend) { const lb = el('button', 'btn pri', '📣 Lembrar as ' + pend + ' que faltam'); lb.style.marginTop = '10px'; lb.addEventListener('click', () => { lb.disabled = true; rodar('rhLembrarAssinar', [S.token, mi.value], (x) => { lb.textContent = '✓ Lembrete enviado para ' + x.enviados; }); }); box.append(lb); }
+      if (pend) { const lb = el('button', 'btn pri', '📣 Lembrar as ' + pend + ' que faltam'); lb.style.marginTop = '10px'; lb.addEventListener('click', () => { lb.disabled = true; rodar('rhLembrarAssinar', [S.token, mi.value], (x) => { lb.textContent = '✓ Lembrete enviado para ' + x.enviados; }, () => { lb.disabled = false; }); }); box.append(lb); }
       box.append(el('div', 'nota', '"Viu" vem da própria ZapSign (abriu o documento para assinar) ou do app. Quem já assinou entra na pasta dela no Drive automaticamente.'));
     }); };
     mi.addEventListener('change', carregar); carregar();
@@ -3942,7 +3978,7 @@ function abrirReuniao() {
   const tela = () => {
     w.replaceChildren(); const pas = el('div', 'pas'); for (let j = 0; j < total; j++) pas.append(el('i', j <= st ? 'on' : '')); w.append(pas);
     const c = el('div', 'corpo'), r = el('div', 'rod'); w.append(c, r); const o = D || {};
-    if (st === 0) { c.append(el('div', 'escolhido', '🗣️'), el('h1', '', 'Bom dia, equipe!'), el('p', 'lead', 'Reunião de 5 minutos. Peguem o celular e toquem em ✋ Estou dentro (ou toque no nome aqui).')); const bx = el('div', 'rpres'); pres(bx); c.append(bx); clearInterval(poll); poll = setInterval(() => google.script.run.withSuccessHandler((x) => { if (x) { R = x; if (st === 0 || st === 5) pres(bx); } }).withFailureHandler(() => {}).reuniaoStatus(S.token), 4000); }
+    if (st === 0) { c.append(el('div', 'escolhido', '🗣️'), el('h1', '', 'Bom dia, equipe!'), el('p', 'lead', 'Reunião de 5 minutos. Peguem o celular e toquem em ✋ Estou dentro (ou toque no nome aqui).')); const bx = el('div', 'rpres'); pres(bx); c.append(bx); clearInterval(poll); poll = window.__REU_POLL = setInterval(() => S && google.script.run.withSuccessHandler((x) => { if (x) { R = x; if (st === 0 || st === 5) pres(bx); } }).withFailureHandler(() => {}).reuniaoStatus(S.token), 4000); }
     if (st === 1) { c.append(el('h1', '', 'Como fomos no último dia')); if (o.data && !o.semDados) { const q = el('div', 'card cdia'), kp = el('div', 'ckp'), kpi = (v, l) => { const x = el('div'); x.append(el('b', '', v), el('span', '', l)); kp.append(x); };
         kpi(String(o.at), 'atendimentos'); kpi(String(o.v), 'vendas'); kpi(o.conv != null ? pc(o.conv) : '—', 'conversão'); if (o.valor) kpi(rs(o.valor), 'vendido'); if (o.pa) kpi(DEC1.format(o.pa), 'peças/venda'); q.append(el('b', '', '📊 ' + DS3[new Date(o.data + 'T12:00:00').getDay()] + ', ' + isoBR(o.data).slice(0, 5)), kp);
         if (o.equipe && o.equipe.length) { const eq = el('div', 'ceq'); o.equipe.forEach((p, i) => { const x = el('div'); x.append(el('span', '', (['🥇', '🥈', '🥉'][i] || '') + ' ' + p.nome), el('span', '', p.v + ' vendas · ' + pc(p.conv))); eq.append(x); }); q.append(eq); } c.append(q); }
@@ -4163,7 +4199,7 @@ function fimModulo(m, acertos, total) {
     o.append(el('div', 'sub', r.passou ? (r.feitos.length === r.modulos.length ? 'Você concluiu toda a trilha! A medalha 🎓 já é sua.' : 'Próximo módulo liberado. Bora continuar!') : 'Releia as dicas e tente de novo: precisa acertar 2 de 3.'));
     const b = el('button', 'btn pri big', r.passou ? 'Continuar' : 'Tentar de novo'); b.style.marginTop = '10px'; b.addEventListener('click', () => { if (r.passou) fechar(); else abrirModulo(m); }); o.append(b);
     if (r.formou) setTimeout(() => checarMedalhas(), 600);
-  });
+  }, () => { o.replaceChildren(el('div', 'vazio', 'Não consegui salvar agora.')); const b = el('button', 'btn pri big', 'Tentar de novo'); b.addEventListener('click', () => abrirModulo(m)); o.append(b); });
 }
 function desenharManual() {
   const cs = $('a-cats'); cs.replaceChildren(); Object.keys(MANUAL).forEach((k) => { const b = el('button', k === A_CAT ? 'on' : '', k); b.addEventListener('click', () => { A_CAT = k; desenharManual(); }); cs.append(b); });
@@ -5149,7 +5185,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { if (S.cargo === 'VENDEDORA') mudarAba('meta'); else verResultados(); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba('fila'); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { if (S.cargo === 'VENDEDORA') mudarAba('meta'); else if (S.cargo === 'ESTOQUISTA') mudarAba('mural'); else verResultados(); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba(casaAba_()); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide'); blocoNotif(o);
 }));
@@ -5248,7 +5284,7 @@ $('imp-ok').addEventListener('click', () => {
   rodar('importar', [S.token, IMP.tipo, $('imp-loja').value, IMP.linhas, $('imp-de').value.trim(), $('imp-ate').value.trim(), IMP.nome], (r) => {
     $('imp-ok').disabled = false; $('imp-ok').classList.add('hide'); $('imp-arq').value = ''; IMP = null;
     $('imp-prev').textContent = '✅ ' + r.linhas + ' linhas importadas para ' + r.loja + '.'; toast('Dados atualizados!'); carregarProdutos();
-  });
+  }, (e) => { $('imp-ok').disabled = false; $('imp-prev').textContent = '⚠️ Não importou: ' + amigavel((e && e.message) || String(e)); });
 });
 $('i-loja').addEventListener('change', carregarInicio); prepPer('i', carregarInicio);
 $('tab-meta').addEventListener('click', () => mudarAba('meta'));
@@ -5277,7 +5313,7 @@ function trodar(fn, args, ok) {
   google.script.run.withSuccessHandler(ok).withFailureHandler((e) => {
     const m = (e && e.message) || String(e); tOcup = false;
     if (/TABLET_INVALIDO/.test(m)) { tabletDesligar(true); toast('O modo tablet foi desligado. A gerente precisa entrar e ligar de novo.'); return; }
-    if (/FORA_DA_VEZ/.test(m)) return;
+    if (/FORA_DA_VEZ/.test(m)) { try { toast('A fila mudou agora há pouco. Confira de quem é a vez e toque de novo.'); } catch (x) {} return; }
     toast(m);
   })[fn].apply(null, args);
 }
@@ -5436,6 +5472,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && T)
     dia: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
     res: '<path d="M4 20V11M10 20V5M16 20v-6M21 20H3"/><path d="M4 8l6-4 6 5 5-4"/>',
     rh: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    aj: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/>',
     cb: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .9 3 2-1.3 2-3 2c-1.4 0-2.6-.6-3-1.6M12 6.5V8M12 16v1.5"/>',
   };
   const svg = (k) => { const d = document.createElement('span'); d.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + (I[k] || I.ini) + '</svg>'; return d.firstChild; };
