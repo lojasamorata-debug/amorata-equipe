@@ -841,7 +841,7 @@ function historicoFila(token, lojaSel, dia) {
     const x = res[r[2]] = res[r[2]] || { at: 0, v: 0, min: 0 }; x.at++; if (vend) x.v++; x.min += min; });
   // atendimentos que ainda estão acontecendo (só entram na planilha quando encerram): vêm do estado ao vivo da fila
   if (dia === dia_(loja)) try { const e = ler_(loja); Object.keys(e.atendendo || {}).forEach((al) => { const a = e.atendendo[al], us = usuarios_().find((x) => x.usuario === al), nm = quem(al, us ? us.nome : al);
-    [a.inicio].concat(a.extra || []).forEach((t, i) => { if (t) ev.push({ h: hora_(loja, Number(t)).slice(11, 19), u: al, nome: nm, txt: (i ? 'pegou mais uma cliente' : 'começou a atender' + (a.foraDaVez ? ' (fora da vez)' : '')) + ' · em andamento ⏳', k: 'inicio', por: '' }); }); }); } catch (x) {}
+    [a.inicio].forEach((t, i) => { if (t) ev.push({ h: hora_(loja, Number(t)).slice(11, 19), u: al, nome: nm, txt: (i ? 'pegou mais uma cliente' : 'começou a atender' + (a.foraDaVez ? ' (fora da vez)' : '')) + ' · em andamento ⏳', k: 'inicio', por: '' }); }); }); } catch (x) {}
   ev.sort((a, b) => a.h.localeCompare(b.h));
   const pessoas = {}; ev.forEach((e) => { const p = pessoas[e.u] = pessoas[e.u] || { usuario: e.u, nome: e.nome, primeira: e.h, ultima: e.h, at: 0, v: 0, min: 0, pausas: 0 }; p.ultima = e.h; if (e.k === 'saiu') p.pausas++; });
   Object.keys(res).forEach((k) => { if (pessoas[k]) Object.assign(pessoas[k], res[k]); });
