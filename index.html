@@ -154,7 +154,8 @@ body.adm #eu, body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fil
 .mini-r { display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12px; } .mini-r .nm { width:74px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .mini-r .tr { flex:1; height:8px; background:var(--line); border-radius:6px; overflow:hidden; } .mini-r .tr i { display:block; height:100%; border-radius:6px; } .mini-r .v { width:38px; text-align:right; font-weight:700; }
 .legenda { display:grid; gap:3px; font-size:12px; margin-top:6px; } .legenda div { display:flex; align-items:center; gap:6px; } .legenda i { width:10px; height:10px; border-radius:3px; flex:none; }
 .funil { display:grid; gap:5px; margin-top:8px; } .funil div { height:22px; border-radius:7px; display:flex; align-items:center; padding:0 8px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap; }
-.tc #agora:empty, body.ini-res #agora { display:none !important; } .agora { margin-top:6px; }
+.tc .pv-lista { margin-top:8px; border-top:1px solid var(--line); } .pv-it { padding:10px 2px; border-bottom:1px solid var(--line); } .pv-l1 { display:flex; justify-content:space-between; gap:10px; align-items:baseline; } .pv-l1 b { font-weight:600; font-size:14px; min-width:0; overflow-wrap:anywhere; } .pv-q { font-weight:800; white-space:nowrap; } .pv-l2 { font-size:12px; color:var(--muted); margin-top:2px; overflow-wrap:anywhere; } .pv-l3 { display:flex; justify-content:space-between; gap:10px; font-size:12.5px; margin-top:3px; } .pv-l3 span:last-child { color:var(--muted); text-align:right; }
+#agora:empty, body.ini-res #agora { display:none !important; } .agora { margin-top:6px; }
 .ag-hero { background:#5b4a7a; color:#fff; border-radius:18px; padding:16px; margin-top:6px; } .ag-hero.sua { background:#1e7a46; }
 .ag-hero .k { font-size:12px; font-weight:700; letter-spacing:.06em; opacity:.8; } .ag-hero .t { font-size:24px; font-weight:800; margin:4px 0 2px; line-height:1.2; } .ag-hero .s { font-size:13px; opacity:.9; }
 .ag-hero .go { margin-top:12px; width:100%; background:#fff; color:#5b4a7a; border:0; border-radius:12px; padding:13px; font:inherit; font-weight:700; font-size:16px; cursor:pointer; } .ag-hero.sua .go { color:#1e7a46; }
@@ -5444,10 +5445,13 @@ function montarVendidosAdm_() {
     const tot = it.reduce((a, x) => [a[0] + x.qtde, a[1] + x.valor], [0, 0]);
     res.replaceChildren(el('div', 'sm', it.length + ' produtos · ' + tot[0] + ' peças · ' + rs(tot[1]) + (PV.semApi.length ? ' · sem API: ' + PV.semApi.join(', ') : '')));
     const sig = (l) => ({ 'Cerâmica': 'CER', 'Via Verde': 'VV', 'Cruzeiro do Sul': 'CZS', 'Via Norte': 'VN', 'Sumaúma': 'SUM' })[l] || l;
-    const wr = el('div', 'tbl-x'), tb = el('table'), hd = el('tr'); ['Produto', 'Tipo'].concat(PV.marcas.length ? ['Marca'] : [], ['Peças', 'Valor', 'Lojas']).forEach((h, i) => hd.append(el('th', /Peças|Valor/.test(h) ? 'n' : '', h)));
-    const th = el('thead'); th.append(hd); tb.append(th); const bd = el('tbody'); let mx = 300;
-    const linha = (x) => { const tr = el('tr'), td0 = el('td'); td0.append(el('div', '', x.nome), el('div', 'sm', (x.ref ? 'ref ' + x.ref : '') + (Object.keys(x.tams).length ? ' · ' + Object.keys(x.tams).map((t) => t + ':' + x.tams[t]).join(' ') : ''))); tr.append(td0, el('td', '', x.tipo)); if (PV.marcas.length) tr.append(el('td', '', x.marca || '—')); tr.append(el('td', 'n', String(x.qtde)), el('td', 'n', rs(x.valor)), el('td', 'sm', Object.keys(x.lojas).map((l) => sig(l) + ' ' + x.lojas[l]).join(' · '))); return tr; };
-    it.slice(0, mx).forEach((x) => bd.append(linha(x))); tb.append(bd); wr.append(tb); res.append(wr);
+    // lista em cartões (cabe na largura do celular, sem rolar para o lado)
+    const bd = el('div', 'pv-lista'); let mx = 300;
+    const linha = (x) => { const c = el('div', 'pv-it'), l1 = el('div', 'pv-l1'); l1.append(el('b', '', x.nome), el('span', 'pv-q', x.qtde + (x.qtde === 1 ? ' pç' : ' pçs')));
+      const det = [x.ref ? 'ref ' + x.ref : '', x.tipo, x.marca].filter(Boolean).join(' · '), tm = Object.keys(x.tams).map((t) => t + ' ' + x.tams[t]).join(' · ');
+      const l3 = el('div', 'pv-l3'); l3.append(el('span', '', rs(x.valor)), el('span', '', Object.keys(x.lojas).map((l) => sig(l) + ' ' + x.lojas[l]).join(' · ')));
+      c.append(l1, el('div', 'pv-l2', det + (tm ? ' · tam ' + tm : '')), l3); return c; };
+    it.slice(0, mx).forEach((x) => bd.append(linha(x))); res.append(bd);
     if (it.length > mx) { const mais = el('button', 'btn sm', 'Mostrar todos (' + it.length + ')'); mais.addEventListener('click', () => { it.slice(mx).forEach((x) => bd.append(linha(x))); mais.remove(); }); res.append(mais); }
   };
   const carregar = () => { const [a, b] = periodo(); res.replaceChildren(el('div', 'sub', 'Buscando as vendas no USE… (períodos longos levam alguns segundos)'));
