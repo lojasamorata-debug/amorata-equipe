@@ -510,7 +510,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
 @media (min-width:700px) { #menu { grid-template-columns:repeat(4,minmax(0,1fr)); } }
 @media (max-width:1099px) {
   body.logado .tabs { display:none; }
-  body.logado #bnav { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); position:fixed; left:0; right:0; bottom:0; z-index:70; max-width:640px; margin:0 auto; background:var(--panel); border-top:1px solid var(--line); padding:4px 0 env(safe-area-inset-bottom); }
+  body.logado #bnav { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); position:fixed; transform:translateZ(0); -webkit-transform:translateZ(0); left:0; right:0; bottom:0; z-index:70; max-width:640px; margin:0 auto; background:var(--panel); border-top:1px solid var(--line); padding:4px 0 env(safe-area-inset-bottom); }
   #bnav button { border:0; background:transparent; font:inherit; font-size:12px; font-weight:500; color:var(--muted); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-height:56px; cursor:pointer; position:relative; -webkit-tap-highlight-color:transparent; }
   #bnav button .ic { width:23px; height:23px; } #bnav button.on { color:var(--accent); font-weight:700; }
   #bnav .mn { position:absolute; top:4px; left:calc(50% + 6px); min-width:18px; height:18px; border-radius:9px; background:var(--bad); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; padding:0 5px; box-sizing:border-box; }
@@ -574,7 +574,8 @@ body.ini-res #v-ini > #menu, body.ini-res #v-ini > #dia-blocos, body.ini-res[dat
 .cb-i { font-size:14px; padding:6px 10px; border-radius:8px; background:var(--bg); } .cb-i.al { background:var(--warnbg); color:var(--warn); font-weight:600; }
 
 /* celular: o topo não pode passar da largura da tela */
-html, body { overflow-x:hidden; }
+/* 'clip' corta o que passa da largura sem transformar a página numa caixa de rolagem (com 'hidden' o iPhone deixava a barra de baixo 'solta' ao rolar) */
+.wrap { overflow-x:clip; } @supports not (overflow-x:clip) { .wrap { overflow-x:hidden; } }
 .top > div:first-child { min-width:0; } .top > div:first-child > div:last-child { min-width:0; }
 .top h1, .top .sub { overflow:hidden; text-overflow:ellipsis; }
 @media (max-width:1099px) {
@@ -1653,6 +1654,7 @@ setInterval(() => { document.querySelectorAll('.timer[data-ini]').forEach((t) =>
 
 $('lbtn').addEventListener('click', entrar);
 $('ls').addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
+try { const bn = $('bnav'); if (bn && bn.parentNode !== document.body) document.body.appendChild(bn); } catch (e) {} // barra de baixo direto no body: fica presa no rodapé ao rolar
 try { if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone) { const ai = $('a-inst'); if (ai) ai.style.display = 'none'; } } catch (e) {}
 $('b-sair').addEventListener('click', () => { if (confirm('Sair da sua conta neste aparelho?')) sair(''); });
 $('b-rh').addEventListener('click', abrirMeuRH);
