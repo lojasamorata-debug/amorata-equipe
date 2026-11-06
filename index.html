@@ -1029,7 +1029,7 @@ function amigavel(m) {
   return m;
 }
 let ERR_N = 0;
-function logErro(onde, msg) { if (ERR_N++ > 8) return; try { google.script.run.withSuccessHandler(() => {}).withFailureHandler(() => {}).registrarErro({ onde: onde, msg: String(msg).slice(0, 500), usuario: (S && S.usuario) || (T && 'tablet ' + T.loja) || '', versao: VERSAO, ua: navigator.userAgent, url: HOSPEDADO ? location.href : 'google' }); } catch (e) {} }
+function logErro(onde, msg) { if (!S && !T && /'(token|cargo|usuario|lojas)'|\.(token|cargo|usuario|lojas)\b/.test(String(msg))) return; /* resposta que chegou depois de sair da conta: não é erro de verdade */ if (ERR_N++ > 8) return; try { google.script.run.withSuccessHandler(() => {}).withFailureHandler(() => {}).registrarErro({ onde: onde, msg: String(msg).slice(0, 500), usuario: (S && S.usuario) || (T && 'tablet ' + T.loja) || '', versao: VERSAO, ua: navigator.userAgent, url: HOSPEDADO ? location.href : 'google' }); } catch (e) {} }
 window.addEventListener('error', (ev) => logErro('js', (ev.message || '') + ' @' + (ev.lineno || '') + ':' + (ev.colno || '')));
 window.addEventListener('unhandledrejection', (ev) => logErro('promise', (ev.reason && (ev.reason.message || ev.reason)) || ''));
 function rodar(fn, args, ok, erro) {
