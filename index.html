@@ -156,7 +156,8 @@ body.adm #eu, body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fil
 .funil { display:grid; gap:5px; margin-top:8px; } .funil div { height:22px; border-radius:7px; display:flex; align-items:center; padding:0 8px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap; }
 .tc .pv-lista { margin-top:8px; border-top:1px solid var(--line); } .pv-it { padding:10px 2px; border-bottom:1px solid var(--line); } .pv-l1 { display:flex; justify-content:space-between; gap:10px; align-items:baseline; } .pv-l1 b { font-weight:600; font-size:14px; min-width:0; overflow-wrap:anywhere; } .pv-q { font-weight:800; white-space:nowrap; } .pv-l2 { font-size:12px; color:var(--muted); margin-top:2px; overflow-wrap:anywhere; } .pv-l3 { display:flex; justify-content:space-between; gap:10px; font-size:12.5px; margin-top:3px; } .pv-l3 span:last-child { color:var(--muted); text-align:right; }
 #reg-ov { position:fixed; left:50%; top:42%; transform:translate(-50%,-50%); z-index:9500; display:none; align-items:center; gap:10px; background:#1f1e1d; color:#fff; border-radius:16px; padding:16px 20px; font-size:17px; box-shadow:0 10px 30px rgba(0,0,0,.3); max-width:86vw; } #reg-ov.ok { background:#1e7a46; } #reg-ov b { font-weight:700; } #reg-ov .spin { width:20px; height:20px; border:3px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:regsp .8s linear infinite; flex:none; } @keyframes regsp { to { transform:rotate(360deg); } }
-body.ocupado #eu-acoes .btn, body.ocupado .fila-ac .btn { opacity:.55; pointer-events:none; }
+body.ocupado #eu-acoes .btn, body.ocupado .fila-ac .btn { opacity:.55; pointer-events:none; } body.recem #eu-acoes .btn, body.recem .fila-ac .btn { pointer-events:none; opacity:.7; } /* 3 s depois de começar: evita o toque duplo cair em "+ outra cliente" */
+.hist-lista { margin-top:10px; } .hist-it { display:grid; grid-template-columns:46px 84px 1fr; gap:8px; padding:8px 4px; border-bottom:1px solid var(--line); font-size:13.5px; align-items:baseline; } .hist-it .hh { font-variant-numeric:tabular-nums; color:var(--muted); font-weight:600; } .hist-it .hq { font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .hist-it.vendeu .ht { color:var(--ok); font-weight:600; } .hist-it.naovendeu .ht { color:var(--bad); } .hist-it.saiu .ht, .hist-it.fora .ht { color:var(--warn); }
 #agora:empty, body.ini-res #agora { display:none !important; } .agora { margin-top:6px; }
 .ag-hero { background:#5b4a7a; color:#fff; border-radius:18px; padding:16px; margin-top:6px; } .ag-hero.sua { background:#1e7a46; }
 .ag-hero .k { font-size:12px; font-weight:700; letter-spacing:.06em; opacity:.8; } .ag-hero .t { font-size:24px; font-weight:800; margin:4px 0 2px; line-height:1.2; } .ag-hero .s { font-size:13px; opacity:.9; }
@@ -702,6 +703,7 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
     <div id="v-fila">
     <div id="rede-fila" class="hide"></div>
     <div id="fila-ferr" class="hide"></div>
+    <button id="b-hist" type="button" class="btn sm hide" style="margin:8px 0 2px">🕘 Histórico da fila de hoje</button>
     <div id="vez-hero" class="hide"></div>
     <div class="card eu hide" id="eu">
       <div class="sub">Você</div>
@@ -1065,14 +1067,19 @@ let ERR_N = 0;
 function logErro(onde, msg) { if (!S && !T && /'(token|cargo|usuario|lojas)'|\.(token|cargo|usuario|lojas)\b/.test(String(msg))) return; /* resposta que chegou depois de sair da conta: não é erro de verdade */ if (ERR_N++ > 8) return; try { google.script.run.withSuccessHandler(() => {}).withFailureHandler(() => {}).registrarErro({ onde: onde, msg: String(msg).slice(0, 500), usuario: (S && S.usuario) || (T && 'tablet ' + T.loja) || '', versao: VERSAO, ua: navigator.userAgent, url: HOSPEDADO ? location.href : 'google' }); } catch (e) {} }
 window.addEventListener('error', (ev) => logErro('js', (ev.message || '') + ' @' + (ev.lineno || '') + ':' + (ev.colno || '')));
 window.addEventListener('unhandledrejection', (ev) => logErro('promise', (ev.reason && (ev.reason.message || ev.reason)) || ''));
+let FALHAS_BG = 0, TICK_AG = 0;
 function rodar(fn, args, ok, erro) {
   prog(1);
-  google.script.run.withSuccessHandler((r) => { if (!window.__DO_CACHE) prog(-1); if (ok) ok(r); if (/^(salvarEscala|salvarExcecao|decidirFeriado|marcarCheck|salvarChecklist|responderTroca|aprovarTroca|salvarMetas|importarVendasUSE|marcarSemVendas)$/.test(fn) && typeof carregarPendencias === 'function') setTimeout(carregarPendencias, 300); }).withFailureHandler((e) => {
+  google.script.run.withSuccessHandler((r) => { if (/^(estado|tabletEstado)$/.test(fn)) FALHAS_BG = 0; if (!window.__DO_CACHE) prog(-1); if (ok) ok(r); if (/^(salvarEscala|salvarExcecao|decidirFeriado|marcarCheck|salvarChecklist|responderTroca|aprovarTroca|salvarMetas|importarVendasUSE|marcarSemVendas)$/.test(fn) && typeof carregarPendencias === 'function') setTimeout(carregarPendencias, 300); }).withFailureHandler((e) => {
     prog(-1);
     const m = (e && e.message) || String(e);
     if (/SESSAO_EXPIRADA/.test(m)) { sair('Sua sessão expirou. Entre de novo.'); return; }
     if (/FORA_DA_VEZ/.test(m)) { ocupado = false; if (erro) try { erro(e); } catch (x) {} toast('A fila mudou agora há pouco. Confira de quem é a vez e toque de novo.'); setTimeout(atualizar, 100); return; }
     if (tecnico(m) || /too many|quota|Lock|Timeout/i.test(m)) logErro(fn, m);
+    // consultas automáticas (a fila se atualiza sozinha a cada poucos segundos): uma falha de rede passageira não vira aviso; só avisa se repetir
+    if (/^(estado|contAvisos|avisos|filasRede|reuniaoStatus|pendencias|ritmoDia|tabletEstado|tabletExtras)$/.test(fn) && /Sem conex|ocupado|demorou|HTTP|Failed|Load failed|network/i.test(amigavel(m) + ' ' + m)) {
+      FALHAS_BG = (FALHAS_BG || 0) + 1; if (erro) try { erro(m); } catch (x) {} if (FALHAS_BG === 3) toast('A conexão está instável: a fila pode demorar para atualizar.'); return;
+    }
     ocupado = false; toast(amigavel(m)); if (erro) erro(m);
   })[fn].apply(null, args);
 }
@@ -1112,7 +1119,7 @@ function abrir() {
   prepararFiltros(); botaoAjudaAba(); mudarAba(chefe() ? 'ini' : 'dia');
   carregarMetaHoje(); carregarPendencias(); carregarCk(); carregarReuniao(); carregarPlano(); setTimeout(desenharPush, 1200); carregarCmn(); carregarMe(); carregarCart(); clearInterval(timerExtra); timerExtra = setInterval(() => { if (!document.hidden) { carregarMetaHoje(); carregarPendencias(); carregarCmn(); } }, 900000);
   setTimeout(tirarSplash, 400);
-  atualizar(); clearInterval(timerPoll); timerPoll = setInterval(() => { if (!document.hidden && aba === 'fila') { atualizar(); if (S && S.cargo === 'ADMIN' && ++TICK_REDE % 3 === 0) carregarRedeFila(); } }, 5000);
+  atualizar(); clearInterval(timerPoll); timerPoll = setInterval(() => { if (!document.hidden && (aba === 'fila' || (aba === casaAba_() && !chefe() && ++TICK_AG % 2 === 0))) { atualizar(); if (S && S.cargo === 'ADMIN' && ++TICK_REDE % 3 === 0) carregarRedeFila(); } }, 5000);
 }
 // ---------- checklist ----------
 let CK = null, CK_T = null;
@@ -1391,7 +1398,7 @@ function fazer(tipo, alvo, dados, msg) {
   const fim = marcarCarregando(); ocupado = true; fechar(); document.body.classList.add('ocupado');
   try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} regAviso_(REG_TXT[tipo] || 'Registrando…');
   const solta = () => { fim(); ocupado = false; document.body.classList.remove('ocupado'); };
-  rodar('acao', [S.token, loja, tipo, alvo, dados || {}], (e) => { solta(); desenhar(e);
+  rodar('acao', [S.token, loja, tipo, alvo, dados || {}], (e) => { solta(); desenhar(e); if (tipo === 'atender') { document.body.classList.add('recem'); setTimeout(() => document.body.classList.remove('recem'), 3000); }
     if (e && e.repetido) { regAviso_('✅ Já estava registrado', true); return; } regAviso_('✅ Pronto!', true);
     if (msg && alvo === S.usuario) { const t = typeof msg === 'function' ? msg(e) : msg; if (t) toast(t); } }, (er) => { solta(); regFim_(); if (typeof er !== 'undefined') {} });
 }
@@ -2643,6 +2650,28 @@ function abrirDet(titulo, montar) {
   const fechaD = () => { movidos.reverse().forEach(([n, p, nx]) => { if (nx && nx.parentNode === p) p.insertBefore(n, nx); else p.append(n); }); w.remove(); };
   x.addEventListener('click', fechaD); montar(b, mover);
 }
+// ---------- 🕘 histórico da fila do dia: entradas, saídas, atendimentos e vendas com horário ----------
+function abrirHistoricoFila(lj, dia) {
+  abrirDet('🕘 Histórico da fila', (b) => {
+    const f = el('div', 'filtros'), sl = el('select'), dt = el('input'), ps = el('select'); dt.type = 'date'; dt.value = dia || diaISO(0); f.append(sl, dt); b.append(f, ps); ps.style.cssText = 'width:100%;margin-top:6px';
+    const out = el('div'); b.append(out);
+    const carregar = () => { out.replaceChildren(el('div', 'sub', 'Carregando…'));
+      rodar('historicoFila', [S.token, sl.value || lj || loja, dt.value], (r) => {
+        if (!sl.options.length) { r.lojas.forEach((l) => sl.append(new Option(l, l))); } sl.value = r.loja;
+        const atual = ps.value; ps.replaceChildren(new Option('Todas as pessoas (' + r.pessoas.length + ')', '')); r.pessoas.forEach((p) => ps.append(new Option(primeiroNome(p.nome), p.usuario))); ps.value = atual;
+        const desenha = () => { out.replaceChildren(); const qq = ps.value;
+          if (!r.eventos.length) { out.append(el('div', 'card', 'Nenhum movimento na fila neste dia.')); return; }
+          const res = el('div', 'card'); res.append(el('b', '', 'Resumo do dia'));
+          r.pessoas.filter((p) => !qq || p.usuario === qq).forEach((p) => res.append(el('div', 'sm', primeiroNome(p.nome) + ': ' + p.primeira.slice(0, 5) + ' → ' + p.ultima.slice(0, 5) + ' · ' + p.at + (p.at === 1 ? ' atendimento' : ' atendimentos') + ' · ' + p.v + (p.v === 1 ? ' venda' : ' vendas') + (p.at ? ' · média ' + Math.round(p.min / p.at) + ' min' : '') + (p.pausas ? ' · ' + p.pausas + (p.pausas === 1 ? ' saída' : ' saídas') : ''))));
+          out.append(res);
+          const lst = el('div', 'hist-lista'); r.eventos.filter((e) => !qq || e.u === qq).forEach((e) => { const it = el('div', 'hist-it ' + e.k); it.append(el('span', 'hh', e.h.slice(0, 5)), el('span', 'hq', primeiroNome(e.nome)), el('span', 'ht', e.txt + (e.por ? ' · por ' + e.por : ''))); lst.append(it); });
+          out.append(lst); };
+        ps.onchange = desenha; desenha();
+      }, (e) => out.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e))));
+    };
+    sl.addEventListener('change', carregar); dt.addEventListener('change', carregar); carregar();
+  });
+}
 // ---------- tela "Agora": o que fazer neste momento, por cargo ----------
 const AJUDA = {
   vendido: ['Vendido hoje', 'Soma das vendas que você marcou como "Vendeu" na fila hoje. O valor oficial vem do USE ao longo do dia.'],
@@ -2726,6 +2755,7 @@ function abrirCk_() { mudarAba(casaAba_()); setTimeout(() => { const c = $('ck')
 // ---------- atalhos dentro da fila: estoque, cashback, anotar cliente e meta sem sair da tela ----------
 let VEZ_POS = null, VEZ_FECHA = null;
 function desenharFerrFila_(naFilaOuDentro) {
+  const bh = $('b-hist'); if (bh) { bh.classList.toggle('hide', !(S && chefe() && !telaLoja())); if (!bh._ok) { bh._ok = 1; bh.addEventListener('click', () => abrirHistoricoFila(loja, diaISO(0))); } }
   const box = $('fila-ferr'); if (!box) return;
   const mostra = S && !chefe() && S.cargo !== 'AUXILIAR' && S.cargo !== 'ESTOQUISTA' && !telaLoja();
   box.classList.toggle('hide', !mostra); if (!mostra) return; if (!box.childElementCount) {
