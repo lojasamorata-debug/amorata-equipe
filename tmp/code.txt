@@ -87,7 +87,7 @@ function statusPostar(token, tipo, dataUrl, texto, duracao) {
   const bytes = Utilities.base64Decode(m[2]); if (bytes.length > 12 * 1024 * 1024) throw new Error('Arquivo muito grande (máx. 12 MB). Grave pelo app, que já sai menor.');
   const id = Utilities.getUuid().slice(0, 8), ext = (m[1].split('/')[1] || 'bin').split(';')[0].replace('quicktime', 'mov');
   const f = pastaStatus_().createFile(Utilities.newBlob(bytes, m[1], 'status_' + u.usuario + '_' + id + '.' + ext));
-  aba_('Status', H_ST).appendRow([id, agoraBR_(), Date.now(), u.usuario, u.nome, u.loja === 'TODAS' ? 'Rede' : u.loja, tipo, f.getId(), m[1].split(';')[0], dur, String(texto || '').trim().slice(0, 140), '[]', '']);
+  aba_('Status', H_ST).appendRow(linha_([id, agoraBR_(), Date.now(), u.usuario, u.nome, u.loja === 'TODAS' ? 'Rede' : u.loja, tipo, f.getId(), m[1].split(';')[0], dur, String(texto || '').trim().slice(0, 140), '[]', '']));
   if (!ScriptApp.getProjectTriggers().some((g) => g.getHandlerFunction() === 'limparStatus')) ScriptApp.newTrigger('limparStatus').timeBased().everyHours(1).create();
   CacheService.getScriptCache().remove('status_l');
   return statusLista(token);
@@ -144,13 +144,14 @@ function postarMetaDiaDe_(d, autor) {
   if (!lista.length) { CacheService.getScriptCache().remove('status_l'); return { postado: 0 }; }
   const adm = usuarios_().find((x) => x.ativo && x.usuario === (autor || pr.getProperty('ST_META_AUTOR') || 'jonatan')) || usuarios_().find((x) => x.ativo && x.cargo === 'ADMIN'); if (!adm) return { postado: 0 };
   const id = Utilities.getUuid().slice(0, 8), f = pastaStatus_().createFile(Utilities.newBlob(svgMetaDia_(d, lista), 'image/svg+xml', 'status_' + adm.usuario + '_' + id + '.svg'));
-  aba_('Status', H_ST).appendRow([id, agoraBR_(), Date.now(), adm.usuario, adm.nome, 'Rede', 'foto', f.getId(), 'image/svg+xml', 0, '🎉 Parabéns a quem bateu a meta do dia ' + d.slice(8, 10) + '/' + d.slice(5, 7) + '! ' + lista.slice(0, 6).map((p) => p.nome).join(', ') + (lista.length > 6 ? '…' : ''), '[]', '']);
+  aba_('Status', H_ST).appendRow(linha_([id, agoraBR_(), Date.now(), adm.usuario, adm.nome, 'Rede', 'foto', f.getId(), 'image/svg+xml', 0, '🎉 Parabéns a quem bateu a meta do dia ' + d.slice(8, 10) + '/' + d.slice(5, 7) + '! ' + lista.slice(0, 6).map((p) => p.nome).join(', ') + (lista.length > 6 ? '…' : ''), '[]', '']));
   pr.setProperty('ST_META_ID_' + d, id); CacheService.getScriptCache().remove('status_l');
   pr.setProperty('ST_META_LISTA', JSON.stringify({ d: d, lista: lista.map((p) => ({ usuario: p.usuario, nome: p.nome, loja: p.loja, pct: Math.round(p.pct * 100) / 100, venda: p.venda, meta: p.meta })) }));
   return { postado: lista.length, nomes: lista.map((p) => p.nome) };
 }
 // reserva: se a importação não disparou o status, posta o dia anterior a partir do meio-dia
-function postarMetaDia() {
+function postarMetaDia(e) { soGatilho_(e); return postarMetaDia_(e); }
+function postarMetaDia_() {
   const hh = +Utilities.formatDate(new Date(), 'America/Rio_Branco', 'H'); if (hh < 12 || hh > 21) return 'fora do horário';
   const hoje = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd'), d = somaDia_(hoje, -1), pr = PropertiesService.getScriptProperties();
   if (pr.getProperty('ST_META_DIA') === d || pr.getProperty('ST_META_ID_' + d)) return 'já postado';
@@ -233,7 +234,8 @@ function statusApagar(token, id) {
   return statusLista(token);
 }
 // gatilho de hora em hora: tira do ar e apaga do Drive o que passou de 24 h
-function limparStatus() {
+function limparStatus(e) { soGatilho_(e); return limparStatus_(e); }
+function limparStatus_() {
   const sh = aba_('Status', H_ST), v = sh.getDataRange().getValues(), lim = Date.now() - ST_HORAS * 3600000;
   v.forEach((r, i) => { if (i && r[0] && !r[12] && Number(r[2]) < lim) { try { DriveApp.getFileById(String(r[7])).setTrashed(true); } catch (e) {} sh.getRange(i + 1, 13).setValue('expirou ' + agoraBR_()); } });
   CacheService.getScriptCache().remove('status_l');
@@ -282,7 +284,7 @@ function salvarArquivosRH_(usuario, tipo, competencia, arquivos, por, origem, ti
     const bytes = Utilities.base64Decode(m[2]); if (bytes.length > 10 * 1024 * 1024) throw new Error('Arquivo maior que 10 MB: ' + (a.nome || ''));
     const nome = String(a.nome || (tipo + '.pdf')).slice(0, 120), id = Utilities.getUuid().slice(0, 8);
     const f = pasta.createFile(Utilities.newBlob(bytes, m[1], (comp ? competencia + ' ' : Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd') + ' ') + tipo + ' - ' + primeiroNomeS_(nomeP) + ' - ' + nome));
-    sh.appendRow([id, agoraBR_(), usuario, tipo, titulo || '', comp ? "'" + comp : '', f.getId(), nome, m[1], bytes.length, por, origem === 'funcionaria' ? agoraBR_() : '', '', origem, '', '', '']);
+    sh.appendRow(linha_([id, agoraBR_(), usuario, tipo, titulo || '', comp ? "'" + comp : '', f.getId(), nome, m[1], bytes.length, por, origem === 'funcionaria' ? agoraBR_() : '', '', origem, '', '', '']));
     ids.push(id);
   });
   return { comp: comp, n: ids.length };
@@ -326,7 +328,7 @@ function rhVincularPasta(token, usuario, link) {
   usuario = String(usuario || '').trim().toLowerCase(); const m = String(link || '').match(/[-\w]{25,}/); if (!m) throw new Error('Cole o link da pasta do Drive.');
   const f = DriveApp.getFolderById(m[0]), sh = aba_('RH Pastas', H_RHP), v = sh.getDataRange().getDisplayValues();
   const i = v.findIndex((r, k) => k > 0 && String(r[0]).trim().toLowerCase() === usuario);
-  if (i > 0) sh.getRange(i + 1, 2, 1, 2).setValues([[f.getId(), f.getName()]]); else sh.appendRow([usuario, f.getId(), f.getName()]);
+  if (i > 0) sh.getRange(i + 1, 2, 1, 2).setValues([[f.getId(), f.getName()]]); else sh.appendRow(linha_([usuario, f.getId(), f.getName()]));
   return rhLista(token, usuario);
 }
 
@@ -344,8 +346,9 @@ function zsSalvarToken(token, loja, apiToken) {
   try { zsSincronizarLoja_(loja); } catch (e) {}
   return rhLista(token, '');
 }
-function zsSincronizarAgora(token) { const u = sessao_(token); if (u.cargo !== 'ADMIN') throw new Error('Só a administração.'); const r = zsSincronizar(); const out = rhLista(token, ''); out.sinc = r; return out; }
-function zsSincronizar() {
+function zsSincronizarAgora(token) { const u = sessao_(token); if (u.cargo !== 'ADMIN') throw new Error('Só a administração.'); const r = zsSincronizar_(); const out = rhLista(token, ''); out.sinc = r; return out; }
+function zsSincronizar(e) { soGatilho_(e); const pr = PropertiesService.getScriptProperties(), ult = +pr.getProperty('ZS_SYNC_ULT') || 0; if (Date.now() - ult < 29 * 60000) return 'aguardando'; pr.setProperty('ZS_SYNC_ULT', String(Date.now())); return zsSincronizar_(e); }
+function zsSincronizar_() {
   const lock = LockService.getScriptLock(); if (!lock.tryLock(5000)) return 'ocupado';
   try { const res = []; LOJAS.forEach((l) => { if (PropertiesService.getScriptProperties().getProperty('ZS_TOKEN_' + l)) { try { res.push(l + ': ' + zsSincronizarLoja_(l)); } catch (e) { res.push(l + ': erro ' + e.message); } } }); return res.join(' · '); }
   finally { lock.releaseLock(); }
@@ -391,7 +394,7 @@ function zsSincronizarLoja_(loja) {
       if (idx == null) {
         const tipo = zsTipo_(det.name || d.name), comp = zsComp_(det.name || d.name), id = Utilities.getUuid().slice(0, 8);
         const nmd = String(det.name || d.name || 'documento').replace(/\.pdf$/i, '').replace(/\.+$/, '');
-        sh.appendRow([id, agoraBR_(), quem, tipo, nmd.slice(0, 80), comp ? "'" + comp : '', '', nmd + '.pdf', 'application/pdf', 0, 'zapsign:' + loja, '', '', 'zapsign', d.token, sg.sign_url || '', assinou ? 'assinado' : 'pendente']);
+        sh.appendRow(linha_([id, agoraBR_(), quem, tipo, nmd.slice(0, 80), comp ? "'" + comp : '', '', nmd + '.pdf', 'application/pdf', 0, 'zapsign:' + loja, '', '', 'zapsign', d.token, sg.sign_url || '', assinou ? 'assinado' : 'pendente']));
         conhecidos[k] = sh.getLastRow() - 1; v.push(sh.getRange(sh.getLastRow(), 1, 1, H_RH.length).getDisplayValues()[0]);
         novos++;
         if (!assinou) { try { avisar_(quem, 'rh', '✍️ ' + tipo + (comp ? ' ' + comp : '') + ' para você assinar no Meu RH. Toque para ver.', '', ''); } catch (e) {} }
@@ -414,7 +417,7 @@ function zsArquivar_(sh, linha, det, quem, tipo, comp) {
       b.setName(orig ? (/\.pdf$/i.test(orig) ? orig : orig + '.pdf') : (comp ? comp.replace('/', '-') + ' ' : '') + tipo + ' - ' + primeiroNomeS_(nomeP) + ' - ASSINADO.pdf');
       fid = pastaRH_(quem, tipo).createFile(b).getId();
     }
-  } catch (e) {}
+  } catch (e) { console.warn('arquivar assinado: ' + e.message); return; } // falhou o download: fica pendente e tenta de novo na próxima sincronização
   sh.getRange(linha, 7).setValue(fid); if (tam) sh.getRange(linha, 10).setValue(tam);
   sh.getRange(linha, 17).setValue(fid ? 'assinado' : 'assinado (sem arquivo)');
 }
@@ -542,7 +545,7 @@ function rhHoleriteEnviar(token, usuario, competencia, b64, nomeArq, forcar, tip
   const r = UrlFetchApp.fetch(ZS_API + '/docs/', { method: 'post', contentType: 'application/json', headers: { Authorization: 'Bearer ' + tk }, payload: JSON.stringify(corpo), muteHttpExceptions: true });
   const st = r.getResponseCode(), tx = r.getContentText(); if (st < 200 || st > 299) throw new Error('ZapSign recusou (' + st + '): ' + tx.slice(0, 160));
   const js = JSON.parse(tx), sg = (js.signers || [])[0] || {};
-  sh.appendRow([id, agoraBR_(), usuario, tipoLinha, rotulo + ' ' + comp, "'" + comp, '', String(nomeOrig || titulo + '.pdf').slice(0, 250), 'application/pdf', tam, u.usuario, '', '', 'app-zapsign', js.token || '', sg.sign_url || '', 'pendente']);
+  sh.appendRow(linha_([id, agoraBR_(), usuario, tipoLinha, rotulo + ' ' + comp, "'" + comp, '', String(nomeOrig || titulo + '.pdf').slice(0, 250), 'application/pdf', tam, u.usuario, '', '', 'app-zapsign', js.token || '', sg.sign_url || '', 'pendente']));
   try { avisar_(usuario, 'rh', '✍️ Chegou para você assinar: ' + rotulo + ' ' + comp + '. Abra o Meu RH e toque em Assinar (vai chegar um código no seu e-mail).', '', u.usuario); } catch (e) {}
   return { ok: true, comp: comp };
 }
@@ -576,7 +579,7 @@ function zsContratoEnviar(token, lojaZs, b64, nomeDoc, sig, pos, tipo) {
   // se a funcionária já está no app, o documento aparece no Meu RH dela
   sig.forEach((x, i) => { if (!x.usuario) return; const p = usuarios_().find((z) => z.usuario === x.usuario); if (!p) return;
     try { if (!(dadosRH_()[x.usuario] || {}).email) gravarDadosRH_(x.usuario, x.nome, x.cpf, x.email, u.usuario); } catch (e) {}
-    aba_('RH Docs', H_RH).appendRow([id + (i ? '-' + i : ''), agoraBR_(), x.usuario, tipoDoc, nome, '', '', nome + '.pdf', 'application/pdf', tam, u.usuario, '', '', 'app-zapsign', js.token || '', (ss[i] || {}).sign_url || '', 'pendente']);
+    aba_('RH Docs', H_RH).appendRow(linha_([id + (i ? '-' + i : ''), agoraBR_(), x.usuario, tipoDoc, nome, '', '', nome + '.pdf', 'application/pdf', tam, u.usuario, '', '', 'app-zapsign', js.token || '', (ss[i] || {}).sign_url || '', 'pendente']));
     try { avisar_(x.usuario, 'rh', '✍️ Chegou para você assinar: ' + nome + '. Abra o Meu RH e toque em Assinar (vai pedir uma selfie e um código no seu e-mail).', '', u.usuario); } catch (e) {} });
   return { ok: true, posicionado: posOk, posErro: posOk ? '' : r2.getContentText().slice(0, 160), links: sig.map((x, i) => ({ nome: x.nome, papel: x.papel, link: (ss[i] || {}).sign_url || '' })) };
 }
@@ -599,7 +602,7 @@ function aceitarTermo(token, versao, aparelho) {
   const u = sessao_(token);
   if (String(versao) !== TERMO_VERSAO) throw new Error('O termo foi atualizado. Feche e abra o app de novo.');
   if (!termoAceito_(u.usuario)) {
-    aba_('Aceites', H_ACEITE).appendRow([u.usuario, u.nome, lojasDe_(u).join(', '), u.cargo, TERMO_VERSAO, agoraBR_(), String(aparelho || '').slice(0, 120)]);
+    aba_('Aceites', H_ACEITE).appendRow(linha_([u.usuario, u.nome, lojasDe_(u).join(', '), u.cargo, TERMO_VERSAO, agoraBR_(), String(aparelho || '').slice(0, 120)]));
     CacheService.getScriptCache().put('ac_' + u.usuario + '_' + TERMO_VERSAO, '1', 21600);
   }
   return true;
@@ -609,9 +612,13 @@ function aceitarTermo(token, versao, aparelho) {
 // senhas padrão de cadastro: quem entra com uma delas é obrigada a criar a própria senha
 const SENHAS_PADRAO = ['1234'];
 function login(usuario, senha) {
-  CacheService.getScriptCache().remove('usuarios');
-  const u = usuarios_().find((x) => x.usuario === String(usuario || '').trim().toLowerCase() && x.senha === String(senha || '') && x.ativo);
-  if (!u || !String(senha || '')) { Utilities.sleep(1000); throw new Error('Usuário ou senha inválidos.'); }
+  const usu = String(usuario || '').trim().toLowerCase(), c = CacheService.getScriptCache(), kf = 'lgf_' + usu.slice(0, 60), falhas = Number(c.get(kf)) || 0;
+  if (falhas >= 8) { Utilities.sleep(1000); throw new Error('Muitas tentativas erradas. Espere 15 minutos ou peça para a gerente redefinir sua senha.'); }
+  const acha = () => usuarios_().find((x) => x.usuario === usu && x.senha === String(senha || '') && x.ativo);
+  let u = String(senha || '') ? acha() : null;
+  if (!u && String(senha || '')) { c.remove('usuarios'); u = acha(); } // senha pode ter mudado na planilha agora há pouco
+  if (!u) { c.put(kf, String(falhas + 1), 900); Utilities.sleep(1000); throw new Error('Usuário ou senha inválidos.'); }
+  c.remove(kf);
   const lojas = lojasDe_(u);
   if (!lojas.length) throw new Error('Seu cadastro está sem loja. Fale com o gestor.');
   const token = Utilities.getUuid();
@@ -719,9 +726,9 @@ function acao(token, loja, tipo, alvo, dados) {
       if (!dados.vendeu && !dados.motivo) throw new Error('Escolha o motivo da perda.');
       const cl = [a.inicio].concat(a.extra || []), ci = Math.min(Math.max(0, Math.round(Number(dados.cli) || 0)), cl.length - 1), ini = cl[ci];
       const min = Math.round((agora - ini) / 600) / 100;
-      SpreadsheetApp.openById(DADOS_ID).getSheetByName('Atendimentos').appendRow([
+      SpreadsheetApp.openById(DADOS_ID).getSheetByName('Atendimentos').appendRow(linha_([
         dia_(loja), loja, alvo, pessoa.nome, hora_(loja, ini), hora_(loja, agora), min,
-        dados.vendeu ? 'VENDEU' : 'NÃO VENDEU', dados.vendeu ? '' : dados.motivo, ci === 0 ? a.foraDaVez || '' : '', u.usuario, dados.vendeu ? '' : String(dados.produto || '').trim().slice(0, 80), dados.vendeu && valorOk_(dados.valor) ? valorOk_(dados.valor) : '', cl.length > 1 ? 'SIM' : '']);
+        dados.vendeu ? 'VENDEU' : 'NÃO VENDEU', dados.vendeu ? '' : dados.motivo, ci === 0 ? a.foraDaVez || '' : '', u.usuario, dados.vendeu ? '' : String(dados.produto || '').trim().slice(0, 80), dados.vendeu && valorOk_(dados.valor) ? valorOk_(dados.valor) : '', cl.length > 1 ? 'SIM' : '']));
       e.resumo = e.resumo || {};
       const r = e.resumo[alvo] || { at: 0, v: 0 }; r.at++; if (dados.vendeu) { r.v++; if (valorOk_(dados.valor)) r.rs = Math.round(((r.rs || 0) + valorOk_(dados.valor)) * 100) / 100; } e.resumo[alvo] = r;
       try { reconferirAval_(loja, alvo); } catch (x) {}
@@ -759,7 +766,7 @@ function acao(token, loja, tipo, alvo, dados) {
 
 function valorOk_(v) { const n = Number(String(v == null ? '' : v).replace(/\./g, '').replace(',', '.')); return n > 0 && n < 100000 ? Math.round(n * 100) / 100 : 0; }
 function evento_(loja, pessoa, tipo, motivo, por) {
-  SpreadsheetApp.openById(DADOS_ID).getSheetByName('Eventos').appendRow([hora_(loja, Date.now()), loja, pessoa.usuario, pessoa.nome, tipo, motivo || '', por.usuario]);
+  SpreadsheetApp.openById(DADOS_ID).getSheetByName('Eventos').appendRow(linha_([hora_(loja, Date.now()), loja, pessoa.usuario, pessoa.nome, tipo, motivo || '', por.usuario]));
 }
 
 // ---------- relatórios ----------
@@ -943,7 +950,7 @@ function registrarMetas_(lojas) {
       lst.forEach((x) => {
         if (mesesJa[x.mes]) return; // mês já cadastrado (no app ou numa captura anterior): a CONFIG não sobrescreve
         const k = x.mes + '|' + loja + '|' + primeiro_(x.nome), i = idx[k];
-        if (i == null) { sh.appendRow([x.mes, loja, x.nome, x.meta || '', agoraBR_(), x.metaOn || '']); idx[k] = sh.getLastRow() - 1; }
+        if (i == null) { sh.appendRow(linha_([x.mes, loja, x.nome, x.meta || '', agoraBR_(), x.metaOn || ''])); idx[k] = sh.getLastRow() - 1; }
         else if (Math.abs((num_(v[i][3]) || 0) - (x.meta || 0)) > 0.009 || Math.abs((num_(v[i][5]) || 0) - (x.metaOn || 0)) > 0.009) sh.getRange(i + 1, 4, 1, 3).setValues([[x.meta || '', agoraBR_(), x.metaOn || '']]);
       });
       c.put('mh_' + norm_(loja).replace(/\s/g, '_'), '1', 1800);
@@ -1150,7 +1157,7 @@ function metas(token, lojaSel, periodo, deX, ateX) {
 }
 
 // ---------- resumo diário por e-mail (gerentes: a própria loja; admin: todas) ----------
-// E-mails na coluna G da planilha Acessos. Gatilho diário instalado por instalarResumo().
+// E-mails na coluna G da planilha Acessos. Gatilho diário instalado por instalarResumo_().
 function emailsDe_(filtro) {
   const v = SpreadsheetApp.openById(ACESSOS_ID).getSheetByName('Acessos').getDataRange().getDisplayValues().slice(1);
   return v.filter((r) => String(r[6] || '').indexOf('@') > 0 && !/^n/i.test(norm_(r[3] || 'sim')))
@@ -1243,7 +1250,8 @@ function fechamentoLoja_(t, loja) {
   L.push('👉 Amanhã: foco em ' + foco + '.');
   return { texto: L.join('\n'), at: tot.at, v: tot.v, conv: tot.conv, pct: m && m.meta ? m.pct : null };
 }
-function resumoDiario() {
+function resumoDiario(e) { soGatilho_(e); return resumoDiario_(e); }
+function resumoDiario_() {
   const adm = usuarios_().find((x) => x.cargo === 'ADMIN' && x.ativo);
   if (!adm) return null;
   const t = Utilities.getUuid(); CacheService.getScriptCache().put('t_' + t, JSON.stringify({ usuario: adm.usuario }), 600);
@@ -1258,7 +1266,8 @@ function resumoDiario() {
   return completo;
 }
 
-function instalarResumo() {
+function instalarResumo(e) { soGatilho_(e); return instalarResumo_(e); }
+function instalarResumo_() {
   ScriptApp.getProjectTriggers().filter((g) => g.getHandlerFunction() === 'resumoDiario').forEach((g) => ScriptApp.deleteTrigger(g));
   ScriptApp.newTrigger('resumoDiario').timeBased().everyDays(1).atHour(22).nearMinute(30).inTimezone('America/Rio_Branco').create();
 }
@@ -1457,7 +1466,7 @@ function gravarImport_(tipo, loja, linhas, de, ate, arquivo, por) {
     if (!ls.length) throw new Error('Não reconheci as lojas no arquivo.');
     const sh = SpreadsheetApp.openById(PROD_ID).getSheetByName('descontos'), head = ['loja', 'vendido', 'desconto', 'custo', 'de', 'ate'];
     sh.clearContents(); sh.getRange(1, 1, ls.length + 1, 6).setValues([head].concat(ls));
-    SpreadsheetApp.openById(PROD_ID).getSheetByName('importacoes').appendRow([Utilities.formatDate(new Date(), 'America/Rio_Branco', 'dd/MM/yyyy HH:mm'), tipo, 'TODAS', ls.length, arquivo || '', por || '']);
+    SpreadsheetApp.openById(PROD_ID).getSheetByName('importacoes').appendRow(linha_([Utilities.formatDate(new Date(), 'America/Rio_Branco', 'dd/MM/yyyy HH:mm'), tipo, 'TODAS', ls.length, arquivo || '', por || '']));
     CacheService.getScriptCache().remove('prod_descontos');
     return { linhas: ls.length, loja: 'todas as lojas', tipo: tipo };
   }
@@ -1477,7 +1486,7 @@ function gravarImport_(tipo, loja, linhas, de, ate, arquivo, por) {
     const tudo = [head].concat(resto, novas.map((r) => { while (r.length < head.length) r.push(''); return r.slice(0, head.length); }));
     sh.clearContents();
     sh.getRange(1, 1, tudo.length, head.length).setValues(tudo);
-    SpreadsheetApp.openById(PROD_ID).getSheetByName('importacoes').appendRow([Utilities.formatDate(new Date(), 'America/Rio_Branco', 'dd/MM/yyyy HH:mm'), tipo, loja, novas.length, arquivo || '', por || '']);
+    SpreadsheetApp.openById(PROD_ID).getSheetByName('importacoes').appendRow(linha_([Utilities.formatDate(new Date(), 'America/Rio_Branco', 'dd/MM/yyyy HH:mm'), tipo, loja, novas.length, arquivo || '', por || '']));
     CacheService.getScriptCache().removeAll(['prod_vendas_produto', 'prod_estoque', 'prod_descontos']);
   } finally { lock.releaseLock(); }
   return { linhas: novas.length, loja: loja, tipo: tipo };
@@ -1499,7 +1508,8 @@ function doPost(e) {
     return ContentService.createTextOutput(JSON.stringify(gravarImport_(b.tipo, b.loja, b.linhas, b.de, b.ate, b.arquivo, 'carga USE')));
   } catch (err) { return ContentService.createTextOutput(JSON.stringify({ erro: String(err.message || err) })); }
 }
-function criarChaveImport() { const k = Utilities.getUuid(); PropertiesService.getScriptProperties().setProperty('IMPORT_KEY', k); Logger.log(k); }
+function criarChaveImport(e) { soGatilho_(e); return criarChaveImport_(e); }
+function criarChaveImport_() { const k = Utilities.getUuid(); PropertiesService.getScriptProperties().setProperty('IMPORT_KEY', k); Logger.log(k); }
 function prodTab_(tipo) {
   const c = CacheService.getScriptCache(), k = 'prod_' + tipo, hit = c.get(k);
   if (hit) return JSON.parse(hit);
@@ -1573,7 +1583,8 @@ function pastaFotos_() {
   if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
   const f = DriveApp.createFolder('Fila Amorata – Fotos'); p.setProperty('FOTOS_PASTA', f.getId()); return f;
 }
-function prepararFotos() { Logger.log(pastaFotos_().getUrl()); aba_('Perfis', ['usuario', 'foto_id', 'atualizado']); aba_('Mural', ['id', 'data_hora', 'usuario', 'nome', 'loja', 'tipo', 'texto', 'foto_id', 'curtidas', 'apagado']); }
+function prepararFotos(e) { soGatilho_(e); return prepararFotos_(e); }
+function prepararFotos_() { Logger.log(pastaFotos_().getUrl()); aba_('Perfis', ['usuario', 'foto_id', 'atualizado']); aba_('Mural', ['id', 'data_hora', 'usuario', 'nome', 'loja', 'tipo', 'texto', 'foto_id', 'curtidas', 'apagado']); }
 function salvarImagem_(dataUrl, nome) {
   const m = String(dataUrl || '').match(/^data:(image\/[\w+]+);base64,(.+)$/); if (!m) throw new Error('Imagem inválida.');
   const bytes = Utilities.base64Decode(m[2]); if (bytes.length > 2000000) throw new Error('Imagem muito grande.');
@@ -1594,7 +1605,7 @@ function salvarPerfil(token, dataUrl) {
   const sh = aba_('Perfis', ['usuario', 'foto_id', 'atualizado']), v = sh.getDataRange().getValues();
   const i = v.findIndex((r) => String(r[0]) === u.usuario), quando = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'dd/MM/yyyy HH:mm');
   if (i > 0) { try { DriveApp.getFileById(String(v[i][1])).setTrashed(true); } catch (e) {} sh.getRange(i + 1, 2, 1, 2).setValues([[id, quando]]); }
-  else sh.appendRow([u.usuario, id, quando]);
+  else sh.appendRow(linha_([u.usuario, id, quando]));
   CacheService.getScriptCache().remove('perfis');
   return urlFoto_(id, 200);
 }
@@ -1621,7 +1632,7 @@ function postarConquista(token, tipo, texto, dataUrl, mencoes) {
   if (!texto && !dataUrl) throw new Error('Escreva algo ou escolha uma foto.');
   const id = Utilities.getUuid().slice(0, 8), foto = dataUrl ? salvarImagem_(dataUrl, 'mural_' + id + '.jpg') : '';
   aba_('Mural', ['id', 'data_hora', 'usuario', 'nome', 'loja', 'tipo', 'texto', 'foto_id', 'curtidas', 'apagado'])
-    .appendRow([id, Utilities.formatDate(new Date(), 'America/Rio_Branco', 'dd/MM/yyyy HH:mm'), u.usuario, u.nome, u.loja === 'TODAS' ? 'Rede' : u.loja, TIPOS_POST[tipo] ? tipo : 'outro', texto, foto, '[]', '']);
+    .appendRow(linha_([id, Utilities.formatDate(new Date(), 'America/Rio_Branco', 'dd/MM/yyyy HH:mm'), u.usuario, u.nome, u.loja === 'TODAS' ? 'Rede' : u.loja, TIPOS_POST[tipo] ? tipo : 'outro', texto, foto, '[]', '']));
   const marcadas = mencionar_(u, mencoes, texto, id, 'numa publicação do mural');
   avisarMural_(u, u.loja === 'TODAS' ? 'Rede' : u.loja, TIPOS_POST[tipo] ? tipo : 'outro', texto, !!foto, Array.isArray(marcadas) ? marcadas : [], id);
   return mural(token, 'TODAS');
@@ -1649,7 +1660,7 @@ function editarPost(token, id, texto) {
   const i = v.findIndex((r) => String(r[0]) === String(id)); if (i < 1) throw new Error('Publicação não encontrada.');
   if (!(String(v[i][2]) === u.usuario || u.cargo === 'ADMIN')) throw new Error('Só quem publicou pode editar.');
   texto = String(texto || '').trim().slice(0, 500); if (!texto && !v[i][7]) throw new Error('Escreva o texto.');
-  sh.getRange(i + 1, 7).setValue(texto); sh.getRange(i + 1, 11).setValue(agoraBR_());
+  sh.getRange(i + 1, 7).setValue(linha_([texto])[0]); sh.getRange(i + 1, 11).setValue(agoraBR_());
   return mural(token, 'TODAS');
 }
 function editarComentario(token, cid, texto) {
@@ -1684,7 +1695,7 @@ const H_AVI = ['id', 'data_hora', 'para', 'tipo', 'texto', 'ref', 'lido'];
 const agoraBR_ = () => Utilities.formatDate(new Date(), 'America/Rio_Branco', 'dd/MM/yyyy HH:mm');
 function avisar_(para, tipo, texto, ref, deUsuario) {
   if (!para || para === deUsuario) return;
-  aba_('Avisos', H_AVI).appendRow([Utilities.getUuid().slice(0, 8), agoraBR_(), para, tipo, texto, ref || '', '']);
+  aba_('Avisos', H_AVI).appendRow(linha_([Utilities.getUuid().slice(0, 8), agoraBR_(), para, tipo, texto, ref || '', '']));
   const c = CacheService.getScriptCache(), k = 'av_' + para; c.put(k, String((Number(c.get(k)) || 0) + 1), 21600);
   try { enviarPush_(para, texto, tipo, /mencao|comentario|conquista|curtida|reac/.test(tipo) && ref ? 'mural:' + ref : ''); } catch (e) {}
   // (e-mail de recado removido em 03/11/2026: o aviso já chega pelo 🔔 e pelo push)
@@ -1706,7 +1717,7 @@ function avisos(token) {
 function comentar(token, postId, texto, mencoes) {
   const u = sessao_(token); texto = String(texto || '').trim().slice(0, 300); if (!texto) throw new Error('Escreva o comentário.');
   const post = aba_('Mural', []).getDataRange().getDisplayValues().find((r) => r[0] === String(postId)); if (!post) throw new Error('Publicação não encontrada.');
-  aba_('Comentarios', H_COM).appendRow([Utilities.getUuid().slice(0, 8), String(postId), agoraBR_(), u.usuario, u.nome, texto]);
+  aba_('Comentarios', H_COM).appendRow(linha_([Utilities.getUuid().slice(0, 8), String(postId), agoraBR_(), u.usuario, u.nome, texto]));
   const marcados = mencionar_(u, mencoes, texto, postId, 'num comentário do mural');
   if (marcados.indexOf(post[2]) < 0) avisar_(post[2], 'comentario', primeiroNomeS_(u.nome) + ' comentou sua publicação: "' + texto.slice(0, 80) + '"', postId, u.usuario);
   return comentariosDe_(postId);
@@ -1735,7 +1746,7 @@ function enviarRecado(token, para, texto) {
   const u = sessao_(token); texto = String(texto || '').trim().slice(0, 500); para = String(para || '').toLowerCase();
   if (!texto) throw new Error('Escreva o recado.');
   if (!usuarios_().some((x) => x.usuario === para && x.ativo)) throw new Error('Pessoa não encontrada.');
-  aba_('Recados', H_REC).appendRow([Utilities.getUuid().slice(0, 8), agoraBR_(), u.usuario, u.nome, para, texto, '']);
+  aba_('Recados', H_REC).appendRow(linha_([Utilities.getUuid().slice(0, 8), agoraBR_(), u.usuario, u.nome, para, texto, '']));
   avisar_(para, 'recado', '💌 ' + primeiroNomeS_(u.nome) + ': ' + texto.slice(0, 100), u.usuario, u.usuario);
   return conversa(token, para);
 }
@@ -1837,7 +1848,7 @@ const H_MED = ['data_hora', 'usuario', 'medalha', 'ref'];
 function darMedalha_(u, k, ref) {
   const sh = aba_('Medalhas', H_MED);
   if (sh.getDataRange().getDisplayValues().some((r) => r[1] === u.usuario && r[2] === k && r[3] === String(ref || ''))) return false;
-  sh.appendRow([agoraBR_(), u.usuario, k, String(ref || '')]);
+  sh.appendRow(linha_([agoraBR_(), u.usuario, k, String(ref || '')]));
   const m = MEDALHAS[k];
   try { CacheService.getScriptCache().removeAll(['medcont', 'conq']); } catch (e) {}
   // não publica sozinho no mural: a própria consultora escolhe compartilhar (compartilharConquista)
@@ -1853,7 +1864,7 @@ function compartilharConquista(token, itens, texto) {
   const pn = primeiroNomeS_(u.nome), um = itens.length === 1 ? itens[0] : null;
   const base = um ? um.emoji + ' ' + pn + (um.premio ? ' desbloqueou o prêmio ' : ' ganhou a medalha ') + '"' + um.nome + '"!' : '🏅 ' + pn + ' ganhou ' + itens.length + ' conquistas: ' + itens.map((x) => x.emoji + ' ' + x.nome).join(', ') + '!';
   const id = Utilities.getUuid().slice(0, 8), loja = u.loja === 'TODAS' ? 'Rede' : u.loja;
-  aba_('Mural', []).appendRow([id, agoraBR_(), u.usuario, u.nome, loja, 'medalha', base + (texto ? ' ' + texto : ''), '', '[]', '']);
+  aba_('Mural', []).appendRow(linha_([id, agoraBR_(), u.usuario, u.nome, loja, 'medalha', base + (texto ? ' ' + texto : ''), '', '[]', '']));
   if (u.loja && u.loja !== 'TODAS') usuarios_().filter((x) => x.ativo && x.usuario !== u.usuario && x.cargo !== 'ADMIN' && lojasDe_(x).indexOf(u.loja) >= 0)
     .forEach((x) => { try { avisar_(x.usuario, 'conquista', '🎉 ' + pn + ' ganhou ' + (um ? um.emoji + ' ' + um.nome : itens.length + ' conquistas') + '! Dê os parabéns no mural 💜', id, u.usuario); } catch (e) {} });
   try { const adm = usuarios_().filter((x) => x.ativo && x.cargo === 'ADMIN' && x.usuario !== u.usuario).map((x) => x.usuario); if (adm.length) enviarPushVarios_(adm, base, 'mural', 'mural'); } catch (e) {}
@@ -1968,7 +1979,7 @@ function medalhasEquipe_(u, mes, mesBR, prog, tenta, token, PR, mAnt) {
   try { const nc = aba_('Conversas', H_CONV).getDataRange().getDisplayValues().slice(1).filter((r) => r[3] === u.nome && String(r[0]).slice(3, 10) === mesBR).length; prog.mentora = [nc, 5]; if (nc >= 5) tenta('mentora', mes); } catch (e) {}
 }
 function quizCompleto(token, acertos, total) {
-  const u = sessao_(token); aba_('Quiz', ['data_hora', 'usuario', 'nome', 'acertos', 'total']).appendRow([agoraBR_(), u.usuario, u.nome, acertos, total]);
+  const u = sessao_(token); aba_('Quiz', ['data_hora', 'usuario', 'nome', 'acertos', 'total']).appendRow(linha_([agoraBR_(), u.usuario, u.nome, Math.max(0, Math.min(99, Math.round(Number(acertos) || 0))), Math.max(0, Math.min(99, Math.round(Number(total) || 0)))]));
   return acertos === total && total >= 5 ? darMedalha_(u, 'estudiosa') : false;
 }
 
@@ -1994,7 +2005,7 @@ function criarDesafio(token, loja, titulo, alvo, unidade, dias) {
   titulo = String(titulo || '').trim().slice(0, 80); alvo = Math.round(Number(alvo)); dias = Math.min(31, Math.max(1, Math.round(Number(dias) || 1)));
   if (!titulo || !(alvo > 0)) throw new Error('Preencha o desafio e a meta.');
   const fim = new Date(Utilities.formatDate(new Date(Date.now() + (dias - 1) * 864e5), 'America/Rio_Branco', "yyyy-MM-dd'T'23:59:59'-05:00'")).getTime();
-  aba_('Desafios', H_DES).appendRow([Utilities.getUuid().slice(0, 8), loja, titulo, alvo, String(unidade || '').trim().slice(0, 20), Date.now(), fim, u.usuario, '']);
+  aba_('Desafios', H_DES).appendRow(linha_([Utilities.getUuid().slice(0, 8), loja, titulo, alvo, String(unidade || '').trim().slice(0, 20), Date.now(), fim, u.usuario, '']));
   usuarios_().filter((x) => x.ativo && x.loja === loja && x.usuario !== u.usuario).forEach((x) => { try { avisar_(x.usuario, 'desafio', '🎯 Novo desafio: ' + titulo + ' (meta ' + alvo + ' ' + (unidade || '') + ')', '', u.usuario); } catch (e) {} });
   return desafios(token);
 }
@@ -2009,7 +2020,7 @@ function marcarDesafio(token, id, delta) {
     const i = v.findIndex((r) => String(r[0]) === String(id) && String(r[1]) === u.usuario);
     const q = Math.max(0, (i > 0 ? Number(v[i][3]) : 0) + (Number(delta) > 0 ? 1 : -1));
     const cumpriu = i > 0 && v[i][5];
-    if (i > 0) sh.getRange(i + 1, 4, 1, 2).setValues([[q, agoraBR_()]]); else sh.appendRow([String(id), u.usuario, u.nome, q, agoraBR_(), '']);
+    if (i > 0) sh.getRange(i + 1, 4, 1, 2).setValues([[q, agoraBR_()]]); else sh.appendRow(linha_([String(id), u.usuario, u.nome, q, agoraBR_(), '']));
     if (q >= Number(d[3]) && !cumpriu) {
       const r2 = i > 0 ? i + 1 : sh.getLastRow(); sh.getRange(r2, 6).setValue('sim');
       darMedalha_(u, 'desafio', String(id)); ganhou = true;
@@ -2035,7 +2046,7 @@ function salvarDica(token, titulo, texto) {
   const u = sessao_(token); if (!chefe_(u)) throw new Error('Só gerente e administração publicam dicas.');
   titulo = String(titulo || '').trim().slice(0, 80); texto = String(texto || '').trim().slice(0, 1000); if (!titulo || !texto) throw new Error('Preencha título e dica.');
   const loja = u.loja === 'TODAS' ? 'Rede' : u.loja;
-  aba_('Dicas', H_DIC).appendRow([Utilities.getUuid().slice(0, 8), agoraBR_(), loja, u.usuario, u.nome, titulo, texto, '']);
+  aba_('Dicas', H_DIC).appendRow(linha_([Utilities.getUuid().slice(0, 8), agoraBR_(), loja, u.usuario, u.nome, titulo, texto, '']));
   usuarios_().filter((x) => x.ativo && x.usuario !== u.usuario && (loja === 'Rede' || x.loja === loja)).forEach((x) => { try { avisar_(x.usuario, 'dica', '💡 Dica nova de ' + primeiroNomeS_(u.nome) + ': ' + titulo, '', u.usuario); } catch (e) {} });
   return dicasGerente(token);
 }
@@ -2062,7 +2073,8 @@ function limparConversa(token, outro) {
 function ocultarRec_(sh, i, r, eu) { const l = String(r[8] || '').split(',').filter(String); if (l.indexOf(eu) < 0) { l.push(eu); sh.getRange(i + 1, 9).setValue(l.join(',')); } if (r[4] === eu && !r[6]) sh.getRange(i + 1, 7).setValue('lido'); }
 
 // ---------- auditoria (rodar no editor): vendas e metas do mês anterior por consultora ----------
-function auditoriaMesAnterior() {
+function auditoriaMesAnterior(e) { soGatilho_(e); return auditoriaMesAnterior_(e); }
+function auditoriaMesAnterior_() {
   const adm = usuarios_().find((x) => x.cargo === 'ADMIN' && x.ativo);
   const t = Utilities.getUuid(); CacheService.getScriptCache().put('t_' + t, JSON.stringify({ usuario: adm.usuario }), 600);
   LOJAS.forEach((l) => { const k = norm_(l).replace(/\s/g, '_'); CacheService.getScriptCache().removeAll(['mh_' + k, 'imp2_' + k, 'cal_' + k]); });
@@ -2275,13 +2287,16 @@ function repoAvisos_() {
     c.slots.forEach((sl) => { if (sl.dias.indexOf(wd) < 0) return; const dif = m(hm) - m(sl.hora), k = 'REPO_ENV_' + loja + '_' + d + '_' + sl.hora;
       try { repoAcompanhar_(loja, d, sl, dif); } catch (e) {}
       if (dif < -10 || dif >= 30 || pr.getProperty(k)) return; // sai até 10 min antes (a rotina roda a cada 10 min), para chegar no máximo no horário
-      pr.setProperty(k, '1');
-      try {
+      try { // a marca de enviado só é gravada depois que o aviso sai; se der erro, tenta de novo na próxima rodada (até 3 vezes)
         let ult = null; aba_('Reposicao', H_REP).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (String(r[0]).slice(0, 10) === d && r[1] === loja && r[3] === 'FEITO' && (!ult || r[6] > ult)) ult = r[6]; });
         const p = usuarios_().find((x) => x.usuario === sl.usuario); let fol = false; try { fol = p && !!folgasHoje_(loja)[primeiro_(p.nome)]; } catch (e) {}
         if (fol) usuarios_().filter((x) => x.ativo && x.cargo === 'GERENTE' && x.loja === loja).forEach((g) => repoMandar_(loja, g.usuario, ult ? ult.slice(11, 16) : '', '', '(' + primeiroNomeS_(p.nome) + ' está de folga hoje) '));
         else if (p && p.ativo) repoMandar_(loja, p.usuario, ult ? ult.slice(11, 16) : '', '');
-      } catch (e) {} });
+        pr.setProperty(k, '1');
+      } catch (e) {
+        try { const ke = k + '_ERR', n = (+pr.getProperty(ke) || 0) + 1; pr.setProperty(ke, String(n)); if (n >= 3) pr.setProperty(k, '1');
+          aba_('Erros', ['data_hora', 'usuario', 'versao', 'onde', 'mensagem', 'aparelho', 'endereco']).appendRow(linha_([agoraBR_(), sl.usuario, 'script', 'reposição ' + loja + ' ' + sl.hora + ' (tentativa ' + n + ')', String((e && e.message) || e).slice(0, 300), '', ''])); } catch (x) {}
+      } });
   });
 }
 // painel da gerente/administração: progresso da reposição de hoje em cada loja e quem fez / não fez nos horários da escala
@@ -2369,7 +2384,7 @@ function confSalvar(token, lojaSel, de, ate, marcas) {
   const u = sessao_(token), loja = lojaCanon_(lojaSel); if (!(chefe_(u) || u.cargo === 'ESTOQUISTA') || !pode_(u, loja)) throw new Error('Sem acesso a esta loja.');
   const sh = confAba_(), v = sh.getDataRange().getDisplayValues(), i = v.findIndex((r, k) => k > 0 && r[1] === loja && r[2] === de && r[3] === ate && r[8] === 'RASCUNHO');
   const js = JSON.stringify(marcas || {}).slice(0, 45000);
-  if (i > 0) sh.getRange(i + 1, 10).setValue(js); else sh.appendRow([Utilities.getUuid().slice(0, 8), loja, "'" + de, "'" + ate, u.usuario, u.nome, '', '', 'RASCUNHO', js, '', '', '', '', '', '']);
+  if (i > 0) sh.getRange(i + 1, 10).setValue(js); else sh.appendRow(linha_([Utilities.getUuid().slice(0, 8), loja, "'" + de, "'" + ate, u.usuario, u.nome, '', '', 'RASCUNHO', js, '', '', '', '', '', '']));
   return { ok: true };
 }
 function sha256_(t) { return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, t, Utilities.Charset.UTF_8).map((b) => ('0' + ((b + 256) % 256).toString(16)).slice(-2)).join(''); }
@@ -2436,7 +2451,8 @@ function dsImportarDia_(lojaNum, d, silencioso) {
   return { loja: loja, d: d, linhas: linhas.length, total: r.importado.total };
 }
 // gatilho de hora em hora: das 9h às 21h atualiza o dia de hoje (parcial, sem aviso); de manhã, se o fechamento das 22h falhou, fecha o dia anterior
-function dsSincronizar() {
+function dsSincronizar(e) { soGatilho_(e); return dsSincronizar_(e); }
+function dsSincronizar_() {
   const c = dsCfg_(); if (!c.base || !c.key) return 'sem configuração';
   const pr = PropertiesService.getScriptProperties(), agora = new Date(), log = [];
   let lojas = []; try { lojas = dsLojas_(); } catch (e) { pr.setProperty('DS_SYNC', agoraBR_() + ' · erro: ' + e.message); return e.message; }
@@ -2453,7 +2469,8 @@ function dsSincronizar() {
 }
 // 22h: última atualização do dia (completa, avisa as gerentes que o fechamento está pronto) e, se todas as lojas abertas
 // já estão com o dia importado, posta o status das campeãs (fotos flutuando + card da meta batida)
-function dsFechamentoDia(soLojas) {
+function dsFechamentoDia(e) { soGatilho_(e); return dsFechamentoDia_(e); }
+function dsFechamentoDia_(soLojas) {
   const c = dsCfg_(); if (!c.base || !c.key) return 'sem configuração';
   const pr = PropertiesService.getScriptProperties(), log = []; let hoje = '';
   let lojas = []; try { lojas = dsLojas_(); } catch (e) { pr.setProperty('DS_SYNC', agoraBR_() + ' · fechamento: erro ' + e.message); return e.message; }
@@ -2475,7 +2492,7 @@ function dsFechamentoDia(soLojas) {
 const H_ESTQ = ['loja', 'referencia', 'nome', 'cor', 'tamanho', 'saldo', 'preco', 'custo', 'cod_barra', 'produto', 'atualizado'];
 function dsNomesProdutos_(lojaNum) {
   const pr = PropertiesService.getScriptProperties(), k = 'DS_NOMES_' + lojaNum, hoje = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd');
-  let o = null; try { o = JSON.parse(pr.getProperty(k) || 'null'); } catch (e) {}
+  let o = cacheGrandeGet_(k);
   if (o && o.d === hoje && o.c) return o;
   const n = {}, cs = {}; let pag = 1, lidos = 0, tot = 0;
   do { const r = dsGet_('/api/v1/produtos', { loja: lojaNum, dataUltimaCompraInicio: '2000-01-01', dataUltimaCompraFim: hoje, itensPorPagina: 1000, pagina: pag }); if (r.status !== 200 || !r.json) break;
@@ -2486,7 +2503,7 @@ function dsNomesProdutos_(lojaNum) {
   const add = (t) => { const m = String(t || '').trim().match(/^(\S+)\s+(.+)$/); if (m && !n[m[1]]) n[m[1]] = m[2].trim(); };
   ['estoque', 'vendas_produto'].forEach((tb) => { try { prodTab_(tb).forEach((r) => add(r[1])); } catch (e) {} });
   try { const ini = somaDia_(hoje, -89); const r = dsGet_('/api/v1/vendas', { dataVendaInicio: somaDia_(hoje, -30), dataVendaFim: hoje, loja: lojaNum, itensPorPagina: 1000, pagina: 1 }); ((r.json && r.json.itens) || []).forEach((v) => (v.itens || []).forEach((p) => add(p.descricao))); } catch (e) {}
-  const out = { d: hoje, n: n, c: cs }; try { pr.setProperty(k, JSON.stringify(out)); } catch (e) {}
+  const out = { d: hoje, n: n, c: cs }; cacheGrandePut_(k, out, 21600);
   return out;
 }
 function dsEstoqueSync_(lojaNum) {
@@ -2552,8 +2569,10 @@ function estoqueBuscar(token, termo, loja, todos, pagina) {
 }
 
 // estoque a cada 10 minutos, das 8h às 22h no horário da loja (1 crédito por consulta)
-function dsEstoque10() {
+function dsEstoque10(e) { soGatilho_(e); return dsEstoque10_(e); }
+function dsEstoque10_() {
   try { repoAvisos_(); } catch (e) {}
+  try { const pr0 = PropertiesService.getScriptProperties(), hj = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd'); if (pr0.getProperty('LIMPA_ULT') !== hj) { pr0.setProperty('LIMPA_ULT', hj); limparProps_(); } const ub = pr0.getProperty('BK_ULT') || ''; if (ub < somaDia_(hj, -1) && +Utilities.formatDate(new Date(), 'America/Rio_Branco', 'H') >= 2) backupDiario_(); } catch (e) { console.warn('rotina diária: ' + e.message); }
   const c = dsCfg_(); if (!c.base || !c.key) return 'sem configuração';
   const pr = PropertiesService.getScriptProperties(), agora = new Date(), log = []; let lojas = []; try { lojas = dsLojas_(); } catch (e) { return e.message; }
   // rodízio: a cada 10 min atualiza primeiro as lojas com estoque mais antigo, até ~25 s de trabalho (o Google limita o tempo
@@ -2569,14 +2588,15 @@ function dsEstoque10() {
 // a partir das 22h20 faz a última busca e o fechamento do dia (aviso à gerente: relatório pronto, conferência e status das campeãs), uma vez por loja
 // minutos do dia no fuso da loja e horário de fechamento dela hoje (shopping 22h / dom 21h; rua 19h / dom 13h)
 function dsRelogio_(ln, agora) { const loja = LOJA_COD[ln], tz = TZ[loja] || 'America/Rio_Branco', hoje = Utilities.formatDate(agora, tz, 'yyyy-MM-dd'), f = fechaLoja_(loja, hoje); return { loja: loja, hoje: hoje, min: +Utilities.formatDate(agora, tz, 'H') * 60 + +Utilities.formatDate(agora, tz, 'm'), fecha: +f.slice(0, 2) * 60 + +f.slice(3, 5), fechaTxt: f, fechada: fechadaDia_(loja, hoje) }; }
-function dsFim5() {
+function dsFim5(e) { soGatilho_(e); return dsFim5_(e); }
+function dsFim5_() {
   const c = dsCfg_(); if (!c.base || !c.key) return 'sem configuração';
   const pr = PropertiesService.getScriptProperties(), agora = new Date(), log = []; let lojas = []; try { lojas = dsLojas_(); } catch (e) { return e.message; }
   lojas.forEach((ln) => {
     // do horário de fechamento da loja até +20 min: busca a cada 10 min; depois de +20 min: fechamento do dia (uma vez)
     const R = dsRelogio_(ln, agora); if (R.fechada || pr.getProperty('DS_FECHOU_' + ln) === R.hoje) return;
     if (R.min >= R.fecha && R.min < R.fecha + 20) { try { const r = dsImportarDia_(ln, R.hoje, true); log.push(R.loja + ' ' + Math.floor(R.min / 60) + 'h' + String(R.min % 60).padStart(2, '0') + ': ' + r.linhas + ' vendedora(s)'); } catch (e) { log.push(R.loja + ': ' + e.message); } }
-    else if (R.min >= R.fecha + 20) log.push(dsFechamentoDia([ln]));
+    else if (R.min >= R.fecha + 20) log.push(dsFechamentoDia_([ln]));
   });
   if (log.length) pr.setProperty('DS_SYNC', agoraBR_() + ' · ' + log.join(' · '));
   return log.join('\n');
@@ -2586,7 +2606,7 @@ function dsGatilho_(ligar) {
   if (ligar) { ScriptApp.newTrigger('dsEstoque10').timeBased().everyMinutes(10).create(); ScriptApp.newTrigger('dsSincronizar').timeBased().everyHours(1).create(); ScriptApp.newTrigger('dsFim5').timeBased().everyMinutes(10).create(); }
 }
 // ADMIN: buscar agora / ligar ou desligar a sincronização automática
-function dsSincronizarAgora(token) { const u = sessao_(token); if (u.cargo !== 'ADMIN') throw new Error('Só a administração.'); dsGatilho_(true); let r = dsSincronizar(); try { dsLojas_().forEach((ln) => { r += '\n' + LOJA_COD[ln] + ' estoque: ' + dsEstoqueSync_(ln) + ' itens'; }); } catch (e) { r += '\nestoque: ' + e.message; } return Object.assign({ log: r }, dsStatus(token)); }
+function dsSincronizarAgora(token) { const u = sessao_(token); if (u.cargo !== 'ADMIN') throw new Error('Só a administração.'); dsGatilho_(true); let r = dsSincronizar_(); try { dsLojas_().forEach((ln) => { r += '\n' + LOJA_COD[ln] + ' estoque: ' + dsEstoqueSync_(ln) + ' itens'; }); } catch (e) { r += '\nestoque: ' + e.message; } return Object.assign({ log: r }, dsStatus(token)); }
 function dsDesligar(token) { const u = sessao_(token); if (u.cargo !== 'ADMIN') throw new Error('Só a administração.'); dsGatilho_(false); return dsStatus(token); }
 
 function dsSalvar(token, base, chave) {
@@ -2617,7 +2637,7 @@ function especiais_() {
   if (especiais_.m) return especiais_.m;
   const sh = aba_('Datas Especiais', H_DE), pr = PropertiesService.getScriptProperties();
   if (sh.getLastRow() < 2 && !pr.getProperty('DE_SEED')) { // Black 2026 sugerida pelo resultado da Black 2025 (quantas vezes uma semana normal)
-    [['Cerâmica', 4.1], ['Via Verde', 3.1], ['Cruzeiro do Sul', 5.6], ['Via Norte', 2.2], ['Sumaúma', 2.2]].forEach(([l, m]) => sh.appendRow([Utilities.getUuid().slice(0, 8), l, '2026-11-24', '2026-11-28', 'Black Friday', m, agoraBR_(), 'sugestão (Black 2025)']));
+    [['Cerâmica', 4.1], ['Via Verde', 3.1], ['Cruzeiro do Sul', 5.6], ['Via Norte', 2.2], ['Sumaúma', 2.2]].forEach(([l, m]) => sh.appendRow(linha_([Utilities.getUuid().slice(0, 8), l, '2026-11-24', '2026-11-28', 'Black Friday', m, agoraBR_(), 'sugestão (Black 2025)'])));
     pr.setProperty('DE_SEED', '1');
   }
   const out = sh.getDataRange().getDisplayValues().slice(1).filter((r) => r[0] && r[2]).map((r) => ({ id: r[0], loja: r[1] || 'TODAS', de: String(r[2]).slice(0, 10), ate: String(r[3] || r[2]).slice(0, 10), nome: r[4], mult: Number(String(r[5]).replace(/\s/g, '').replace(',', '.')) || 1, por: r[7] }));
@@ -2769,7 +2789,7 @@ function marcarSemVendas(token, loja, dataIso) {
   loja = lojaCanon_(loja); if (!loja || !pode_(u, loja)) throw new Error('Sem acesso a esta loja.');
   const sh = abaVendas_(), v = sh.getDataRange().getDisplayValues();
   if (v.some((r, i) => i && String(r[0]).slice(0, 10) === dataIso && r[1] === loja)) throw new Error('Este dia já tem vendas importadas.');
-  sh.appendRow([dataIso, loja, '-', '(sem vendas)', 'LOJA', 0, 0, 0, 0, 'marcado sem vendas', agoraBR_(), u.usuario]);
+  sh.appendRow(linha_([dataIso, loja, '-', '(sem vendas)', 'LOJA', 0, 0, 0, 0, 'marcado sem vendas', agoraBR_(), u.usuario]));
   limparCacheVendas_(loja);
   return statusVendas(token, loja);
 }
@@ -2854,7 +2874,8 @@ function statusVendas(token, lojaSel) {
   return { loja: loja, ultimos: ult, faltando: faltando, parciais: parciais, ontem: ontem };
 }
 // migração única: copia o histórico das abas IMPORTAÇÃO_USE (sem duplicados) para o banco. Rodar no editor.
-function migrarVendasPlanilhas() {
+function migrarVendasPlanilhas(e) { soGatilho_(e); return migrarVendasPlanilhas_(e); }
+function migrarVendasPlanilhas_() {
   const sh = abaVendas_(), ja = {}; sh.getDataRange().getDisplayValues().slice(1).forEach((r) => { ja[r[1]] = 1; });
   LOJAS.forEach((loja) => {
     if (ja[loja]) { Logger.log(loja + ': já tem dados no banco, pulei'); return; }
@@ -2972,7 +2993,7 @@ function salvarExcecao(token, lojaSel, data, nome, status) {
   const sh = aba_('EscalaExcecoes', H_EXC); sh.getRange('A:A').setNumberFormat('@');
   const v = sh.getDataRange().getDisplayValues();
   for (let i = v.length - 1; i >= 1; i--) if (String(v[i][0]).slice(0, 10) === data && v[i][1] === loja && similaridade_(v[i][2], nome) >= 2) sh.deleteRow(i + 1);
-  if (status && status !== 'APAGAR') sh.appendRow([data, loja, String(nome).toUpperCase(), status, agoraBR_(), u.usuario]);
+  if (status && status !== 'APAGAR') sh.appendRow(linha_([data, loja, String(nome).toUpperCase(), status, agoraBR_(), u.usuario]));
   CacheService.getScriptCache().remove('cal3_' + norm_(loja).replace(/\s/g, '_'));
   return escala(token, loja);
 }
@@ -2994,8 +3015,9 @@ function tabSess_(chave) {
   if (!raw) throw new Error('TABLET_INVALIDO');
   const t = JSON.parse(raw), u = usuarios_().find((x) => x.usuario === t.usuario);
   if (!u || !u.ativo || !chefe_(u) || !pode_(u, t.loja)) throw new Error('TABLET_INVALIDO');
-  const tok = 'tab' + chave, c = CacheService.getScriptCache();
-  if (!c.get('t_' + tok)) c.put('t_' + tok, JSON.stringify({ usuario: u.usuario }), 21600);
+  const c = CacheService.getScriptCache(); let tok = c.get('tabtok_' + chave);
+  // sessão interna do tablet: token aleatório que nunca sai do servidor (a chave sozinha não abre as telas da gerente)
+  if (!tok || !c.get('t_' + tok)) { tok = 'tabx' + Utilities.getUuid().replace(/-/g, ''); c.put('t_' + tok, JSON.stringify({ usuario: u.usuario }), 21600); c.put('tabtok_' + chave, tok, 21600); }
   return { tok: tok, loja: t.loja, u: u };
 }
 function tabletEstado(chave) { const s = tabSess_(chave); return estado(s.tok, s.loja); }
@@ -3159,7 +3181,7 @@ function fechamentoDia(token, lojaSel, d) {
 function pendencias(token) {
   const u = sessao_(token); if (!chefe_(u)) return [];
   try { premiarSemana_(); } catch (e) {}
-  try { const ub = PropertiesService.getScriptProperties().getProperty('BK_ULT') || ''; if (ub < somaDia_(dia_('Cerâmica'), -1)) backupDiario(); } catch (e) {}
+  // o backup diário agora roda na rotina de 10 min (antes a primeira gerente do dia esperava a cópia terminar)
   const c = CacheService.getScriptCache(), k = 'pend_' + u.usuario, hit = c.get(k);
   if (hit) return JSON.parse(hit);
   const lojas = lojasDe_(u), hoje = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd'), ontem = somaDia_(hoje, -1), mes = hoje.slice(0, 7);
@@ -3254,7 +3276,7 @@ function decidirFeriado(token, lojaSel, data, decisao, nome, obs) {
   const sh = aba_('Feriados', H_FER); sh.getRange('A:A').setNumberFormat('@');
   const v = sh.getDataRange().getDisplayValues(); let nomeAnt = '';
   for (let i = v.length - 1; i >= 1; i--) if (String(v[i][0]).slice(0, 10) === data && v[i][1] === loja) { nomeAnt = v[i][2]; sh.deleteRow(i + 1); }
-  if (decisao !== 'APAGAR') sh.appendRow([data, loja, String(nome || nomeAnt || '').trim(), decisao, String(obs || '').slice(0, 120), agoraBR_(), u.usuario]);
+  if (decisao !== 'APAGAR') sh.appendRow(linha_([data, loja, String(nome || nomeAnt || '').trim(), decisao, String(obs || '').slice(0, 120), agoraBR_(), u.usuario]));
   limparFer_(loja); CacheService.getScriptCache().remove('pend_' + u.usuario);
   return feriados(token, loja);
 }
@@ -3355,7 +3377,7 @@ function marcarTarefa_(loja, u, id, feito, chefe) {
   try {
     const dia = dia_(loja), sh = aba_('ChecklistFeito', H_CKF); sh.getRange('A:A').setNumberFormat('@'); const v = sh.getDataRange().getDisplayValues();
     for (let i = v.length - 1; i >= 1; i--) if (String(v[i][0]).slice(0, 10) === dia && v[i][1] === loja && v[i][2] === 'TAREFA' && v[i][3] === id) sh.deleteRow(i + 1);
-    if (feito) sh.appendRow([dia, loja, 'TAREFA', id, u.usuario, u.nome, Utilities.formatDate(new Date(), TZ[loja] || 'America/Rio_Branco', 'HH:mm')]);
+    if (feito) sh.appendRow(linha_([dia, loja, 'TAREFA', id, u.usuario, u.nome, Utilities.formatDate(new Date(), TZ[loja] || 'America/Rio_Branco', 'HH:mm')]));
     limparConf_(loja, dia, id, 'CONFERIDO');
   } finally { lock.releaseLock(); }
   limparPend_(loja); return checklistLoja_(loja, u);
@@ -3381,7 +3403,7 @@ function conferirTarefa(token, lojaSel, id, ok, motivo) {
     quem = v[feitoI][4];
     limparConf_(loja, dia, id, '');
     const sh = aba_('TarefasConferencia', H_TCF); sh.getRange('A:A').setNumberFormat('@');
-    sh.appendRow([dia, loja, id, ok ? 'CONFERIDO' : 'REFAZER', u.usuario, u.nome, hora, motivo]);
+    sh.appendRow(linha_([dia, loja, id, ok ? 'CONFERIDO' : 'REFAZER', u.usuario, u.nome, hora, motivo]));
     if (!ok) ck.deleteRow(feitoI + 1); // volta a ficar pendente
   } finally { lock.releaseLock(); }
   const alvo = t.responsavel || quem;
@@ -3402,7 +3424,7 @@ function marcarCheck_(loja, u, turno, item, feito) {
     const dia = dia_(loja), sh = aba_('ChecklistFeito', H_CKF); sh.getRange('A:A').setNumberFormat('@');
     const v = sh.getDataRange().getDisplayValues();
     for (let i = v.length - 1; i >= 1; i--) if (String(v[i][0]).slice(0, 10) === dia && v[i][1] === loja && v[i][2] === turno && v[i][3] === item) sh.deleteRow(i + 1);
-    if (feito) sh.appendRow([dia, loja, turno, item, u.usuario, u.nome, Utilities.formatDate(new Date(), TZ[loja] || 'America/Rio_Branco', 'HH:mm')]);
+    if (feito) sh.appendRow(linha_([dia, loja, turno, item, u.usuario, u.nome, Utilities.formatDate(new Date(), TZ[loja] || 'America/Rio_Branco', 'HH:mm')]));
   } finally { lock.releaseLock(); }
   CacheService.getScriptCache().remove('pend_' + u.usuario);
   return checklistLoja_(loja, u);
@@ -3460,7 +3482,7 @@ function registrarConversa(token, lojaSel, nome, texto) {
   const u = sessao_(token); if (!chefe_(u)) throw new Error('Só gerente e administração.');
   const loja = lojaCanon_(lojaSel); if (!loja || loja === 'TODAS' || !pode_(u, loja)) throw new Error('Sem acesso a esta loja.');
   texto = String(texto || '').trim(); if (!texto) throw new Error('Escreva o que foi combinado.');
-  aba_('Conversas', H_CONV).appendRow([agoraBR_(), loja, String(nome).toUpperCase(), u.nome, texto.slice(0, 1000)]);
+  aba_('Conversas', H_CONV).appendRow(linha_([agoraBR_(), loja, String(nome).toUpperCase(), u.nome, texto.slice(0, 1000)]));
   return true;
 }
 function conversasDe(token, lojaSel, nome) {
@@ -3504,6 +3526,7 @@ function reuniaoStatus(token) {
 function confirmarReuniao(token, id, quem) {
   const u = sessao_(token), loja = u.loja; const x = reuniaoHoje_(loja); if (!x || (id && x.r[0] !== id)) throw new Error('Não há reunião hoje.');
   const alvo = quem && chefe_(u) ? String(quem) : u.usuario;
+  if (alvo !== u.usuario && !equipeLoja_(loja).some((x) => x.usuario === alvo)) throw new Error('Essa pessoa não é da loja.');
   const lock = LockService.getScriptLock(); lock.waitLock(15000);
   try { const y = reuniaoHoje_(loja); let pres = []; try { pres = JSON.parse(y.r[6] || '[]'); } catch (e) {} const k = pres.indexOf(alvo); if (k < 0) pres.push(alvo); else if (chefe_(u) && quem) pres.splice(k, 1); aba_('Reunioes', H_REU).getRange(y.i + 1, 7).setValue(JSON.stringify(pres)); }
   finally { lock.releaseLock(); }
@@ -3570,7 +3593,7 @@ function salvarObjetivo(token, lojaSel, d) {
   const mes = /^\d{4}-\d{2}$/.test(String(d.mes || '')) ? d.mes : Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM');
   if (objetivos_(loja, mes).filter((o) => o.usuario === p.usuario).length >= 3) throw new Error('Máximo de 3 objetivos por mês (foco!).');
   const sh = aba_('Planos', H_PLA); sh.getRange('B:B').setNumberFormat('@');
-  sh.appendRow(['o' + Utilities.getUuid().slice(0, 7), mes, loja, p.usuario, p.nome, d.tipo, d.tipo === 'livre' ? '' : String(Number(d.alvo)), String(d.texto || '').trim().slice(0, 200), agoraBR_(), u.nome, 'ATIVO']);
+  sh.appendRow(linha_(['o' + Utilities.getUuid().slice(0, 7), mes, loja, p.usuario, p.nome, d.tipo, d.tipo === 'livre' ? '' : String(Number(d.alvo)), String(d.texto || '').trim().slice(0, 200), agoraBR_(), u.nome, 'ATIVO']));
   try { avisar_(p.usuario, 'plano', '🌱 ' + primeiroNomeS_(u.nome) + ' combinou um objetivo com você: ' + (d.tipo === 'livre' ? d.texto : TIPOS_OBJ[d.tipo][0] + ' ' + d.alvo + TIPOS_OBJ[d.tipo][1]), '', u.usuario); } catch (e) {}
   return planosLoja(token, loja, mes);
 }
@@ -3598,10 +3621,12 @@ function linkAvaliacao(token, lojaSel) {
   const loja = lojaCanon_(lojaSel); if (!loja || loja === 'TODAS' || !pode_(u, loja)) throw new Error('Escolha uma loja.');
   return { loja: loja, url: urlApp_() + '?av=' + encodeURIComponent(loja) };
 }
+function avId_(usuario) { const pr = PropertiesService.getScriptProperties(); let k = pr.getProperty('AV_SEGREDO'); if (!k) { k = Utilities.getUuid(); pr.setProperty('AV_SEGREDO', k); }
+  return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(String(usuario), k)).replace(/[^A-Za-z0-9]/g, '').slice(0, 12); }
 function equipeAvaliar(lojaSel) {
   const loja = lojaCanon_(lojaSel); if (!loja || loja === 'TODAS') throw new Error('Loja não encontrada.');
   const pf = perfis_();
-  return usuarios_().filter((x) => x.ativo && x.loja === loja && x.cargo !== 'ADMIN' && x.cargo !== 'ESTOQUISTA').map((x) => ({ usuario: x.usuario, nome: primeiroNomeS_(x.nome), foto: urlFoto_(pf[x.usuario], 120) }));
+  return usuarios_().filter((x) => x.ativo && x.loja === loja && x.cargo !== 'ADMIN' && x.cargo !== 'ESTOQUISTA').map((x) => ({ usuario: avId_(x.usuario), nome: primeiroNomeS_(x.nome), foto: urlFoto_(pf[x.usuario], 120) }));
 }
 function avaliarAtendimento(lojaSel, usuario, nota, comentario, notaLoja) {
   const loja = lojaCanon_(lojaSel); if (!loja || loja === 'TODAS') throw new Error('Loja não encontrada.');
@@ -3610,11 +3635,11 @@ function avaliarAtendimento(lojaSel, usuario, nota, comentario, notaLoja) {
   const c = CacheService.getScriptCache(), k = 'avq_' + norm_(loja).replace(/\s/g, '_'), n = Number(c.get(k)) || 0;
   if (n >= 40) throw new Error('Recebemos muitas avaliações agora. Tente de novo mais tarde.');
   c.put(k, String(n + 1), 3600);
-  const p = usuario ? usuarios_().find((x) => x.usuario === String(usuario) && x.loja === loja) : null;
+  const p = usuario ? usuarios_().find((x) => x.loja === loja && x.ativo && (avId_(x.usuario) === String(usuario))) : null; // a página recebe um id opaco, não o login
   const sh = aba_('Avaliacoes', H_AVA); if (!sh.getRange(1, 8).getValue()) sh.getRange(1, 7, 1, 3).setValues([['nota_loja', 'conferida', 'motivo']]);
   let ok = '', mot = '';
-  if (p && nota) { try { mot = conferirAval_(loja, p, sh); } catch (e) { mot = ''; } ok = mot ? 'NÃO' : 'SIM'; }
-  sh.appendRow([agoraBR_(), loja, nota && p ? p.usuario : '', nota && p ? p.nome : '', nota || '', String(comentario || '').trim().slice(0, 400), notaLoja || '', ok, mot]);
+  if (p && nota) { try { mot = conferirAval_(loja, p, sh); } catch (e) { mot = 'não deu para conferir agora'; } ok = mot ? 'NÃO' : 'SIM'; }
+  sh.appendRow(linha_([Utilities.formatDate(new Date(), TZ[loja] || 'America/Rio_Branco', 'dd/MM/yyyy HH:mm'), loja, nota && p ? p.usuario : '', nota && p ? p.nome : '', nota || '', String(comentario || '').trim().slice(0, 400), notaLoja || '', ok, mot]));
   if (mot) return true; // a cliente vê o mesmo "obrigada"; a avaliação fica guardada como não conferida
   if (p && nota === 5) try { medalhasAval_(p); } catch (e) {}
   if (p && nota >= 4) try { avisar_(p.usuario, 'avaliacao', '⭐ Uma cliente avaliou seu atendimento com ' + nota + ' estrelas!' + (comentario ? ' "' + String(comentario).slice(0, 80) + '"' : ''), '', ''); } catch (e) {}
@@ -3728,12 +3753,13 @@ function bhLista(token, loja) {
 function bhSalvar(token, d) {
   const u = sessao_(token); if (!chefe_(u)) throw new Error('Só gerente e administração.');
   const p = usuarios_().find((x) => x.usuario === String(d.usuario || '')); if (!p || !pode_(u, p.loja)) throw new Error('Funcionária não encontrada nesta loja.');
+  if (p.usuario === u.usuario && u.cargo !== 'ADMIN') throw new Error('O seu próprio banco de horas é lançado pela administração.');
   const tipo = String(d.tipo || ''); if (['COMP', 'CRED', 'SALDO'].indexOf(tipo) < 0) throw new Error('Tipo inválido.');
   if (tipo === 'SALDO' && u.cargo !== 'ADMIN') throw new Error('O saldo do DPATEC é lançado pela administração.');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.data || ''))) throw new Error('Informe a data.');
   let min = Math.round(Number(d.minutos) || 0); if (tipo !== 'SALDO' && min <= 0) throw new Error('Informe as horas.');
   if (tipo === 'COMP') min = -Math.abs(min); if (tipo === 'CRED') min = Math.abs(min);
-  abaBH_().appendRow([Utilities.getUuid().slice(0, 8), d.data, p.loja, p.usuario, p.nome, tipo, min, String(d.obs || '').slice(0, 120), u.usuario, Date.now(), '']);
+  abaBH_().appendRow(linha_([Utilities.getUuid().slice(0, 8), d.data, p.loja, p.usuario, p.nome, tipo, min, String(d.obs || '').slice(0, 120), u.usuario, Date.now(), '']));
   return bhLista(token, d.lojaVer || p.loja);
 }
 // ---------- saldo automático: lê o "Saldo Banc" do espelho de ponto (PDF do DPATEC que vai para assinatura) ----------
@@ -3791,7 +3817,8 @@ function salvarSaida(token, usuario, saida) {
   const h = {}; [0, 1, 2, 3, 4, 5, 6].forEach((d) => { h[d] = { entrada: '', saida: saida }; }); horariosGravar_(usuario, p.loja, h, 'gerente', u.usuario); return true;
 }
 // a cada 10 min: avisa a consultora 15 min antes da saída para sair da fila; se ela continuar na fila 10 min depois do horário, avisa a gerente
-function filaSaida() {
+function filaSaida(e) { soGatilho_(e); return filaSaida_(e); }
+function filaSaida_() {
   const H = horarios_(), us = usuarios_(), c = CacheService.getScriptCache(), agoraD = new Date(), log = [];
   LOJAS.forEach((loja) => {
     let e; try { e = ler_(loja); } catch (er) { return; } if (!e || !(e.fila || []).length) return;
@@ -3807,7 +3834,8 @@ function filaSaida() {
   return log.join('\n');
 }
 // gatilho diário: procura os PDFs de "Banco de horas + Folha de ponto" no RH de cada vendedora e lança o saldo do mês
-function bhAutoSaldos() {
+function bhAutoSaldos(e) { soGatilho_(e); return bhAutoSaldos_(e); }
+function bhAutoSaldos_() {
   const pr = PropertiesService.getScriptProperties(); let feitos = {}; try { feitos = JSON.parse(pr.getProperty('BH_AUTO') || '{}'); } catch (e) {}
   const sh = abaBH_(), ja = {}; sh.getDataRange().getValues().slice(1).forEach((r) => { if (!r[10] && r[5] === 'SALDO') ja[r[3] + '|' + (r[1] instanceof Date ? Utilities.formatDate(r[1], 'America/Rio_Branco', 'yyyy-MM-dd') : String(r[1]).slice(0, 10))] = 1; });
   const us = {}; usuarios_().forEach((x) => { us[x.usuario] = x; }); const log = [];
@@ -3824,11 +3852,12 @@ function bhAutoSaldos() {
       const d = e.data || (r[5] && /^\d{2}\/\d{4}$/.test(r[5]) ? Utilities.formatDate(new Date(+r[5].slice(3), +r[5].slice(0, 2), 0, 12), 'America/Rio_Branco', 'yyyy-MM-dd') : '');
       if (!d) { log.push(r[2] + ': sem período'); return; }
       if (ja[r[2] + '|' + d]) { log.push(r[2] + ' ' + d + ': já lançado'); return; }
-      const p = us[r[2]]; sh.appendRow([Utilities.getUuid().slice(0, 8), d, p.loja, p.usuario, p.nome, 'SALDO', e.min, 'Automático: Saldo Banc do espelho de ponto ' + d.slice(5, 7) + '/' + d.slice(0, 4), 'automatico', Date.now(), '']); ja[r[2] + '|' + d] = 1;
+      const p = us[r[2]]; sh.appendRow(linha_([Utilities.getUuid().slice(0, 8), d, p.loja, p.usuario, p.nome, 'SALDO', e.min, 'Automático: Saldo Banc do espelho de ponto ' + d.slice(5, 7) + '/' + d.slice(0, 4), 'automatico', Date.now(), ''])); ja[r[2] + '|' + d] = 1;
       log.push(r[2] + ' ' + d + ': ' + (e.min < 0 ? '-' : '') + Math.floor(Math.abs(e.min) / 60) + 'h' + String(Math.abs(e.min) % 60).padStart(2, '0'));
     } catch (er) { log.push(r[2] + ': ' + er.message); }
   });
-  pr.setProperty('BH_AUTO', JSON.stringify(feitos)); pr.setProperty('BH_HOR', JSON.stringify(feitosH)); if (log.length) pr.setProperty('BH_AUTO_LOG', agoraBR_() + ' · ' + log.join(' · '));
+  const poda = (o) => { const ks = Object.keys(o); if (ks.length > 250) ks.slice(0, ks.length - 250).forEach((x) => delete o[x]); return o; };
+  pr.setProperty('BH_AUTO', JSON.stringify(poda(feitos))); pr.setProperty('BH_HOR', JSON.stringify(poda(feitosH))); if (log.length) pr.setProperty('BH_AUTO_LOG', agoraBR_() + ' · ' + log.join(' · '));
   return log.join('\n');
 }
 // saldo atual de cada vendedora (mesma regra da tela)
@@ -3840,7 +3869,8 @@ function bhSaldos_() {
 const hmTxt_ = (m) => (m < 0 ? '-' : '') + Math.floor(Math.abs(m) / 60) + 'h' + (Math.abs(m) % 60 ? String(Math.abs(m) % 60).padStart(2, '0') : '');
 // de hora em hora: (1) dia de movimento fraco entre 15h e 19h → sugere à gerente liberar mais cedo quem tem mais banco;
 // (2) segunda às 10h → lembrete semanal com quem está com mais horas para compensar
-function bhLembretes() {
+function bhLembretes(e) { soGatilho_(e); return bhLembretes_(e); }
+function bhLembretes_() {
   try { entradasAvisos_(); } catch (e) {}
   const pr = PropertiesService.getScriptProperties(), sal = bhSaldos_(), us = usuarios_(), agoraD = new Date(), log = [];
   const dados = SpreadsheetApp.openById(DADOS_ID), tzs = dados.getSpreadsheetTimeZone(); let at = null;
@@ -3923,7 +3953,7 @@ function criarComunicado(token, lojaSel, texto) {
   const loja = lojaSel === 'TODAS' && u.cargo === 'ADMIN' ? 'TODAS' : lojaCanon_(lojaSel);
   if (!loja || (loja !== 'TODAS' && !pode_(u, loja))) throw new Error('Escolha a loja.');
   texto = String(texto || '').trim(); if (texto.length < 3) throw new Error('Escreva o comunicado.');
-  aba_('Comunicados', H_CMN).appendRow([Utilities.getUuid().slice(0, 8), agoraBR_(), loja, u.nome, texto.slice(0, 1500), '']);
+  aba_('Comunicados', H_CMN).appendRow(linha_([Utilities.getUuid().slice(0, 8), agoraBR_(), loja, u.nome, texto.slice(0, 1500), '']));
   return comunicados(token);
 }
 function comunicados(token) {
@@ -3944,7 +3974,7 @@ function comunicados(token) {
 }
 function lerComunicado(token, id) {
   const u = sessao_(token), sh = aba_('Leituras', H_LEI);
-  if (!sh.getDataRange().getDisplayValues().some((r) => r[0] === String(id) && r[1] === u.usuario)) sh.appendRow([String(id), u.usuario, agoraBR_()]);
+  if (!sh.getDataRange().getDisplayValues().some((r) => r[0] === String(id) && r[1] === u.usuario)) sh.appendRow(linha_([String(id), u.usuario, agoraBR_()]));
   return comunicados(token);
 }
 function encerrarComunicado(token, id) {
@@ -3976,7 +4006,7 @@ function pedirTroca(token, folgar, trabalhar, motivo) {
   if (folgar < dia_(u.loja)) throw new Error('O dia da folga já passou.');
   if (trocasDaLoja_(u.loja).some((t) => t.usuario === u.usuario && t.status === 'PENDENTE' && t.folgar === folgar)) throw new Error('Você já pediu essa troca. Aguarde a gerente.');
   const sh = aba_('Trocas', H_TRO); sh.getRange('A:A').setNumberFormat('@'); sh.getRange('F:G').setNumberFormat('@');
-  sh.appendRow(['t' + Utilities.getUuid().slice(0, 7), agoraBR_(), u.loja, u.usuario, u.nome, folgar, trabalhar, String(motivo || '').trim().slice(0, 120), 'PENDENTE', '', '']);
+  sh.appendRow(linha_(['t' + Utilities.getUuid().slice(0, 7), agoraBR_(), u.loja, u.usuario, u.nome, folgar, trabalhar, String(motivo || '').trim().slice(0, 120), 'PENDENTE', '', '']));
   usuarios_().filter((x) => x.ativo && x.cargo === 'GERENTE' && x.loja === u.loja).forEach((g) => { try { avisar_(g.usuario, 'troca', '🔁 ' + primeiroNomeS_(u.nome) + ' pediu troca de folga: folgar ' + folgar.slice(8, 10) + '/' + folgar.slice(5, 7) + ' e trabalhar ' + trabalhar.slice(8, 10) + '/' + trabalhar.slice(5, 7) + '.', '', u.usuario); } catch (e) {} });
   CacheService.getScriptCache().removeAll(usuarios_().filter((x) => x.loja === u.loja || x.cargo === 'ADMIN').map((x) => 'pend_' + x.usuario));
   return minhaEscala(token);
@@ -4001,6 +4031,26 @@ function urlDoApp() { return urlApp_(); }
 
 // ---------- API: o mesmo app hospedado fora do Google (GitHub Pages) chama as funções por aqui ----------
 const API_NEGADAS = ['dsFim5', 'filaSaida', 'bhLembretes', 'bhAutoSaldos', 'dsEstoque10', 'dsFechamentoDia', 'dsSincronizar', 'postarMetaDia', 'rhImportarZapSign_', 'limparStatus', 'zsSincronizar', 'doGet', 'doPost', 'migrarVendasPlanilhas', 'prepararFotos', 'instalarResumo', 'resumoDiario', 'auditoriaMesAnterior', 'criarChaveImport', 'backupDiario', 'autorizarNotificacoes'];
+// guarda valores grandes no cache em pedaços de 90 KB (o limite é 100 KB por chave)
+function cacheGrandePut_(k, v, ttl) { try { const c = CacheService.getScriptCache(), st = JSON.stringify(v), o = {}; let n = 0; for (let i = 0; i < st.length; i += 90000) o[k + '_' + (n++)] = st.slice(i, i + 90000); c.putAll(o, ttl); c.put(k, String(n), ttl); } catch (e) { console.warn('cache ' + k + ': ' + e.message); } }
+function cacheGrandeGet_(k) { try { const c = CacheService.getScriptCache(), n = +c.get(k); if (!n) return null; const ks = []; for (let i = 0; i < n; i++) ks.push(k + '_' + i); const g = c.getAll(ks); if (!ks.every((x) => g[x] != null)) return null; return JSON.parse(ks.map((x) => g[x]).join('')); } catch (e) { return null; } }
+// apaga marcadores diários antigos das propriedades do script (sem isso o espaço de 500 KB enche e a fila para)
+function limparProps_() {
+  const pr = PropertiesService.getScriptProperties(), lim = Utilities.formatDate(new Date(Date.now() - 3 * 864e5), 'America/Rio_Branco', 'yyyy-MM-dd'); let n = 0;
+  pr.getKeys().forEach((k) => { const m = k.match(/^(REPO_(ENV|OK|ATR|REDIR)_|ST_META_ID_|ST_META_|FECH_ENV_|REPO_).*?(\d{4}-\d{2}-\d{2})/); if (m && m[3] < lim) { pr.deleteProperty(k); n++; } });
+  ['DS_NOMES_1', 'DS_NOMES_2', 'DS_NOMES_3', 'DS_NOMES_4', 'DS_NOMES_5'].forEach((k) => { if (pr.getProperty(k)) { pr.deleteProperty(k); n++; } });
+  return n;
+}
+// ---------- segurança ----------
+// texto digitado pela equipe ou por clientes nunca vira fórmula na planilha
+function linha_(a) { return a.map((v) => (typeof v === 'string' && /^[=+\-@]/.test(v) ? "'" + v : v)); }
+// funções de rotina (gatilhos e configuração): só rodam pelo gatilho de verdade ou pelo dono no editor
+function soGatilho_(e) {
+  try { if (e && e.triggerUid && ScriptApp.getProjectTriggers().some((t) => t.getUniqueId() === String(e.triggerUid))) return; } catch (x) {}
+  let a = '', o = ''; try { a = Session.getActiveUser().getEmail(); o = Session.getEffectiveUser().getEmail(); } catch (x) {}
+  if (a && o && a === o) return;
+  throw new Error('Função não permitida.');
+}
 function api_(b) {
   const fn = String(b.fn || '');
   if (!/^[a-zA-Z]\w*$/.test(fn) || /_$/.test(fn) || API_NEGADAS.indexOf(fn) >= 0 || typeof globalThis[fn] !== 'function') throw new Error('Função não permitida.');
@@ -4097,7 +4147,7 @@ function trocarMinhaSenha(token, atual, nova) {
 function registrarErro(info) {
   try {
     info = info || {}; const c = CacheService.getScriptCache(), n = Number(c.get('errq')) || 0; if (n > 300) return false; c.put('errq', String(n + 1), 3600);
-    aba_('Erros', ['data_hora', 'usuario', 'versao', 'onde', 'mensagem', 'aparelho', 'endereco']).appendRow([agoraBR_(), String(info.usuario || '').slice(0, 40), String(info.versao || '').slice(0, 10), String(info.onde || '').slice(0, 80), String(info.msg || '').slice(0, 500), String(info.ua || '').slice(0, 200), String(info.url || '').slice(0, 120)]);
+    aba_('Erros', ['data_hora', 'usuario', 'versao', 'onde', 'mensagem', 'aparelho', 'endereco']).appendRow(linha_([agoraBR_(), String(info.usuario || '').slice(0, 40), String(info.versao || '').slice(0, 10), String(info.onde || '').slice(0, 80), String(info.msg || '').slice(0, 500), String(info.ua || '').slice(0, 200), String(info.url || '').slice(0, 120)]));
   } catch (e) {}
   return true;
 }
@@ -4108,7 +4158,8 @@ function pastaBackup_() {
   if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
   const f = DriveApp.createFolder('Amorata Equipe – Backups'); p.setProperty('BK_PASTA', f.getId()); return f;
 }
-function backupDiario() {
+function backupDiario(e) { soGatilho_(e); return backupDiario_(e); }
+function backupDiario_() {
   const p = PropertiesService.getScriptProperties(), hoje = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd');
   if (p.getProperty('BK_ULT') === hoje) return 'já feito hoje';
   const lock = LockService.getScriptLock(); if (!lock.tryLock(1000)) return 'em andamento';
@@ -4164,7 +4215,7 @@ function salvarCliente(token, d) {
   if (!fone) throw new Error('WhatsApp com DDD, ex.: 68 99999-9999.');
   const quando = /^\d{4}-\d{2}-\d{2}$/.test(String(d.retorno || '')) ? d.retorno : somaDia_(dia_(loja), 2);
   const cid = 'c' + Utilities.getUuid().slice(0, 7);
-  abaCli_().appendRow([cid, agoraBR_(), loja, u.usuario, nome, fone, String(d.interesse || '').trim().slice(0, 120), String(d.motivo || '').slice(0, 60), quando, 'ABERTO', '', agoraBR_()]);
+  abaCli_().appendRow(linha_([cid, agoraBR_(), loja, u.usuario, nome, fone, String(d.interesse || '').trim().slice(0, 120), String(d.motivo || '').slice(0, 60), quando, 'ABERTO', '', agoraBR_()]));
   let jaTem = [];
   if (d.desejo && (d.desejo.produto || d.desejo.descricao)) jaTem = gravarDesejo_(u, loja, nome, fone, d.desejo, cid);
   const r = meusRetornos(token); r.jaTem = jaTem; return r;
@@ -4432,7 +4483,7 @@ function trilha(token) {
 function concluirModulo(token, modulo, acertos, total) {
   const u = sessao_(token); if (MODULOS.indexOf(modulo) < 0) throw new Error('Módulo não encontrado.');
   acertos = Math.max(0, Math.round(Number(acertos) || 0)); total = Math.max(1, Math.round(Number(total) || 1));
-  aba_('Trilha', H_TRI).appendRow([agoraBR_(), u.usuario, u.nome, u.loja, modulo, acertos, total]);
+  aba_('Trilha', H_TRI).appendRow(linha_([agoraBR_(), u.usuario, u.nome, u.loja, modulo, acertos, total]));
   const r = trilha(token); r.passou = acertos >= total - 1 && total >= 3; r.formou = false;
   if (r.feitos.length === MODULOS.length) { try { r.formou = darMedalha_(u, 'formada', ''); } catch (e) {} }
   return r;
@@ -4564,7 +4615,7 @@ function salvarPush(token, sub, aparelho) {
   if (!k.p256dh || !k.auth) throw new Error('Inscrição inválida.');
   const sh = aba_('Push', H_PUSH), v = sh.getDataRange().getDisplayValues();
   for (let i = v.length - 1; i >= 1; i--) if (v[i][1] === ep) sh.deleteRow(i + 1);
-  sh.appendRow([u.usuario, ep, k.p256dh, k.auth, agoraBR_(), String(aparelho || '').slice(0, 80)]);
+  sh.appendRow(linha_([u.usuario, ep, k.p256dh, k.auth, agoraBR_(), String(aparelho || '').slice(0, 80)]));
   try { enviarPush_(u.usuario, '🔔 Pronto! Você vai receber os avisos do Amorata Equipe aqui no celular.', 'teste'); } catch (e) {}
   return true;
 }
@@ -4623,7 +4674,8 @@ function avisarMural_(u, loja, tipo, texto, temFoto, jaAvisadas, postId) {
   try { enviarPushVarios_(para, msg, 'mural', 'mural' + (postId ? ':' + postId : '')); } catch (e) {}
 }
 // rode uma vez no editor para autorizar o envio de notificações (acesso a serviço externo)
-function autorizarNotificacoes() { vapid_(); try { UrlFetchApp.fetch('https://fcm.googleapis.com/', { muteHttpExceptions: true }); } catch (e) {} Logger.log('ok'); }
+function autorizarNotificacoes(e) { soGatilho_(e); return autorizarNotificacoes_(e); }
+function autorizarNotificacoes_() { vapid_(); try { UrlFetchApp.fetch('https://fcm.googleapis.com/', { muteHttpExceptions: true }); } catch (e) {} Logger.log('ok'); }
 
 // ---------- relatório para reunião (aba Relatórios: PDF + mapa mental) ----------
 // quem pode: vendedora/estoquista só o próprio; gerente as pessoas e a loja dela; ADMIN todos
@@ -4842,6 +4894,7 @@ function cashbackTodas_() {
 }
 function cashbackBuscar(token, lojaSel, termo) {
   const u = sessao_(token); if (u.cargo === 'ESTOQUISTA') throw new Error('Consulta disponível para vendedoras, gerentes e administração.');
+  { const c = CacheService.getScriptCache(), k = 'cbq_' + u.usuario, n = +c.get(k) || 0; if (n >= 150) throw new Error('Muitas consultas de cashback na última hora. Tente mais tarde.'); c.put(k, String(n + 1), 3600); }
   termo = String(termo || '').trim(); const dig = termo.replace(/\D/g, '');
   if (dig.length !== 11 && dig.length !== 14 && norm_(termo).replace(/[^a-z ]/g, '').trim().length < 3) throw new Error('Digite pelo menos 3 letras do nome ou o CPF completo.');
   const lista = cashbackTodas_(), h = Utilities.formatDate(new Date(), 'America/Manaus', 'yyyy-MM-dd');
