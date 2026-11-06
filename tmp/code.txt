@@ -2298,7 +2298,8 @@ function indicadoresVenda(token, lojaSel, de, ate) {
   const hoje = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd'), ok = (d) => /^\d{4}-\d{2}-\d{2}$/.test(String(d || ''));
   de = ok(de) ? de : hoje.slice(0, 8) + '01'; ate = ok(ate) ? ate : hoje; if (ate > hoje) ate = hoje; if (de > ate) { const t = de; de = ate; ate = t; }
   if ((new Date(ate) - new Date(de)) / 864e5 > 92) throw new Error('Escolha um período de até 3 meses.');
-  const ano = (d) => (+d.slice(0, 4) - 1) + d.slice(4), de0 = ano(de), ate0 = ano(ate).replace(/-02-29$/, '-02-28');
+  // como o USE: compara com as mesmas semanas do ano passado (364 dias antes, mesmo dia da semana)
+  const de0 = somaDia_(de, -364), ate0 = somaDia_(ate, -364);
   let lig = []; try { lig = dsLojas_(); } catch (e) {}
   const minhas = lojasDe_(u).filter((l) => l !== 'TODAS'), alvo = (lojaSel && lojaSel !== 'TODAS' ? [lojaCanon_(lojaSel)] : minhas).filter((l) => minhas.indexOf(l) >= 0 && lig.indexOf(String(lojaNumDe_(l))) >= 0);
   const soma = (ag) => { let it = 0, vl = 0; Object.keys(ag.m).forEach((k) => { it += ag.m[k].q; vl += ag.m[k].v; }); return { valor: Math.round(vl * 100) / 100, vendas: ag.v, itens: it }; };
