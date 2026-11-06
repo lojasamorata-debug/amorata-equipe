@@ -1772,7 +1772,7 @@ function rrPaginas(r) {
   two.append(lst('💪 Pontos fortes', '#1e7a46', r.fortes.map((x) => x.txt), 'Sem destaque no período.'), lst('🎯 A melhorar', '#a85d00', r.fracos.map((x) => x.txt), 'Nada abaixo do esperado.')); p3.append(two);
   if (r.foco.length) { p3.append(rrH('h3', '', 'Sugestões de foco')); const b = rrH('div', 'rr-bx'), u = rrH('ul'); r.foco.forEach((x) => u.append(rrH('li', '', x))); b.append(u); p3.append(b); }
   if (c.motivos && c.motivos.length) { p3.append(rrH('h3', '', 'Por que não vendeu (fila)')); const t3 = rrH('table', 'rr-tb'); c.motivos.forEach((x) => { const tr = rrH('tr'); tr.append(rrH('td', '', x.motivo), rrH('td', 'n', x.n + (x.n === 1 ? ' vez' : ' vezes'))); t3.append(tr); }); p3.append(t3); }
-  if (r.picos && r.picos.length) {
+  if (r.picos && r.picos.length && r.tipo !== 'pessoa') { // horários de pico e cobertura: só no relatório da loja (informação para a gerente)
     p3.append(rrH('h3', '', 'Horários de pico e cobertura da loja'));
     const t4 = rrH('table', 'rr-tb'), h4 = rrH('tr'); ['Horário', 'Clientes atendidas', 'Clientes ao mesmo tempo (máx.)', 'Vendedoras na loja', 'Disponíveis', 'Em pausa', 'Conversão', 'Cobertura'].concat(r.tipo === 'pessoa' ? ['Ela nesse horário'] : []).forEach((x, i) => h4.append(rrH('th', i ? 'n' : '', x))); t4.append(h4);
     r.picos.forEach((k) => { const tr = rrH('tr'); tr.append(rrH('td', '', k.h + 'h às ' + (k.h + 1) + 'h'), rrH('td', 'n', k.clientesDia + ' por dia (' + k.total + ' no total)'), rrH('td', 'n', String(k.simultaneas != null ? k.simultaneas : '—')), rrH('td', 'n', String(k.vendedoras)), rrH('td', 'n', String(k.disponiveis)), rrH('td', 'n', String(k.emPausa)), rrH('td', 'n', pc(k.conv)));
