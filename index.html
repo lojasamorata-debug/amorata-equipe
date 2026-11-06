@@ -507,6 +507,8 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
 #menu .mt small.al { color:var(--warn); font-weight:600; } #menu .mt small.ok { color:var(--ok); font-weight:600; }
 #menu .mt .mn { position:absolute; top:10px; right:10px; min-width:22px; height:22px; border-radius:11px; background:var(--bad); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; padding:0 6px; box-sizing:border-box; }
 #bnav { display:none; }
+/* auxiliar de vendas: só a fila (sem menu, abas, mural, RH, comunicados) */
+body.aux .tabs, body.aux #bnav, body.aux #b-rh, body.aux #pend, body.aux #cmn-top, body.aux #mood-fila, body.aux #nuvem-foto, body.aux #dia-fila, body.aux #menu { display:none !important; }
 @media (min-width:700px) { #menu { grid-template-columns:repeat(4,minmax(0,1fr)); } }
 @media (max-width:1099px) {
   body.logado .tabs { display:none; }
@@ -1665,6 +1667,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) atua
 // ---------- relatórios ----------
 let aba = 'fila', aba0_ = '';
 function mudarAba(a) {
+  if (S && S.cargo === 'AUXILIAR') a = 'fila'; // auxiliar de vendas: só a fila
   document.body.classList.remove('ini-res');
   aba = a; document.body.dataset.aba = a; document.body.classList.toggle('fila-v', a === 'fila' && !!S && !chefe()); ['ini', 'dia', 'fila', 'meta', 'mural', 'est', 'apr', 'gest', 'prod', 'rel'].forEach((x) => { $('tab-' + x).classList.toggle('on', a === x); $('v-' + x).classList.toggle('hide', a !== x); });
   $('sel-loja-box').classList.toggle('hide', a !== 'fila' || S.lojas.length < 2 || S.cargo === 'ADMIN');
@@ -2013,7 +2016,7 @@ function verResultados() { mudarAba('ini'); document.body.classList.add('ini-res
 $('i-res-v').addEventListener('click', () => mudarAba('ini'));
 const MENU_TXT = { aj: 'Ajuda e senha', cb: 'Cashback', res: 'Meus resultados', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
 const NAV_TXT = { ini: 'Início', dia: 'Início', fila: 'Fila', meta: 'Metas', mural: 'Mural', est: 'Estoque', gest: 'Gestão', rh: 'Meu RH' };
-const casaAba_ = () => (chefe() ? 'ini' : 'dia');
+const casaAba_ = () => (chefe() ? 'ini' : S && S.cargo === 'AUXILIAR' ? 'fila' : 'dia');
 function abaVisivel_(k) { if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
 function irAba_(k) { if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
 function menuSub_(k) {
@@ -2055,7 +2058,7 @@ function prepararFiltros() {
   g.value = f.value; g.classList.toggle('hide', S.lojas.length < 2); $('m-filtro-box').classList.toggle('um', S.lojas.length < 2);
   const gi = $('i-loja'); gi.replaceChildren(...ops.map((l) => new Option(l === 'TODAS' ? 'Todas as lojas' : l, l)));
   gi.value = f.value; gi.classList.toggle('hide', S.lojas.length < 2); $('i-filtro-box').classList.toggle('um', S.lojas.length < 2);
-  $('tab-ini').classList.toggle('hide', !chefe()); $('tab-dia').classList.toggle('hide', chefe()); $('tab-fila').classList.toggle('hide', S.cargo === 'ESTOQUISTA'); document.body.classList.toggle('estq', S.cargo === 'ESTOQUISTA'); $('en-card').classList.toggle('hide', !(chefe() || S.cargo === 'ESTOQUISTA')); /* entradas de mercadoria: só estoque, gerência e administração */ $('b-rh').classList.toggle('hide', S.cargo === 'ADMIN'); document.body.classList.toggle('adm', S.cargo === 'ADMIN');
+  $('tab-ini').classList.toggle('hide', !chefe()); $('tab-dia').classList.toggle('hide', chefe()); $('tab-fila').classList.toggle('hide', S.cargo === 'ESTOQUISTA'); document.body.classList.toggle('estq', S.cargo === 'ESTOQUISTA'); document.body.classList.toggle('aux', S.cargo === 'AUXILIAR'); $('en-card').classList.toggle('hide', !(chefe() || S.cargo === 'ESTOQUISTA')); /* entradas de mercadoria: só estoque, gerência e administração */ $('b-rh').classList.toggle('hide', S.cargo === 'ADMIN'); document.body.classList.toggle('adm', S.cargo === 'ADMIN');
   // gerente/admin: os blocos do "Meu dia" ficam no topo do Início
   if (chefe()) { const v = $('v-ini'); v.insertBefore($('dia-blocos'), $('i-cards').nextSibling); } else $('v-dia').insertBefore($('dia-blocos'), $('dia-fila'));
   unirInicio(chefe());
@@ -3362,7 +3365,7 @@ function passosTour() {
     { el: 'tab-rel', aba: 'rel', t: '📈 Relatórios', x: 'Conversão, motivos de perda, horários de pico, retornos e avaliações das clientes.' },
   ], fim);
 }
-function iniciarTour(lista) {
+function iniciarTour(lista) { if (S && S.cargo === 'AUXILIAR') { toast('Use a fila: toque em Entrar na fila e, quando chegar a sua vez, atenda a cliente.'); return; }
   if (!S) return; fechar(); const ant = $('tour'); if (ant) ant.remove();
   const cel = window.matchMedia('(max-width:1099px)').matches, casa = casaAba_();
   const mapa = (p) => { if (!cel || typeof p.el !== 'string') return p; const m = p.el.match(/^tab-(\w+)$/); if (m) return m[1] === casa ? Object.assign({}, p, { el: 'bnav', aba: casa }) : Object.assign({}, p, { el: 'mt-' + m[1], aba: casa }); if (p.el === 'b-rh') return Object.assign({}, p, { el: 'mt-rh', aba: casa }); if (p.el === 'b-ajuda') return Object.assign({}, p, { el: 'mt-aj', aba: casa, x: 'Quer ver este tour de novo, o guia ou trocar a senha? É neste botão. Bom trabalho! 💪' }); return p; };
@@ -3848,7 +3851,7 @@ async function assinarPush() {
 }
 async function exigirApp(tourDepois) {
   if (tourDepois) GATE_TOUR = true;
-  const liberar = () => { const g = $('gate'); if (g) g.remove(); const pc = $('push-card'); if (pc) desenharPush(); let viu = false; try { viu = localStorage.getItem('amorata_tour_' + S.usuario) === '1'; } catch (e) {} if (GATE_TOUR && !viu) { GATE_TOUR = false; setTimeout(iniciarTour, 400); } };
+  const liberar = () => { const g = $('gate'); if (g) g.remove(); const pc = $('push-card'); if (pc) desenharPush(); let viu = false; try { viu = localStorage.getItem('amorata_tour_' + S.usuario) === '1'; } catch (e) {} if (GATE_TOUR && !viu && S.cargo !== 'AUXILIAR') { GATE_TOUR = false; setTimeout(iniciarTour, 400); } };
   if (!S || S.cargo === 'ADMIN' || telaLoja() || !ehCelular()) { if (S) liberar(); return; }
   const st = await situacaoApp(); if (!S) return;
   if (st === 'ok') { liberar(); return; }
@@ -4475,7 +4478,7 @@ function editarPremio(p) {
 }
 // --- equipe: cadastro e senhas ---
 let EQ = null;
-const cargoTxt = (c) => ({ VENDEDORA: 'Consultora', GERENTE: 'Gerente', ADMIN: 'Administração', ESTOQUISTA: 'Estoquista' })[c] || c;
+const cargoTxt = (c) => ({ VENDEDORA: 'Consultora', GERENTE: 'Gerente', ADMIN: 'Administração', ESTOQUISTA: 'Estoquista', AUXILIAR: 'Auxiliar de vendas (só fila)' })[c] || c;
 const linkApp = () => (HOSPEDADO ? location.origin + location.pathname : URL_APP || '');
 function desenharEquipe(r) {
   EQ = r; const g = $('g-eq'); g.replaceChildren();
@@ -4525,7 +4528,7 @@ function editarPessoa(p) {
   const us = el('input'); us.value = p.usuario; us.maxLength = 20; us.autocapitalize = 'none'; us.placeholder = 'Ex.: maria'; if (!novo) us.disabled = true;
   if (novo) { nm.addEventListener('input', () => { if (!us.dataset.mexeu) us.value = primeiroNome(nm.value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ''); }); us.addEventListener('input', () => { us.dataset.mexeu = '1'; }); }
   const lj = el('select'); EQ.lojas.forEach((l) => lj.append(new Option(l === 'TODAS' ? 'Todas as lojas' : l, l))); lj.value = EQ.lojas.indexOf(p.loja) >= 0 ? p.loja : EQ.lojas[0];
-  const cg = el('select'); (EQ.podeCargo ? ['VENDEDORA', 'ESTOQUISTA', 'GERENTE', 'ADMIN'] : ['VENDEDORA', 'ESTOQUISTA']).forEach((c) => cg.append(new Option(cargoTxt(c), c))); cg.value = p.cargo || 'VENDEDORA'; cg.disabled = !EQ.podeCargo && p.cargo !== 'VENDEDORA' && p.cargo !== 'ESTOQUISTA' && !novo;
+  const cg = el('select'); (EQ.podeCargo ? ['VENDEDORA', 'AUXILIAR', 'ESTOQUISTA', 'GERENTE', 'ADMIN'] : ['VENDEDORA', 'AUXILIAR', 'ESTOQUISTA']).forEach((c) => cg.append(new Option(cargoTxt(c), c))); cg.value = p.cargo || 'VENDEDORA'; cg.disabled = !EQ.podeCargo && p.cargo !== 'VENDEDORA' && p.cargo !== 'ESTOQUISTA' && !novo;
   const at = el('select'); at.append(new Option('Ativa: pode entrar no app', '1'), new Option('Inativa: não entra mais', '0')); at.value = p.ativo ? '1' : '0';
   const ok = el('button', 'btn pri big', novo ? 'Cadastrar' : 'Salvar');
   ok.addEventListener('click', () => { ok.disabled = true; rodar('salvarPessoa', [S.token, { novo: novo, usuario: us.value.trim().toLowerCase(), nome: nm.value, loja: lj.value, cargo: cg.value, ativo: at.value === '1', filtro: $('g-loja').value }], (x) => { desenharEquipe(x); if (x.senha) mostrarSenha(x); else { fechar(); toast('Cadastro salvo ✅'); } }, () => { ok.disabled = false; }); });
