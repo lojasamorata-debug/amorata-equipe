@@ -170,7 +170,7 @@ body.adm #eu, body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fil
 .ag-ml { display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; } .ag-ml b { font-size:22px; } .ag-ml .p { font-weight:700; font-size:13px; } .ag-bar { height:8px; border-radius:4px; background:var(--accentbg); margin-top:8px; overflow:hidden; } .ag-bar i { display:block; height:100%; background:var(--ok); } .ag-bar i.y { background:var(--warn); } .ag-bar i.r { background:var(--bad); }
 .agora #pend { margin:0; } .agora .sm { font-size:12px; color:var(--muted); margin-top:6px; }
 .aq { width:20px; height:20px; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font:inherit; font-size:11px; font-weight:700; line-height:1; padding:0; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; vertical-align:middle; flex:none; letter-spacing:0; text-transform:none; }
-.aq-tip { position:absolute; z-index:9000; background:#1f1e1d; color:#fff; border-radius:12px; padding:10px 12px; font-size:13px; line-height:1.4; box-shadow:0 6px 18px rgba(0,0,0,.25); } .aq-tip b { display:block; margin-bottom:2px; }
+.aq-tip { position:fixed; z-index:9000; background:#1f1e1d; color:#fff; border-radius:12px; padding:10px 12px; font-size:13px; line-height:1.4; box-shadow:0 6px 18px rgba(0,0,0,.25); } .aq-tip b { display:block; margin-bottom:2px; }
 .det-vez { position:sticky; top:0; z-index:3; display:flex; justify-content:space-between; align-items:center; gap:10px; background:#5b4a7a; color:#fff; border-radius:14px; padding:10px 12px; margin:0 auto 10px; max-width:640px; box-sizing:border-box; } .det-vez .sm { font-size:12px; color:#fff !important; opacity:.85; } .det-vez b { color:#fff; } .det-vez .x { flex:none; background:rgba(255,255,255,.2); color:#fff; border:0; border-radius:10px; padding:8px 10px; font:inherit; font-weight:600; font-size:13px; cursor:pointer; } .det-vez.sua { background:#1e7a46; } .det-vez.sua b { font-size:18px; }
 #fila-ferr { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:10px 0 4px; } #fila-ferr.hide { display:none; } #fila-ferr .ff { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 4px; font:inherit; font-size:12px; font-weight:600; color:var(--fg); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; } #fila-ferr .ff i { font-style:normal; font-size:22px; } #fila-ferr .ff.hide { display:none; }
 .dhead { display:flex; justify-content:space-between; align-items:center; max-width:640px; width:100%; margin:0 auto 8px; } .tc .dhead h1 { text-align:left; margin:0; font-size:24px; } .tc .dhead button { border:0; background:var(--panel); border:1px solid var(--line); width:40px; height:40px; border-radius:50%; font-size:20px; cursor:pointer; }
@@ -599,6 +599,9 @@ body.ini-res #v-ini > #menu, body.ini-res #v-ini > #dia-blocos, body.ini-res[dat
 /* celular: o topo não pode passar da largura da tela */
 /* 'clip' corta o que passa da largura sem transformar a página numa caixa de rolagem (com 'hidden' o iPhone deixava a barra de baixo 'solta' ao rolar) */
 .wrap { overflow-x:clip; } @supports not (overflow-x:clip) { .wrap { overflow-x:hidden; } }
+/* celular: a página rola dentro do .wrap e não no documento. No iPhone (app na tela inicial) a barra de baixo com position:fixed
+   saía do lugar ao rolar a página; com o documento parado, ela fica presa no rodapé */
+@media (max-width:1099px) { @media screen { html, body { height:100%; overflow:hidden; } .wrap { height:100%; height:100dvh; overflow-y:auto; overflow-x:clip; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; box-sizing:border-box; } } }
 .top > div:first-child { min-width:0; } .top > div:first-child > div:last-child { min-width:0; }
 .top h1, .top .sub { overflow:hidden; text-overflow:ellipsis; }
 @media (max-width:1099px) {
@@ -1049,6 +1052,7 @@ function amigavel(m) {
   if (tecnico(m)) return 'Algo deu errado aqui. Já registramos para o suporte. Tente de novo.';
   return m;
 }
+function rolarTopo_() { try { window.scrollTo(0, 0); const w = document.querySelector('.wrap'); if (w) w.scrollTop = 0; } catch (e) {} }
 let ERR_N = 0;
 function logErro(onde, msg) { if (!S && !T && /'(token|cargo|usuario|lojas)'|\.(token|cargo|usuario|lojas)\b/.test(String(msg))) return; /* resposta que chegou depois de sair da conta: não é erro de verdade */ if (ERR_N++ > 8) return; try { google.script.run.withSuccessHandler(() => {}).withFailureHandler(() => {}).registrarErro({ onde: onde, msg: String(msg).slice(0, 500), usuario: (S && S.usuario) || (T && 'tablet ' + T.loja) || '', versao: VERSAO, ua: navigator.userAgent, url: HOSPEDADO ? location.href : 'google' }); } catch (e) {} }
 window.addEventListener('error', (ev) => logErro('js', (ev.message || '') + ' @' + (ev.lineno || '') + ':' + (ev.colno || '')));
@@ -1710,7 +1714,7 @@ function mudarAba(a) {
   if (a === 'fila') carregarStatus();
   if (a === 'apr') carregarAprender();
   if (a === 'gest') carregarGestao();
-  desenharMenu(); if (a !== aba0_) { try { window.scrollTo(0, 0); } catch (e) {} } aba0_ = a;
+  desenharMenu(); if (a !== aba0_) { rolarTopo_(); } aba0_ = a;
 }
 // ---------- relatório para reunião: PDF com mapa mental ----------
 let RR_P = null, RR = null;
@@ -2037,7 +2041,7 @@ function abrirContrato(rh) {
 }
 // ---------- menu em botões (tela inicial) e barra de atalhos ----------
 // gerente/admin: "Meus resultados" abre os cards do Início (fora dele, o Início mostra só o menu)
-function verResultados() { mudarAba('ini'); document.body.classList.add('ini-res'); try { window.scrollTo(0, 0); } catch (e) {} }
+function verResultados() { mudarAba('ini'); document.body.classList.add('ini-res'); rolarTopo_(); }
 $('i-res-v').addEventListener('click', () => mudarAba('ini'));
 const MENU_TXT = { sd: 'Check-up do app', aj: 'Ajuda e senha', cb: 'Cashback', res: 'Meus resultados', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
 const NAV_TXT = { ini: 'Agora', dia: 'Agora', fila: 'Fila', meta: 'Metas', mural: 'Mural', est: 'Estoque', gest: 'Gestão', rh: 'Meu RH' };
@@ -2620,7 +2624,7 @@ function ajudaQ(chave) {
   const a = AJUDA[chave]; if (!a) return null; const q = el('button', 'aq', '?'); q.type = 'button'; q.setAttribute('aria-label', 'O que é isso?');
   q.addEventListener('click', (ev) => { ev.stopPropagation(); const ab = document.querySelector('.aq-tip'); if (ab) { const era = ab._de === q; ab.remove(); if (era) return; }
     const t = el('div', 'aq-tip'); t._de = q; t.append(el('b', '', a[0]), el('div', '', a[1])); document.body.append(t);
-    const r = q.getBoundingClientRect(), w = Math.min(260, innerWidth - 24); t.style.width = w + 'px'; t.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.right - w + 10)) + 'px'; t.style.top = (r.bottom + 8 + scrollY) + 'px';
+    const r = q.getBoundingClientRect(), w = Math.min(260, innerWidth - 24); t.style.width = w + 'px'; t.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.right - w + 10)) + 'px'; t.style.top = (r.bottom + 8) + 'px';
     setTimeout(() => document.addEventListener('click', function f() { t.remove(); document.removeEventListener('click', f); }), 0); });
   return q;
 }
