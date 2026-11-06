@@ -154,7 +154,9 @@ body.adm #eu, body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fil
 .mini-r { display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12px; } .mini-r .nm { width:74px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .mini-r .tr { flex:1; height:8px; background:var(--line); border-radius:6px; overflow:hidden; } .mini-r .tr i { display:block; height:100%; border-radius:6px; } .mini-r .v { width:38px; text-align:right; font-weight:700; }
 .legenda { display:grid; gap:3px; font-size:12px; margin-top:6px; } .legenda div { display:flex; align-items:center; gap:6px; } .legenda i { width:10px; height:10px; border-radius:3px; flex:none; }
 .funil { display:grid; gap:5px; margin-top:8px; } .funil div { height:22px; border-radius:7px; display:flex; align-items:center; padding:0 8px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap; }
-.tc .dhead { display:flex; justify-content:space-between; align-items:center; max-width:640px; width:100%; margin:0 auto 8px; } .tc .dhead h1 { text-align:left; margin:0; font-size:24px; } .tc .dhead button { border:0; background:var(--panel); border:1px solid var(--line); width:40px; height:40px; border-radius:50%; font-size:20px; cursor:pointer; }
+.tc .det-vez { position:sticky; top:0; z-index:3; display:flex; justify-content:space-between; align-items:center; gap:10px; background:#5b4a7a; color:#fff; border-radius:14px; padding:10px 12px; margin:0 auto 10px; max-width:640px; box-sizing:border-box; } .det-vez .sm { font-size:12px; color:#fff !important; opacity:.85; } .det-vez b { color:#fff; } .det-vez .x { flex:none; background:rgba(255,255,255,.2); color:#fff; border:0; border-radius:10px; padding:8px 10px; font:inherit; font-weight:600; font-size:13px; cursor:pointer; } .det-vez.sua { background:#1e7a46; } .det-vez.sua b { font-size:18px; }
+#fila-ferr { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:10px 0 4px; } #fila-ferr.hide { display:none; } #fila-ferr .ff { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 4px; font:inherit; font-size:12px; font-weight:600; color:var(--fg); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; } #fila-ferr .ff i { font-style:normal; font-size:22px; } #fila-ferr .ff.hide { display:none; }
+.dhead { display:flex; justify-content:space-between; align-items:center; max-width:640px; width:100%; margin:0 auto 8px; } .tc .dhead h1 { text-align:left; margin:0; font-size:24px; } .tc .dhead button { border:0; background:var(--panel); border:1px solid var(--line); width:40px; height:40px; border-radius:50%; font-size:20px; cursor:pointer; }
 .tc .dbody { max-width:640px; width:100%; margin:0 auto; } .tc .dbody > * { margin-top:12px; } .tc .dbody h2 { margin-top:16px; }
 .tv-eq .mini-r { font-size:16px; margin-top:10px; } .tv-eq .mini-r .nm { width:130px; } .tv-eq .mini-r .tr { height:14px; } .tv-eq .mini-r .v { width:56px; }
 #tour { position:fixed; inset:0; z-index:9500; }
@@ -673,6 +675,7 @@ body.ini-res #v-ini > #menu, body.ini-res #v-ini > #dia-blocos, body.ini-res[dat
     </div>
     <div id="v-fila">
     <div id="rede-fila" class="hide"></div>
+    <div id="fila-ferr" class="hide"></div>
     <div id="vez-hero" class="hide"></div>
     <div class="card eu hide" id="eu">
       <div class="sub">Você</div>
@@ -886,8 +889,8 @@ body.ini-res #v-ini > #menu, body.ini-res #v-ini > #dia-blocos, body.ini-res[dat
     <div id="v-est" class="hide">
       <div class="card hide" id="en-card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>📦 Entradas de mercadoria</b><div class="sub">O que chegou na loja na semana, por nota e por modelo.</div></div><button class="btn pri" id="en-abrir">Abrir</button></div></div>
       <div class="card" id="rp-card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>🔄 Reposição das peças vendidas</b><div class="sub" id="rp-sub">Veja o que foi vendido e precisa voltar para a arara.</div></div><button class="btn pri" id="rp-abrir">Abrir</button></div></div>
-      <div style="display:flex;gap:8px;margin-top:12px"><input id="es-q" type="search" placeholder="🔎 Nome, referência ou código de barras" autocomplete="off" style="flex:1;width:100%"><button class="btn" id="es-cam" title="Ler código de barras com a câmera" style="flex:none;font-size:18px">📷</button><select id="es-loja" class="hide" style="width:auto"></select></div>
-      <label class="sub" style="display:flex;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="es-zero" style="width:auto"> mostrar também o que está zerado</label>
+      <div id="es-busca" style="display:flex;gap:8px;margin-top:12px"><input id="es-q" type="search" placeholder="🔎 Nome, referência ou código de barras" autocomplete="off" style="flex:1;width:100%"><button class="btn" id="es-cam" title="Ler código de barras com a câmera" style="flex:none;font-size:18px">📷</button><select id="es-loja" class="hide" style="width:auto"></select></div>
+      <label class="sub" id="es-zl" style="display:flex;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="es-zero" style="width:auto"> mostrar também o que está zerado</label>
       <div class="sub" id="es-tit" style="margin-top:8px"></div>
       <div id="es-res"></div>
     </div>
@@ -1573,6 +1576,7 @@ function desenhar(e) {
   const eu = S.usuario;
   // você
   const naFila = e.fila.find((x) => x.usuario === eu), at = e.atendendo.find((x) => x.usuario === eu), fo = e.fora.find((x) => x.usuario === eu);
+  try { vezNoDet_(e, naFila, at); desenharFerrFila_(naFila || at || fo); } catch (x) {}
   const meuCard = $('eu'), ac = $('eu-acoes'); ac.replaceChildren();
   desenharMetaHoje();
   { const bf = $('ban-fer'), f = e.feriado; bf.classList.toggle('hide', !f); if (f) bf.textContent = '🎉 Hoje é feriado: ' + f.nome + (f.decisao === 'FECHA' ? ' · loja fechada' : f.decisao === 'ABRE' ? ' · loja aberta' : chefe() ? ' · confirme se a loja abre (Gestão › Escala)' : ''); }
@@ -2573,8 +2577,48 @@ function abrirDet(titulo, montar) {
   const w = el('div', 'tc'); w.id = 'det'; const movidos = [];
   const mover = (id) => { const n = $(id); if (!n) return null; movidos.push([n, n.parentNode, n.nextSibling]); n.classList.remove('hide'); return n; };
   const h = el('div', 'dhead'), x = el('button', '', '×'); h.append(el('h1', '', titulo), x); const b = el('div', 'dbody'); w.append(h, b); document.body.append(w);
+  if (S && aba === 'fila' && !chefe()) { w.dataset.fila = '1'; const fx = el('div', 'det-vez'); fx.id = 'det-vez'; b.append(fx); try { vezNoDet_(E); } catch (e) {} }
   const fechaD = () => { movidos.reverse().forEach(([n, p, nx]) => { if (nx && nx.parentNode === p) p.insertBefore(n, nx); else p.append(n); }); w.remove(); };
   x.addEventListener('click', fechaD); montar(b, mover);
+}
+// ---------- atalhos dentro da fila: estoque, cashback, anotar cliente e meta sem sair da tela ----------
+let VEZ_POS = null, VEZ_FECHA = null;
+function desenharFerrFila_(naFilaOuDentro) {
+  const box = $('fila-ferr'); if (!box) return;
+  const mostra = S && !chefe() && S.cargo !== 'AUXILIAR' && S.cargo !== 'ESTOQUISTA' && !telaLoja();
+  box.classList.toggle('hide', !mostra); if (!mostra) return; if (!box.childElementCount) {
+  const itens = [['🔎', 'Estoque', () => !$('tab-est').classList.contains('hide'), abrirEstoqueFila], ['💳', 'Cashback', () => abaVisivel_('cb'), abrirCashback], ['📲', 'Anotar cliente', () => true, () => anotarCliente('', '', 3)], ['🎯', 'Minha meta', () => true, abrirMetaFila]];
+  itens.forEach(([ic, nm, ok, fn]) => { const b = el('button', 'ff'); b.type = 'button'; b.append(el('i', '', ic), document.createTextNode(nm)); b.dataset.ok = ''; b.addEventListener('click', fn); b._ok = ok; box.append(b); }); }
+  [...box.children].forEach((b) => b.classList.toggle('hide', !b._ok()));
+}
+function abrirEstoqueFila() {
+  abrirDet('🔎 Estoque', (b, mv) => { ['es-busca', 'es-zl', 'es-tit', 'es-res'].forEach((id) => { const n = mv(id); if (n) b.append(n); }); setTimeout(() => { try { $('es-q').focus(); } catch (e) {} }, 200); });
+}
+function abrirMetaFila() {
+  abrirDet('🎯 Minha meta', (b) => {
+    const m = $('eu-meta'); if (m && !m.classList.contains('hide') && m.textContent.trim()) { const c = el('div', 'card'); c.append(...[...m.childNodes].map((n) => n.cloneNode(true))); b.append(c); }
+    else b.append(el('div', 'card', 'A sua meta de hoje aparece aqui assim que a gerente lançar as metas do mês.'));
+    const mh = (E && E.hoje && E.hoje.meu) || null; if (mh) b.append(el('div', 'card sm', 'Hoje na fila: ' + (mh.at || 0) + ' atendimentos · ' + (mh.v || 0) + ' vendas' + (mh.rs ? ' · ' + rs(mh.rs) : '')));
+    const bt = el('button', 'btn big', 'Ver todas as metas'); bt.addEventListener('click', () => { const d = $('det'); if (d) d.querySelector('.dhead button').click(); mudarAba('meta'); }); b.append(bt);
+  });
+}
+// faixa no topo das telas abertas a partir da fila: posição sempre à vista; chegou a vez → vibra, avisa e fecha em 5 s
+function vezNoDet_(e, naFila, at) {
+  if (!S || !e) return; const eu = S.usuario;
+  naFila = naFila || (e.fila || []).find((x) => x.usuario === eu); at = at || (e.atendendo || []).find((x) => x.usuario === eu);
+  const pos = naFila ? naFila.pos : null, antes = VEZ_POS; VEZ_POS = pos;
+  const d = $('det'), fx = $('det-vez'); if (!d || !d.dataset.fila || !fx) return;
+  fx.replaceChildren(); fx.className = 'det-vez';
+  const volta = el('button', 'x', 'Voltar à fila'); volta.addEventListener('click', () => { const dd = $('det'); if (dd) dd.querySelector('.dhead button').click(); });
+  const tx = el('div');
+  if (pos === 1) {
+    fx.classList.add('sua'); tx.append(el('b', '', '🙋‍♀️ É a sua vez!'), el('div', 'sm', 'a consulta fecha em 5 s')); fx.append(tx, volta);
+    if (antes !== 1 && !VEZ_FECHA) { try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (x) {} VEZ_FECHA = setTimeout(() => { VEZ_FECHA = null; const dd = $('det'); if (dd && dd.dataset.fila) dd.querySelector('.dhead button').click(); }, 5000); }
+    return;
+  }
+  const quem = (e.atendendo || []).filter((x) => x.usuario !== eu).map((x) => primeiroNome(x.nome)).slice(0, 2);
+  tx.append(el('b', '', at ? 'Você está atendendo' : pos ? 'Você é a ' + pos + 'ª da vez' : 'Você está fora da fila'), el('div', 'sm', at ? 'encerre o atendimento na fila quando terminar' : pos === 2 && (e.fila || [])[0] ? primeiroNome(e.fila[0].nome) + ' é a próxima… depois é você' : quem.length ? quem.join(' e ') + ' atendendo agora' : ''));
+  fx.append(tx, volta);
 }
 function desenharCards() {
   const box = $('i-cards'); if (!box || !INI) return; const r = INI, R = r.rede; box.replaceChildren();
