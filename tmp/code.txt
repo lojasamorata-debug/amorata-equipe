@@ -2265,9 +2265,11 @@ function produtosQuentes_() {
   const hoje = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd'), ini = somaDia_(hoje, -21);
   let lig = []; try { lig = dsLojas_(); } catch (e) {}
   const lojas = LOJAS.filter((l) => lig.indexOf(String(lojaNumDe_(l))) >= 0), novos = {};
-  lojas.forEach((loja) => { let ent = []; try { ent = dsEntradas_(lojaNumDe_(loja), ini, hoje); } catch (e) { return; }
-    ent.forEach((x) => { if (!x[4] || String(x[1]).toUpperCase().indexOf('AMORATA') >= 0) return; // compra de fornecedor (transferência entre lojas não conta)
+  lojas.forEach((loja) => { const ln = String(lojaNumDe_(loja)); let ent = []; try { ent = dsEntradas_(ln, ini, hoje); } catch (e) { return; }
+    ent.forEach((x) => { if (!x[4] || (String(x[1]).toUpperCase().indexOf('AMORATA') >= 0 && String(x[9]) !== ln)) return; // entrada de mercadoria (transferência entre lojas não conta)
       const n = novos[x[4]] = novos[x[4]] || { ref: x[4], nome: String(x[3]).replace(/^\d+\s+/, ''), chegou: x[0], entrou: 0, fornecedor: x[1] }; n.entrou += Number(x[7]) || 0; if (x[0] && x[0] < n.chegou) n.chegou = x[0]; }); });
+  // novidade de verdade: o modelo não teve venda nos 30 dias antes da janela (senão é só reposição de peça antiga)
+  lojas.forEach((loja) => { try { const ag = pvAgreg_(loja, somaDia_(ini, -30), somaDia_(ini, -1), hoje); Object.keys(ag.m).forEach((k) => { const r0 = ag.m[k].r; if (r0 && novos[r0]) delete novos[r0]; }); } catch (e) {} });
   const refs = Object.keys(novos); if (!refs.length) return { quando: agoraBR_(), lista: [] };
   const de = refs.reduce((a, r) => (novos[r].chegou < a ? novos[r].chegou : a), hoje);
   const vend = {}, tams = {}, porLoja = {}, est = {}, estT = {};
