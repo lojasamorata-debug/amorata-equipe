@@ -1067,7 +1067,7 @@ let ERR_N = 0;
 function logErro(onde, msg) { if (!S && !T && /'(token|cargo|usuario|lojas)'|\.(token|cargo|usuario|lojas)\b/.test(String(msg))) return; /* resposta que chegou depois de sair da conta: não é erro de verdade */ if (ERR_N++ > 8) return; try { google.script.run.withSuccessHandler(() => {}).withFailureHandler(() => {}).registrarErro({ onde: onde, msg: String(msg).slice(0, 500), usuario: (S && S.usuario) || (T && 'tablet ' + T.loja) || '', versao: VERSAO, ua: navigator.userAgent, url: HOSPEDADO ? location.href : 'google' }); } catch (e) {} }
 window.addEventListener('error', (ev) => logErro('js', (ev.message || '') + ' @' + (ev.lineno || '') + ':' + (ev.colno || '')));
 window.addEventListener('unhandledrejection', (ev) => logErro('promise', (ev.reason && (ev.reason.message || ev.reason)) || ''));
-let FALHAS_BG = 0, TICK_AG = 0;
+let FALHAS_BG = 0, TICK_AG = 0; const PEND_EL = document.getElementById('pend');
 function rodar(fn, args, ok, erro) {
   prog(1);
   google.script.run.withSuccessHandler((r) => { if (/^(estado|tabletEstado)$/.test(fn)) FALHAS_BG = 0; if (!window.__DO_CACHE) prog(-1); if (ok) ok(r); if (/^(salvarEscala|salvarExcecao|decidirFeriado|marcarCheck|salvarChecklist|responderTroca|aprovarTroca|salvarMetas|importarVendasUSE|marcarSemVendas)$/.test(fn) && typeof carregarPendencias === 'function') setTimeout(carregarPendencias, 300); }).withFailureHandler((e) => {
@@ -2697,6 +2697,8 @@ function ajudaQ(chave) {
 }
 function desenharAgora() {
   const box = $('agora'); if (!box || !S) return;
+  // o quadro de pendências pode estar dentro do "Agora": tira antes de limpar, senão ele sai da tela e o app perde o #pend
+  const pd0 = PEND_EL || $('pend'); if (pd0 && box.contains(pd0)) { box.after(pd0); pd0.classList.add('hide'); }
   if (S.cargo === 'AUXILIAR' || S.cargo === 'ESTOQUISTA' || telaLoja()) { box.replaceChildren(); return; }
   box.replaceChildren(); box.className = 'agora';
   const tit = (t, chave, n) => { const h = el('div', 'ag-lb'); const a = el('span', '', t); if (chave) { const q = ajudaQ(chave); if (q) a.append(q); } h.append(a); if (n) h.append(el('span', 'ag-n', String(n))); return h; };
@@ -2731,7 +2733,7 @@ function desenharAgora() {
     box.append(td);
   } else {
     // PRECISA DE VOCÊ: as pendências da gerente
-    const pd = $('pend'), its = pd ? [...pd.children].filter((x) => !x.classList.contains('mais')) : [];
+    const pd = PEND_EL || $('pend'), its = pd ? [...pd.children].filter((x) => !x.classList.contains('mais')) : [];
     if (its.length) { box.append(tit('PRECISA DE VOCÊ', 'pend', its.length)); if (pd.parentNode !== box) box.append(pd); else box.append(pd); pd.classList.remove('hide'); }
     // LOJA AGORA: fila ao vivo (gerente de uma loja)
     if (S.cargo !== 'ADMIN' && E) {
