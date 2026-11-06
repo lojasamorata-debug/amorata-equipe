@@ -2879,12 +2879,41 @@ function cardReposicao(box) {
     });
   }).withFailureHandler(() => c.remove()).reposicaoPainel(S.token);
 }
+// 📋 todas as avaliações em lista, com filtros (gerente e administração)
+function abrirAvaliacoes() {
+  abrirDet('⭐ Avaliações das clientes', (b) => {
+    const f = el('div', 'filtros'), lj = el('select'), per = el('select'), nt = el('select'), q = el('input'), sc = el('label', 'sub');
+    [['mes', 'Mês atual'], ['7', 'Últimos 7 dias'], ['30', 'Últimos 30 dias'], ['mes_ant', 'Mês anterior'], ['tudo', 'Tudo']].forEach(([v, t]) => per.append(new Option(t, v)));
+    [['', 'Todas as notas'], ['5', '★★★★★ 5'], ['4', '★★★★ 4'], ['b', 'Abaixo de 4']].forEach(([v, t]) => nt.append(new Option(t, v)));
+    q.type = 'search'; q.placeholder = '🔎 vendedora ou palavra do comentário'; q.style.cssText = 'width:100%;margin-top:6px';
+    const cb = el('input'); cb.type = 'checkbox'; sc.append(cb, document.createTextNode(' só com comentário')); sc.style.cssText = 'display:flex;gap:6px;align-items:center;margin-top:6px';
+    f.append(lj, per); const f2 = el('div', 'filtros'); f2.style.marginTop = '6px'; f2.append(nt); b.append(f, f2, q, sc); const out = el('div'); b.append(out);
+    let R = null; const nrm = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const periodo = () => { const h = diaISO(0), m = h.slice(0, 8) + '01'; if (per.value === 'mes') return [m, h]; if (per.value === '7') return [diaISO(-6), h]; if (per.value === '30') return [diaISO(-29), h];
+      if (per.value === 'mes_ant') { const d = new Date(m + 'T12:00:00'); d.setDate(0); const fim = d.toISOString().slice(0, 10); return [fim.slice(0, 8) + '01', fim]; } return ['', '']; };
+    const desenha = () => { if (!R) return; const tq = nrm(q.value);
+      const it = R.itens.filter((x) => (!nt.value || (nt.value === 'b' ? x.nota && x.nota < 4 : x.nota === +nt.value)) && (!cb.checked || x.comentario) && (!tq || nrm(x.nome + ' ' + x.comentario).indexOf(tq) >= 0));
+      const notas = it.filter((x) => x.nota && x.valida).map((x) => x.nota), med = notas.length ? notas.reduce((a, x) => a + x, 0) / notas.length : null;
+      out.replaceChildren(el('div', 'sm', it.length + (it.length === 1 ? ' avaliação' : ' avaliações') + (med != null ? ' · média ' + DEC1.format(med) + ' ★' : '') + (R.total > R.itens.length ? ' · mostrando as ' + R.itens.length + ' mais recentes' : '')));
+      const lst = el('div', 'pv-lista'); it.slice(0, 600).forEach((x) => { const c = el('div', 'pv-it'), l1 = el('div', 'pv-l1');
+        l1.append(el('b', '', x.nota ? estr(x.nota) + ' ' + x.nota : 'só a loja'), el('span', 'sm', x.quando.slice(0, 5) + ' ' + x.quando.slice(11, 16)));
+        c.append(l1, el('div', 'pv-l2', [x.loja, x.nome ? 'atendida por ' + x.nome : '', x.notaLoja ? 'loja ' + x.notaLoja + '★' : ''].filter(Boolean).join(' · ')));
+        if (x.comentario) { const cm = el('div', '', '“' + x.comentario + '”'); cm.style.cssText = 'font-style:italic;margin-top:4px;font-size:14px'; c.append(cm); }
+        if (!x.valida) { const nv = el('div', 'sm', '⚠️ não conferida' + (x.motivo ? ': ' + x.motivo : '')); nv.style.color = 'var(--warn)'; c.append(nv); }
+        lst.append(c); }); out.append(lst); };
+    const carregar = () => { out.replaceChildren(el('div', 'sub', 'Carregando…')); const [a, z] = periodo();
+      rodar('avaliacoesLista', [S.token, lj.value || 'TODAS', a, z], (r) => { R = r; if (!lj.options.length) { if (r.lojas.length > 1) lj.append(new Option('Todas as lojas', 'TODAS')); r.lojas.forEach((l) => lj.append(new Option(l, l))); } desenha(); }, (e) => out.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e)))); };
+    [lj, per].forEach((x) => x.addEventListener('change', carregar)); [nt, cb].forEach((x) => x.addEventListener('change', desenha)); q.addEventListener('input', desenha);
+    carregar();
+  });
+}
 function cardAvaliacoes(box, cls) {
   const c = el('div', 'dc full av-dest ' + (cls || '')); c.append(el('div', 'sub', '⭐ Carregando avaliações…')); box.append(c);
   google.script.run.withSuccessHandler((r) => {
     c.replaceChildren(); if (!r || !r.mes) { c.remove(); return; }
     const MES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'], nm = MES[(+r.mes.slice(0, 2)) - 1];
     const t = el('div', 'dt'); t.append(el('span', '', r.tipo === 'eu' ? '⭐ Suas avaliações' : '⭐ Avaliações das clientes'), el('span', '', nm)); c.append(t);
+    if (r.tipo !== 'eu' && chefe()) { const vb = el('button', 'btn sm', '📋 Ver todas as avaliações'); vb.style.cssText = 'margin:6px 0 4px'; vb.addEventListener('click', (ev) => { ev.stopPropagation(); abrirAvaliacoes(); }); c.append(vb); }
     const big = (m, n, rot) => { const h = el('div', 'av-big'); h.append(el('div', 'av-n', m == null ? '—' : DEC1.format(m)), el('div', 'av-st', estr(m || 0)), el('div', 'sm', n + (n === 1 ? ' avaliação' : ' avaliações') + (rot ? ' · ' + rot : ''))); return h; };
     if (r.tipo === 'eu') {
       if (!r.n) { c.append(el('div', 'sm', 'Nenhuma avaliação sua neste mês ainda. Ao fim do atendimento, convide a cliente a avaliar pelo QR code do balcão — leva 10 segundos 💜')); }
