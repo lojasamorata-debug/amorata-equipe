@@ -347,7 +347,37 @@ function zsSalvarToken(token, loja, apiToken) {
   return rhLista(token, '');
 }
 function zsSincronizarAgora(token) { const u = sessao_(token); if (u.cargo !== 'ADMIN') throw new Error('Só a administração.'); const r = zsSincronizar_(); const out = rhLista(token, ''); out.sinc = r; return out; }
-function zsSincronizar(e) { soGatilho_(e); const pr = PropertiesService.getScriptProperties(), ult = +pr.getProperty('ZS_SYNC_ULT') || 0; if (Date.now() - ult < 29 * 60000) return 'aguardando'; pr.setProperty('ZS_SYNC_ULT', String(Date.now())); return zsSincronizar_(e); }
+// ---------- ZapSign por webhook: a ZapSign avisa na hora que alguém assina; a busca automática vira só uma garantia a cada 3 horas ----------
+const ZS_EXEC = 'https://script.google.com/macros/s/AKfycbzLVCL9V3HFNC1oovEF80GHdZbCNIsIdBqm8CFZ3ZBSjFAeXrarzUg19-z9go2MgGJuUw/exec';
+function zsWebhook_(e) {
+  const pr = PropertiesService.getScriptProperties(), seg = pr.getProperty('ZS_WEBHOOK') || '';
+  const ok = (t) => ContentService.createTextOutput(JSON.stringify({ ok: t })).setMimeType(ContentService.MimeType.JSON);
+  const dado = String(e.parameter.zsw || '');
+  if (!seg || dado.length !== seg.length) return ok(false);
+  let dif = 0; for (let i = 0; i < seg.length; i++) dif |= seg.charCodeAt(i) ^ dado.charCodeAt(i);
+  if (dif) return ok(false);
+  let ev = ''; try { ev = String(JSON.parse(e.postData.contents).event_type || ''); } catch (x) {}
+  pr.setProperty('ZS_WH_ULT', agoraBR_() + (ev ? ' · ' + ev.slice(0, 40) : ''));
+  if (ev && !/sign|doc_|creat/i.test(ev)) return ok(true);
+  // processa logo depois (fora desta chamada, para responder rápido à ZapSign); vários avisos juntos viram uma busca só
+  try {
+    if (!ScriptApp.getProjectTriggers().some((t) => t.getHandlerFunction() === 'zsWebhookRodar')) ScriptApp.newTrigger('zsWebhookRodar').timeBased().after(30 * 1000).create();
+  } catch (x) { try { zsSincronizar_(); } catch (y) {} }
+  return ok(true);
+}
+function zsWebhookRodar(e) {
+  soGatilho_(e);
+  try { ScriptApp.getProjectTriggers().forEach((t) => { if (t.getHandlerFunction() === 'zsWebhookRodar') ScriptApp.deleteTrigger(t); }); } catch (x) {}
+  const r = zsSincronizar_(); if (r === 'ocupado') { try { ScriptApp.newTrigger('zsWebhookRodar').timeBased().after(60 * 1000).create(); } catch (x) {} }
+  return r;
+}
+function zsWebhookUrl(token) {
+  const u = sessao_(token); if (u.cargo !== 'ADMIN') throw new Error('Só a administração.');
+  const pr = PropertiesService.getScriptProperties(); let seg = pr.getProperty('ZS_WEBHOOK');
+  if (!seg) { seg = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, ''); pr.setProperty('ZS_WEBHOOK', seg); }
+  return { url: ZS_EXEC + '?zsw=' + seg, ult: pr.getProperty('ZS_WH_ULT') || '' };
+}
+function zsSincronizar(e) { soGatilho_(e); const pr = PropertiesService.getScriptProperties(), ult = +pr.getProperty('ZS_SYNC_ULT') || 0; if (Date.now() - ult < (pr.getProperty('ZS_WH_ULT') ? 179 : 29) * 60000) return 'aguardando'; pr.setProperty('ZS_SYNC_ULT', String(Date.now())); return zsSincronizar_(e); }
 function zsSincronizar_() {
   const lock = LockService.getScriptLock(); if (!lock.tryLock(5000)) return 'ocupado';
   try { const res = []; LOJAS.forEach((l) => { if (PropertiesService.getScriptProperties().getProperty('ZS_TOKEN_' + l)) { try { res.push(l + ': ' + zsSincronizarLoja_(l)); } catch (e) { res.push(l + ': erro ' + e.message); } } }); return res.join(' · '); }
@@ -1500,6 +1530,8 @@ function importar(token, tipo, loja, linhas, de, ate, arquivo) {
 }
 // carga inicial feita pelo Claude a partir do USE (chave guardada nas propriedades do script)
 function doPost(e) {
+  // aviso automático da ZapSign (webhook): chega quando alguém assina; o endereço leva um segredo (?zsw=...)
+  if (e && e.parameter && e.parameter.zsw) return zsWebhook_(e);
   try {
     const b = JSON.parse(e.postData.contents);
     if (b.fn) { let out; try { out = { ok: true, r: api_(b) }; } catch (err) { out = { ok: false, e: String((err && err.message) || err) }; } return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON); }
@@ -4030,7 +4062,7 @@ function urlDoApp() { return urlApp_(); }
 
 
 // ---------- API: o mesmo app hospedado fora do Google (GitHub Pages) chama as funções por aqui ----------
-const API_NEGADAS = ['dsFim5', 'filaSaida', 'bhLembretes', 'bhAutoSaldos', 'dsEstoque10', 'dsFechamentoDia', 'dsSincronizar', 'postarMetaDia', 'rhImportarZapSign_', 'limparStatus', 'zsSincronizar', 'doGet', 'doPost', 'migrarVendasPlanilhas', 'prepararFotos', 'instalarResumo', 'resumoDiario', 'auditoriaMesAnterior', 'criarChaveImport', 'backupDiario', 'autorizarNotificacoes'];
+const API_NEGADAS = ['dsFim5', 'filaSaida', 'bhLembretes', 'bhAutoSaldos', 'dsEstoque10', 'dsFechamentoDia', 'dsSincronizar', 'postarMetaDia', 'rhImportarZapSign_', 'limparStatus', 'zsSincronizar', 'doGet', 'doPost', 'migrarVendasPlanilhas', 'prepararFotos', 'instalarResumo', 'resumoDiario', 'auditoriaMesAnterior', 'criarChaveImport', 'backupDiario', 'autorizarNotificacoes', 'zsWebhookRodar'];
 // guarda valores grandes no cache em pedaços de 90 KB (o limite é 100 KB por chave)
 function cacheGrandePut_(k, v, ttl) { try { const c = CacheService.getScriptCache(), st = JSON.stringify(v), o = {}; let n = 0; for (let i = 0; i < st.length; i += 90000) o[k + '_' + (n++)] = st.slice(i, i + 90000); c.putAll(o, ttl); c.put(k, String(n), ttl); } catch (e) { console.warn('cache ' + k + ': ' + e.message); } }
 function cacheGrandeGet_(k) { try { const c = CacheService.getScriptCache(), n = +c.get(k); if (!n) return null; const ks = []; for (let i = 0; i < n; i++) ks.push(k + '_' + i); const g = c.getAll(ks); if (!ks.every((x) => g[x] != null)) return null; return JSON.parse(ks.map((x) => g[x]).join('')); } catch (e) { return null; } }
