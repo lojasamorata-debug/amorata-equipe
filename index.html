@@ -700,7 +700,7 @@ html, body { overflow-x:hidden; }
 
     <div id="v-ini" class="hide">
       <div id="i-res-h"><button type="button" id="i-res-v">‹ Menu</button><h2>📊 Meus resultados</h2></div>
-      <div class="filtros" id="i-filtro-box"><select id="i-per"><option value="hoje">Hoje</option><option value="mes" selected>Mês atual</option><option value="mes_ant">Mês anterior</option><option value="ano">Ano</option><option value="custom">Personalizado…</option></select><select id="i-loja"></select></div><div class="datas hide" id="i-datas"><label>De <input type="date" id="i-de"></label><label>Até <input type="date" id="i-ate"></label><button class="btn sm pri" id="i-ok">Ver</button></div>
+      <div class="filtros" id="i-filtro-box"><select id="i-per"><option value="hoje" selected>Hoje</option><option value="mes">Mês atual</option><option value="mes_ant">Mês anterior</option><option value="ano">Ano</option><option value="custom">Personalizado…</option></select><select id="i-loja"></select></div><div class="datas hide" id="i-datas"><label>De <input type="date" id="i-de"></label><label>Até <input type="date" id="i-ate"></label><button class="btn sm pri" id="i-ok">Ver</button></div>
       <div class="sub" id="i-tit" style="margin-top:8px"></div>
       <div id="i-cards" class="dash"></div>
       <div id="i-det" class="hide">
@@ -2571,6 +2571,7 @@ function desenharCards() {
     const top = el('div', 'card'), hh = el('div'); hh.style.cssText = 'display:flex;gap:16px;align-items:center';
     const tx = el('div'); tx.append(el('div', 'sm', 'Vendido'), el('div', 'big', rs(R.vendido)), el('div', 'sm', 'de ' + rs(R.meta) + (R.fecha != null ? ' · no ritmo fecha em ' + rs(R.fecha) : ''))); hh.append(ring(R.pct, 110, COR[k]), tx); top.append(hh); b.append(top);
     if (serieTot.length && (r.serie.dias || []).length > 1) { const c = el('div', 'card'); c.append(el('b', '', '📊 Vendas por dia'), el('div', 'sm', 'barra verde = dia acima da meta diária (linha laranja)'), barrasDia(r.serie.dias, serieTot, metaDiaTot, 140, true)); b.append(c); }
+    { const tv = tabelaVendedoras((r.equipe || []), r.multi); if (tv) b.append(tv); }
     mv('i-res'); b.append($('i-res')); [ 'm-lojas-box', 'i-nota'].forEach((id) => { const n = mv(id); if (n) b.append(n); });
   }));
   const hr = el('div', 'hero'), tx = el('div', 'tx'); tx.append(el('div', 'big', rs(R.vendido)), el('div', 'sm', 'de ' + rs(R.meta) + ' · faltam ' + rs(Math.max(0, (R.meta || 0) - (R.vendido || 0)))));
@@ -2607,8 +2608,7 @@ function desenharCards() {
     const nm = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][(new Date().getMonth() + 11) % 12];
     const c = card('full', '📅 Fechamento de ' + nm, 'abrir ›', () => abrirFechamento(nm)); c.append(el('div', 'sm', 'O resumo do mês que passou: resultado, ranking das lojas, destaques da equipe. Dá para salvar em PDF e apresentar na reunião.')); box.insertBefore(c, box.children[1]);
   }
-  // reposição de hoje (lojas ligadas à API)
-  cardReposicao(box);
+  // a reposição de hoje fica na aba Estoque (não aparece mais aqui)
   // 7. avaliações das clientes (destaque)
   cardAvaliacoes(box);
   // 6. equipe
@@ -2712,7 +2712,7 @@ function abrirFechamento(nm) {
 // horário da última atualização das vendas + resumo da conferência automática (feita a cada importação do dia completo)
 function infoVendasUI(alvo) {
   google.script.run.withSuccessHandler((r) => {
-    if (!r) return; const fmt = (x) => { const d = x.dia === diaISO(0) ? 'hoje' : x.dia === diaISO(-1) ? 'ontem' : isoBR(x.dia).slice(0, 5); return (S.lojas.length > 1 ? x.loja + ' ' : '') + d + ' · ' + x.quando.slice(8, 10) + '/' + x.quando.slice(5, 7) + ' ' + x.quando.slice(11, 16) + (x.api ? ' 🔌' : ''); };
+    if (!r) return; const fmt = (x) => { const d = x.dia === diaISO(0) ? 'hoje' : x.dia === diaISO(-1) ? 'ontem' : isoBR(x.dia).slice(0, 5); return (S.lojas.length > 1 ? x.loja + ' ' : '') + d + ' · ' + x.quando.slice(8, 10) + '/' + x.quando.slice(5, 7) + ' ' + x.quando.slice(11, 16) ; };
     const t = $(alvo); if (t && r.atual.length) { const old = t.parentNode.querySelector('.vd-at'); if (old) old.remove(); const d = el('div', 'sub vd-at', '🧾 Vendas do USE atualizadas: ' + r.atual.map(fmt).join(' · ')); t.after(d); }
     const c = $('i-conf'); if (c && r.conf.length) { [...c.children].slice(1).forEach((n) => n.remove()); r.conf.slice(0, 3).forEach((k) => { const pc = k.pct != null ? Math.round(k.pct * 100) : null, ln = el('div', 'sm'); ln.append(el('b', '', (S.lojas.length > 1 ? k.loja + ' · ' : '') + isoBR(k.d).slice(0, 5) + ': ' + (pc != null ? pc + '%' : '—') + ' na fila'), document.createTextNode(' · ' + k.naFila + ' de ' + k.use + (k.fora.length ? ' · fora: ' + k.fora.map((x) => x.nome + ' ' + x.n).join(', ') : ' ✅'))); c.append(ln); }); }
   }).withFailureHandler(() => {}).infoVendas(S.token);
@@ -2742,6 +2742,18 @@ function abrirConferencia() {
     b.append(el('div', 'sm', '💡 "Fora da fila" = venda registrada no caixa que não foi marcada como Vendeu na fila. "A mais na fila" costuma ser venda marcada no nome de outra pessoa no caixa, ou troca/cancelamento.'));
   }));
 }
+// vendas de cada vendedora no período (detalhe da rede e da loja)
+function tabelaVendedoras(lista, comLoja) {
+  const vs = (lista || []).filter((x) => x.venda || x.meta).sort((a, b) => (b.venda || 0) - (a.venda || 0)); if (!vs.length) return null;
+  const c = el('div', 'card'); c.append(el('b', '', '👩‍💼 Vendas por vendedora'));
+  const wr = el('div', 'tbl-x'), tb = el('table'), th = el('tr'); wr.style.marginTop = '8px';
+  ['Vendedora'].concat(comLoja ? ['Loja'] : [], ['Vendido', '% meta', 'Ticket', 'Peças/venda', 'Conv.']).forEach((t, i) => { const h = el('th', i ? 'n' : '', t); if (t === 'Loja') h.className = ''; th.append(h); });
+  const hd = el('thead'); hd.append(th); tb.append(hd); const bd = el('tbody'); let tot = 0;
+  vs.forEach((x) => { tot += x.venda || 0; const tr = el('tr'), td = (t, n) => tr.append(el('td', n ? 'n' : '', t));
+    td(primeiroNome(x.nome)); if (comLoja) td(x.loja); td(rs(x.venda || 0), 1); td(x.meta ? pc(x.pct) : '—', 1); td(x.tkm ? rs(x.tkm) : '—', 1); td(x.pa ? String(Math.round(x.pa * 10) / 10).replace('.', ',') : '—', 1); td(x.conv != null ? pc(x.conv) : '—', 1); bd.append(tr); });
+  const tr = el('tr'); tr.style.fontWeight = '600'; tr.append(el('td', '', 'Total')); if (comLoja) tr.append(el('td', '', '')); tr.append(el('td', 'n', rs(tot))); for (let i = 0; i < 4; i++) tr.append(el('td', 'n', '')); bd.append(tr);
+  tb.append(bd); wr.append(tb); c.append(wr); return c;
+}
 function detLoja(l) {
   const r = INI; abrirDet(l.loja, (b) => {
     const kl = nivelCor(l.fechaPct, l.pct), top = el('div', 'card'), hh = el('div'); hh.style.cssText = 'display:flex;gap:16px;align-items:center';
@@ -2751,6 +2763,7 @@ function detLoja(l) {
     k2(pc(l.conv), 'conversão'); k2(pc(l.pctFila), 'pela fila'); k2(rs(l.ticket), 'ticket médio'); k2(String(l.at || 0), 'atendimentos'); k2(String(l.v || 0), 'vendas na fila'); k2(rs(l.perdasR$), 'perdas est.'); b.append(kp);
     if (l.atencoes.length) { const a = el('div', 'card'); a.append(el('b', '', '⚠️ Atenções')); l.atencoes.forEach((t) => a.append(el('div', 'sm', '• ' + t))); b.append(a); }
     const eq = (r.equipe || []).filter((x) => x.loja === l.loja && x.meta).sort((a, c) => (c.pct || 0) - (a.pct || 0));
+    { const tv = tabelaVendedoras((r.equipe || []).filter((x) => x.loja === l.loja), false); if (tv) b.append(tv); }
     if (eq.length) { const c = el('div', 'card'); c.append(el('b', '', '🏅 Equipe · % da meta')); c.append(linhasPct(eq.map((x) => ({ rot: primeiroNome(x.nome), pct: x.pct, fechaPct: x.fechaPct })))); b.append(c); }
     { const mp = mapaEquipe((r.equipe || []).filter((x) => x.loja === l.loja)); if (mp) b.append(mp); }
     const rt = RIT && RIT.lojas ? RIT.lojas.find((x) => x.loja === l.loja) : null; if (rt) b.append(el('div', 'card sm', '⏱️ Hoje: ' + rt.vendasHoje + ' vendas na fila até ' + RIT.quando + (rt.esperado != null ? ' · o normal até agora é ' + rt.esperado : '')));
@@ -2762,7 +2775,7 @@ function carregarInicio() {
   rodar('inicio', [S.token, $('i-loja').value].concat(perArgs('i')), (r) => {
     INI = r; desenharCards(); desenharMenu();
     const R = r.rede;
-    $('i-tit').textContent = textoPeriodo(r); setTimeout(() => infoVendasUI('i-tit'), 50);
+    $('i-tit').textContent = textoPeriodo(r);
     desenharResumo(r);
     const topo = $('i-topo'); topo.replaceChildren(); avisoSemMeta(topo, r);
     cartaoMeta.restam = r.restam; cartaoMeta.encerrado = r.encerrado;
