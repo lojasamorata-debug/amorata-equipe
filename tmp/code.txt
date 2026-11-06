@@ -784,6 +784,8 @@ function acao(token, loja, tipo, alvo, dados) {
     } else if (tipo === 'mais') {
       const a = e.atendendo[alvo];
       if (!a) throw new Error('Não há atendimento em andamento.');
+      // "+ outra cliente" logo depois de começar quase sempre é toque duplo no mesmo lugar do botão Atender: ignora nos primeiros 10 s
+      if (agora - Number(a.inicio || 0) < 10000 && !(a.extra || []).length) { const m0 = montar_(loja, e, u); m0.repetido = true; return m0; }
       a.extra = a.extra || []; if (a.extra.length >= 4) throw new Error('Máximo de 5 clientes ao mesmo tempo.');
       a.extra.push(agora); evento_(loja, pessoa, 'atendendo mais de uma cliente', String(a.extra.length + 1) + ' clientes', u);
     } else if (tipo === 'cancelar') {
