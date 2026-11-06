@@ -158,6 +158,7 @@ body.adm #eu, body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fil
 #reg-ov { position:fixed; left:50%; top:42%; transform:translate(-50%,-50%); z-index:9500; display:none; align-items:center; gap:10px; background:#1f1e1d; color:#fff; border-radius:16px; padding:16px 20px; font-size:17px; box-shadow:0 10px 30px rgba(0,0,0,.3); max-width:86vw; } #reg-ov.ok { background:#1e7a46; } #reg-ov b { font-weight:700; } #reg-ov .spin { width:20px; height:20px; border:3px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:regsp .8s linear infinite; flex:none; } @keyframes regsp { to { transform:rotate(360deg); } }
 body.ocupado #eu-acoes .btn, body.ocupado .fila-ac .btn { opacity:.55; pointer-events:none; } body.recem #eu-acoes .btn, body.recem .fila-ac .btn { pointer-events:none; opacity:.7; } /* 3 s depois de começar: evita o toque duplo cair em "+ outra cliente" */
 .hist-lista { margin-top:10px; } .hist-it { display:grid; grid-template-columns:46px 84px 1fr; gap:8px; padding:8px 4px; border-bottom:1px solid var(--line); font-size:13.5px; align-items:baseline; } .hist-it .hh { font-variant-numeric:tabular-nums; color:var(--muted); font-weight:600; } .hist-it .hq { font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .hist-it.vendeu .ht { color:var(--ok); font-weight:600; } .hist-it.naovendeu .ht { color:var(--bad); } .hist-it.saiu .ht, .hist-it.fora .ht { color:var(--warn); }
+.ind-l { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line); } .ind-l > div > div:nth-child(2) { font-size:18px; font-weight:700; } .ind-p { font-weight:800; font-size:14px; padding:6px 10px; border-radius:10px; white-space:nowrap; background:var(--bg); } .ind-p.up { color:var(--ok); background:#e3f3e9; } .ind-p.dn { color:var(--bad); background:#fbe4e2; }
 #agora:empty, body.ini-res #agora { display:none !important; } .agora { margin-top:6px; }
 .ag-hero { background:#5b4a7a; color:#fff; border-radius:18px; padding:16px; margin-top:6px; } .ag-hero.sua { background:#1e7a46; }
 .ag-hero .k { font-size:12px; font-weight:700; letter-spacing:.06em; opacity:.8; } .ag-hero .t { font-size:24px; font-weight:800; margin:4px 0 2px; line-height:1.2; } .ag-hero .s { font-size:13px; opacity:.9; }
@@ -532,7 +533,7 @@ body.fila-v #v-fila > .ajuda-aba { margin-top:6px; }
 #menu .mt small.al { color:var(--warn); font-weight:600; } #menu .mt small.ok { color:var(--ok); font-weight:600; }
 #menu .mt .mn { position:absolute; top:10px; right:10px; min-width:22px; height:22px; border-radius:11px; background:var(--bad); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; padding:0 6px; box-sizing:border-box; }
 #bnav { display:none; }
-#v-ini > .seg2 { display:none; } body.ini-res #v-ini > .seg2 { display:flex; } .seg2 { margin-top:4px; margin-bottom:8px; } .seg2 button { flex:1 1 0; }
+#v-ini > .seg2 { display:none; } body.ini-res #v-ini > .seg2 { display:flex; } #b-ind { display:none; } body.ini-res #b-ind { display:block; } .seg2 { margin-top:4px; margin-bottom:8px; } .seg2 button { flex:1 1 0; }
 /* auxiliar de vendas: só a fila (sem menu, abas, mural, RH, comunicados) */
 body.aux .tabs, body.aux #bnav, body.aux #b-rh, body.aux #pend, body.aux #cmn-top, body.aux #mood-fila, body.aux #nuvem-foto, body.aux #dia-fila, body.aux #menu { display:none !important; }
 @media (min-width:700px) { #menu { grid-template-columns:repeat(4,minmax(0,1fr)); } }
@@ -2105,7 +2106,7 @@ function segDuplo_() {
   const par = [[['ini', '📊 Resultados', () => verResultados()], ['rel', '📄 Relatórios e PDF', () => { const t = $('tab-rel'); if (t) t.click(); else mudarAba('rel'); }]], [['est', '📦 Estoque', () => mudarAba('est')], ['prod', '📈 Produtos', () => { const t = $('tab-prod'); if (t) t.click(); else mudarAba('prod'); }]]];
   par.forEach((pp) => pp.forEach(([a]) => {
     const v = $('v-' + a); if (!v) return; let g = v.querySelector(':scope > .seg2'); if (!g) { g = el('div', 'seg seg2'); v.prepend(g); }
-    if (a === 'ini') { const h = $('i-res-h'); if (h && h.nextElementSibling !== g) h.after(g); }
+    if (a === 'ini') { const h = $('i-res-h'); if (h && h.nextElementSibling !== g) h.after(g); let bi = $('b-ind'); if (!bi) { bi = el('button', 'btn', '📈 Indicadores de venda · comparar com o ano passado'); bi.id = 'b-ind'; bi.type = 'button'; bi.style.cssText = 'width:100%;margin:0 0 10px'; bi.addEventListener('click', abrirIndicadores); } if (g.nextElementSibling !== bi) g.after(bi); }
     g.replaceChildren(...pp.map(([b, t, fn]) => { const x = el('button', b === a ? 'on' : '', t); x.type = 'button'; x.addEventListener('click', fn); return x; }));
   }));
 }
@@ -2878,6 +2879,29 @@ function cardReposicao(box) {
       w.addEventListener('click', (ev) => { ev.stopPropagation(); abrirReposicao(false, x.loja); }); c.append(w);
     });
   }).withFailureHandler(() => c.remove()).reposicaoPainel(S.token);
+}
+// 📈 indicadores de venda (iguais ao USE › Inteligência › Indicadores de Venda): período x mesmas semanas do ano passado
+function abrirIndicadores() {
+  abrirDet('📈 Indicadores de venda', (b) => {
+    const f = el('div', 'filtros'), per = el('select'), lj = el('select'); [['mes', 'Mês atual'], ['hoje', 'Hoje'], ['7', 'Últimos 7 dias'], ['mes_ant', 'Mês anterior'], ['custom', 'Personalizado…']].forEach(([v, t]) => per.append(new Option(t, v)));
+    const f2 = el('div', 'filtros hide'), d1 = el('input'), d2 = el('input'); d1.type = d2.type = 'date'; f2.append(d1, d2); f2.style.marginTop = '6px';
+    f.append(per, lj); const out = el('div'); b.append(f, f2, out);
+    const periodo = () => { const h = diaISO(0), m = h.slice(0, 8) + '01'; if (per.value === 'hoje') return [h, h]; if (per.value === '7') return [diaISO(-6), h]; if (per.value === 'mes') return [m, h];
+      if (per.value === 'mes_ant') { const d = new Date(m + 'T12:00:00'); d.setDate(0); const fim = d.toISOString().slice(0, 10); return [fim.slice(0, 8) + '01', fim]; } return [d1.value || m, d2.value || h]; };
+    const pct = (a, b) => (b ? (a - b) / b : null), n2 = (x) => String(Math.round(x * 100) / 100).replace('.', ',');
+    const card = (L, r) => { const A = L.atual, P = L.anterior, c = el('div', 'card'); c.style.marginTop = '8px'; c.append(el('b', '', L.loja));
+      const met = [['Valor vendido', A.valor, P.valor, rs], ['Vendas', A.vendas, P.vendas, String], ['Peças', A.itens, P.itens, String], ['P.A. (peças por venda)', A.vendas ? A.itens / A.vendas : 0, P.vendas ? P.itens / P.vendas : 0, n2], ['Ticket médio', A.vendas ? A.valor / A.vendas : 0, P.vendas ? P.valor / P.vendas : 0, rs], ['Preço médio da peça', A.itens ? A.valor / A.itens : 0, P.itens ? P.valor / P.itens : 0, rs]];
+      met.forEach(([nm, a, p0, fm]) => { const v = pct(a, p0), ln = el('div', 'ind-l'); const ch = el('span', 'ind-p ' + (v == null ? '' : v >= 0 ? 'up' : 'dn'), v == null ? '—' : (v >= 0 ? '+' : '') + DEC1.format(v * 100) + '%');
+        const tx = el('div'); tx.append(el('div', 'sm', nm), el('div', '', fm(a) + '  '), el('div', 'sm', 'ano passado ' + fm(p0))); ln.append(tx, ch); c.append(ln); });
+      return c; };
+    const carregar = () => { const [a, z] = periodo(); out.replaceChildren(el('div', 'sub', 'Buscando no USE… (a primeira vez de um período leva alguns segundos)'));
+      rodar('indicadoresVenda', [S.token, lj.value || 'TODAS', a, z], (r) => {
+        if (!lj.options.length) { if (r.opcoes.length > 1) lj.append(new Option('Todas as lojas', 'TODAS')); r.opcoes.forEach((l) => lj.append(new Option(l, l))); }
+        out.replaceChildren(el('div', 'sm', isoBR(r.de) + ' a ' + isoBR(r.ate) + ' comparado com ' + isoBR(r.de0) + ' a ' + isoBR(r.ate0) + ' (mesmos dias da semana do ano passado, como no USE)'));
+        if (r.total) out.append(card(r.total, r)); r.lojas.forEach((L) => out.append(card(L, r))); }, (e) => out.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e)))); };
+    per.addEventListener('change', () => { f2.classList.toggle('hide', per.value !== 'custom'); if (per.value !== 'custom') carregar(); });
+    [d1, d2].forEach((x) => x.addEventListener('change', () => { if (d1.value && d2.value) carregar(); })); lj.addEventListener('change', carregar); carregar();
+  });
 }
 // 📋 todas as avaliações em lista, com filtros (gerente e administração)
 function abrirAvaliacoes() {
