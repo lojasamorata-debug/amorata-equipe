@@ -5419,7 +5419,46 @@ $('mu-ok').addEventListener('click', () => {
   }, () => { $('mu-ok').disabled = false; $('mu-ok').textContent = 'Publicar no mural'; });
 });
 $('p-loja').addEventListener('change', carregarProdutos);
+// ADMIN: relação de todos os produtos vendidos no período, com filtros por tipo, marca e nome
+let PV = null;
+function montarVendidosAdm_() {
+  let box = $('pv-box'); if (!S || S.cargo !== 'ADMIN') { if (box) box.remove(); return; } if (box) return;
+  box = el('div', 'card'); box.id = 'pv-box'; box.style.marginTop = '10px'; $('p-filtro-box').after(box);
+  const t = el('b', '', '🧾 Todos os produtos vendidos'); box.append(t, el('div', 'sub', 'Tudo o que saiu no caixa (USE) no período, de todas as lojas ligadas à API.'));
+  const f1 = el('div', 'filtros'); f1.style.marginTop = '8px';
+  const per = el('select'); [['hoje', 'Hoje'], ['ontem', 'Ontem'], ['7', 'Últimos 7 dias'], ['mes', 'Mês atual'], ['mes_ant', 'Mês anterior'], ['custom', 'Personalizado…']].forEach(([v, t2]) => per.append(new Option(t2, v))); per.value = 'mes';
+  const lj = el('select'); lj.append(new Option('Todas as lojas', 'TODAS')); (S.lojas && S.lojas.length > 1 ? S.lojas : ['Cerâmica', 'Via Verde', 'Cruzeiro do Sul', 'Via Norte', 'Sumaúma']).filter((l) => l !== 'TODAS').forEach((l) => lj.append(new Option(l, l)));
+  f1.append(per, lj);
+  const f2 = el('div', 'filtros hide'); const d1 = el('input'), d2 = el('input'); d1.type = d2.type = 'date'; f2.append(d1, d2); f2.style.marginTop = '6px';
+  const f3 = el('div', 'filtros'); f3.style.marginTop = '6px'; const tp = el('select'), mc = el('select'), q = el('input'); q.placeholder = '🔎 nome ou referência'; q.type = 'search'; f3.append(tp, mc);
+  const res = el('div'); res.style.marginTop = '8px';
+  box.append(f1, f2, f3, q, res); q.style.marginTop = '6px'; q.style.width = '100%';
+  const periodo = () => { const h = diaISO(0), m = h.slice(0, 8) + '01';
+    if (per.value === 'hoje') return [h, h]; if (per.value === 'ontem') return [diaISO(-1), diaISO(-1)]; if (per.value === '7') return [diaISO(-6), h]; if (per.value === 'mes') return [m, h];
+    if (per.value === 'mes_ant') { const d = new Date(m + 'T12:00:00'); d.setDate(0); const fim = d.toISOString().slice(0, 10); return [fim.slice(0, 8) + '01', fim]; }
+    return [d1.value || m, d2.value || h]; };
+  const opts = (sel, rot, lista, atual) => { sel.replaceChildren(new Option(rot, '')); lista.forEach((x) => sel.append(new Option(x, x))); sel.value = lista.indexOf(atual) >= 0 ? atual : ''; sel.classList.toggle('hide', !lista.length); };
+  const nrm = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const desenha = () => {
+    if (!PV) return; const nrm = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); const tq = nrm(q.value || ''), it = PV.itens.filter((x) => (!tp.value || x.tipo === tp.value) && (!mc.value || x.marca === mc.value) && (!tq || nrm(x.nome + ' ' + x.ref).indexOf(tq) >= 0));
+    const tot = it.reduce((a, x) => [a[0] + x.qtde, a[1] + x.valor], [0, 0]);
+    res.replaceChildren(el('div', 'sm', it.length + ' produtos · ' + tot[0] + ' peças · ' + rs(tot[1]) + (PV.semApi.length ? ' · sem API: ' + PV.semApi.join(', ') : '')));
+    const sig = (l) => ({ 'Cerâmica': 'CER', 'Via Verde': 'VV', 'Cruzeiro do Sul': 'CZS', 'Via Norte': 'VN', 'Sumaúma': 'SUM' })[l] || l;
+    const wr = el('div', 'tbl-x'), tb = el('table'), hd = el('tr'); ['Produto', 'Tipo'].concat(PV.marcas.length ? ['Marca'] : [], ['Peças', 'Valor', 'Lojas']).forEach((h, i) => hd.append(el('th', /Peças|Valor/.test(h) ? 'n' : '', h)));
+    const th = el('thead'); th.append(hd); tb.append(th); const bd = el('tbody'); let mx = 300;
+    const linha = (x) => { const tr = el('tr'), td0 = el('td'); td0.append(el('div', '', x.nome), el('div', 'sm', (x.ref ? 'ref ' + x.ref : '') + (Object.keys(x.tams).length ? ' · ' + Object.keys(x.tams).map((t) => t + ':' + x.tams[t]).join(' ') : ''))); tr.append(td0, el('td', '', x.tipo)); if (PV.marcas.length) tr.append(el('td', '', x.marca || '—')); tr.append(el('td', 'n', String(x.qtde)), el('td', 'n', rs(x.valor)), el('td', 'sm', Object.keys(x.lojas).map((l) => sig(l) + ' ' + x.lojas[l]).join(' · '))); return tr; };
+    it.slice(0, mx).forEach((x) => bd.append(linha(x))); tb.append(bd); wr.append(tb); res.append(wr);
+    if (it.length > mx) { const mais = el('button', 'btn sm', 'Mostrar todos (' + it.length + ')'); mais.addEventListener('click', () => { it.slice(mx).forEach((x) => bd.append(linha(x))); mais.remove(); }); res.append(mais); }
+  };
+  const carregar = () => { const [a, b] = periodo(); res.replaceChildren(el('div', 'sub', 'Buscando as vendas no USE… (períodos longos levam alguns segundos)'));
+    rodar('produtosVendidos', [S.token, lj.value, a, b], (r) => { PV = r; r.itens.forEach((x) => { x.tipo = (String(x.nome || '').toUpperCase().split(/\s+/).find((w) => w && !/^\d+$/.test(w)) || '').replace(/[^A-ZÀ-Ú]/g, ''); }); r.tipos = [...new Set(r.itens.map((x) => x.tipo).filter(Boolean))].sort(); opts(tp, 'Todos os tipos', r.tipos, tp.value); opts(mc, 'Todas as marcas', r.marcas, mc.value); t.textContent = '🧾 Todos os produtos vendidos · ' + isoBR(r.de).slice(0, 5) + (r.de !== r.ate ? ' a ' + isoBR(r.ate).slice(0, 5) : ''); desenha(); }, (e) => res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || 'erro')))); };
+  per.addEventListener('change', () => { f2.classList.toggle('hide', per.value !== 'custom'); if (per.value !== 'custom') carregar(); });
+  [d1, d2].forEach((x) => x.addEventListener('change', () => { if (d1.value && d2.value) carregar(); })); lj.addEventListener('change', carregar);
+  [tp, mc].forEach((x) => x.addEventListener('change', desenha)); q.addEventListener('input', desenha);
+  carregar();
+}
 function carregarProdutos() {
+  try { montarVendidosAdm_(); } catch (e) {}
   $('p-tit').textContent = 'Carregando…';
   rodar('produtos', [S.token, $('p-loja').value], (r) => {
     const fim = (d) => (d || '').split('-').reverse().join('/');
