@@ -1,21 +1,8 @@
-function zzDebug(){ const out=[]; const r=dsGet_('/api/v1/vendas',{dataVendaInicio:'2026-10-31',dataVendaFim:'2026-10-31',loja:5,itensPorPagina:50,pagina:1}); const it=(r.json&&r.json.itens)||[]; out.push('n='+it.length+' keys='+Object.keys(it[0]||{}).join(','));
- it.slice(0,4).forEach((v)=>out.push(JSON.stringify({codigo:v.codigo,hora:v.hora,valorTotal:v.valorTotal,tipoVenda:v.tipoVenda,parcelas:v.parcelas,difTroca:v.difTroca,creditoLoja:v.creditoLoja,bonusValor:v.bonusValor})));
- ['/swagger/v1/swagger.json','/openapi.json','/swagger.json','/api/openapi.json'].forEach((u)=>{ try{ const x=dsGet_(u,{}); out.push(u+' '+x.status+' '+(x.json&&x.json.paths?Object.keys(x.json.paths).join(' '):String(x.texto).slice(0,80))); }catch(e){out.push(u+' erro '+e.message);} });
- Logger.log(out.join('\n')); }
-// Fila da vez – Lojas Amorata
-// Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
-// O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
-const ACESSOS_ID = '18rrkMYle6_2XjZmy_Z6TwYjuKPD6txVJdfczMNNpleQ';
-const DADOS_ID = '1OvmNgq5l19wIWiRuFNhgUCMMFhSwRPanYKkbfRDjvm8';
-const LOJAS = ['Cerâmica', 'Via Verde', 'Cruzeiro do Sul', 'Via Norte', 'Sumaúma'];
-const TZ = { 'Cerâmica': 'America/Rio_Branco', 'Via Verde': 'America/Rio_Branco', 'Cruzeiro do Sul': 'America/Rio_Branco', 'Via Norte': 'America/Manaus', 'Sumaúma': 'America/Manaus' };
-const MOTIVOS = {
-  perda: ['Só olhando', 'Voltará depois', 'Não gostou do modelo', 'Não tinha o tamanho/cor', 'Produto em falta', 'Achou caro', 'Troca/devolução', 'Outro'],
-  pausa: ['Almoço/lanche', 'Banheiro', 'Estoque/arrumação', 'Atendimento online', 'Reunião', 'Fim do turno', 'Outro'],
-  foraDaVez: ['Cliente pediu por ela', 'Cliente dela retornando', 'A da vez não estava', 'Outro'],
-  ordem: ['Combinado da equipe', 'Erro na ordem', 'Outro'],
-};
-
+function zzDebug(){ const out=[]; let pag=1,n=0,tot=0; const f={}; let vt=0,dt=0,bo=0,nv=0,devol=0,cl=0; let ik='';
+ do { const r=dsGet_('/api/v1/vendas',{dataVendaInicio:'2026-10-01',dataVendaFim:'2026-10-31',loja:5,itensPorPagina:1000,pagina:pag}); const it=(r.json&&r.json.itens)||[]; tot=r.json.totalItens||0; n+=it.length;
+  it.forEach((v)=>{ if(Number(v.excluido)===1) return; nv++; vt+=v.valorTotal||0; dt+=v.difTroca||0; bo+=v.bonusValor||0; cl+=v.creditoLoja||0; (v.parcelas||[]).forEach((p)=>{ f[p.descricao]=(f[p.descricao]||0)+(p.valor||0); }); (v.itens||[]).forEach((p)=>{ if(!ik) ik=Object.keys(p).join(','); if((p.qtde||0)<0) devol+=p.valorLiquido||0; }); });
+  pag++; } while(n<tot && pag<10);
+ out.push('vendas '+nv+' total '+vt.toFixed(2)+' difTroca '+dt.toFixed(2)+' bonus '+bo.toFixed(2)+' credLoja '+cl.toFixed(2)+' devol '+devol.toFixed(2)); out.push('formas '+JSON.stringify(f)); out.push('itemKeys '+ik); Logger.log(out.join('\n')); }
 function doGet(e) {
   if (e && e.parameter && e.parameter.av) return paginaAvaliar_(e.parameter.av);
   // o app agora é usado só pelo endereço do GitHub; este endereço do Google leva para lá
