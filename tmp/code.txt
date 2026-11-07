@@ -1,4 +1,4 @@
-function zzDebug(){ const out=[]; ['Via Verde','Sumaúma','Cerâmica'].forEach((loja)=>{ const hoje=dia_(loja), ate=somaDia_(hoje,-1), de=somaDia_(ate,-29); const l=trBrutos_(loja,de,ate), L=trLoja_(l); out.push(loja+' L at'+L.at+' n'+L.n); l.forEach((q)=>{ const r=trRaio_(q,L); out.push('  '+q.usuario+' at'+q.at+' n'+q.n+' ret'+q.ret+' foco='+r.foco+' ganho='+r.ganho+' | '+r.dims.map((d)=>d.k+':'+(d.valor==null?'-':Math.round(d.valor*100)/100)+'/'+(d.loja==null?'-':Math.round(d.loja*100)/100)).join(' ')); }); }); Logger.log(out.join('\n')); }
+function zzDebug(){ const out=[]; ['Via Verde','Sumaúma','Cerâmica','Via Norte','Cruzeiro do Sul'].forEach((loja)=>{ const hoje=dia_(loja), ate=somaDia_(hoje,-1), de=somaDia_(ate,-29); const l=trBrutos_(loja,de,ate), L=trLoja_(l); l.forEach((q)=>{ const r=trRaio_(q,L); out.push(loja.slice(0,4)+' '+q.usuario+' foco='+r.foco+' '+r.dims.map((d)=>d.k.slice(0,4)+(d.gap==null?'-':Math.round(d.gap*100))).join(' ')); }); }); Logger.log(out.join('\n')); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
@@ -5359,7 +5359,8 @@ function trValor_(q, k) {
 function trLoja_(lista) { const t = { at: 0, v: 0, olhando: 0, modelo: 0, objec: 0, n: 0, valor: 0, itens: 0, ret: 0 }; lista.forEach((q) => Object.keys(t).forEach((k) => { t[k] += q[k] || 0; })); const ativas = lista.filter((q) => q.at || q.n).length || 1; t.retMedia = t.ret / ativas; return t; }
 function trRaio_(q, L) {
   const dims = Object.keys(TR_DIMS).map((k) => { const d = TR_DIMS[k], v = trValor_(q, k), l = k === 'posvenda' ? L.retMedia : trValor_(Object.assign({}, L, { at: Math.max(L.at, 15), n: Math.max(L.n, 8) }), k);
-    let gap = null; if (v != null && l != null) gap = d[2] < 0 ? (v - l) / Math.max(l, 0.03) : (l - v) / Math.max(Math.abs(l), k === 'posvenda' ? 1 : 0.01);
+    // taxas da fila: diferença em pontos (25 pontos = 1); PA e ticket: diferença relativa; pós-venda: retornos (só vira foco quando a loja faz em média 3+)
+    let gap = null; if (v != null && l != null) gap = d[3] === 'fila' ? (d[2] < 0 ? v - l : l - v) / 0.25 : k === 'posvenda' ? (l >= 3 ? (l - v) / l : Math.min(0, (l - v) / Math.max(l, 1))) : (l - v) / Math.max(Math.abs(l), 0.01);
     return { k: k, ic: d[0], nome: d[1], valor: v, loja: l, menor: d[2] < 0, gap: gap, status: gap == null ? '' : gap <= 0 ? 'g' : gap < 0.15 ? 'y' : 'r' }; });
   let foco = null; dims.forEach((d) => { if (d.gap != null && d.gap >= 0.08 && (!foco || d.gap * TR_PESO[d.k] > foco.gap * TR_PESO[foco.k])) foco = d; });
   let ganho = null; const tk = q.n ? q.valor / q.n : 0;
