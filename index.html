@@ -1165,7 +1165,7 @@ function abrir() {
   if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirTermo(() => exigirApp(false)), 500); }
   if (fazCaminho) { ONTEM = null; ONTEM_OK = false; cardMetaLoja.pedida = cardMetaLoja.ok = false; cardMetaLoja.m = null; google.script.run.withSuccessHandler((o) => { ONTEM = o; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); }).withFailureHandler(() => { ONTEM = { semDados: true }; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
-  setTimeout(checarAvisos, 2500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 3000); setTimeout(carregarStatus, 4500); setTimeout(() => carregarTreino(), 6000); setTimeout(carregarCampeas, 3500); setTimeout(carregarEstoqueInfo, 5000); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
+  setTimeout(checarAvisos, 2500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 3000); setTimeout(carregarStatus, 4500); setTimeout(() => carregarTreino(), 6000); try { $('rp-card').classList.toggle('hide', S.cargo === 'VENDEDORA' || S.cargo === 'AUXILIAR'); } catch (e) {} setTimeout(carregarCampeas, 3500); setTimeout(carregarEstoqueInfo, 5000); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
   $('t-av').replaceChildren(...avatar(S.foto, S.nome).childNodes); if (!S.foto) $('t-av').textContent = (S.nome || '?').charAt(0);
   nuvemFoto(); desenharMood(); setTimeout(carregarDesafios, 4000);
   const sel = $('sel-loja'); sel.replaceChildren(...S.lojas.map((l) => new Option(l, l)));
@@ -5246,7 +5246,7 @@ $('fc-rede').addEventListener('click', () => fechamento('TODAS', $('fc-data').va
 $('rp-abrir').addEventListener('click', () => abrirReposicao());
 $('en-abrir').addEventListener('click', () => abrirEntradas(''));
 $('tab-est').addEventListener('click', () => { $('en-card').classList.toggle('hide', !(chefe() || S.cargo === 'ESTOQUISTA')); });
-$('tab-est').addEventListener('click', () => { if (!chefe()) return; const box = $('rp-prog'); if (!box) { const d = el('div'); d.id = 'rp-prog'; $('rp-card').after(d); } const b2 = $('rp-prog'); b2.replaceChildren(); cardReposicao(b2); });
+$('tab-est').addEventListener('click', () => { $('rp-card').classList.toggle('hide', !!S && (S.cargo === 'VENDEDORA' || S.cargo === 'AUXILIAR')); if (!chefe()) return; const box = $('rp-prog'); if (!box) { const d = el('div'); d.id = 'rp-prog'; $('rp-card').after(d); } const b2 = $('rp-prog'); b2.replaceChildren(); cardReposicao(b2); });
 $('fc-obj').addEventListener('click', () => objetivoDia($('g-loja').value, ONTEM && ONTEM.loja === $('g-loja').value ? ONTEM : null));
 // ---------- vínculo código do USE → pessoa (ADMIN) ----------
 function carregarCodUse() { const lj = $('g-loja').value; if (!lj || lj === 'TODAS') return; rodar('codigosUSE', [S.token, lj], desenharCodUse); }
