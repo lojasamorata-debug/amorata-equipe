@@ -185,6 +185,17 @@ body.ocupado #eu-acoes .btn, body.ocupado .fila-ac .btn { opacity:.55; pointer-e
 .pf-elo { background:var(--accentbg); border-left:3px solid #e8a33a; border-radius:10px; padding:8px 10px; font-size:13px; font-style:italic; margin-bottom:6px; }
 .pf-abre { width:100%; } .pf-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; margin:0 -18px; } .pf-grid .pg { position:relative; aspect-ratio:1; border:0; padding:0; background:var(--accentbg); border-radius:0; overflow:hidden; cursor:pointer; } .pf-grid img { width:100%; height:100%; object-fit:cover; } .pf-grid .pt { font-size:11px; padding:6px; display:block; color:var(--fg); }
 body:not(.adm) #mu-filtro-box { display:none; }
+.rx .rx-l { display:grid; grid-template-columns:118px 1fr 74px; gap:8px; align-items:center; padding:7px 0; border-bottom:1px solid var(--line); } .rx .rx-l:last-of-type { border:0; } .rx .n { text-align:left; } .rx .n span { display:block; font-size:13px; } .rx .n small { color:var(--muted); font-size:11px; }
+.rx-b { height:8px; border-radius:4px; background:var(--accentbg); position:relative; } .rx-b i { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:#9a93a8; } .rx-b i.g { background:#1e7a46; } .rx-b i.y { background:#e8a33a; } .rx-b i.r { background:#d64545; } .rx-b b { position:absolute; top:-3px; width:2px; height:14px; background:var(--fg); } .rx-b em { font-size:11px; color:var(--muted); position:absolute; top:-5px; }
+.rx .v { text-align:right; } .rx .v b { display:block; font-size:13.5px; } .rx .v small { color:var(--muted); font-size:10.5px; }
+.tr-foco { background:linear-gradient(135deg,#5b4a7a,#b0578d); color:#fff; border:0; } .tr-foco .k { font-size:11px; font-weight:800; letter-spacing:.08em; opacity:.85; } .tr-foco .t { font-size:18px; font-weight:800; margin:4px 0; } .tr-foco .s { font-size:13px; opacity:.95; } .tr-foco .s2 { font-size:11.5px; opacity:.8; margin-top:8px; }
+.tr-foco .st { display:flex; gap:6px; margin-top:10px; } .tr-foco .st span { flex:1; text-align:center; font-size:11.5px; padding:6px 2px; border-radius:8px; background:rgba(255,255,255,.18); } .tr-foco .st span.on { background:#fff; color:#5b4a7a; font-weight:700; }
+.tr-foco .go { display:block; width:100%; margin-top:10px; border:0; background:#fff; color:#5b4a7a; border-radius:12px; padding:11px; font:inherit; font-weight:700; font-size:15px; cursor:pointer; } .tr-foco .tr-ok { background:rgba(255,255,255,.2); border-radius:10px; padding:8px 10px; font-size:12.5px; margin-bottom:8px; }
+.tr-l p { margin:4px 0 10px; font-size:14px; line-height:1.45; } .tr-l ol { margin:6px 0 10px; padding-left:20px; font-size:14px; line-height:1.45; } .tr-l .fr { background:var(--accentbg); border-radius:10px; padding:10px; font-style:italic; font-size:13.5px; margin-bottom:10px; } .tr-ok { color:#1e7a46; font-weight:700; font-size:13px; margin-top:6px; }
+.tr-p { font-size:13.5px; margin:10px 0 4px; font-weight:600; } .tr-o { display:block; width:100%; text-align:left; border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:9px 10px; margin-top:6px; font:inherit; font-size:13.5px; color:var(--fg); cursor:pointer; } .tr-o.ok { border-color:#1e7a46; background:#e8f6ee; } .tr-o.no { border-color:#d64545; background:#fde8e8; }
+.tr-d { background:#fff7e8; border-color:#f0d3a6; } .tr-d .cnt { display:flex; gap:6px; margin-top:8px; } .tr-d .cnt button { flex:1; height:36px; border-radius:10px; border:0; background:#efe6d6; font:inherit; font-size:14px; cursor:pointer; } .tr-d .cnt button.on { background:#e8862a; color:#fff; }
+.tr-tb { width:100%; border-collapse:collapse; font-size:13px; } .tr-tb th { text-align:left; color:var(--muted); font-weight:600; font-size:11.5px; padding:6px 4px; } .tr-tb td { padding:9px 4px; border-top:1px solid var(--line); } .tr-tb td.up { color:#1e7a46; font-weight:700; } .tr-tb td.dn { color:#b3261e; }
+.ag-tr { margin:0 0 6px; }
 .mu-eu { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 12px; margin:0 0 10px; font:inherit; color:var(--fg); cursor:pointer; } .mu-eu b { display:block; font-size:14.5px; } .mu-eu span { font-size:12px; color:var(--muted); } .mu-eu i { margin-left:auto; font-style:normal; font-size:22px; color:var(--muted); } .mu-eu .av { box-shadow:0 0 0 2px #fff, 0 0 0 4px #e8862a; }
 .bp-sub { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin:0 0 10px; } .bp-sub button { flex:none; border:0; background:var(--accentbg); color:var(--accent); border-radius:10px; padding:6px 10px; font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; } .bp-sub button.on { background:#e8862a; color:#fff; }
 .bp-novo { display:block; width:100%; text-align:left; background:var(--panel); border:1px dashed #b9a9d6; border-radius:14px; padding:12px; font:inherit; font-weight:700; color:var(--accent); margin-bottom:10px; cursor:pointer; }
@@ -850,6 +861,7 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
 
     <div id="v-apr" class="hide">
       <div class="card" style="margin-top:12px" id="a-inst"><b>📲 Use como aplicativo</b><div class="sub" style="margin-top:4px">Coloque o ícone da fila na tela do seu celular e abra com um toque.</div><button class="btn sm pri" id="a-inst-b" style="margin-top:8px">Ver como instalar</button></div>
+      <div id="rx-box" class="hide"></div>
       <h2><span>🎓 Escola Amorata</span><span id="tr-n"></span></h2>
       <div class="card" id="tr-box"></div>
       <div id="tr-eq-box" class="hide"><h2><span>Equipe na trilha</span></h2><div id="tr-eq" class="corr"></div></div>
@@ -864,7 +876,7 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
 
     <div id="v-gest" class="hide">
       <div class="filtros um"><select id="g-loja"></select></div>
-      <div class="seg grade"><button id="sg-imp" class="on">📊 Vendas e fechamento</button><button id="sg-esc">🗓️ Escala</button><button id="sg-ck">📋 Tarefas</button><button id="sg-met">🎯 Metas</button><button id="sg-eq">👥 Equipe</button><button id="sg-bh">⏱️ Banco de horas</button><button id="sg-pla">🌱 Planos</button><button id="sg-pre" class="hide">🎁 Prêmios</button><button id="sg-rh" class="hide">📁 RH</button></div>
+      <div class="seg grade"><button id="sg-imp" class="on">📊 Vendas e fechamento</button><button id="sg-esc">🗓️ Escala</button><button id="sg-ck">📋 Tarefas</button><button id="sg-met">🎯 Metas</button><button id="sg-eq">👥 Equipe</button><button id="sg-bh">⏱️ Banco de horas</button><button id="sg-pla">🌱 Planos</button><button id="sg-tre">🎓 Treinos</button><button id="sg-pre" class="hide">🎁 Prêmios</button><button id="sg-rh" class="hide">📁 RH</button></div>
 
       <div id="g-imp">
         <details class="card hide" id="imp-arq" style="margin-top:12px"><summary><b>📁 Importar arquivo e API do USE</b> <span class="sub">· só se as vendas não entrarem sozinhas</span></summary>
@@ -953,6 +965,7 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
       <div id="g-eq" class="hide"></div>
       <div id="g-pre" class="hide"></div>
       <div id="g-pla" class="hide"></div>
+      <div id="g-tre" class="hide"></div>
       <div id="g-rh" class="hide"></div>
       <div id="g-bh" class="hide"></div>
     </div>
@@ -1152,7 +1165,7 @@ function abrir() {
   if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirTermo(() => exigirApp(false)), 500); }
   if (fazCaminho) { ONTEM = null; ONTEM_OK = false; cardMetaLoja.pedida = cardMetaLoja.ok = false; cardMetaLoja.m = null; google.script.run.withSuccessHandler((o) => { ONTEM = o; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); }).withFailureHandler(() => { ONTEM = { semDados: true }; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
-  setTimeout(checarAvisos, 2500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 3000); setTimeout(carregarStatus, 4500); setTimeout(carregarCampeas, 3500); setTimeout(carregarEstoqueInfo, 5000); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
+  setTimeout(checarAvisos, 2500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 3000); setTimeout(carregarStatus, 4500); setTimeout(() => carregarTreino(), 6000); setTimeout(carregarCampeas, 3500); setTimeout(carregarEstoqueInfo, 5000); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
   $('t-av').replaceChildren(...avatar(S.foto, S.nome).childNodes); if (!S.foto) $('t-av').textContent = (S.nome || '?').charAt(0);
   nuvemFoto(); desenharMood(); setTimeout(carregarDesafios, 4000);
   const sel = $('sel-loja'); sel.replaceChildren(...S.lojas.map((l) => new Option(l, l)));
@@ -2763,6 +2776,7 @@ function desenharAgora() {
     if (meta) kp(falta ? rs(falta).replace(/,\d\d$/, '') : '✅', falta ? 'falta p/ meta' : 'meta batida', falta ? 'y' : 'g', 'falta');
     kp((mh.v || 0) + ' de ' + (mh.at || 0), 'conversão', mh.at && mh.v / mh.at >= 0.5 ? 'g' : mh.at ? 'y' : '', 'conv');
     box.append(row);
+    if (TRX && TRX.raio && !(TRX.treino && TRX.treino.concluido)) { const tc = cardTreino(); tc.classList.add('ag-tr'); box.append(tit('TREINO DA SEMANA'), tc); }
     // PARA FAZER: clientes, peças que chegaram, tarefas
     const fazer = [], hj = diaISO(0);
     ((CART && CART.desejos) || []).filter((d) => d.status === 'CHEGOU').slice(0, 2).forEach((d) => fazer.push(['🛍️', 'Chegou para ' + primeiroNome(d.cliente || 'a cliente'), (d.produto || d.descricao || 'peça que ela pediu') + (d.tamanho ? ' · tam. ' + d.tamanho : ''), 'Avisar ›', abrirCart_]));
@@ -4596,8 +4610,105 @@ const QUIZ = [
   ['Uma boa mensagem de pós-venda é:', ['"Oi! Como ficou o vestido na festa? Manda foto!"', 'Mandar só a tabela de preços', 'Não mandar nada para não incomodar'], 0],
 ];
 let A_CAT = 'Abordagem', QZ = null;
+// ---------- 🎓 raio-x do atendimento + treino da semana ----------
+const TREINOS = {
+  abordagem: { t: 'Abordagem que prende a cliente', ic: '👋', pq: 'Muitas clientes saem como "só olhando". Quase sempre é porque a primeira conversa não criou interesse: a cliente se sente vigiada ou não vê motivo para ficar.',
+    passos: ['Cumprimente em até 10 segundos, com sorriso, e dê espaço: "Fique à vontade, já te mostro as novidades".', 'Puxe assunto pelo que ela está olhando: tecido, cor, coleção nova. Nunca "posso ajudar?".', 'Leve uma peça na mão e convide para provar: provar é o que transforma o "só olhando" em compra.'],
+    frase: '"Essa saia chegou ontem e está saindo muito. Quer sentir o tecido? Separo uma no seu tamanho para você provar."',
+    quiz: [['A cliente entra e diz "só estou olhando". O que fazer?', ['Deixar ela sozinha e voltar para o balcão', 'Respeitar, dizer onde estão as novidades e voltar em 1 minuto com uma peça', 'Insistir e mostrar a loja inteira'], 1], ['Qual abertura funciona melhor?', ['"Posso ajudar?"', '"Chegou coleção nova ontem, já conhece?"', '"Procurando algo?"'], 1], ['O que mais transforma visita em venda?', ['Dar desconto logo', 'Levar a cliente ao provador', 'Falar do preço'], 1]],
+    desafio: 'Convide 5 clientes "só olhando" para provar uma peça.' },
+  sondagem: { t: 'Descobrir o que a cliente quer', ic: '❓', pq: 'Quando a cliente "não gosta do modelo", faltou entender para que ela quer a peça, o estilo e o que ela já tem em casa.',
+    passos: ['Faça 2 ou 3 perguntas abertas antes de mostrar: "É para alguma ocasião?", "Como você gosta de usar?".', 'Repita o que ela disse: "Então você quer algo leve para trabalhar, que não amasse".', 'Mostre 3 opções diferentes e observe a reação para afinar.'],
+    frase: '"Me conta: é para usar no dia a dia ou para alguma ocasião especial? Assim eu já separo o que tem mais a ver com você."',
+    quiz: [['Qual é uma boa pergunta de sondagem?', ['"Vai levar?"', '"É para alguma ocasião especial?"', '"Qual seu tamanho?" e só'], 1], ['Ela não gostou das 2 primeiras peças. E agora?', ['Desistir', 'Perguntar o que não agradou e mostrar outro estilo', 'Mostrar as mesmas em outra cor'], 1], ['Quantas opções mostrar de início?', ['Só uma', 'Umas 3, diferentes entre si', 'A arara inteira'], 1]],
+    desafio: 'Faça 2 perguntas abertas antes de mostrar a peça em 5 atendimentos.' },
+  pa: { t: 'Vender o look completo', ic: '👗', pq: 'A cliente que leva só a peça que procurou sai com metade do que poderia. Mostrar o look pronto ajuda ela a se imaginar usando.',
+    passos: ['Ao separar a peça, já leve 1 complemento: blusa, sapato, cinto ou acessório.', 'No provador, entregue o look montado, não a peça solta.', 'Elogie o conjunto e mostre como fica com cada peça.'],
+    frase: '"Separei essa blusa que fica linda com a pantalona. Prova junto para você ver o look completo?"',
+    quiz: [['A cliente pediu só uma calça. O que fazer?', ['Mostrar só calças', 'Levar a calça e uma blusa que combine ao provador', 'Perguntar no caixa se quer mais alguma coisa'], 1], ['Quando oferecer o complemento?', ['Só no caixa', 'Ao separar as peças e no provador', 'Nunca, para não parecer insistente'], 1], ['O que mais ajuda a levar 2 peças?', ['Mostrar o look montado no provador', 'Dar desconto', 'Falar rápido'], 0]],
+    desafio: 'Ofereça um complemento (look completo) em 5 atendimentos.' },
+  ticket: { t: 'Aumentar o ticket médio', ic: '💰', pq: 'O ticket sobe quando a cliente entende o valor da peça. Começar pelo mais barato ou falar de desconto cedo derruba a venda.',
+    passos: ['Apresente primeiro as peças de maior valor e da coleção nova.', 'Valorize antes do preço: tecido, caimento, acabamento e quanto ela vai usar.', 'Deixe o desconto e o parcelamento para o fim, só se ela pedir.'],
+    frase: '"Esse vestido é de viscose premium, não amassa e vai do trabalho ao jantar. Prova, o caimento dele é outro nível."',
+    quiz: [['Por onde começar a mostrar?', ['Pela promoção', 'Pelas peças novas e de maior valor', 'Pelo mais barato'], 1], ['A cliente pergunta o preço logo de cara. O que fazer?', ['Dizer e oferecer desconto', 'Dizer o preço e já falar do tecido e do caimento', 'Fugir da pergunta'], 1], ['Quando falar de parcelamento?', ['No começo', 'No fechamento, se ela precisar', 'Nunca'], 1]],
+    desafio: 'Apresente uma peça de maior valor primeiro em 5 atendimentos.' },
+  objecoes: { t: 'Contornar o "achei caro" e o "vou pensar"', ic: '🤔', pq: '"Achei caro" e "vou pensar" quase sempre significam que ainda falta segurança. Dá para ajudar sem baixar o preço.',
+    passos: ['Concorde e entenda: "Entendo. O que te deixou em dúvida?".', 'Reforce o valor: durabilidade, quantas vezes ela vai usar, como ficou nela.', 'Ofereça uma saída: parcelar, separar a peça até amanhã ou anotar o contato para avisar.'],
+    frase: '"Entendo! Ficou tão bonito em você... quer que eu separe até amanhã? Assim você pensa com calma e não corre o risco de acabar o tamanho."',
+    quiz: [['A cliente diz "achei caro". Primeira coisa:', ['Dar desconto', 'Entender o que pesou e mostrar o valor da peça', 'Concordar e guardar a peça'], 1], ['Ela diz "vou pensar". O que ajuda?', ['Deixar ir sem nada', 'Oferecer separar a peça e anotar o contato para retorno', 'Insistir até ela levar'], 1], ['Como mostrar o valor?', ['Falar que todo mundo compra', 'Mostrar quantas vezes vai usar e como ficou nela', 'Comparar com a loja do lado'], 1]],
+    desafio: 'Use a frase de contorno em 5 objeções (ou anote o contato para retorno).' },
+  fechamento: { t: 'Fechar mais vendas', ic: '🤝', pq: 'Muitas clientes gostam da peça mas não são conduzidas até o caixa. Fechar é ajudar ela a decidir.',
+    passos: ['Observe os sinais de compra: volta a olhar, pergunta tamanho, pergunta forma de pagamento.', 'Faça uma pergunta de escolha, não de sim/não: "Vai levar a preta ou as duas?".', 'Depois do provador, resuma o que ficou bom e já encaminhe: "Vou levando para o caixa para você".'],
+    frase: '"Ficou perfeito! Você prefere levar a preta ou as duas cores? Vou separando no caixa para você."',
+    quiz: [['Qual é um sinal de compra?', ['A cliente olha o celular', 'Pergunta se tem outro tamanho ou a forma de pagamento', 'Diz que está com pressa'], 1], ['Qual pergunta fecha melhor?', ['"Vai querer?"', '"Prefere a preta ou as duas?"', '"Gostou?"'], 1], ['Ela gostou de 2 peças e está em dúvida. O que fazer?', ['Deixar decidir sozinha', 'Lembrar como cada uma ficou e sugerir levar as duas', 'Dizer que tanto faz'], 1]],
+    desafio: 'Use uma pergunta de escolha para fechar em 5 atendimentos.' },
+  posvenda: { t: 'Pós-venda que traz a cliente de volta', ic: '📲', pq: 'Cliente que recebe atenção depois da compra volta mais. O retorno é a venda mais fácil do mês.',
+    passos: ['Depois de cada venda, anote a cliente para pós-venda no app.', 'Em 2 ou 3 dias mande mensagem: "Como ficou o look? Usou já?".', 'Quando chegar novidade do estilo dela, avise primeiro ela.'],
+    frase: '"Oi Maria! Aqui é a Ana da Amorata 💜 E aí, já estreou o vestido? Chegou uma sandália que vai ficar perfeita com ele, quer que eu separe?"',
+    quiz: [['Quando mandar a mensagem de pós-venda?', ['Nunca', 'Em 2 ou 3 dias depois da compra', 'Só no aniversário'], 1], ['O que falar no pós-venda?', ['Só "compre mais"', 'Perguntar como ficou e oferecer algo que combine', 'Mandar a tabela de preços'], 1], ['Por que anotar a cliente no app?', ['Para lembrar o dia certo do retorno', 'Não precisa', 'Para a gerente cobrar'], 0]],
+    desafio: 'Faça 5 retornos de pós-venda pelo app (Minhas clientes).' },
+};
+const TR_FMT = (k, v) => v == null ? '—' : k === 'ticket' ? rs(v).replace(/,\d\d$/, '') : k === 'pa' ? DEC1.format(v) : k === 'posvenda' ? String(Math.round(v)) : Math.round(v * 100) + '%';
+const TR_SUB = { abordagem: '"só olhando"', sondagem: '"não gostou do modelo"', pa: 'peças por venda', ticket: 'valor por venda', objecoes: '"caro" / "vou pensar"', fechamento: 'conversão da fila', posvenda: 'retornos feitos' };
+let TRX = null;
+function carregarTreino(cb) { if (!S || S.cargo !== 'VENDEDORA') return; rodar('treinoSemana', [S.token], (r) => { TRX = r; desenharRaio(); try { desenharAgora(); } catch (e) {} if (cb) cb(r); }, () => {}); }
+// barras do raio-x (vendedora vê o dela; gerente vê de qualquer uma)
+function barrasRaio(r) {
+  const c = el('div', 'card rx'); r.raio.dims.forEach((d) => { const ln = el('div', 'rx-l'), nm = el('div', 'n'); nm.append(el('span', '', d.ic + ' ' + d.nome), el('small', '', TR_SUB[d.k])); const br = el('div', 'rx-b');
+    if (d.valor != null && d.loja != null) { const mx = Math.max(d.valor, d.loja) * 1.35 || 1, i = el('i', d.status); i.style.width = Math.min(100, d.valor / mx * 100) + '%'; const m = el('b'); m.style.left = Math.min(99, d.loja / mx * 100) + '%'; br.append(i, m); } else br.append(el('em', '', 'poucos dados'));
+    const vv = el('div', 'v'); vv.append(el('b', '', TR_FMT(d.k, d.valor)), el('small', '', 'loja ' + TR_FMT(d.k, d.loja))); ln.append(nm, br, vv); c.append(ln); });
+  c.append(el('div', 'sm', '│ = média da loja · verde = melhor que a loja · laranja = atenção · vermelho = foco. Últimos 30 dias.')); return c;
+}
+function desenharRaio() {
+  const box = $('rx-box'); if (!box) return; box.replaceChildren(); if (!TRX || !TRX.raio || S.cargo !== 'VENDEDORA') { box.classList.add('hide'); return; } box.classList.remove('hide');
+  const h = el('h2'); h.append(el('span', '', '🔎 Meu raio-x do atendimento')); box.append(h, barrasRaio(TRX)); box.append(cardTreino());
+}
+function cardTreino() {
+  const t = TRX && TRX.treino, k = t ? t.foco : TRX && TRX.raio.foco, c = el('div', 'card tr-foco');
+  if (TRX && TRX.anterior && TRX.anterior.melhorou === 'SIM') c.append(el('div', 'tr-ok', '📈 Você melhorou no treino da semana passada (' + TREINOS[TRX.anterior.foco].t + ')! Medalha conquistada 🎖️'));
+  if (!k || !TREINOS[k]) { c.append(el('div', 'k', '🏆 SEM PONTO FRACO NESTA SEMANA'), el('div', 't', 'Você está igual ou melhor que a loja em tudo!'), el('div', 's', 'Que tal ajudar uma colega? Compartilhe uma boa prática no Mural ✨')); return c; }
+  const T = TREINOS[k], d = TRX.raio.dims.find((x) => x.k === k);
+  c.append(el('div', 'k', '🎯 SEU FOCO DESTA SEMANA'), el('div', 't', T.ic + ' ' + T.t), el('div', 's', (d && d.valor != null ? d.nome + ': ' + TR_FMT(k, d.valor) + ' (loja ' + TR_FMT(k, d.loja) + ').' : '') + (TRX.raio.ganho && TRX.raio.foco === k ? ' Chegando na média da loja ≈ +' + rs(TRX.raio.ganho).replace(/,\d\d$/, '') + ' por mês.' : '')));
+  const st = el('div', 'st'); [['Lição', t && t.licao], ['Quiz', t && t.quiz != null], ['Desafio ' + ((t && t.desafio) || 0) + '/5', t && t.desafio >= 5]].forEach(([n, ok]) => st.append(el('span', ok ? 'on' : '', (ok ? '✓ ' : '') + n))); c.append(st);
+  const b = el('button', 'go', t && t.concluido ? '✅ Treino concluído · rever' : 'Começar treino · 5 min'); b.addEventListener('click', abrirTreino); c.append(b);
+  c.append(el('div', 's2', 'Na próxima segunda o app compara seu número desta semana com o de antes.')); return c;
+}
+function abrirTreino() {
+  const t = TRX && TRX.treino, k = t ? t.foco : TRX.raio.foco, T = TREINOS[k]; if (!T) return;
+  abrirDet(T.ic + ' ' + T.t, (b) => { const pinta = () => { b.replaceChildren(); const tt = TRX.treino || {};
+    const l = el('div', 'card tr-l'); l.append(el('b', '', 'Por que importa'), el('p', '', T.pq), el('b', '', 'Como fazer')); const ol = el('ol'); T.passos.forEach((p) => ol.append(el('li', '', p))); l.append(ol, el('div', 'fr', T.frase));
+    if (!tt.licao) { const ok = el('button', 'btn pri', '✓ Li a lição'); ok.addEventListener('click', () => { ok.disabled = true; rodar('treinoMarcar', [S.token, 'licao'], (r) => { TRX = r; pinta(); desenharRaio(); }); }); l.append(ok); } else l.append(el('div', 'tr-ok', '✓ Lição lida')); b.append(l);
+    const qz = el('div', 'card'); qz.append(el('b', '', '🧠 Quiz rápido')); if (tt.quiz != null) qz.append(el('div', 'tr-ok', '✓ Quiz feito: ' + tt.quiz + ' de 3'));
+    else { let ac = 0, resp = 0; T.quiz.forEach(([p, ops, cor], i) => { qz.append(el('div', 'tr-p', (i + 1) + '. ' + p)); const g = el('div'); ops.forEach((o, j) => { const x = el('button', 'tr-o', o); x.type = 'button'; x.addEventListener('click', () => { if (g.dataset.r) return; g.dataset.r = 1; resp++; if (j === cor) ac++; x.classList.add(j === cor ? 'ok' : 'no'); if (j !== cor) g.children[cor].classList.add('ok');
+      if (resp === 3) rodar('treinoMarcar', [S.token, 'quiz', ac], (r) => { TRX = r; toast(ac === 3 ? 'Acertou tudo! 🎉' : ac + ' de 3 · confira as respostas certas em verde'); setTimeout(pinta, 1500); desenharRaio(); }); }); g.append(x); }); qz.append(g); }); }
+    b.append(qz);
+    const ds = el('div', 'card tr-d'); ds.append(el('b', '', '🏁 Desafio na loja'), el('div', 'sm', T.desafio + ' Marque aqui cada vez que fizer:')); const cn = el('div', 'cnt'); for (let i = 1; i <= 5; i++) { const x = el('button', i <= tt.desafio ? 'on' : '', i <= tt.desafio ? '✓' : String(i)); x.type = 'button'; x.addEventListener('click', () => { const v = i <= tt.desafio ? -1 : 1; if (v === 1 && i !== tt.desafio + 1) return; rodar('treinoMarcar', [S.token, 'desafio', v], (r) => { TRX = r; pinta(); desenharRaio(); if (r.treino && r.treino.concluido && v === 1 && r.treino.desafio === 5) toast('Treino da semana concluído! 🎉 Na segunda sai o resultado.'); }); }); cn.append(x); } ds.append(cn); b.append(ds);
+    b.append(el('div', 'card sm', '📈 Resultado: na próxima segunda o app compara seu número desta semana com o de antes. Melhorou → medalha 📈 Evoluiu no treino e o próximo ponto.')); };
+    pinta(); });
+}
+// --- Gestão › 🎓 Treinos ---
+function desenharTreinosEq(r) {
+  const b = $('g-tre'); b.replaceChildren(); b.append(el('div', 'sub', r.loja + ' · semana de ' + isoBR(r.semana).slice(0, 5) + ' · raio-x dos últimos 30 dias'));
+  const c = el('div', 'card'), tb = el('table', 'tr-tb'), hd = el('tr'); ['Consultora', 'Foco', 'Treino', 'Semana passada'].forEach((t) => hd.append(el('th', '', t))); tb.append(hd);
+  r.pessoas.forEach((p) => { const tr = el('tr'); tr.style.cursor = 'pointer'; const T = TREINOS[p.foco];
+    tr.append(el('td', '', primeiroNome(p.nome)), el('td', '', T ? T.ic + ' ' + (r.pessoas && p.raio.dims.find((d) => d.k === p.foco) ? p.raio.dims.find((d) => d.k === p.foco).nome : '') : '🏆 sem foco'));
+    const t = p.treino; tr.append(el('td', '', !t ? 'ainda não abriu' : t.concluido ? '✅ feito' : '⏳ ' + [t.licao, t.quiz != null, t.desafio >= 5].filter(Boolean).length + '/3'));
+    const a = p.anterior; tr.append(el('td', a && a.melhorou === 'SIM' ? 'up' : a && a.melhorou === 'NAO' ? 'dn' : '', !a ? '—' : a.melhorou === 'SIM' ? '↑ melhorou' : a.melhorou === 'NAO' ? '↓ não melhorou' : a.melhorou === 'SEM DADOS' ? 'poucos dados' : '…'));
+    tr.addEventListener('click', () => abrirRaioPessoa(p, r)); tb.append(tr); }); c.append(tb); b.append(c);
+  if (r.maior && TREINOS[r.maior.k]) b.append(el('div', 'card sm', '📊 Maior dificuldade da loja: ' + TREINOS[r.maior.k].ic + ' ' + TREINOS[r.maior.k].t + ' (' + r.maior.n + ' de ' + r.maior.total + ' consultoras). Sugestão: tema da reunião do dia.'));
+  b.append(el('div', 'sm', 'Toque na consultora para ver o raio-x completo e o roteiro da conversa 1:1. Cada consultora vê só o próprio raio-x.'));
+}
+function abrirRaioPessoa(p, r) {
+  abrirDet('🔎 ' + primeiroNome(p.nome), (b) => { b.append(barrasRaio(p));
+    const ok = p.raio.dims.filter((d) => d.gap != null).sort((a, x) => a.gap - x.gap), forte = ok[0], f = p.raio.dims.find((d) => d.k === p.foco), T = TREINOS[p.foco];
+    const c = el('div', 'card'); c.append(el('b', '', '🗣️ Roteiro para a conversa 1:1')); const ol = el('ol');
+    if (forte && forte.gap < 0) ol.append(el('li', '', 'Comece pelo ponto forte: ' + forte.nome.toLowerCase() + ' ' + TR_FMT(forte.k, forte.valor) + ' (loja ' + TR_FMT(forte.k, forte.loja) + ').'));
+    if (f && T) { ol.append(el('li', '', 'Mostre o ponto a melhorar: ' + f.nome.toLowerCase() + ' ' + TR_FMT(f.k, f.valor) + ' x loja ' + TR_FMT(f.k, f.loja) + '.')); ol.append(el('li', '', 'Combine a ação da semana: ' + T.desafio)); ol.append(el('li', '', 'Treine a frase junto: ' + T.frase)); }
+    else ol.append(el('li', '', 'Ela está igual ou acima da loja em tudo: reconheça e peça para ela compartilhar uma boa prática no Mural.'));
+    ol.append(el('li', '', 'Registre o combinado no Plano do mês (Gestão › Planos).')); c.append(ol); b.append(c); });
+}
 function carregarAprender() {
-  carregarTrilha();
+  carregarTrilha(); carregarTreino();
   desenharManual(); if (!QZ) novoQuiz(); else desenharQuiz();
   $('a-dica-novo').classList.toggle('hide', !chefe());
   rodar('dicasGerente', [S.token], desenharDicas, () => {});
@@ -4821,8 +4932,8 @@ function formBHSaldo(p, tipo) {
   const ov = el('div', 'bh-ov'); ov.id = 'bh-ov'; ov.append(f); ov.addEventListener('click', (e) => { if (e.target === ov) escolherFechar(); }); document.body.append(ov); setTimeout(() => hr.focus(), 100);
 }
 function escolherFechar() { const o = $('bh-ov'); if (o) o.remove(); }
-function abaGest(q) { G_ABA = q; ['imp', 'met', 'ck', 'esc', 'bh', 'eq', 'pre', 'pla', 'rh'].forEach((x) => { $('sg-' + x).classList.toggle('on', x === q); $('g-' + x).classList.toggle('hide', x !== q); }); carregarGestao(); }
-['imp', 'met', 'ck', 'esc', 'bh', 'eq', 'pre', 'pla', 'rh'].forEach((x) => $('sg-' + x).addEventListener('click', () => abaGest(x)));
+function abaGest(q) { G_ABA = q; ['imp', 'met', 'ck', 'esc', 'bh', 'eq', 'pre', 'pla', 'rh', 'tre'].forEach((x) => { $('sg-' + x).classList.toggle('on', x === q); $('g-' + x).classList.toggle('hide', x !== q); }); carregarGestao(); }
+['imp', 'met', 'ck', 'esc', 'bh', 'eq', 'pre', 'pla', 'rh', 'tre'].forEach((x) => $('sg-' + x).addEventListener('click', () => abaGest(x)));
 ['ABERTURA', 'FECHAMENTO'].forEach((t) => $('gc-ok-' + t).addEventListener('click', () => rodar('salvarChecklist', [S.token, $('g-loja').value, t, $('gc-' + t).value.split('\n')], (r) => { desenharCkEd(r); toast('Checklist salvo ✅'); if ($('g-loja').value === loja) desenharCk(r); })));
 function desenharCkEd(r) { r.turnos.forEach((t) => { $('gc-' + t.turno).value = t.itens.map((x) => x.texto).join('\n'); }); CKE = r; desenharTarefasEd(r); }
 let CKE = null; const DS_C = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -4860,6 +4971,7 @@ function carregarGestao() {
   if (G_ABA === 'pre') { rodar('premiosAdm', [S.token], desenharPremiosAdm); return; }
   if (G_ABA === 'rh') { rodar('rhLista', [S.token, RH_SEL], desenharRHAdm); return; }
   if (G_ABA === 'pla') { rodar('planosLoja', [S.token, lj, ''], desenharPlanos); return; }
+  if (G_ABA === 'tre') { $('g-tre').replaceChildren(el('div', 'sub', 'Montando o raio-x da equipe…')); rodar('treinosEquipe', [S.token, lj], desenharTreinosEq); return; }
   if (G_ABA === 'imp') { if (!$('gi-data').value) $('gi-data').value = ontemISO(); $('gt-card').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('imp-arq').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('fc-rede').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); carregarDS(); if (!$('fc-data').value) $('fc-data').value = ontemISO(); if (!$('gt-data').value) $('gt-data').value = ontemISO(); rodar('statusVendas', [S.token, lj], desenharStatusVendas); }
   if (G_ABA === 'met') { prepMeses(); rodar('metasDoMes', [S.token, lj, $('gm-mes').value], desenharMetasEd); rodar('distribuicaoMeta', [S.token, lj, $('gm-mes').value], desenharDistrib); }
   if (G_ABA === 'ck') rodar('checklist', [S.token, lj], desenharCkEd);
