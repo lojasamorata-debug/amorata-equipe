@@ -1,9 +1,4 @@
-function zzDebug(){ const sh=aba_('FinLanc',H_FLC), v=sh.getDataRange().getDisplayValues(), raw=sh.getDataRange().getValues(); const out=['linhas '+(v.length-1)];
- v.slice(1,4).forEach((r,i)=>out.push(JSON.stringify(r.slice(0,12).map(String).map((x)=>x.slice(0,30)))+' raw3='+Object.prototype.toString.call(raw[i+1][3])+' raw8='+Object.prototype.toString.call(raw[i+1][8])+':'+String(raw[i+1][8]).slice(0,30)));
- const c={}; v.slice(1).forEach((r)=>{ if(r[6]) { const k=r[6]+'|'+r[8]+'|'+r[7]; c[k]=(c[k]||0)+1; } }); out.push(JSON.stringify(c));
- out.push('desp out: '+JSON.stringify(finDespesasMes_('2026-10').slice(0,5)));
- out.push('regras '+JSON.stringify(aba_('FinRegras',H_FRG).getDataRange().getDisplayValues().slice(0,4)));
- Logger.log(out.join('\n')); }
+function zzDebug(){ ['FinLanc','FinDespesas','FinReceb','FinMes'].forEach((n)=>{ try{ finAba_(n, {FinLanc:H_FLC,FinDespesas:H_FDP,FinReceb:H_FRC,FinMes:H_FMS}[n]); }catch(e){ Logger.log(n+' '+e.message); } }); const c={}; finAba_('FinLanc',H_FLC).getDataRange().getDisplayValues().slice(1).forEach((r)=>{ if(r[6]) { const k=r[6]+'|'+r[8]; c[k]=(c[k]||0)+1; } }); Logger.log(JSON.stringify(c)+' fm='+JSON.stringify(finAba_('FinMes',H_FMS).getDataRange().getDisplayValues().map((r)=>r[0]+' '+r[1]))); const d9=finDespesasMes_('2026-09'), d10=finDespesasMes_('2026-10'); Logger.log('set '+d9.length+' R$'+d9.reduce((a,x)=>a+x.valor,0)+' | out '+d10.length+' R$'+d10.reduce((a,x)=>a+x.valor,0)); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
@@ -5442,7 +5437,7 @@ const finNum_ = (v) => { const n = Number(String(v).replace(',', '.')); return i
 const finMesAnt_ = (m, k) => { const d = new Date(Date.UTC(+m.slice(0, 4), +m.slice(5, 7) - 1 - k, 1)); return d.toISOString().slice(0, 7); };
 // números do mês de uma loja pela API do USE (mês fechado fica guardado na aba FinMes)
 function finMes_(loja, mes) {
-  const hoje = dia_(loja), atual = mes >= hoje.slice(0, 7), sh = aba_('FinMes', H_FMS), v = sh.getDataRange().getDisplayValues(), i = v.findIndex((r, k) => k > 0 && r[0] === loja && r[1] === mes);
+  const hoje = dia_(loja), atual = mes >= hoje.slice(0, 7), sh = finAba_('FinMes', H_FMS), v = sh.getDataRange().getDisplayValues(), i = v.findIndex((r, k) => k > 0 && r[0] === loja && r[1] === mes);
   if (i >= 1 && !atual) try { return JSON.parse(v[i][2]); } catch (e) {}
   const ck = 'finm_' + norm_(loja).replace(/\s/g, '_') + mes, c = CacheService.getScriptCache(), hit = atual ? c.get(ck) : null; if (hit) return JSON.parse(hit);
   const ln = Object.keys(LOJA_COD).find((k) => LOJA_COD[k] === loja), de = mes + '-01', fim = somaDia_(finMesAnt_(mes, -1) + '-01', -1), ate = fim < hoje ? fim : hoje;
@@ -5464,15 +5459,15 @@ function finMes_(loja, mes) {
 const SIMPLES_I = [[180000, 0.04, 0], [360000, 0.073, 5940], [720000, 0.095, 13860], [1800000, 0.107, 22500], [3600000, 0.143, 87300], [4800000, 0.19, 378000]];
 function finAliquota_(loja, mes, cfg) {
   const lc = (cfg.lojas || {})[loja] || {}; if (lc.das) return { pct: finNum_(lc.das) / 100, fonte: 'DAS informado' };
-  const meses = []; for (let k = 1; k <= 12; k++) { const m = finMesAnt_(mes, k), r = aba_('FinMes', H_FMS).getDataRange().getDisplayValues().find((x) => x[0] === loja && x[1] === m); if (r) try { meses.push(JSON.parse(r[2]).pago); } catch (e) {} }
+  const meses = []; for (let k = 1; k <= 12; k++) { const m = finMesAnt_(mes, k), r = finAba_('FinMes', H_FMS).getDataRange().getDisplayValues().find((x) => x[0] === loja && x[1] === m); if (r) try { meses.push(JSON.parse(r[2]).pago); } catch (e) {} }
   let rbt = meses.length ? meses.reduce((a, b) => a + b, 0) * 12 / meses.length : finMes_(loja, mes).pago * 12; const f = SIMPLES_I.find((x) => rbt <= x[0]) || SIMPLES_I[SIMPLES_I.length - 1];
   return { pct: rbt > 0 ? Math.max(0, (rbt * f[1] - f[2]) / rbt) : 0.04, fonte: 'estimada (Anexo I, ' + (meses.length >= 12 ? '12 meses' : meses.length ? meses.length + ' meses, anualizado' : 'mês anualizado') + ')' };
 }
 function finDespesasMes_(mes) {
   const out = [];
-  aba_('FinDespesas', H_FDP).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (r[8] === 'NAO' || !r[0]) return; const fixa = r[1] === 'FIXA';
+  finAba_('FinDespesas', H_FDP).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (r[8] === 'NAO' || !r[0]) return; const fixa = r[1] === 'FIXA';
     if (fixa ? (r[6] <= mes && (!r[7] || r[7] >= mes)) : r[6] === mes) out.push({ id: r[0], origem: fixa ? 'fixa' : 'manual', categoria: r[2], descricao: r[3], valor: finNum_(r[4]), destino: r[5] }); });
-  aba_('FinLanc', H_FLC).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (!r[0] || r[8] !== mes || !r[6] || !FIN_CATS[r[6]]) return; const v = finNum_(r[4]);
+  finAba_('FinLanc', H_FLC).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (!r[0] || r[8] !== mes || !r[6] || !FIN_CATS[r[6]]) return; const v = finNum_(r[4]);
     if ((FIN_CATS[r[6]][2] === 'dre' || FIN_CATS[r[6]][2] === 'imposto') && v < 0) out.push({ id: r[0], origem: 'extrato', categoria: r[6], descricao: r[5], valor: -v, destino: r[7] || r[1], data: r[3] });
     if (FIN_CATS[r[6]][2] === 'receita' && v > 0) out.push({ id: r[0], origem: 'extrato', categoria: r[6], descricao: r[5], valor: v, destino: r[7] || r[1], data: r[3] }); });
   return out;
@@ -5491,7 +5486,7 @@ function finColuna_(lojaSel, mes, cfg) {
     if (das[l]) { c.simples += das[l]; c.aliq[l] = { pct: m.pago ? das[l] / m.pago : 0, fonte: 'DAS pago ' + Math.round(das[l] * 100) / 100, das: true }; }
     else { const al = finAliquota_(l, mes, cfg); al.estimado = true; c.aliq[l] = al; c.simples += m.pago * al.pct; c.simplesEstimado = (c.simplesEstimado || 0) + 1; } });
   // taxas de cartão: pelos recebíveis importados do mês
-  aba_('FinReceb', H_FRC).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (lojas.indexOf(r[1]) < 0 || r[2].slice(0, 7) !== mes || r[7] !== 'Aprovada') return; c.cartao += finNum_(r[10]); });
+  finAba_('FinReceb', H_FRC).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (lojas.indexOf(r[1]) < 0 || r[2].slice(0, 7) !== mes || r[7] !== 'Aprovada') return; c.cartao += finNum_(r[10]); });
   c.cartaoFonte = c.cartao ? 'recebíveis importados' : '';
   finDespesasMes_(mes).forEach((d) => { if (d.categoria === 'das') return; const pt = finParte_(d.destino, lojaSel, d.destino === 'RATEIO_VENDA' && lojaSel !== 'REDE' ? pesosDe() : {}); if (!pt) return; if (d.categoria === 'rendimento') { c.rendimentos += d.valor * pt; return; } if (d.categoria === 'entrega') { c.entregas += d.valor * pt; return; } c.desp[d.categoria] = (c.desp[d.categoria] || 0) + d.valor * pt; });
   if (c.cartao && c.desp.taxas) c.desp.taxas_aviso = 1;
@@ -5508,19 +5503,19 @@ function finDRE_(lojaSel, mes) {
 }
 // --- despesas lançadas no app ---
 function finDespesas(token, mes) { finAdm_(token); const cfg = finCfg_(); const lst = finDespesasMes_(mes);
-  const fixasAll = aba_('FinDespesas', H_FDP).getDataRange().getDisplayValues().slice(1).filter((r) => r[0] && r[1] === 'FIXA' && r[8] !== 'NAO').map((r) => ({ id: r[0], categoria: r[2], descricao: r[3], valor: finNum_(r[4]), destino: r[5], desde: r[6], ate: r[7] }));
+  const fixasAll = finAba_('FinDespesas', H_FDP).getDataRange().getDisplayValues().slice(1).filter((r) => r[0] && r[1] === 'FIXA' && r[8] !== 'NAO').map((r) => ({ id: r[0], categoria: r[2], descricao: r[3], valor: finNum_(r[4]), destino: r[5], desde: r[6], ate: r[7] }));
   const ant = finDespesasMes_(finMesAnt_(mes, 1)).filter((d) => d.origem === 'manual'), falta = ant.filter((a) => !lst.some((d) => d.origem === 'manual' && norm_(d.descricao) === norm_(a.descricao) && d.destino === a.destino)).map((a) => a.descricao + ' (' + (a.destino.indexOf('RATEIO') === 0 ? 'rateio' : a.destino) + ')');
   return { mes: mes, lista: lst, fixas: fixasAll, falta: falta, cats: FIN_CATS, lojas: LOJAS, cfg: cfg };
 }
 function finDespesaSalvar(token, d) {
   finAdm_(token); d = d || {}; if (!FIN_CATS[d.categoria] || (FIN_CATS[d.categoria][2] !== 'dre' && d.categoria !== 'das')) throw new Error('Escolha a categoria.'); const v = finNum_(d.valor); if (!(v > 0)) throw new Error('Informe o valor.');
   if (!/^\d{4}-\d{2}$/.test(String(d.competencia || ''))) throw new Error('Informe o mês.'); const dest = d.destino === 'RATEIO_VENDA' || d.destino === 'RATEIO_IGUAL' ? d.destino : lojaCanon_(d.destino); if (!dest) throw new Error('Escolha a loja.');
-  const sh = aba_('FinDespesas', H_FDP), lin = [d.id || Utilities.getUuid().slice(0, 8), d.fixa ? 'FIXA' : 'MES', d.categoria, String(d.descricao || '').trim().slice(0, 100) || FIN_CATS[d.categoria][1], v, dest, d.competencia, d.ate || '', 'SIM', agoraBR_()];
+  const sh = finAba_('FinDespesas', H_FDP), lin = [d.id || Utilities.getUuid().slice(0, 8), d.fixa ? 'FIXA' : 'MES', d.categoria, String(d.descricao || '').trim().slice(0, 100) || FIN_CATS[d.categoria][1], v, dest, d.competencia, d.ate || '', 'SIM', agoraBR_()];
   const v0 = sh.getDataRange().getDisplayValues(), i = d.id ? v0.findIndex((r, k) => k > 0 && r[0] === d.id) : -1;
   if (i >= 1) sh.getRange(i + 1, 1, 1, lin.length).setValues([linha_(lin)]); else sh.appendRow(linha_(lin)); return finDespesas(token, d.competencia);
 }
 // apagar: fixa = para de repetir a partir deste mês (os meses anteriores continuam)
-function finDespesaApagar(token, id, mes) { finAdm_(token); const sh = aba_('FinDespesas', H_FDP), v = sh.getDataRange().getDisplayValues(), i = v.findIndex((r, k) => k > 0 && r[0] === id); if (i < 1) throw new Error('Não encontrada.');
+function finDespesaApagar(token, id, mes) { finAdm_(token); const sh = finAba_('FinDespesas', H_FDP), v = sh.getDataRange().getDisplayValues(), i = v.findIndex((r, k) => k > 0 && r[0] === id); if (i < 1) throw new Error('Não encontrada.');
   if (v[i][1] === 'FIXA' && v[i][6] < mes) sh.getRange(i + 1, 8).setValue(finMesAnt_(mes, 1)); else sh.getRange(i + 1, 9).setValue('NAO'); return finDespesas(token, mes); }
 function finCfgSalvar(token, cfg) { finAdm_(token); const o = finCfg_(); o.lojas = o.lojas || {}; ((cfg && cfg.lojas) ? Object.keys(cfg.lojas) : []).forEach((l) => { if (LOJAS.indexOf(l) < 0) return; const x = cfg.lojas[l] || {}; o.lojas[l] = { empresa: String(x.empresa || '').slice(0, 80), das: x.das === '' || x.das == null ? '' : finNum_(x.das) }; });
   PropertiesService.getScriptProperties().setProperty('FIN_CFG', JSON.stringify(o)); return o; }
@@ -5529,7 +5524,7 @@ function finChave_(memo) { return norm_(String(memo || '').replace(/\d[\d.\/\-]*
 function finRegras_() { const o = {}; aba_('FinRegras', H_FRG).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (r[0]) o[r[0]] = { categoria: r[1], destino: r[2], desloc: Math.max(-12, Math.min(12, Math.round(Number(r[4]) || 0))) }; }); return o; }
 function finImportarExtrato(token, loja, conta, arquivo, linhas) {
   finAdm_(token); loja = lojaCanon_(loja); if (!loja) throw new Error('Escolha a loja/empresa desta conta.'); if (!Array.isArray(linhas) || !linhas.length) throw new Error('Nenhum lançamento no arquivo.');
-  const sh = aba_('FinLanc', H_FLC), v = sh.getDataRange().getDisplayValues(), ja = new Set(v.slice(1).map((r) => r[0])), rg = finRegras_(), novas = []; let dup = 0, auto = 0;
+  const sh = finAba_('FinLanc', H_FLC), v = sh.getDataRange().getDisplayValues(), ja = new Set(v.slice(1).map((r) => r[0])), rg = finRegras_(), novas = []; let dup = 0, auto = 0;
   linhas.slice(0, 3000).forEach((x) => { const d = String(x.data || '').slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return; const val = Math.round(finNum_(x.valor) * 100) / 100; if (!val) return;
     const id = 'L' + String(x.id || (d + '_' + val + '_' + x.memo)).replace(/[^\w\-.]/g, '').slice(0, 60) + '_' + norm_(conta).replace(/\W/g, '').slice(0, 12); if (ja.has(id)) { dup++; return; } ja.add(id);
     const memo = String(x.memo || '').trim().slice(0, 140), r = rg[finChave_(memo) + (val < 0 ? '|S' : '|E')]; if (r) auto++;
@@ -5538,11 +5533,11 @@ function finImportarExtrato(token, loja, conta, arquivo, linhas) {
   return { novas: novas.length, duplicadas: dup, auto: auto };
 }
 function finExtrato(token, loja, mes) { finAdm_(token);
-  const v = aba_('FinLanc', H_FLC).getDataRange().getDisplayValues().slice(1).filter((r) => r[0] && (!loja || loja === 'REDE' || r[1] === loja) && (!mes || r[3].slice(0, 7) === mes));
+  const v = finAba_('FinLanc', H_FLC).getDataRange().getDisplayValues().slice(1).filter((r) => r[0] && (!loja || loja === 'REDE' || r[1] === loja) && (!mes || r[3].slice(0, 7) === mes));
   return { lista: v.map((r) => ({ id: r[0], loja: r[1], conta: r[2], data: r[3], valor: finNum_(r[4]), memo: r[5], categoria: r[6], destino: r[7], competencia: r[8], auto: r[11] === 'auto' })).sort((a, b) => a.data < b.data ? 1 : -1), cats: FIN_CATS, lojas: LOJAS }; }
 // classificar: aplica nos ids e (se aprender) em todos os parecidos ainda sem categoria + guarda a regra
 function finClassificar(token, ids, categoria, destino, competencia, aprender) {
-  finAdm_(token); if (categoria && !FIN_CATS[categoria]) throw new Error('Categoria inválida.'); const sh = aba_('FinLanc', H_FLC), v = sh.getDataRange().getDisplayValues(), set = new Set(ids || []), chaves = {};
+  finAdm_(token); if (categoria && !FIN_CATS[categoria]) throw new Error('Categoria inválida.'); const sh = finAba_('FinLanc', H_FLC), v = sh.getDataRange().getDisplayValues(), set = new Set(ids || []), chaves = {};
   let desloc = 0; v.forEach((r, i) => { if (i && set.has(r[0])) { chaves[finChave_(r[5]) + (finNum_(r[4]) < 0 ? '|S' : '|E')] = 1; if (/^\d{4}-\d{2}$/.test(String(competencia || ''))) desloc = finMesesEntre_(r[3].slice(0, 7), competencia); } });
   let n = 0; const itens = []; v.forEach((r, i) => { if (!i) return; const k = finChave_(r[5]) + (finNum_(r[4]) < 0 ? '|S' : '|E'); const alvo = set.has(r[0]) || (aprender && chaves[k] && !r[6]); if (!alvo) return; n++;
     r[6] = categoria || ''; r[7] = categoria ? (destino || r[1]) : ''; if (!categoria) r[8] = r[3].slice(0, 7); else if (set.has(r[0]) && /^\d{4}-\d{2}$/.test(String(competencia || ''))) r[8] = competencia; if (categoria && !set.has(r[0])) r[8] = desloc ? finMesAnt_(r[3].slice(0, 7), -desloc) : r[3].slice(0, 7); r[11] = !categoria ? '' : set.has(r[0]) ? agoraBR_() : 'auto'; sh.getRange(i + 1, 7, 1, 6).setValues([[r[6], r[7], r[8], r[9], r[10], r[11]]]); itens.push({ id: r[0], categoria: r[6], destino: r[7], competencia: r[8], auto: r[11] === 'auto' }); });
@@ -5554,7 +5549,7 @@ function finClassificar(token, ids, categoria, destino, competencia, aprender) {
 // --- recebíveis (InfinitePay e parecidos) + conciliação com as vendas do USE ---
 function finImportarReceb(token, loja, arquivo, linhas) {
   finAdm_(token); loja = lojaCanon_(loja); if (!loja) throw new Error('Escolha a loja da maquininha.'); if (!Array.isArray(linhas) || !linhas.length) throw new Error('Nenhuma transação no arquivo.');
-  const sh = aba_('FinReceb', H_FRC), v = sh.getDataRange().getDisplayValues(), ja = new Set(v.slice(1).map((r) => r[0])), novas = []; let dup = 0;
+  const sh = finAba_('FinReceb', H_FRC), v = sh.getDataRange().getDisplayValues(), ja = new Set(v.slice(1).map((r) => r[0])), novas = []; let dup = 0;
   linhas.slice(0, 6000).forEach((x) => { const id = String(x.id || '').slice(0, 80); if (!id || !/^\d{4}-\d{2}-\d{2}$/.test(String(x.data))) return; if (ja.has(id)) { dup++; return; } ja.add(id);
     novas.push(linha_([id, loja, x.data, String(x.hora || '').slice(0, 5), x.meio, x.bandeira || '', x.parcelas || '', x.status, finNum_(x.bruto), finNum_(x.liquido), finNum_(x.taxa), x.origem || '', String(arquivo || '').slice(0, 80)])); });
   if (novas.length) sh.getRange(sh.getLastRow() + 1, 1, novas.length, H_FRC.length).setValues(novas); return { novas: novas.length, duplicadas: dup };
@@ -5564,7 +5559,7 @@ function finConciliacao(token, loja, mes) { finAdm_(token); return finConc_(loja
 function finConc_(loja, mes) {
   loja = lojaCanon_(loja); if (!loja) throw new Error('Escolha a loja.'); const ln = Object.keys(LOJA_COD).find((k) => LOJA_COD[k] === loja), hoje = dia_(loja);
   const de = mes + '-01', fim = somaDia_(finMesAnt_(mes, -1) + '-01', -1), ate = fim < hoje ? fim : hoje;
-  const rc = aba_('FinReceb', H_FRC).getDataRange().getDisplayValues().slice(1).filter((r) => r[1] === loja && r[2] >= de && r[2] <= ate && r[7] === 'Aprovada').map((r) => ({ id: r[0], data: r[2], hora: r[3], meio: r[4], band: r[5], parc: r[6], bruto: finNum_(r[8]), liq: finNum_(r[9]), taxa: finNum_(r[10]), origem: r[11] }));
+  const rc = finAba_('FinReceb', H_FRC).getDataRange().getDisplayValues().slice(1).filter((r) => r[1] === loja && r[2] >= de && r[2] <= ate && r[7] === 'Aprovada').map((r) => ({ id: r[0], data: r[2], hora: r[3], meio: r[4], band: r[5], parc: r[6], bruto: finNum_(r[8]), liq: finNum_(r[9]), taxa: finNum_(r[10]), origem: r[11] }));
   if (!rc.length) return { loja: loja, mes: mes, vazio: true };
   const ck = 'fincv_' + ln + mes, hit = cacheGrandeGet_(ck); let us = hit;
   if (!us) { us = []; let pag = 1, n = 0, tot = 0;
@@ -5589,6 +5584,17 @@ function finConc_(loja, mes) {
 // de madrugada (0h–6h), guarda 1 mês fechado por rodada (últimos 13 meses de cada loja): a DRE e o Simples (12 meses) abrem rápido
 function finPreparar_() {
   const h = +Utilities.formatDate(new Date(), 'America/Rio_Branco', 'H'); if (h > 6) return; if (!dsCfg_().key) return;
-  const ja = new Set(aba_('FinMes', H_FMS).getDataRange().getDisplayValues().slice(1).map((r) => r[0] + '|' + r[1])), m0 = dia_('Via Verde').slice(0, 7);
+  const ja = new Set(finAba_('FinMes', H_FMS).getDataRange().getDisplayValues().slice(1).map((r) => r[0] + '|' + r[1])), m0 = dia_('Via Verde').slice(0, 7);
   for (let k = 1; k <= 13; k++) { const m = finMesAnt_(m0, k); for (const l of LOJAS) { if (!ja.has(l + '|' + m)) { finMes_(l, m); return; } } }
+}
+
+// as abas do financeiro guardam datas e meses como TEXTO (senão a planilha vira data e "2026-09" aparece como "2026-9")
+const FIN_TXT = { FinLanc: [[4, 'd'], [9, 'm']], FinDespesas: [[7, 'm'], [8, 'm']], FinReceb: [[3, 'd'], [4, 'h']], FinMes: [[2, 'm']] };
+function finAba_(nome, H) {
+  const sh = aba_(nome, H), cols = FIN_TXT[nome], pr = PropertiesService.getScriptProperties(), k = 'FIN_FMT2_' + nome; if (!cols || pr.getProperty(k)) return sh;
+  const n = Math.max(sh.getLastRow(), 1), tz = SpreadsheetApp.openById(DADOS_ID).getSpreadsheetTimeZone();
+  cols.forEach(([c, t]) => { const rg = sh.getRange(1, c, Math.max(n, 2000), 1); const vals = sh.getRange(1, c, n, 1).getValues();
+    const fix = vals.map((r, i) => { const x = r[0]; if (!i) return [x]; if (x instanceof Date) return [Utilities.formatDate(x, tz, t === 'm' ? 'yyyy-MM' : t === 'd' ? 'yyyy-MM-dd' : 'HH:mm')]; const m = String(x).match(/^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?$/); if (m) return [m[1] + '-' + m[2].padStart(2, '0') + (m[3] ? '-' + m[3].padStart(2, '0') : '')]; return [x]; });
+    rg.setNumberFormat('@'); sh.getRange(1, c, n, 1).setValues(fix); });
+  pr.setProperty(k, '1'); return sh;
 }
