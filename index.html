@@ -2550,6 +2550,7 @@ function linhasPct(lista, max) {
 // detalhe em tela cheia: move os blocos já desenhados para dentro e devolve ao fechar
 // ---------- reposição: lista do que vendeu (por horário) para repor na arara; marca ✓ reposto / ✗ sem peça ----------
 let RP = null;
+let LISTA_REPO_ABERTA = false;
 function abrirReposicao(desdeUlt, lojaIni) {
   const LS = (S && S.lojas) || [], lj = lojaIni && LS.indexOf(lojaIni) >= 0 ? lojaIni : LS.length > 1 && LS.indexOf('Sumaúma') >= 0 ? 'Sumaúma' : (LS.indexOf(loja) >= 0 ? loja : LS[0] || 'Sumaúma');
   abrirDet('🔄 Reposição', (b) => {
@@ -2607,7 +2608,9 @@ function abrirReposicao(desdeUlt, lojaIni) {
       }
       const pend = r.lista.filter((x) => !x.status);
       if (r.chefe && pend.length) { const be = el('button', 'btn', '➡️ Passar o que falta para a estoquista'); be.style.cssText = 'margin-top:8px;margin-right:6px'; be.addEventListener('click', () => { be.disabled = true; google.script.run.withSuccessHandler((q) => { be.disabled = false; toast('Lista enviada para ' + q.para + ' (' + q.pendentes + ' peças) ✅'); }).withFailureHandler((e) => { be.disabled = false; toast((e && e.message) || 'erro'); }).reposicaoRedirecionar(S.token, sl.value, ''); }); res.append(be); }
-      if (pend.length > 1) { const all = el('button', 'btn pri', '✓ Marcar todas como repostas (' + r.pendentes + ')'); all.style.marginTop = '8px'; all.addEventListener('click', () => { if (confirm('Marcar as ' + r.pendentes + ' peças como repostas?')) marcar([].concat(...pend.map((x) => x.linhas)), 'FEITO'); }); res.append(all); }
+      // gerente/ADMIN: a lista fica com a responsável da escala (recebe no celular); aqui ela fica escondida, com opção de abrir se precisar
+      let alvo = res; if (r.chefe && !desdeUlt && r.lista.length) { const dl = el('details', 'card'); dl.style.marginTop = '8px'; dl.open = !!LISTA_REPO_ABERTA; dl.addEventListener('toggle', () => { LISTA_REPO_ABERTA = dl.open; }); dl.append(el('summary', '', '📋 Ver a lista de peças (' + r.pendentes + ' pendentes)'), el('div', 'sub', 'A responsável da escala recebe esta lista no celular, no horário dela. Abra só se precisar acompanhar ou marcar por ela.')); res.append(dl); alvo = dl; }
+      if (pend.length > 1) { const all = el('button', 'btn pri', '✓ Marcar todas como repostas (' + r.pendentes + ')'); all.style.marginTop = '8px'; all.addEventListener('click', () => { if (confirm('Marcar as ' + r.pendentes + ' peças como repostas?')) marcar([].concat(...pend.map((x) => x.linhas)), 'FEITO'); }); alvo.append(all); }
       r.lista.forEach((x) => {
         const c = el('div', 'card'); c.style.cssText = 'margin-top:8px;padding:10px 12px;' + (x.status === 'FEITO' ? 'background:#eef7f0;border-left:4px solid #1e7a46;' : x.status === 'SEM' ? 'border-left:4px solid #c0392b;' : '');
         const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:flex-start';
@@ -2617,7 +2620,7 @@ function abrirReposicao(desdeUlt, lojaIni) {
         const ops = el('div'); ops.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap';
         if (x.status) { const tg = el('b', '', (x.status === 'FEITO' ? '✅ Reposta' : '❌ Sem peça no estoque') + (x.por ? ' · ' + x.por : '')); tg.style.cssText = 'align-self:center;color:' + (x.status === 'FEITO' ? '#1e7a46' : '#c0392b'); ops.append(tg); const u2 = el('button', 'btn sm', 'Desfazer'); u2.addEventListener('click', () => marcar(x.linhas, '')); ops.append(u2); }
         else { const ok = el('button', 'btn rp-ok', '✓ Reposta'), no = el('button', 'btn rp-no', '✗ Sem peça'); ok.addEventListener('click', () => marcar(x.linhas, 'FEITO')); no.addEventListener('click', () => marcar(x.linhas, 'SEM')); ops.append(ok, no); }
-        c.append(ops); res.append(c);
+        c.append(ops); alvo.append(c);
       });
     }
     let primeira = !!desdeUlt; const carregar0 = carregar;
