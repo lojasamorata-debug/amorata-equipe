@@ -695,6 +695,8 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
 #mu-comp[open] > summary::after { content:'✕'; background:var(--bg); color:var(--muted); font-size:13px; }
 #mu-comp[open] > summary { margin-bottom:10px; }
 #mu-filtro-box { margin-top:12px; } #mu-lista { margin-top:12px !important; }
+.casa-mu { display:flex; align-items:center; gap:12px; width:100%; text-align:left; margin-top:12px; background:linear-gradient(135deg,#fff3c4,#ffe1ec); border:1px solid #f3d2a0; border-radius:14px; padding:12px 14px; font:inherit; color:var(--fg); cursor:pointer; }
+.casa-mu i { font-style:normal; font-size:28px; } .casa-mu b { display:block; font-size:15px; } .casa-mu span { font-size:12.5px; color:var(--muted); }
 </style>
 </head>
 <body>
@@ -834,7 +836,7 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
       <div id="st-strip"></div>
       <div class="seg seg-mu"><button id="sg-mural" class="on"><i>📸</i>Mural</button><button id="sg-rec"><i>💌</i>Recados<span id="rec-n" class="bdg"></span></button><button id="sg-cmn"><i>📢</i>Comunicados</button><button id="sg-con"><i>🏅</i>Conquistas</button></div>
       <div id="mu-area">
-      <div id="mood-mu"></div>
+      <div id="casa-mu"></div><div id="mood-mu"></div>
       <div id="eq-mood-box" class="card hide"><div class="mu-ct"><b>Mood da equipe hoje</b><span>toque para mandar recado</span></div><div class="equipe-mood" id="eq-mood"></div></div>
       <details class="card dob" id="mu-comp">
         <summary id="mu-sum">✨ Compartilhar uma conquista</summary>
@@ -1176,7 +1178,7 @@ function abrir() {
   if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirTermo(() => exigirApp(false)), 500); }
   if (fazCaminho) { ONTEM = null; ONTEM_OK = false; cardMetaLoja.pedida = cardMetaLoja.ok = false; cardMetaLoja.m = null; google.script.run.withSuccessHandler((o) => { ONTEM = o; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); }).withFailureHandler(() => { ONTEM = { semDados: true }; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
-  setTimeout(checarAvisos, 2500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 3000); setTimeout(carregarStatus, 4500); setTimeout(carregarCampeas, 3500); setTimeout(carregarEstoqueInfo, 5000); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
+  setTimeout(checarAvisos, 2500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 3000); setTimeout(carregarStatus, 4500); setTimeout(carregarCampeas, 3500); setTimeout(carregarCasa, 6500); setTimeout(carregarEstoqueInfo, 5000); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
   $('t-av').replaceChildren(...avatar(S.foto, S.nome).childNodes); if (!S.foto) $('t-av').textContent = (S.nome || '?').charAt(0);
   nuvemFoto(); desenharMood(); setTimeout(carregarDesafios, 4000);
   const sel = $('sel-loja'); sel.replaceChildren(...S.lojas.map((l) => new Option(l, l)));
@@ -1809,7 +1811,7 @@ function mudarAba(a) {
   if (a === 'ini') carregarInicio();
   if (a === 'prod') carregarProdutos();
   if (a === 'est') buscarEstoque(0);
-  if (a === 'mural') { carregarMural(); carregarStatus(); }
+  if (a === 'mural') { carregarMural(); carregarStatus(); desenharCasaMu(); }
   if (a === 'fila') carregarStatus();
   if (a === 'apr') carregarAprender();
   if (a === 'gest') carregarGestao();
@@ -5573,6 +5575,32 @@ function comemorar(novas) {
     bts.append(tx, pub, volta); setTimeout(() => tx.focus(), 50);
   });
   bts.append(comp, ok, ver); fc.append(bts); f.append(fc); document.body.append(f);
+}
+// ---------- tempo de Amorata: mês/ano completo → festa + compartilhar no mural ----------
+let CASA = null;
+function carregarCasa() { if (!S || telaLoja()) return; google.script.run.withSuccessHandler((r) => { CASA = r || null; desenharCasaMu(); if (!CASA || CASA.compartilhado) return; const k = 'amorata_casa_' + S.usuario + '_' + CASA.d; try { if (localStorage.getItem(k)) return; localStorage.setItem(k, '1'); } catch (e) {} festaCasa(); }).withFailureHandler(() => {}).casaHoje(S.token); }
+function casaTxt() { return '🎉 Hoje completo ' + CASA.texto + ' de Amorata! Obrigada, equipe, por fazer parte dessa história comigo 💜'; }
+function desenharCasaMu() {
+  const b = $('casa-mu'); if (!b) return; b.replaceChildren(); if (!CASA || CASA.compartilhado) return;
+  const c = el('button', 'casa-mu'); c.type = 'button'; c.append(el('i', '', CASA.ano ? '🎂' : '🎉'), (() => { const d = el('div'); d.append(el('b', '', 'Hoje você completa ' + CASA.texto + ' de Amorata!'), el('span', '', 'Toque para compartilhar com toda a equipe')); return d; })());
+  c.addEventListener('click', festaCasa); b.append(c);
+}
+function festaCasa() {
+  if (!CASA || $('festa')) return; if ($('caminho')) { setTimeout(festaCasa, 4000); return; }
+  try { navigator.vibrate && navigator.vibrate([100, 60, 100, 60, 400]); } catch (x) {}
+  const f = el('div'); f.id = 'festa'; const cores = ['#5b4a7a', '#f2b01e', '#e8738a', '#1e7a46', '#7fb3e6', '#ff9f43'];
+  for (let i = 0; i < 40; i++) { const c = el('i', 'cf'); c.style.left = Math.random() * 100 + '%'; c.style.background = cores[i % cores.length]; c.style.animationDuration = 2 + Math.random() * 2.5 + 's'; c.style.animationDelay = Math.random() * 0.8 + 's'; f.append(c); }
+  const fc = el('div', 'fc'); fc.append(el('div', 'em', CASA.ano ? '🎂' : '🎉'), el('div', 'mini', CASA.ano ? 'Aniversário de Amorata' : 'Mais um mês de Amorata'), el('h3', '', CASA.texto + ' de Amorata!'), el('p', '', 'Obrigado por fazer parte da nossa história, ' + primeiroNome(S.nome) + '. Que tal contar para a equipe?'));
+  const sai = () => f.remove(); f.addEventListener('click', (ev) => { if (ev.target === f) sai(); });
+  const bts = el('div'); bts.style.cssText = 'display:flex;flex-direction:column;gap:8px';
+  const comp = el('button', 'btn pri big', '📣 Compartilhar com a equipe'), ok = el('button', 'btn big', 'Agora não'); ok.addEventListener('click', sai);
+  comp.addEventListener('click', () => {
+    bts.replaceChildren(); const tx = el('textarea'); tx.rows = 3; tx.maxLength = 500; tx.value = casaTxt(); tx.style.cssText = 'width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:none';
+    const pub = el('button', 'btn pri big', 'Publicar no mural 🎉'), volta = el('button', 'btn sm', 'Cancelar'); volta.style.cssText = 'margin:0 auto;border:0;background:none;color:var(--muted)'; volta.addEventListener('click', sai);
+    pub.addEventListener('click', () => { pub.disabled = true; rodar('compartilharCasa', [S.token, tx.value], (r) => { sai(); CASA.compartilhado = true; desenharCasaMu(); toast('Compartilhado com a equipe 🎉'); if (aba === 'mural' && r && r.posts) desenharMural(r); }, () => { pub.disabled = false; }); });
+    bts.append(tx, pub, volta); setTimeout(() => tx.focus(), 50);
+  });
+  bts.append(comp, ok); fc.append(bts); f.append(fc); document.body.append(f);
 }
 function checarMedalhas(cb) {
   if (!S) return;
