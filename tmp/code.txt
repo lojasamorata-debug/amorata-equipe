@@ -1,4 +1,3 @@
-function zzDebug(){ const out=[]; ['Via Verde','Sumaúma','Cerâmica','Via Norte','Cruzeiro do Sul'].forEach((loja)=>{ const hoje=dia_(loja), ate=somaDia_(hoje,-1), de=somaDia_(ate,-29); const l=trBrutos_(loja,de,ate), L=trLoja_(l); l.forEach((q)=>{ const r=trRaio_(q,L); out.push(loja.slice(0,4)+' '+q.usuario+' foco='+r.foco+' '+r.dims.map((d)=>d.k.slice(0,4)+(d.gap==null?'-':Math.round(d.gap*100))).join(' ')); }); }); Logger.log(out.join('\n')); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
