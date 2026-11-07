@@ -1,4 +1,3 @@
-function zzDebug(){ ['FinLanc','FinDespesas','FinReceb','FinMes'].forEach((n)=>{ try{ finAba_(n, {FinLanc:H_FLC,FinDespesas:H_FDP,FinReceb:H_FRC,FinMes:H_FMS}[n]); }catch(e){ Logger.log(n+' '+e.message); } }); const c={}; finAba_('FinLanc',H_FLC).getDataRange().getDisplayValues().slice(1).forEach((r)=>{ if(r[6]) { const k=r[6]+'|'+r[8]; c[k]=(c[k]||0)+1; } }); Logger.log(JSON.stringify(c)+' fm='+JSON.stringify(finAba_('FinMes',H_FMS).getDataRange().getDisplayValues().map((r)=>r[0]+' '+r[1]))); const d9=finDespesasMes_('2026-09'), d10=finDespesasMes_('2026-10'); Logger.log('set '+d9.length+' R$'+d9.reduce((a,x)=>a+x.valor,0)+' | out '+d10.length+' R$'+d10.reduce((a,x)=>a+x.valor,0)); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
@@ -5591,9 +5590,9 @@ function finPreparar_() {
 // as abas do financeiro guardam datas e meses como TEXTO (senão a planilha vira data e "2026-09" aparece como "2026-9")
 const FIN_TXT = { FinLanc: [[4, 'd'], [9, 'm']], FinDespesas: [[7, 'm'], [8, 'm']], FinReceb: [[3, 'd'], [4, 'h']], FinMes: [[2, 'm']] };
 function finAba_(nome, H) {
-  const sh = aba_(nome, H), cols = FIN_TXT[nome], pr = PropertiesService.getScriptProperties(), k = 'FIN_FMT2_' + nome; if (!cols || pr.getProperty(k)) return sh;
+  const sh = aba_(nome, H), cols = FIN_TXT[nome], pr = PropertiesService.getScriptProperties(), k = 'FIN_FMT3_' + nome; if (!cols || pr.getProperty(k)) return sh;
   const n = Math.max(sh.getLastRow(), 1), tz = SpreadsheetApp.openById(DADOS_ID).getSpreadsheetTimeZone();
-  cols.forEach(([c, t]) => { const rg = sh.getRange(1, c, Math.max(n, 2000), 1); const vals = sh.getRange(1, c, n, 1).getValues();
+  cols.forEach(([c, t]) => { const rg = sh.getRange(1, c, sh.getMaxRows(), 1); const vals = sh.getRange(1, c, n, 1).getValues();
     const fix = vals.map((r, i) => { const x = r[0]; if (!i) return [x]; if (x instanceof Date) return [Utilities.formatDate(x, tz, t === 'm' ? 'yyyy-MM' : t === 'd' ? 'yyyy-MM-dd' : 'HH:mm')]; const m = String(x).match(/^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?$/); if (m) return [m[1] + '-' + m[2].padStart(2, '0') + (m[3] ? '-' + m[3].padStart(2, '0') : '')]; return [x]; });
     rg.setNumberFormat('@'); sh.getRange(1, c, n, 1).setValues(fix); });
   pr.setProperty(k, '1'); return sh;
