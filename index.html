@@ -1080,7 +1080,7 @@ if (HOSPEDADO) {
   const API = window.API_URL || 'https://script.google.com/macros/s/AKfycbzLVCL9V3HFNC1oovEF80GHdZbCNIsIdBqm8CFZ3ZBSjFAeXrarzUg19-z9go2MgGJuUw/exec';
   const chamar = (fn, args, ok, falha) => {
     // limite de 90 s: sem isso um servidor travado deixava botões em "Enviando…" por minutos
-    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, tm = ctl ? setTimeout(() => ctl.abort(), (fn === 'postarVideo' || fn === 'finDRE' || fn === 'finConciliacao') ? 300000 : 90000) : null;
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, tm = ctl ? setTimeout(() => ctl.abort(), (fn === 'postarVideo' || fn === 'finDRE' || fn === 'finConciliacao' || fn === 'finBuscarDrive') ? 300000 : 90000) : null;
     fetch(API, { method: 'POST', body: JSON.stringify({ fn: fn, args: args, pq: 1 }), redirect: 'follow', signal: ctl ? ctl.signal : undefined })
       .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
       .then((t) => { let j; try { j = JSON.parse(t); } catch (x) { throw new Error('HTTP 5 resposta inválida'); } return j; })
@@ -5076,7 +5076,16 @@ function desenharFinExt(res, r) {
   const imp = el('div', 'card'), fi = el('input'); fi.type = 'file'; fi.accept = '.ofx,.OFX'; fi.className = 'hide'; const bt = el('button', 'btn pri', '📥 Importar extrato (OFX) de ' + FIN.loja); bt.style.width = '100%'; bt.addEventListener('click', () => fi.click());
   fi.addEventListener('change', async () => { const f = fi.files[0]; if (!f) return; const x = lerOFX(await f.text()); if (!x.linhas.length) { toast('Não achei lançamentos neste arquivo. Ele é um OFX?'); return; } bt.disabled = true; bt.textContent = 'Importando ' + x.linhas.length + ' lançamentos…';
     rodar('finImportarExtrato', [S.token, FIN.loja, x.conta, f.name, x.linhas], (o) => { toast(o.novas + ' novos · ' + o.auto + ' já classificados sozinhos' + (o.duplicadas ? ' · ' + o.duplicadas + ' já existiam' : ''), 5000); carregarFin(); }, () => { bt.disabled = false; }); fi.value = ''; });
-  imp.append(bt, fi, el('div', 'sm', 'No app do banco: Extrato › Exportar › OFX. O app guarda cada lançamento uma vez só (pode importar de novo sem duplicar).')); res.append(imp);
+  const bd = el('button', 'btn', '🔄 Buscar extratos no Drive (todas as lojas)'); bd.style.cssText = 'width:100%;margin-top:8px';
+  bd.addEventListener('click', () => { bd.disabled = true; bd.textContent = 'Procurando arquivos .ofx nas pastas das lojas…';
+    rodar('finBuscarDrive', [S.token], (o) => { const p = Object.keys(o.lojas || {}).filter((k) => o.lojas[k]).map((k) => k + ' ' + o.lojas[k]).join(' · ');
+      toast(o.arquivos ? o.arquivos + ' arquivo(s) novo(s) · ' + o.novas + ' lançamentos' + (p ? ' (' + p + ')' : '') + ' · ' + o.auto + ' já classificados' + (o.pendentes ? ' · faltam ' + o.pendentes + ', toque de novo' : '') : 'Nenhum extrato novo no Drive.', 7000);
+      if (o.erros && o.erros.length) toast('Não consegui ler: ' + o.erros.slice(0, 2).join(' / '), 7000); carregarFin(); }, () => { bd.disabled = false; bd.textContent = '🔄 Buscar extratos no Drive (todas as lojas)'; }); });
+  const arq = el('details', 'sm'); arq.append(el('summary', '', '📁 Arquivos lidos do Drive (' + FIN.loja + ')')); let arqOk = false;
+  arq.addEventListener('toggle', () => { if (!arq.open || arqOk) return; arqOk = true; const w = el('div', 'sm', 'Carregando…'); arq.append(w);
+    rodar('finArquivosDrive', [S.token, FIN.loja], (l) => { w.replaceChildren(); if (!l.length) { w.textContent = 'Nenhum ainda. Toque em "Buscar extratos no Drive".'; return; }
+      l.forEach((a) => w.append(el('div', '', '• ' + a.nome + ' — ' + a.conta + ' · ' + a.novas + ' novos de ' + a.lidas + (a.obs ? ' · ' + a.obs : '')))); }, () => { w.textContent = 'Não consegui carregar.'; }); });
+  imp.append(bt, fi, bd, el('div', 'sm', 'O app também procura sozinho, toda madrugada, os .ofx novos nas pastas de contabilidade de cada loja (lançamentos a partir de jan/2026). Cada lançamento entra uma vez só.'), arq); res.append(imp);
   const l = r.lista, sem = l.filter((x) => !x.categoria); const fl = el('div', 'fin-ch'); [['sem', 'Sem categoria (' + sem.length + ')'], ['todos', 'Todos (' + l.length + ')']].forEach(([k, t]) => { const x = el('button', k === FIN.filtro ? 'on' : '', t); x.addEventListener('click', () => { FIN.filtro = k; desenharFinExt(res, r); }); fl.append(x); }); res.append(fl);
   const tot = (f) => l.filter(f).reduce((a, x) => a + x.valor, 0); res.append(el('div', 'sm', 'Entradas ' + rs(tot((x) => x.valor > 0)) + ' · Saídas ' + rs(-tot((x) => x.valor < 0))));
   const vis = FIN.filtro === 'sem' ? sem : l; if (!vis.length) res.append(el('div', 'vazio', FIN.filtro === 'sem' ? (l.length ? 'Tudo classificado ✅' : 'Nenhum lançamento neste mês. Importe o extrato.') : 'Nada aqui.'));
