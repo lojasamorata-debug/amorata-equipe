@@ -5535,12 +5535,12 @@ function finExtrato(token, loja, mes) { finAdm_(token);
 function finClassificar(token, ids, categoria, destino, competencia, aprender) {
   finAdm_(token); if (categoria && !FIN_CATS[categoria]) throw new Error('Categoria inválida.'); const sh = aba_('FinLanc', H_FLC), v = sh.getDataRange().getDisplayValues(), set = new Set(ids || []), chaves = {};
   let desloc = 0; v.forEach((r, i) => { if (i && set.has(r[0])) { chaves[finChave_(r[5]) + (finNum_(r[4]) < 0 ? '|S' : '|E')] = 1; if (/^\d{4}-\d{2}$/.test(String(competencia || ''))) desloc = finMesesEntre_(r[3].slice(0, 7), competencia); } });
-  let n = 0; v.forEach((r, i) => { if (!i) return; const k = finChave_(r[5]) + (finNum_(r[4]) < 0 ? '|S' : '|E'); const alvo = set.has(r[0]) || (aprender && chaves[k] && !r[6]); if (!alvo) return; n++;
-    r[6] = categoria || ''; r[7] = categoria ? (destino || r[1]) : ''; if (!categoria) r[8] = r[3].slice(0, 7); else if (set.has(r[0]) && /^\d{4}-\d{2}$/.test(String(competencia || ''))) r[8] = competencia; if (categoria && !set.has(r[0])) r[8] = desloc ? finMesAnt_(r[3].slice(0, 7), -desloc) : r[3].slice(0, 7); r[11] = !categoria ? '' : set.has(r[0]) ? agoraBR_() : 'auto'; sh.getRange(i + 1, 7, 1, 6).setValues([[r[6], r[7], r[8], r[9], r[10], r[11]]]); });
+  let n = 0; const itens = []; v.forEach((r, i) => { if (!i) return; const k = finChave_(r[5]) + (finNum_(r[4]) < 0 ? '|S' : '|E'); const alvo = set.has(r[0]) || (aprender && chaves[k] && !r[6]); if (!alvo) return; n++;
+    r[6] = categoria || ''; r[7] = categoria ? (destino || r[1]) : ''; if (!categoria) r[8] = r[3].slice(0, 7); else if (set.has(r[0]) && /^\d{4}-\d{2}$/.test(String(competencia || ''))) r[8] = competencia; if (categoria && !set.has(r[0])) r[8] = desloc ? finMesAnt_(r[3].slice(0, 7), -desloc) : r[3].slice(0, 7); r[11] = !categoria ? '' : set.has(r[0]) ? agoraBR_() : 'auto'; sh.getRange(i + 1, 7, 1, 6).setValues([[r[6], r[7], r[8], r[9], r[10], r[11]]]); itens.push({ id: r[0], categoria: r[6], destino: r[7], competencia: r[8], auto: r[11] === 'auto' }); });
   // desfazer: esquece a regra aprendida para esse tipo de lançamento (os próximos voltam a vir sem categoria)
   if (!categoria) { const rs = aba_('FinRegras', H_FRG), rv = rs.getDataRange().getDisplayValues(); for (let j = rv.length - 1; j >= 1; j--) if (chaves[rv[j][0]]) rs.deleteRow(j + 1); }
   if (aprender && categoria) { const rs = aba_('FinRegras', H_FRG), rv = rs.getDataRange().getDisplayValues(); Object.keys(chaves).forEach((k) => { const j = rv.findIndex((r, x) => x > 0 && r[0] === k), l = [k, categoria, destino || '', agoraBR_(), desloc]; if (j >= 1) rs.getRange(j + 1, 1, 1, 5).setValues([l]); else rs.appendRow(l); }); }
-  return { atualizados: n };
+  return { atualizados: n, itens: itens };
 }
 // --- recebíveis (InfinitePay e parecidos) + conciliação com as vendas do USE ---
 function finImportarReceb(token, loja, arquivo, linhas) {
