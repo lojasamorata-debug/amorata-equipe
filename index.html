@@ -18,6 +18,7 @@
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 body { margin:0; background:var(--bg); color:var(--fg); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size:15px; }
 .wrap { max-width:640px; margin:0 auto; padding:14px 14px 90px; }
+.ptr { position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 6px); transform:translate(-50%,-50px); opacity:0; z-index:200; display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line); border-radius:999px; padding:8px 14px 8px 10px; box-shadow:0 4px 14px rgba(0,0,0,.15); font-size:13px; font-weight:600; color:var(--accent); pointer-events:none; transition:opacity .15s; } .ptr .ic { font-size:20px; display:inline-block; line-height:1; } .ptr.pronto { background:var(--accent); color:#fff; } .ptr.girando .ic { animation:ptrgira .8s linear infinite; } @keyframes ptrgira { to { transform:rotate(360deg); } }
 h1 { font-family:"Source Serif 4", Georgia, serif; font-weight:400; font-size:24px; margin:0; }
 h2 { font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:22px 0 8px; display:flex; justify-content:space-between; }
 .sub { color:var(--muted); font-size:13px; }
@@ -5971,6 +5972,18 @@ const tRelogio = () => { if (T) $('tb-hora').textContent = new Date().toLocaleTi
 setInterval(tRelogio, 1000);
 $('tab-liga').addEventListener('click', ligarTablet);
 $('b-atu').addEventListener('click', atualizarApp);
+// ⟳ puxar a tela para baixo para atualizar (celular): só quando a tela está no topo e não há janela aberta
+(function () {
+  const ind = el('div', 'ptr'); ind.append(el('span', 'ic', '⟳'), el('span', 'tx', 'Puxe para atualizar')); document.body.append(ind);
+  const LIM = 80; let y0 = null, dy = 0, ativo = false;
+  const alvo = () => document.querySelector('.wrap');
+  const bloqueado = () => !document.body.classList.contains('logado') || $('det') || document.body.classList.contains('sheet-on') || document.querySelector('#sheet:not(.hide), .tour-on, #reg-ov:not(.hide)');
+  const topo = () => { const w = alvo(); return (!w || w.scrollTop <= 0) && (document.scrollingElement || document.documentElement).scrollTop <= 0; };
+  const pinta = () => { const d = Math.min(dy, LIM * 1.6); ind.style.transform = 'translate(-50%,' + (d * 0.7 - 50) + 'px)'; ind.style.opacity = Math.min(1, d / LIM); ind.querySelector('.ic').style.transform = 'rotate(' + d * 3 + 'deg)'; ind.classList.toggle('pronto', dy >= LIM); ind.querySelector('.tx').textContent = dy >= LIM ? 'Solte para atualizar' : 'Puxe para atualizar'; };
+  document.addEventListener('touchstart', (e) => { if (e.touches.length !== 1 || bloqueado() || !topo()) { y0 = null; return; } y0 = e.touches[0].clientY; dy = 0; ativo = false; }, { passive: true });
+  document.addEventListener('touchmove', (e) => { if (y0 == null) return; const d = e.touches[0].clientY - y0; if (d <= 0 || !topo()) { if (ativo) { dy = 0; pinta(); } ativo = false; return; } ativo = true; dy = d; pinta(); }, { passive: true });
+  document.addEventListener('touchend', () => { if (y0 == null) return; y0 = null; if (ativo && dy >= LIM) { ind.classList.add('girando'); ind.querySelector('.tx').textContent = 'Atualizando…'; ind.style.transform = 'translate(-50%,10px)'; ind.style.opacity = 1; if (navigator.vibrate) try { navigator.vibrate(15); } catch (x) {} atualizarApp(); return; } dy = 0; ativo = false; ind.style.transform = ''; ind.style.opacity = 0; }, { passive: true });
+})();
 $('tb-atu').addEventListener('click', atualizarApp);
 $('tb-sair').addEventListener('click', () => escolher('Sair do modo tablet', 'O aparelho volta para a tela de login. Para ligar de novo, a gerente entra com o usuário dela.', [['Sair do tablet', 'bad', () => { fechar(); tabletDesligar(false); }]]));
 function tCk(r) {
