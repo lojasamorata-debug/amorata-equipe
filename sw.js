@@ -1,6 +1,6 @@
 // Amorata Equipe: abre na hora com a cópia guardada e busca a versão nova por trás.
 // Quando a versão nova chega, o app mostra um aviso para atualizar. Sem internet, usa a cópia guardada.
-const CACHE = 'amorata-equipe-v8';
+const CACHE = 'amorata-equipe-v6';
 const ARQS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARQS)).catch(() => {})); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });

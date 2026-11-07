@@ -25,7 +25,6 @@ h2 { font-size:13px; font-weight:600; color:var(--muted); text-transform:upperca
 .top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
 select, input { font:inherit; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; width:100%; }
 button.carregando, .btn.carregando { opacity:.7; pointer-events:none; }
-button { color:inherit; }
 button, .btn, .tab, .ck-it, .chip { touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
 .btn:active, .tab:active, .ck-it:active { transform:scale(.96); filter:brightness(.94); }
 .btn { transition:transform .08s ease; border:1px solid var(--line); background:var(--panel); color:var(--fg); border-radius:10px; padding:10px 14px; font:inherit; font-weight:500; cursor:pointer; }
@@ -671,32 +670,6 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
 .ct-bx { position:absolute; border:2px dashed; border-radius:6px; background:rgba(255,255,255,.75); font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; box-sizing:border-box; }
 .ct-pn { position:absolute; right:6px; top:6px; font-size:11px; background:rgba(0,0,0,.55); color:#fff; padding:2px 6px; border-radius:6px; }
 .ct-l { display:flex; flex-wrap:wrap; gap:8px; align-items:center; } .ct-l b { flex:1 1 100%; }
-
-/* ---- Mural: visual mais limpo ---- */
-.seg.seg-mu { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:4px; overflow:visible; -webkit-mask-image:none; mask-image:none; }
-.seg.seg-mu button { position:relative; min-width:0; border:0; background:transparent; border-radius:10px; padding:7px 2px 6px; font-size:12px; font-weight:600; color:var(--muted); display:flex; flex-direction:column; align-items:center; gap:3px; }
-.seg.seg-mu button i { font-style:normal; font-size:19px; line-height:1; }
-.seg.seg-mu button.on { background:var(--accentbg); color:var(--accent); border:0; }
-.seg.seg-mu .bdg { position:absolute; top:3px; left:calc(50% + 8px); min-width:16px; height:16px; padding:0 4px; box-sizing:border-box; border-radius:8px; background:var(--bad); color:#fff; font-size:10px; line-height:16px; text-align:center; }
-.seg.seg-mu .bdg:empty:not(.dot) { display:none; } .seg.seg-mu .bdg.dot { min-width:8px; width:8px; height:8px; padding:0; top:5px; left:calc(50% + 10px); }
-#mu-area > .mood, #mu-area > .card { margin-top:12px; }
-#mu-area .mood { background:var(--panel); border-radius:14px; padding:12px 14px !important; }
-#mu-area .mood b { font-size:15px !important; font-weight:600; }
-#mu-area .mood .moods { gap:6px; margin:10px -14px 2px; }
-#mu-area .mood .moods button { width:auto; display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; font-size:13px; white-space:nowrap; background:var(--bg); border-color:transparent; }
-#mu-area .mood .moods button i { display:inline; font-size:17px; }
-#mu-area .mood .moods button.on { background:var(--accentbg); border-color:var(--accent); color:var(--accent); }
-#mu-area .mood .envia { gap:8px; margin-top:8px; }
-.mu-ct { display:flex; justify-content:space-between; align-items:baseline; gap:8px; } .mu-ct b { font-size:15px; font-weight:600; } .mu-ct span { font-size:12px; color:var(--muted); }
-#eq-mood { scrollbar-width:none; gap:12px; padding:10px 0 0; } #eq-mood::-webkit-scrollbar { display:none; }
-#eq-mood div { width:56px; color:var(--fg); } #eq-mood div { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } #eq-mood em { top:28px; font-size:16px; }
-#mu-comp > summary { display:flex; align-items:center; justify-content:space-between; font-size:15px; font-weight:600; }
-#mu-comp > summary::after { content:'＋'; width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; }
-#mu-comp[open] > summary::after { content:'✕'; background:var(--bg); color:var(--muted); font-size:13px; }
-#mu-comp[open] > summary { margin-bottom:10px; }
-#mu-filtro-box { margin-top:12px; } #mu-lista { margin-top:12px !important; }
-.casa-mu { display:flex; align-items:center; gap:12px; width:100%; text-align:left; margin-top:12px; background:linear-gradient(135deg,#fff3c4,#ffe1ec); border:1px solid #f3d2a0; border-radius:14px; padding:12px 14px; font:inherit; color:var(--fg); cursor:pointer; }
-.casa-mu i { font-style:normal; font-size:28px; } .casa-mu b { display:block; font-size:15px; } .casa-mu span { font-size:12.5px; color:var(--muted); }
 </style>
 </head>
 <body>
@@ -834,11 +807,11 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
 
     <div id="v-mural" class="hide">
       <div id="st-strip"></div>
-      <div class="seg seg-mu"><button id="sg-mural" class="on"><i>📸</i>Mural</button><button id="sg-rec"><i>💌</i>Recados<span id="rec-n" class="bdg"></span></button><button id="sg-cmn"><i>📢</i>Comunicados</button><button id="sg-con"><i>🏅</i>Conquistas</button></div>
+      <div class="seg"><button id="sg-mural" class="on">📸 Mural</button><button id="sg-rec">💌 Recados <span id="rec-n"></span></button><button id="sg-cmn">📢 Comunicados</button><button id="sg-con">🏅 Conquistas</button></div>
       <div id="mu-area">
-      <div id="casa-mu"></div><div id="mood-mu"></div>
-      <div id="eq-mood-box" class="card hide"><div class="mu-ct"><b>Mood da equipe hoje</b><span>toque para mandar recado</span></div><div class="equipe-mood" id="eq-mood"></div></div>
-      <details class="card dob" id="mu-comp">
+      <div id="mood-mu"></div>
+      <div id="eq-mood-box" class="card hide" style="margin-top:12px"><b>🌈 Mood da equipe hoje</b><div class="sub">Toque em alguém para mandar um recado</div><div class="equipe-mood" id="eq-mood"></div></div>
+      <details class="card dob" id="mu-comp" style="margin-top:12px">
         <summary id="mu-sum">✨ Compartilhar uma conquista</summary>
         <div class="chips" id="mu-tipos"></div>
         <textarea id="mu-txt" maxlength="500" placeholder="Conte para a equipe: bateu a meta? fez uma venda incrível? Use @ para marcar uma colega."></textarea><input id="mu-res" class="hide" maxlength="140" placeholder="Resultado (opcional) · ex.: vendeu 3 conjuntos" style="width:100%;box-sizing:border-box;margin:0 0 8px;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit">
@@ -846,7 +819,7 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
         <img id="mu-prev" class="hide" style="width:100%;border-radius:10px;margin-top:8px">
         <button class="btn pri big" id="mu-ok" style="margin-top:10px">Publicar no mural</button>
       </details>
-      <div class="filtros um" id="mu-filtro-box"><select id="mu-loja"></select></div>
+      <div class="filtros" id="mu-filtro-box"><select id="mu-loja"></select><div></div></div>
       <div id="mu-lista" style="margin-top:12px"></div>
       </div>
       <div id="cmn-area" class="hide">
@@ -1178,7 +1151,7 @@ function abrir() {
   if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirTermo(() => exigirApp(false)), 500); }
   if (fazCaminho) { ONTEM = null; ONTEM_OK = false; cardMetaLoja.pedida = cardMetaLoja.ok = false; cardMetaLoja.m = null; google.script.run.withSuccessHandler((o) => { ONTEM = o; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); }).withFailureHandler(() => { ONTEM = { semDados: true }; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
-  setTimeout(checarAvisos, 2500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 3000); setTimeout(carregarStatus, 4500); setTimeout(carregarCampeas, 3500); setTimeout(carregarCasa, 6500); setTimeout(carregarEstoqueInfo, 5000); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
+  setTimeout(checarAvisos, 2500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 3000); setTimeout(carregarStatus, 4500); setTimeout(carregarCampeas, 3500); setTimeout(carregarEstoqueInfo, 5000); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
   $('t-av').replaceChildren(...avatar(S.foto, S.nome).childNodes); if (!S.foto) $('t-av').textContent = (S.nome || '?').charAt(0);
   nuvemFoto(); desenharMood(); setTimeout(carregarDesafios, 4000);
   const sel = $('sel-loja'); sel.replaceChildren(...S.lojas.map((l) => new Option(l, l)));
@@ -1811,7 +1784,7 @@ function mudarAba(a) {
   if (a === 'ini') carregarInicio();
   if (a === 'prod') carregarProdutos();
   if (a === 'est') buscarEstoque(0);
-  if (a === 'mural') { carregarMural(); carregarStatus(); desenharCasaMu(); }
+  if (a === 'mural') { carregarMural(); carregarStatus(); }
   if (a === 'fila') carregarStatus();
   if (a === 'apr') carregarAprender();
   if (a === 'gest') carregarGestao();
@@ -3024,6 +2997,9 @@ function abrirIndicadores() {
 // 📋 todas as avaliações em lista, com filtros (gerente e administração)
 function abrirAvaliacoes() {
   abrirDet('⭐ Avaliações das clientes', (b) => {
+    if (S.cargo === 'ADMIN') { const md = el('div', 'card'); md.style.cssText = 'display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px'; const tx = el('div', 'sub', 'Página do QR Code: carregando…'), bt = el('button', 'btn sm', 'Trocar'); md.append(tx, bt); b.append(md);
+      const pinta = (m) => { tx.textContent = m === 'google' ? '📱 Página do QR: ⭐ Google primeiro (elogiar a consultora é opcional)' : '📱 Página do QR: consultora primeiro (Google depois)'; bt.textContent = m === 'google' ? 'Voltar como era' : 'Usar Google primeiro'; bt.onclick = () => { bt.disabled = true; rodar('avalModo', [S.token, m === 'google' ? 'app' : 'google'], (n) => { bt.disabled = false; pinta(n); toast('Página do QR atualizada ✅'); }, () => { bt.disabled = false; }); }; };
+      rodar('avalModo', [S.token, null], pinta); }
     const f = el('div', 'filtros'), lj = el('select'), per = el('select'), nt = el('select'), q = el('input'), sc = el('label', 'sub');
     [['mes', 'Mês atual'], ['7', 'Últimos 7 dias'], ['30', 'Últimos 30 dias'], ['mes_ant', 'Mês anterior'], ['tudo', 'Tudo']].forEach(([v, t]) => per.append(new Option(t, v)));
     [['', 'Todas as notas'], ['5', '★★★★★ 5'], ['4', '★★★★ 4'], ['b', 'Abaixo de 4']].forEach(([v, t]) => nt.append(new Option(t, v)));
@@ -3361,7 +3337,7 @@ function desenharMural(r) {
   if (r.posts.some((p) => p.eu && p.tipoK === 'mood' && p.hoje)) { S.moodDia = hojeStr(); salvar(); }
   desenharEquipeMood(r.posts); desenharMood();
   const box = $('mu-lista'); box.replaceChildren(); MU_R = r;
-  const eu = el('button', 'mu-eu'); eu.type = 'button'; const ea = avatar(S.foto, S.nome); const et = el('div'); et.append(el('b', '', '📌 Meu Mural'), el('span', '', 'Posts, medalhas e tempo de Amorata')); eu.append(ea, et, el('i', '', '›')); eu.addEventListener('click', () => abrirPerfil(S.usuario)); box.append(eu);
+  const eu = el('button', 'mu-eu'); eu.type = 'button'; const ea = avatar(S.foto, S.nome); const et = el('div'); et.append(el('b', '', '📌 Meu Mural'), el('span', '', 'Seus posts, medalhas, recados e tempo de Amorata')); eu.append(ea, et, el('i', '', '›')); eu.addEventListener('click', () => abrirPerfil(S.usuario)); box.append(eu);
   // abas do feed
   const tabs = el('div', 'mu-tabs'); [['tudo', 'Tudo'], ['bp', '✨ Boas práticas'], ['loja', 'Minha loja'], ['conq', '🏅 Conquistas'], ['ger', '📣 Gerência'], ['cli', '💬 Clientes']].forEach(([k, t]) => { if (k === 'loja' && (!S.loja || S.loja === 'TODAS')) return; const b = el('button', k === MU_ABA ? 'on' : '', t); b.type = 'button'; b.addEventListener('click', () => { MU_ABA = k; chipsMural(); desenharMural(MU_R); }); tabs.append(b); });
   box.append(tabs);
@@ -3655,7 +3631,7 @@ function desenharMood() {
   ['mood-mu'].forEach((id) => {
     const box = $(id); if (!box) return; box.replaceChildren(); if (!S || T) return;
     if (S.moodDia === hojeStr()) { if (id === 'mood-fila') linhaRecado(box); return; }
-    const c = el('div', 'mood'); c.append(el('b', '', primeiroNome(S.nome) + ', como você está hoje?'));
+    const c = el('div', 'mood'); c.append(el('b', '', '🌈 ' + primeiroNome(S.nome) + ', qual seu mood de hoje?'));
     const g = el('div', 'moods'); let esc = null;
     const f = el('div', 'envia'); const inp = el('input'); inp.placeholder = id === 'mood-fila' ? 'Recado para a equipe (opcional)' : 'Quer contar mais? (opcional)'; inp.maxLength = 200; const ok = el('button', 'btn sm pri', 'Publicar');
     moodsDoDia().forEach(([e, n]) => { const b = el('button'); b.append(el('i', '', e), document.createTextNode(n)); b.addEventListener('click', () => { esc = [e, n]; g.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); c.classList.add('esc'); inp.focus(); }); g.append(b); });
@@ -5576,32 +5552,6 @@ function comemorar(novas) {
   });
   bts.append(comp, ok, ver); fc.append(bts); f.append(fc); document.body.append(f);
 }
-// ---------- tempo de Amorata: mês/ano completo → festa + compartilhar no mural ----------
-let CASA = null;
-function carregarCasa() { if (!S || telaLoja()) return; google.script.run.withSuccessHandler((r) => { CASA = r || null; desenharCasaMu(); if (!CASA || CASA.compartilhado) return; const k = 'amorata_casa_' + S.usuario + '_' + CASA.d; try { if (localStorage.getItem(k)) return; localStorage.setItem(k, '1'); } catch (e) {} festaCasa(); }).withFailureHandler(() => {}).casaHoje(S.token); }
-function casaTxt() { return '🎉 Hoje completo ' + CASA.texto + ' de Amorata! Obrigada, equipe, por fazer parte dessa história comigo 💜'; }
-function desenharCasaMu() {
-  const b = $('casa-mu'); if (!b) return; b.replaceChildren(); if (!CASA || CASA.compartilhado) return;
-  const c = el('button', 'casa-mu'); c.type = 'button'; c.append(el('i', '', CASA.ano ? '🎂' : '🎉'), (() => { const d = el('div'); d.append(el('b', '', 'Hoje você completa ' + CASA.texto + ' de Amorata!'), el('span', '', 'Toque para compartilhar com toda a equipe')); return d; })());
-  c.addEventListener('click', festaCasa); b.append(c);
-}
-function festaCasa() {
-  if (!CASA || $('festa')) return; if ($('caminho')) { setTimeout(festaCasa, 4000); return; }
-  try { navigator.vibrate && navigator.vibrate([100, 60, 100, 60, 400]); } catch (x) {}
-  const f = el('div'); f.id = 'festa'; const cores = ['#5b4a7a', '#f2b01e', '#e8738a', '#1e7a46', '#7fb3e6', '#ff9f43'];
-  for (let i = 0; i < 40; i++) { const c = el('i', 'cf'); c.style.left = Math.random() * 100 + '%'; c.style.background = cores[i % cores.length]; c.style.animationDuration = 2 + Math.random() * 2.5 + 's'; c.style.animationDelay = Math.random() * 0.8 + 's'; f.append(c); }
-  const fc = el('div', 'fc'); fc.append(el('div', 'em', CASA.ano ? '🎂' : '🎉'), el('div', 'mini', CASA.ano ? 'Aniversário de Amorata' : 'Mais um mês de Amorata'), el('h3', '', CASA.texto + ' de Amorata!'), el('p', '', 'Obrigado por fazer parte da nossa história, ' + primeiroNome(S.nome) + '. Que tal contar para a equipe?'));
-  const sai = () => f.remove(); f.addEventListener('click', (ev) => { if (ev.target === f) sai(); });
-  const bts = el('div'); bts.style.cssText = 'display:flex;flex-direction:column;gap:8px';
-  const comp = el('button', 'btn pri big', '📣 Compartilhar com a equipe'), ok = el('button', 'btn big', 'Agora não'); ok.addEventListener('click', sai);
-  comp.addEventListener('click', () => {
-    bts.replaceChildren(); const tx = el('textarea'); tx.rows = 3; tx.maxLength = 500; tx.value = casaTxt(); tx.style.cssText = 'width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:none';
-    const pub = el('button', 'btn pri big', 'Publicar no mural 🎉'), volta = el('button', 'btn sm', 'Cancelar'); volta.style.cssText = 'margin:0 auto;border:0;background:none;color:var(--muted)'; volta.addEventListener('click', sai);
-    pub.addEventListener('click', () => { pub.disabled = true; rodar('compartilharCasa', [S.token, tx.value], (r) => { sai(); CASA.compartilhado = true; desenharCasaMu(); toast('Compartilhado com a equipe 🎉'); if (aba === 'mural' && r && r.posts) desenharMural(r); }, () => { pub.disabled = false; }); });
-    bts.append(tx, pub, volta); setTimeout(() => tx.focus(), 50);
-  });
-  bts.append(comp, ok); fc.append(bts); f.append(fc); document.body.append(f);
-}
 function checarMedalhas(cb) {
   if (!S) return;
   google.script.run.withSuccessHandler((r) => { MED = r; chipMedalhas(); desenharDiaPre(); comemorar((r.novosPremios || []).concat(r.novas || [])); if (cb) cb(r); }).withFailureHandler(() => {}).medalhas(S.token);
@@ -5633,7 +5583,7 @@ function cartaoCmn(c, completo) {
 function desenharCmn(l) {
   CMN = l || []; const top = $('cmn-top'); top.replaceChildren();
   CMN.filter((c) => !c.lido).slice(0, 2).forEach((c) => top.append(cartaoCmn(c, false)));
-  $('sg-cmn').replaceChildren(el('i', '', '📢'), document.createTextNode('Comunicados'), ...(CMN.some((c) => !c.lido) ? [el('span', 'bdg dot')] : []));
+  $('sg-cmn').textContent = '📢 Comunicados' + (CMN.some((c) => !c.lido) ? ' •' : '');
   $('cmn-novo').classList.toggle('hide', !chefe());
   const ls = $('cmn-lista'); ls.replaceChildren();
   if (!CMN.length) ls.append(el('div', 'vazio', chefe() ? 'Nenhum comunicado ativo. Publique avisos importantes aqui: a equipe confirma a leitura.' : 'Nenhum comunicado no momento.'));
@@ -5650,7 +5600,7 @@ function carregarRecados() {
     box.replaceChildren(); let nl = 0;
     if (!lst.length) box.append(el('div', 'vazio', 'Nenhum recado ainda. Mande um "parabéns" para alguém da equipe! 💜'));
     lst.forEach((c) => { nl += c.naoLidos; const d = el('div', 'conv'); const w = el('div', 'who'); w.append(el('b', '', primeiroNome(c.nome) + (c.naoLidos ? ' • ' + c.naoLidos + ' nova' + (c.naoLidos > 1 ? 's' : '') : '')), el('span', '', (c.deMim ? 'Você: ' : '') + c.ultimo)); d.append(avatar(c.foto, c.nome), w); d.addEventListener('click', () => abrirConversa(c.usuario)); box.append(d); });
-    $('rec-n').textContent = nl ? String(nl) : '';
+    $('rec-n').textContent = nl ? '(' + nl + ')' : '';
   });
 }
 function desenharConversa(c) {
