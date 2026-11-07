@@ -173,6 +173,14 @@ body.ocupado #eu-acoes .btn, body.ocupado .fila-ac .btn { opacity:.55; pointer-e
 .pf-elo { background:var(--accentbg); border-left:3px solid #e8a33a; border-radius:10px; padding:8px 10px; font-size:13px; font-style:italic; margin-bottom:6px; }
 .pf-abre { width:100%; } .pf-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; margin:0 -16px; } .pf-grid .pg { position:relative; aspect-ratio:1; border:0; padding:0; background:var(--accentbg); border-radius:0; overflow:hidden; cursor:pointer; } .pf-grid img { width:100%; height:100%; object-fit:cover; } .pf-grid .pt { font-size:11px; padding:6px; display:block; color:var(--fg); }
 body:not(.adm) #mu-filtro-box { display:none; }
+.bp-sub { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin:0 0 10px; } .bp-sub button { flex:none; border:0; background:var(--accentbg); color:var(--accent); border-radius:10px; padding:6px 10px; font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; } .bp-sub button.on { background:#e8862a; color:#fff; }
+.bp-novo { display:block; width:100%; text-align:left; background:var(--panel); border:1px dashed #b9a9d6; border-radius:14px; padding:12px; font:inherit; font-weight:700; color:var(--accent); margin-bottom:10px; cursor:pointer; }
+.bp-refc { display:block; width:100%; text-align:left; background:#fff7e8; border:1px solid #f0d3a6; border-radius:14px; padding:10px 12px; font:inherit; font-size:13px; color:var(--fg); margin-bottom:10px; cursor:pointer; } .bp-refc b { display:block; font-size:11px; letter-spacing:.08em; color:#a85d00; margin-bottom:3px; } .bp-refc i { font-style:normal; color:#a85d00; font-weight:700; }
+.post .cab .bp-cat { margin-left:auto; font-size:11.5px; font-weight:700; padding:4px 8px; border-radius:8px; white-space:nowrap; align-self:center; }
+.bp-ac { display:flex; gap:6px; flex-wrap:wrap; padding:2px 12px 8px; } .bp-b { border:0; background:var(--accentbg); color:var(--accent); border-radius:10px; padding:7px 10px; font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; } .bp-b.on { background:var(--accent); color:#fff; }
+.bp-res { margin:-4px 12px 10px; background:#e8f6ee; color:#1e7a46; border-radius:10px; padding:6px 10px; font-size:13px; font-weight:600; }
+#mu-tipos.bp-g { display:grid; grid-template-columns:1fr 1fr; gap:8px; } #mu-tipos.bp-g button { text-align:left; padding:10px; border-radius:12px; } #mu-tipos.bp-g small { display:block; font-weight:400; font-size:11.5px; opacity:.8; margin-top:2px; }
+.bp-ref { display:grid; grid-template-columns:1fr 1fr; gap:8px; } .bp-ref .it { border:1px solid var(--line); background:var(--panel); border-radius:14px; overflow:hidden; padding:0; text-align:left; font:inherit; cursor:pointer; color:var(--fg); } .bp-ref .im { position:relative; height:120px; background:var(--accentbg); display:flex; align-items:center; } .bp-ref .im img { width:100%; height:100%; object-fit:cover; } .bp-ref .im > span:not(.play) { font-size:12px; padding:10px; } .bp-ref .tt { padding:8px; font-size:12.5px; } .bp-ref .tt b { display:block; } .bp-ref .tt span { color:var(--muted); }
 @media (max-width:700px) { #mu-lista .post.ig, #mu-lista .post.destq, #mu-lista .post.elog { margin-left:-14px; margin-right:-14px; border-radius:0; border-left:0; border-right:0; margin-bottom:10px; } #mu-lista .post.destq { margin:0 0 10px; border-radius:18px; } }
 .post.ig .ac .reac { font-size:13px; color:var(--muted); margin-right:6px; } .post.ig .dots { padding:6px 0 0; }
 .post.ig .cab span { display:block; margin-top:1px; } .post.ig .car { margin-top:0; border-radius:0; } .post.ig .carw .cn { top:10px; } .post.ig .vidf { border-radius:0; margin-top:0; } .post.ig .vid .play { width:64px; height:64px; border-radius:32px; font-size:28px; }
@@ -792,9 +800,9 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
       <div id="mood-mu"></div>
       <div id="eq-mood-box" class="card hide" style="margin-top:12px"><b>🌈 Mood da equipe hoje</b><div class="sub">Toque em alguém para mandar um recado</div><div class="equipe-mood" id="eq-mood"></div></div>
       <details class="card dob" id="mu-comp" style="margin-top:12px">
-        <summary>✨ Compartilhar uma conquista</summary>
+        <summary id="mu-sum">✨ Compartilhar uma conquista</summary>
         <div class="chips" id="mu-tipos"></div>
-        <textarea id="mu-txt" maxlength="500" placeholder="Conte para a equipe: bateu a meta? fez uma venda incrível? Use @ para marcar uma colega."></textarea>
+        <textarea id="mu-txt" maxlength="500" placeholder="Conte para a equipe: bateu a meta? fez uma venda incrível? Use @ para marcar uma colega."></textarea><input id="mu-res" class="hide" maxlength="140" placeholder="Resultado (opcional) · ex.: vendeu 3 conjuntos" style="width:100%;box-sizing:border-box;margin:0 0 8px;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit">
         <div style="display:flex;gap:8px;margin-top:8px;align-items:center"><button class="btn" id="mu-fbtn">📷 Fotos ou 🎥 vídeo</button><span class="sub" id="mu-fnome"></span><input type="file" id="mu-foto" accept="image/*,video/*" multiple class="hide"></div><div id="mu-thumbs" class="mu-thumbs"></div>
         <img id="mu-prev" class="hide" style="width:100%;border-radius:10px;margin-top:8px">
         <button class="btn pri big" id="mu-ok" style="margin-top:10px">Publicar no mural</button>
@@ -3235,9 +3243,25 @@ $('t-foto').addEventListener('change', async (e) => {
   e.target.value = '';
 });
 // ---------- mural ----------
-let MU_TIPO = 'meta', MU_FOTO = null, MU_ABA = 'tudo', MU_R = null;
+let MU_TIPO = 'meta', MU_FOTO = null, MU_ABA = 'tudo', MU_R = null, MU_BPF = '';
 const MU_TIPOS = { meta: '🏆 Meta batida', venda: '🎉 Grande venda', cliente: '⭐ Cliente feliz', vitrine: '👗 Vitrine/look', equipe: '💪 Equipe', outro: '✨ Outra' };
-function chipsMural() { const b = $('mu-tipos'); b.replaceChildren(); Object.keys(MU_TIPOS).forEach((k) => { const x = el('button', k === MU_TIPO ? 'on' : '', MU_TIPOS[k]); x.addEventListener('click', () => { MU_TIPO = k; chipsMural(); }); b.append(x); }); }
+const BP_TIPOS = { bp_vitrine: ['🪟 Vitrine do dia', 'foto da vitrine/arara', '#e9f3ff', '#1d5fa8'], bp_ensino: ['📚 Ensinamento', 'algo que aprendi', '#f3eefb', '#5b4a7a'], bp_certo: ['✅ Deu certo', 'situação real que funcionou', '#e8f6ee', '#1e7a46'], bp_dica: ['💡 Dica de venda', 'frase, abordagem, técnica', '#fff3e3', '#a85d00'] };
+function chipsMural() { const b = $('mu-tipos'); b.replaceChildren(); const bp = MU_ABA === 'bp';
+  if (bp && !BP_TIPOS[MU_TIPO]) MU_TIPO = 'bp_vitrine'; if (!bp && !MU_TIPOS[MU_TIPO]) MU_TIPO = 'meta';
+  b.classList.toggle('bp-g', bp); $('mu-res').classList.toggle('hide', !bp); $('mu-sum').textContent = bp ? '✨ Compartilhar uma boa prática' : '✨ Compartilhar uma conquista';
+  $('mu-txt').placeholder = bp ? 'O que você fez? Por que funcionou? Conte para as outras lojas aplicarem também.' : 'Conte para a equipe: bateu a meta? fez uma venda incrível? Use @ para marcar uma colega.';
+  if (bp) Object.keys(BP_TIPOS).forEach((k) => { const x = el('button', k === MU_TIPO ? 'on' : ''); x.type = 'button'; x.append(el('b', '', BP_TIPOS[k][0]), el('small', '', BP_TIPOS[k][1])); x.addEventListener('click', () => { MU_TIPO = k; chipsMural(); }); b.append(x); });
+  else Object.keys(MU_TIPOS).forEach((k) => { const x = el('button', k === MU_TIPO ? 'on' : '', MU_TIPOS[k]); x.addEventListener('click', () => { MU_TIPO = k; chipsMural(); }); b.append(x); }); }
+// ⭐ referências da rede: as boas práticas que a gerência marcou
+function abrirReferencias() {
+  const refs = ((MU_R && MU_R.posts) || []).filter((p) => p.referencia && BP_TIPOS[p.tipoK]); let f = '';
+  abrirDet('⭐ Referências da rede', (b) => { const pinta = () => { b.replaceChildren(el('div', 'sub', 'As melhores práticas escolhidas pela gerência, para consultar e treinar.'));
+    const ch = el('div', 'bp-sub'); [['', 'Todas']].concat(Object.keys(BP_TIPOS).map((k) => [k, BP_TIPOS[k][0]])).forEach(([k, t]) => { const x = el('button', k === f ? 'on' : '', t); x.type = 'button'; x.addEventListener('click', () => { f = k; pinta(); }); ch.append(x); }); b.append(ch);
+    const l = refs.filter((p) => !f || p.tipoK === f); if (!l.length) b.append(el('div', 'vazio', 'Nenhuma referência aqui ainda. A gerência marca com ⭐ as boas práticas que todas devem conhecer.'));
+    const g = el('div', 'bp-ref'); l.forEach((p) => { const d = el('button', 'it'); d.type = 'button'; const im = el('div', 'im'); if (p.foto) { const i = el('img'); i.src = p.foto; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; im.append(i); } else im.append(el('span', '', '"' + String(p.texto || '').slice(0, 110) + '"')); if (p.video) im.append(el('span', 'play', '▶'));
+      const tx = el('div', 'tt'); tx.append(el('b', '', String(p.texto || BP_TIPOS[p.tipoK][0]).split('\n')[0].slice(0, 40)), el('span', '', primeiroNome(p.nome) + ' · 💡 ' + (p.aplicar || 0))); d.append(im, tx);
+      d.addEventListener('click', () => { const dd = $('det'); if (dd) dd.querySelector('.dhead button').click(); MU_ABA = 'bp'; MU_BPF = ''; MU_FOCO = p.id; desenharMural(MU_R); }); g.append(d); }); b.append(g); }; pinta(); });
+}
 // ---------- menções com @ ----------
 let PESSOAS = null, MU_FOCO = '';
 // abre o mural na publicação de quem postou (toque na notificação)
@@ -3277,17 +3301,21 @@ function desenharMural(r) {
   desenharEquipeMood(r.posts); desenharMood();
   const box = $('mu-lista'); box.replaceChildren(); MU_R = r;
   // abas do feed
-  const tabs = el('div', 'mu-tabs'); [['tudo', 'Tudo'], ['loja', 'Minha loja'], ['conq', '🏅 Conquistas'], ['ger', '📣 Gerência'], ['cli', '💬 Clientes']].forEach(([k, t]) => { if (k === 'loja' && (!S.loja || S.loja === 'TODAS')) return; const b = el('button', k === MU_ABA ? 'on' : '', t); b.type = 'button'; b.addEventListener('click', () => { MU_ABA = k; desenharMural(MU_R); }); tabs.append(b); });
+  const tabs = el('div', 'mu-tabs'); [['tudo', 'Tudo'], ['bp', '✨ Boas práticas'], ['loja', 'Minha loja'], ['conq', '🏅 Conquistas'], ['ger', '📣 Gerência'], ['cli', '💬 Clientes']].forEach(([k, t]) => { if (k === 'loja' && (!S.loja || S.loja === 'TODAS')) return; const b = el('button', k === MU_ABA ? 'on' : '', t); b.type = 'button'; b.addEventListener('click', () => { MU_ABA = k; chipsMural(); desenharMural(MU_R); }); tabs.append(b); });
   box.append(tabs);
+  if (MU_ABA === 'bp') { const sub = el('div', 'bp-sub'); [['', 'Todas']].concat(Object.keys(BP_TIPOS).map((k) => [k, BP_TIPOS[k][0]]), [['salvas', '🔖 Minhas salvas']]).forEach(([k, t]) => { const x = el('button', k === MU_BPF ? 'on' : '', t); x.type = 'button'; x.addEventListener('click', () => { MU_BPF = k; desenharMural(MU_R); }); sub.append(x); }); box.append(sub);
+    const nv = el('button', 'bp-novo', '＋ Compartilhar uma boa prática'); nv.type = 'button'; nv.addEventListener('click', () => { chipsMural(); const d = $('mu-comp'); d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => $('mu-txt').focus(), 300); }); box.append(nv);
+    const refs = r.posts.filter((p) => p.referencia && BP_TIPOS[p.tipoK]); if (refs.length) { const rf = el('button', 'bp-refc'); rf.type = 'button'; rf.append(el('b', '', '⭐ REFERÊNCIAS DA REDE · ' + refs.length), el('span', '', refs.slice(0, 3).map((p) => String(p.texto || BP_TIPOS[p.tipoK][0]).split('\n')[0].slice(0, 30)).join(' · ') + ' '), el('i', '', 'ver ›')); rf.addEventListener('click', abrirReferencias); box.append(rf); } }
   if (MU_ABA === 'cli') { const el0 = r.elogios || []; if (!el0.length) box.append(el('div', 'vazio', 'Ainda não há elogios com comentário. Peça para as clientes avaliarem pelo QR code 💜'));
     el0.forEach((x) => { const c = el('div', 'post elog'); c.append(el('div', 'st5', estr(x.nota)), el('div', 'tx', '“' + x.texto + '”'), el('div', 'sm', (x.nome ? 'atendida por ' + x.nome + ' · ' : '') + x.loja + ' · ' + x.quando)); box.append(c); }); return; }
   const CONQ = ['medalha', 'meta', 'venda', 'desafio', 'outro', 'cliente'], GER = ['recado', 'equipe', 'destaque'];
-  let lista = r.posts.filter((p) => MU_ABA === 'tudo' || (MU_ABA === 'loja' && p.loja === S.loja) || (MU_ABA === 'conq' && CONQ.indexOf(p.tipoK) >= 0) || (MU_ABA === 'ger' && GER.indexOf(p.tipoK) >= 0));
+  let lista = r.posts.filter((p) => (MU_ABA === 'bp' && BP_TIPOS[p.tipoK] && (!MU_BPF || p.tipoK === MU_BPF || (MU_BPF === 'salvas' && p.salvo))) || MU_ABA === 'tudo' || (MU_ABA === 'loja' && p.loja === S.loja) || (MU_ABA === 'conq' && CONQ.indexOf(p.tipoK) >= 0) || (MU_ABA === 'ger' && GER.indexOf(p.tipoK) >= 0));
   const fix = MU_ABA === 'tudo' ? r.posts.find((p) => p.tipoK === 'destaque') : null; if (fix) lista = [fix].concat(lista.filter((p) => p !== fix));
-  if (!lista.length) box.append(el('div', 'vazio', MU_ABA === 'tudo' ? 'Ainda não tem nada no mural. Seja a primeira a compartilhar uma conquista! 🌟' : 'Nada aqui por enquanto.'));
+  if (!lista.length) box.append(el('div', 'vazio', MU_ABA === 'bp' ? (MU_BPF === 'salvas' ? 'Você ainda não salvou nenhuma boa prática. Toque em 🔖 Salvar para guardar aqui.' : 'Ainda não tem boas práticas aqui. Compartilhe a primeira! ✨') : MU_ABA === 'tudo' ? 'Ainda não tem nada no mural. Seja a primeira a compartilhar uma conquista! 🌟' : 'Nada aqui por enquanto.'));
   lista.forEach((p) => {
     if (p.tipoK === 'destaque') { const c = el('div', 'post destq' + (p === fix ? ' fix' : '')); c.dataset.id = p.id; c.append(el('div', 'k', '📌 DESTAQUES DA SEMANA'), ...String(p.texto || '').split('\n').map((l, i) => el('div', i ? 'l' : 't', l))); box.append(c); return; }
-    const c = el('div', 'post ig'), cab = el('div', 'cab'); const t = el('div'); t.append(el('b', '', primeiroNome(p.nome) + (p.eu ? ' (você)' : '')), el('span', '', p.loja + ' · ' + quandoRel(p.quando) + ' · ' + p.tipo)); cab.append(avatar(p.avatar, p.nome), t); c.append(cab);
+    const c = el('div', 'post ig'), cab = el('div', 'cab'); const t = el('div'); t.append(el('b', '', primeiroNome(p.nome) + (p.eu ? ' (você)' : '')), el('span', '', p.loja + ' · ' + quandoRel(p.quando) + (BP_TIPOS[p.tipoK] ? '' : ' · ' + p.tipo))); cab.append(avatar(p.avatar, p.nome), t); c.append(cab);
+    if (BP_TIPOS[p.tipoK]) { const ct = el('span', 'bp-cat', (p.referencia ? '⭐ ' : '') + BP_TIPOS[p.tipoK][0]); ct.style.background = BP_TIPOS[p.tipoK][2]; ct.style.color = BP_TIPOS[p.tipoK][3]; cab.append(ct); }
     if (p.video) { const v = el('div', 'vid'); const i = document.createElement('img'); i.className = 'ft'; i.src = p.video.capa; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; v.append(i, el('span', 'play', '▶'));
       v.addEventListener('click', () => { if (!p.video.id) return; const f = document.createElement('iframe'); f.src = 'https://drive.google.com/file/d/' + p.video.id + '/preview'; f.allow = 'autoplay; fullscreen'; f.allowFullscreen = true; f.className = 'vidf'; v.replaceWith(f); }, { once: true }); c.append(v); }
     else if ((p.fotos || []).length > 1) { const car = el('div', 'car'), n = el('span', 'cn', '1/' + p.fotos.length), dots = el('div', 'dots');
@@ -3296,7 +3324,7 @@ function desenharMural(r) {
       const w = el('div', 'carw'); w.append(car, n); c.append(w, dots); }
     else if (p.foto) { const i = document.createElement('img'); i.className = 'ft'; i.src = p.foto; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; c.append(i); }
     if (p.usuario && p.usuario !== 'sistema') { cab.style.cursor = 'pointer'; cab.addEventListener('click', () => abrirPerfil(p.usuario)); }
-    let txEl = null; if (p.texto) { txEl = el('div', 'tx'); txEl.append(el('b', '', primeiroNome(p.nome) + ' '), comMencoes(p.texto)); if (p.editado) txEl.append(el('span', 'ed', ' · editado')); }
+    let txEl = null; const resEl = p.resultado ? el('div', 'bp-res', '📈 Resultado: ' + p.resultado) : null; if (p.texto) { txEl = el('div', 'tx'); txEl.append(el('b', '', primeiroNome(p.nome) + ' '), comMencoes(p.texto)); if (p.editado) txEl.append(el('span', 'ed', ' · editado')); }
     c.dataset.id = p.id;
     const ac = el('div', 'ac'); const like = el('button', 'btn sm', ''); const resumo = el('span', 'reac');
     const pintar = () => { like.textContent = (p.minha || (p.curti ? '❤️' : '🤍')); like.classList.toggle('on', !!p.minha || p.curti); resumo.textContent = Object.keys(p.reacoes || {}).sort((a, b) => p.reacoes[b] - p.reacoes[a]).map((e) => e + (c.classList.contains('ig') ? '' : (p.reacoes[e] > 1 ? p.reacoes[e] : ''))).join(c.classList.contains('ig') ? '' : ' ') + (c.classList.contains('ig') && p.curtidas ? ' ' + p.curtidas : ''); };
@@ -3311,7 +3339,15 @@ function desenharMural(r) {
       mb.addEventListener('click', () => escolher('Publicação', '', [].concat(p.podeEditar ? [['✏️ Editar texto', '', () => { fechar(); const tx0 = c.querySelector('.tx') || (() => { const z = el('div', 'tx'); c.insertBefore(z, ac); return z; })(); editarTexto(tx0, p.texto || '', 500, (nv) => rodar('editarPost', [S.token, p.id, nv], (r2) => { toast('Publicação editada ✏️'); desenharMural(r2); })); }]] : [], p.podeApagar ? [['🗑️ Apagar publicação', 'bad', () => { fechar(); escolher('Apagar publicação?', 'Ela sai do mural para todas.', [['Apagar', 'bad', () => { fechar(); rodar('apagarPost', [S.token, p.id], desenharMural); }]]); }]] : [])));
       ac.append(mb);
     }
-    c.append(ac, picker); if (txEl) c.append(txEl); c.append(cbox); box.append(c);
+    if (BP_TIPOS[p.tipoK]) { const bl = el('div', 'bp-ac');
+      const ap = el('button', 'bp-b'), sv = el('button', 'bp-b'); ap.type = sv.type = 'button';
+      const pa = () => { ap.textContent = '💡 ' + (p.apliquei ? 'Vou aplicar ✓' : 'Vou aplicar') + (p.aplicar ? ' · ' + p.aplicar : ''); ap.classList.toggle('on', !!p.apliquei); sv.textContent = p.salvo ? '🔖 Salva' : '🔖 Salvar'; sv.classList.toggle('on', !!p.salvo); }; pa();
+      ap.addEventListener('click', () => { const a0 = [p.apliquei, p.aplicar]; p.apliquei = !p.apliquei; p.aplicar = (p.aplicar || 0) + (p.apliquei ? 1 : -1); pa(); if (p.apliquei) toast('Boa! A autora vai saber que inspirou você 💡'); rodar('bpAplicar', [S.token, p.id], (x) => { p.aplicar = x.aplicar; p.apliquei = x.apliquei; pa(); }, () => { p.apliquei = a0[0]; p.aplicar = a0[1]; pa(); }); });
+      sv.addEventListener('click', () => { p.salvo = !p.salvo; pa(); rodar('bpSalvar', [S.token, p.id], (x) => { p.salvo = x.salvo; pa(); }, () => { p.salvo = !p.salvo; pa(); }); });
+      bl.append(ap, sv);
+      if (p.podeRef) { const rf = el('button', 'bp-b' + (p.referencia ? ' on' : ''), p.referencia ? '⭐ Referência' : '☆ Referência'); rf.type = 'button'; rf.title = 'Marcar como referência da rede'; rf.addEventListener('click', () => rodar('bpReferencia', [S.token, p.id], (x) => { p.referencia = x.referencia; toast(x.referencia ? '⭐ Virou referência da rede' : 'Saiu das referências'); desenharMural(MU_R); })); bl.append(rf); }
+      c.append(ac, picker, bl); } else c.append(ac, picker);
+    if (txEl) c.append(txEl); if (resEl) c.append(resEl); c.append(cbox); box.append(c);
   });
   if (MU_FOCO) { const alvo = box.querySelector('[data-id="' + MU_FOCO + '"]'); MU_FOCO = ''; if (alvo) { alvo.classList.add('foco'); alvo.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => alvo.classList.remove('foco'), 2500); } }
 }
@@ -5596,9 +5632,9 @@ ativarMencao($('mu-txt'));
 $('mu-ok').addEventListener('click', () => {
   const tx = $('mu-txt').value.trim(); if (!tx && !MU_FOTO && !MU_VIDEO) { toast('Escreva algo ou escolha uma foto 🙂'); return; }
   $('mu-ok').disabled = true; $('mu-ok').textContent = MU_VIDEO ? 'Enviando o vídeo… (pode levar 1 minuto)' : 'Publicando…';
-  rodar(MU_VIDEO ? 'postarVideo' : 'postarConquista', MU_VIDEO ? [S.token, MU_TIPO, tx, MU_VIDEO.b64, MU_VIDEO.mime, MU_VIDEO.capa, mencoesDe($('mu-txt'))] : [S.token, MU_TIPO, tx, MU_FOTO, mencoesDe($('mu-txt'))], (r) => { MU_VIDEO = null; muThumbs_();
+  rodar(MU_VIDEO ? 'postarVideo' : 'postarConquista', MU_VIDEO ? [S.token, MU_TIPO, tx, MU_VIDEO.b64, MU_VIDEO.mime, MU_VIDEO.capa, mencoesDe($('mu-txt')), BP_TIPOS[MU_TIPO] ? $('mu-res').value : ''] : [S.token, MU_TIPO, tx, MU_FOTO, mencoesDe($('mu-txt')), BP_TIPOS[MU_TIPO] ? $('mu-res').value : ''], (r) => { MU_VIDEO = null; muThumbs_();
     limparMencoes($('mu-txt'));
-    $('mu-ok').disabled = false; $('mu-ok').textContent = 'Publicar no mural'; $('mu-txt').value = ''; $('mu-comp').open = false; MU_FOTO = null; MU_VIDEO = null; muThumbs_(); $('mu-foto').value = '';
+    $('mu-ok').disabled = false; $('mu-ok').textContent = 'Publicar no mural'; $('mu-txt').value = ''; $('mu-comp').open = false; MU_FOTO = null; MU_VIDEO = null; muThumbs_(); $('mu-foto').value = ''; $('mu-res').value = '';
     toast('Publicado! A equipe vai ver 🎉'); $('mu-loja').value = 'TODAS'; desenharMural(r);
   }, () => { $('mu-ok').disabled = false; $('mu-ok').textContent = 'Publicar no mural'; });
 });
