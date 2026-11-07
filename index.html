@@ -159,6 +159,19 @@ body.adm #eu, body.adm #eu-meta, body.adm #cart, body.adm #me, body.adm #dia-fil
 body.ocupado #eu-acoes .btn, body.ocupado .fila-ac .btn { opacity:.55; pointer-events:none; } body.recem #eu-acoes .btn, body.recem .fila-ac .btn { pointer-events:none; opacity:.7; } /* 3 s depois de começar: evita o toque duplo cair em "+ outra cliente" */
 .hist-lista { margin-top:10px; } .hist-it { display:grid; grid-template-columns:46px 84px 1fr; gap:8px; padding:8px 4px; border-bottom:1px solid var(--line); font-size:13.5px; align-items:baseline; } .hist-it .hh { font-variant-numeric:tabular-nums; color:var(--muted); font-weight:600; } .hist-it .hq { font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .hist-it.vendeu .ht { color:var(--ok); font-weight:600; } .hist-it.naovendeu .ht { color:var(--bad); } .hist-it.saiu .ht, .hist-it.fora .ht { color:var(--warn); }
 .ind-l { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line); } .ind-l > div > div:nth-child(2) { font-size:18px; font-weight:700; } .ind-p { font-weight:800; font-size:14px; padding:6px 10px; border-radius:10px; white-space:nowrap; background:var(--bg); } .ind-p.up { color:var(--ok); background:#e3f3e9; } .ind-p.dn { color:var(--bad); background:#fbe4e2; }
+.mu-tabs { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin:0 0 10px; } .mu-tabs button { flex:none; border:1px solid var(--line); background:var(--panel); border-radius:999px; padding:7px 12px; font:inherit; font-size:13px; font-weight:600; color:var(--fg); cursor:pointer; } .mu-tabs button.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+.post.destq { background:linear-gradient(135deg,#5b4a7a,#b0578d); color:#fff; border:0; padding:16px; } .post.destq .k { font-size:11px; font-weight:800; letter-spacing:.12em; opacity:.85; } .post.destq .t { font-size:18px; font-weight:800; margin:6px 0 8px; } .post.destq .l { font-size:14px; margin-top:6px; }
+.post.elog .st5 { color:#e8a33a; font-size:15px; } .post.elog .tx { font-style:italic; margin:6px 0 4px; }
+.carw { position:relative; } .car { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; border-radius:12px; margin-top:8px; } .car::-webkit-scrollbar { display:none; } .car img { flex:0 0 100%; width:100%; scroll-snap-align:center; object-fit:cover; max-height:480px; }
+.carw .cn { position:absolute; top:16px; right:10px; background:rgba(0,0,0,.55); color:#fff; font-size:12px; padding:3px 8px; border-radius:10px; } .post .dots { display:flex; gap:4px; justify-content:center; padding:6px 0 0; } .post .dots i { width:6px; height:6px; border-radius:3px; background:var(--line); } .post .dots i.on { background:var(--accent); }
+.vid { position:relative; cursor:pointer; } .vid .play, .pg .play { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:58px; height:58px; border-radius:29px; background:rgba(0,0,0,.5); color:#fff; font-size:24px; display:flex; align-items:center; justify-content:center; } .vidf { width:100%; aspect-ratio:9/16; max-height:70vh; border:0; border-radius:12px; margin-top:8px; background:#000; }
+.mu-thumbs { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; } .mu-thumbs .mt { position:relative; width:72px; height:72px; } .mu-thumbs img { width:72px; height:72px; object-fit:cover; border-radius:10px; } .mu-thumbs .x { position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:11px; border:0; background:#1f1e1d; color:#fff; font-size:13px; } .mu-thumbs .vd { position:absolute; bottom:4px; left:4px; background:rgba(0,0,0,.6); color:#fff; font-size:11px; padding:1px 5px; border-radius:6px; }
+.pf-h { display:flex; flex-direction:column; align-items:center; text-align:center; padding:6px 0 10px; } .pf-h .pf-av { width:96px !important; height:96px !important; font-size:34px; box-shadow:0 0 0 3px #fff, 0 0 0 6px #e8862a; margin-bottom:10px; } .pf-h > b { font-size:21px; }
+.pf-st { display:flex; justify-content:space-around; width:100%; margin:12px 0 8px; } .pf-st div { text-align:center; } .pf-st b { display:block; font-size:18px; } .pf-st span { font-size:11.5px; color:var(--muted); }
+.pf-med { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; } .pf-med span { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:5px 8px; font-size:12px; }
+.pf-lb { font-size:12px; font-weight:800; letter-spacing:.06em; color:var(--muted); margin:16px 2px 8px; } .pf-rec { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:12px; margin-bottom:8px; } .pf-rec .cab { display:flex; align-items:center; gap:8px; } .pf-rec .tx { margin-top:8px; font-size:14.5px; } .pf-rec img { width:100%; border-radius:12px; margin-top:8px; }
+.pf-elo { background:var(--accentbg); border-left:3px solid #e8a33a; border-radius:10px; padding:8px 10px; font-size:13px; font-style:italic; margin-bottom:6px; }
+.pf-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:3px; } .pf-grid .pg { position:relative; aspect-ratio:1; border:0; padding:0; background:var(--accentbg); border-radius:6px; overflow:hidden; cursor:pointer; } .pf-grid img { width:100%; height:100%; object-fit:cover; } .pf-grid .pt { font-size:11px; padding:6px; display:block; color:var(--fg); }
 #agora:empty, body.ini-res #agora { display:none !important; } .agora { margin-top:6px; }
 .ag-hero { background:#5b4a7a; color:#fff; border-radius:18px; padding:16px; margin-top:6px; } .ag-hero.sua { background:#1e7a46; }
 .ag-hero .k { font-size:12px; font-weight:700; letter-spacing:.06em; opacity:.8; } .ag-hero .t { font-size:24px; font-weight:800; margin:4px 0 2px; line-height:1.2; } .ag-hero .s { font-size:13px; opacity:.9; }
@@ -776,7 +789,7 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
         <summary>✨ Compartilhar uma conquista</summary>
         <div class="chips" id="mu-tipos"></div>
         <textarea id="mu-txt" maxlength="500" placeholder="Conte para a equipe: bateu a meta? fez uma venda incrível? Use @ para marcar uma colega."></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px;align-items:center"><button class="btn" id="mu-fbtn">📷 Foto</button><span class="sub" id="mu-fnome"></span><input type="file" id="mu-foto" accept="image/*" class="hide"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center"><button class="btn" id="mu-fbtn">📷 Fotos ou 🎥 vídeo</button><span class="sub" id="mu-fnome"></span><input type="file" id="mu-foto" accept="image/*,video/*" multiple class="hide"></div><div id="mu-thumbs" class="mu-thumbs"></div>
         <img id="mu-prev" class="hide" style="width:100%;border-radius:10px;margin-top:8px">
         <button class="btn pri big" id="mu-ok" style="margin-top:10px">Publicar no mural</button>
       </details>
@@ -1014,7 +1027,7 @@ if (HOSPEDADO) {
   const API = window.API_URL || 'https://script.google.com/macros/s/AKfycbzLVCL9V3HFNC1oovEF80GHdZbCNIsIdBqm8CFZ3ZBSjFAeXrarzUg19-z9go2MgGJuUw/exec';
   const chamar = (fn, args, ok, falha) => {
     // limite de 90 s: sem isso um servidor travado deixava botões em "Enviando…" por minutos
-    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, tm = ctl ? setTimeout(() => ctl.abort(), 90000) : null;
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, tm = ctl ? setTimeout(() => ctl.abort(), fn === 'postarVideo' ? 300000 : 90000) : null;
     fetch(API, { method: 'POST', body: JSON.stringify({ fn: fn, args: args, pq: 1 }), redirect: 'follow', signal: ctl ? ctl.signal : undefined })
       .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
       .then((t) => { let j; try { j = JSON.parse(t); } catch (x) { throw new Error('HTTP 5 resposta inválida'); } return j; })
@@ -1722,6 +1735,7 @@ $('b-ajuda').addEventListener('click', abrirAjudaConta_);
 function abrirAjudaConta_() {
   const op = []; let pa = null; try { pa = typeof passosAba === 'function' && aba && !(aba === 'ini' && !document.body.classList.contains('ini-res')) && aba !== 'dia' ? passosAba(aba) : null; } catch (e) {}
   if (pa && pa.length) op.push(['🧭 Como usar esta tela', 'pri', () => { fechar(); iniciarTour(pa); }]);
+  op.push(['💜 Meu álbum de recordações', '', () => { fechar(); abrirPerfil(S.usuario); }]);
   op.push(['🗺️ Tour pelo app', pa && pa.length ? '' : 'pri', () => { fechar(); iniciarTour(); }], ['📖 Guia rápido', '', () => { fechar(); mostrarGuia(true); }], ['🔑 Trocar minha senha', '', () => { fechar(); trocarSenhaUI('', false); }], ['🔔 Notificações', '', () => { fechar(); verNotificacoes(); }], ['⟳ Atualizar o app', '', () => { fechar(); atualizarApp(); }], ['📜 Termo de uso', '', () => { fechar(); mostrarTermo(null); }], ['🚪 Sair da conta', 'bad', () => { fechar(); $('b-sair').click(); }]);
   escolher('❓ Ajuda e conta', S ? primeiroNome(S.nome) + ' · ' + (S.cargo === 'ADMIN' ? 'administração' : cargoTxt(S.cargo).toLowerCase()) : '', op);
 }
@@ -2880,6 +2894,33 @@ function cardReposicao(box) {
     });
   }).withFailureHandler(() => c.remove()).reposicaoPainel(S.token);
 }
+// 💜 perfil = álbum de recordações: medalhas, elogios das clientes, posts e recados de carinho da equipe
+function abrirPerfil(usuario) {
+  abrirDet('💜 Álbum de recordações', (b) => {
+    b.append(el('div', 'sub', 'Carregando…'));
+    const pinta = (r) => { b.replaceChildren();
+      const h = el('div', 'pf-h'); const ft = avatar(r.foto, r.nome); ft.classList.add('pf-av'); h.append(ft, el('b', '', primeiroNome(r.nome)), el('div', 'sm', r.cargo + ' · ' + r.loja));
+      const st = el('div', 'pf-st'); [[r.posts.length, 'posts'], [r.medalhas.length, 'medalhas'], [r.cinco, 'avaliações 5★'], [r.recordacoes.length, 'recordações']].forEach(([n, l]) => { const d = el('div'); d.append(el('b', '', String(n)), el('span', '', l)); st.append(d); }); h.append(st);
+      if (r.medalhas.length) { const md = el('div', 'pf-med'); r.medalhas.slice(0, 12).forEach((m) => md.append(el('span', '', m.ic + ' ' + m.nome))); h.append(md); }
+      b.append(h);
+      // deixar uma recordação
+      const cx = el('div', 'card'), ta = el('textarea'); ta.maxLength = 500; ta.rows = 3; ta.placeholder = r.eu ? 'Guarde um momento especial no seu álbum…' : 'Deixe um recado de carinho para ' + primeiroNome(r.nome) + ' 💜';
+      let foto = null; const fi = el('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.className = 'hide'; const fb = el('button', 'btn sm', '📷 Foto'), pv = el('img'); pv.className = 'hide'; pv.style.cssText = 'width:100%;border-radius:10px;margin-top:6px';
+      fb.addEventListener('click', () => fi.click()); fi.addEventListener('change', async () => { const f = fi.files[0]; if (!f) return; try { foto = await comprimir(f, 1100, 0.78, false); pv.src = foto; pv.classList.remove('hide'); } catch (x) { toast(x.message); } });
+      const ok = el('button', 'btn pri', '💌 Guardar no álbum'); const ln = el('div'); ln.style.cssText = 'display:flex;gap:8px;justify-content:space-between;margin-top:8px'; ln.append(fb, ok);
+      ok.addEventListener('click', () => { const t = ta.value.trim(); if (!t && !foto) { toast('Escreva uma mensagem ou escolha uma foto 💜'); return; } ok.disabled = true; ok.textContent = 'Guardando…';
+        rodar('deixarRecordacao', [S.token, r.usuario, t, foto], (x) => { toast('Recordação guardada 💜'); pinta(x); }, () => { ok.disabled = false; ok.textContent = '💌 Guardar no álbum'; }); });
+      cx.append(el('b', '', r.eu ? '💌 Meu álbum' : '💌 Deixar uma recordação'), ta, fi, pv, ln); b.append(cx);
+      if (r.recordacoes.length) { b.append(el('div', 'pf-lb', 'RECORDAÇÕES')); r.recordacoes.forEach((x) => { const c = el('div', 'pf-rec'), cab = el('div', 'cab'); const t = el('div'); t.append(el('b', '', x.de), el('span', 'sm', ' · ' + String(x.quando).slice(0, 5))); cab.append(avatar(x.avatar, x.de), t);
+        if (x.podeApagar) { const ap = el('button', 'btn sm', '🗑'); ap.style.marginLeft = 'auto'; ap.addEventListener('click', () => escolher('Apagar esta recordação?', '', [['Apagar', 'bad', () => { fechar(); rodar('apagarRecordacao', [S.token, x.id], pinta); }]])); cab.append(ap); }
+        c.append(cab); if (x.texto) c.append(el('div', 'tx', x.texto)); if (x.foto) { const i = el('img'); i.src = x.foto; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; c.append(i); } b.append(c); }); }
+      if (r.elogios.length) { b.append(el('div', 'pf-lb', 'O QUE AS CLIENTES DISSERAM')); r.elogios.forEach((x) => b.append(el('div', 'pf-elo', '“' + x.texto + '” · ' + x.quando.slice(0, 5)))); }
+      if (r.posts.length) { b.append(el('div', 'pf-lb', 'PUBLICAÇÕES')); const g = el('div', 'pf-grid'); r.posts.forEach((x) => { const d = el('button', 'pg'); d.type = 'button'; if (x.foto) { const i = el('img'); i.src = x.foto; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; d.append(i); if (x.video) d.append(el('span', 'play', '▶')); } else d.append(el('span', 'pt', x.texto || '✨'));
+        d.addEventListener('click', () => { const dd = $('det'); if (dd) dd.querySelector('.dhead button').click(); MU_FOCO = x.id; MU_ABA = 'tudo'; mudarAba('mural'); }); g.append(d); }); b.append(g); }
+    };
+    rodar('perfilPessoa', [S.token, usuario], pinta, (e) => b.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e))));
+  });
+}
 // 📈 indicadores de venda (iguais ao USE › Inteligência › Indicadores de Venda): período x mesmas semanas do ano passado
 function abrirIndicadores() {
   abrirDet('📈 Indicadores de venda', (b) => {
@@ -3186,7 +3227,7 @@ $('t-foto').addEventListener('change', async (e) => {
   e.target.value = '';
 });
 // ---------- mural ----------
-let MU_TIPO = 'meta', MU_FOTO = null;
+let MU_TIPO = 'meta', MU_FOTO = null, MU_ABA = 'tudo', MU_R = null;
 const MU_TIPOS = { meta: '🏆 Meta batida', venda: '🎉 Grande venda', cliente: '⭐ Cliente feliz', vitrine: '👗 Vitrine/look', equipe: '💪 Equipe', outro: '✨ Outra' };
 function chipsMural() { const b = $('mu-tipos'); b.replaceChildren(); Object.keys(MU_TIPOS).forEach((k) => { const x = el('button', k === MU_TIPO ? 'on' : '', MU_TIPOS[k]); x.addEventListener('click', () => { MU_TIPO = k; chipsMural(); }); b.append(x); }); }
 // ---------- menções com @ ----------
@@ -3226,12 +3267,28 @@ function comMencoes(t) {
 function desenharMural(r) {
   if (r.posts.some((p) => p.eu && p.tipoK === 'mood' && p.hoje)) { S.moodDia = hojeStr(); salvar(); }
   desenharEquipeMood(r.posts); desenharMood();
-  const box = $('mu-lista'); box.replaceChildren();
-  if (!r.posts.length) box.append(el('div', 'vazio', 'Ainda não tem nada no mural. Seja a primeira a compartilhar uma conquista! 🌟'));
-  r.posts.forEach((p) => {
+  const box = $('mu-lista'); box.replaceChildren(); MU_R = r;
+  // abas do feed
+  const tabs = el('div', 'mu-tabs'); [['tudo', 'Tudo'], ['loja', 'Minha loja'], ['conq', '🏅 Conquistas'], ['ger', '📣 Gerência'], ['cli', '💬 Clientes']].forEach(([k, t]) => { if (k === 'loja' && (!S.loja || S.loja === 'TODAS')) return; const b = el('button', k === MU_ABA ? 'on' : '', t); b.type = 'button'; b.addEventListener('click', () => { MU_ABA = k; desenharMural(MU_R); }); tabs.append(b); });
+  box.append(tabs);
+  if (MU_ABA === 'cli') { const el0 = r.elogios || []; if (!el0.length) box.append(el('div', 'vazio', 'Ainda não há elogios com comentário. Peça para as clientes avaliarem pelo QR code 💜'));
+    el0.forEach((x) => { const c = el('div', 'post elog'); c.append(el('div', 'st5', estr(x.nota)), el('div', 'tx', '“' + x.texto + '”'), el('div', 'sm', (x.nome ? 'atendida por ' + x.nome + ' · ' : '') + x.loja + ' · ' + x.quando)); box.append(c); }); return; }
+  const CONQ = ['medalha', 'meta', 'venda', 'desafio', 'outro', 'cliente'], GER = ['recado', 'equipe', 'destaque'];
+  let lista = r.posts.filter((p) => MU_ABA === 'tudo' || (MU_ABA === 'loja' && p.loja === S.loja) || (MU_ABA === 'conq' && CONQ.indexOf(p.tipoK) >= 0) || (MU_ABA === 'ger' && GER.indexOf(p.tipoK) >= 0));
+  const fix = MU_ABA === 'tudo' ? r.posts.find((p) => p.tipoK === 'destaque') : null; if (fix) lista = [fix].concat(lista.filter((p) => p !== fix));
+  if (!lista.length) box.append(el('div', 'vazio', MU_ABA === 'tudo' ? 'Ainda não tem nada no mural. Seja a primeira a compartilhar uma conquista! 🌟' : 'Nada aqui por enquanto.'));
+  lista.forEach((p) => {
+    if (p.tipoK === 'destaque') { const c = el('div', 'post destq' + (p === fix ? ' fix' : '')); c.dataset.id = p.id; c.append(el('div', 'k', '📌 DESTAQUES DA SEMANA'), ...String(p.texto || '').split('\n').map((l, i) => el('div', i ? 'l' : 't', l))); box.append(c); return; }
     const c = el('div', 'post'), cab = el('div', 'cab'); const t = el('div'); t.append(el('b', '', primeiroNome(p.nome) + (p.eu ? ' (você)' : '')), el('span', '', p.loja + ' · ' + p.quando)); cab.append(avatar(p.avatar, p.nome), t); c.append(cab);
     c.append(el('span', 'chip', p.tipo));
-    if (p.foto) { const i = document.createElement('img'); i.className = 'ft'; i.src = p.foto; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; c.append(i); }
+    if (p.video) { const v = el('div', 'vid'); const i = document.createElement('img'); i.className = 'ft'; i.src = p.video.capa; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; v.append(i, el('span', 'play', '▶'));
+      v.addEventListener('click', () => { if (!p.video.id) return; const f = document.createElement('iframe'); f.src = 'https://drive.google.com/file/d/' + p.video.id + '/preview'; f.allow = 'autoplay; fullscreen'; f.allowFullscreen = true; f.className = 'vidf'; v.replaceWith(f); }, { once: true }); c.append(v); }
+    else if ((p.fotos || []).length > 1) { const car = el('div', 'car'), n = el('span', 'cn', '1/' + p.fotos.length), dots = el('div', 'dots');
+      p.fotos.forEach((u, k) => { const i = document.createElement('img'); i.src = u; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; car.append(i); dots.append(el('i', k ? '' : 'on')); });
+      car.addEventListener('scroll', () => { const k = Math.round(car.scrollLeft / car.clientWidth); n.textContent = (k + 1) + '/' + p.fotos.length; [...dots.children].forEach((d, j) => d.classList.toggle('on', j === k)); }, { passive: true });
+      const w = el('div', 'carw'); w.append(car, n); c.append(w, dots); }
+    else if (p.foto) { const i = document.createElement('img'); i.className = 'ft'; i.src = p.foto; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; c.append(i); }
+    if (p.usuario && p.usuario !== 'sistema') { cab.style.cursor = 'pointer'; cab.addEventListener('click', () => abrirPerfil(p.usuario)); }
     if (p.texto) { const tx = el('div', 'tx'); tx.append(comMencoes(p.texto)); c.append(tx); }
     c.dataset.id = p.id;
     if (p.editado) { const ed = el('div', 'ed', 'editado'); c.append(ed); }
@@ -3453,7 +3510,23 @@ function previaStatus(tipo, blob, dataUrl, dur) {
 }
 function carregarMural() { chipsMural(); $('mu-lista').replaceChildren(el('div', 'vazio', 'Carregando…')); rodar('mural', [S.token, $('mu-loja').value], desenharMural); }
 $('mu-fbtn').addEventListener('click', () => $('mu-foto').click());
-$('mu-foto').addEventListener('change', async (e) => { const f = e.target.files[0]; if (!f) return; try { MU_FOTO = await comprimir(f, 1100, 0.78, false); $('mu-prev').src = MU_FOTO; $('mu-prev').classList.remove('hide'); $('mu-fnome').textContent = 'foto pronta'; } catch (x) { toast(x.message); } });
+let MU_VIDEO = null;
+function muThumbs_() { const b = $('mu-thumbs'); b.replaceChildren(); $('mu-prev').classList.add('hide');
+  if (MU_VIDEO) { const d = el('div', 'mt'); const i = el('img'); i.src = MU_VIDEO.capa; d.append(i, el('span', 'vd', '▶ ' + Math.round(MU_VIDEO.dur) + 's')); b.append(d); }
+  (MU_FOTO || []).forEach((u, k) => { const d = el('div', 'mt'), i = el('img'), x = el('button', 'x', '×'); i.src = u; x.type = 'button'; x.addEventListener('click', () => { MU_FOTO.splice(k, 1); if (!MU_FOTO.length) MU_FOTO = null; muThumbs_(); }); d.append(i, x); b.append(d); });
+  $('mu-fnome').textContent = MU_VIDEO ? 'vídeo pronto' : MU_FOTO ? MU_FOTO.length + (MU_FOTO.length > 1 ? ' fotos' : ' foto') : ''; }
+function lerVideo_(f) { return new Promise((ok, erro) => {
+  if (f.size > 25 * 1024 * 1024) { erro(new Error('Vídeo muito grande (máximo 25 MB). Grave um vídeo mais curto.')); return; }
+  const v = document.createElement('video'), url = URL.createObjectURL(f); v.preload = 'metadata'; v.muted = true; v.playsInline = true; v.src = url;
+  v.onloadedmetadata = () => { if (v.duration > 31) { URL.revokeObjectURL(url); erro(new Error('O vídeo pode ter no máximo 30 segundos.')); return; } v.currentTime = Math.min(0.5, v.duration / 2); };
+  v.onseeked = () => { const cv = document.createElement('canvas'), w = Math.min(900, v.videoWidth || 900), h = Math.round(w * (v.videoHeight || 1600) / (v.videoWidth || 900)); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(v, 0, 0, w, h);
+    const capa = cv.toDataURL('image/jpeg', 0.75), dur = v.duration, fr = new FileReader(); fr.onload = () => { URL.revokeObjectURL(url); ok({ b64: String(fr.result).split(',')[1], mime: f.type || 'video/mp4', capa: capa, dur: dur }); }; fr.onerror = () => erro(new Error('Não deu para ler o vídeo.')); fr.readAsDataURL(f); };
+  v.onerror = () => { URL.revokeObjectURL(url); erro(new Error('Não deu para abrir este vídeo.')); }; }); }
+$('mu-foto').addEventListener('change', async (e) => { const fs = [...(e.target.files || [])]; if (!fs.length) return; $('mu-fnome').textContent = 'preparando…';
+  try { const vid = fs.find((f) => /^video\//.test(f.type));
+    if (vid) { MU_FOTO = null; MU_VIDEO = await lerVideo_(vid); }
+    else { MU_VIDEO = null; MU_FOTO = (MU_FOTO || []).slice(0, 5); for (const f of fs) { if (MU_FOTO.length >= 5) { toast('No máximo 5 fotos por publicação.'); break; } MU_FOTO.push(await comprimir(f, 1100, 0.78, false)); } }
+    muThumbs_(); } catch (x) { toast(x.message); $('mu-fnome').textContent = ''; } e.target.value = ''; });
 $('mu-loja').addEventListener('change', carregarMural);
 // ---------- foto de perfil (nuvem) e mood do dia ----------
 let NUVEM_FECHADA = false;
@@ -5486,7 +5559,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'saude') { abrirCheckup(); return; } if (a.tipo === 'produto_quente') { abrirQuentes(); return; } if (a.tipo === 'avaliacao_baixa') { if (chefe()) verResultados(); else mudarAba(casaAba_()); return; } if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { if (S.cargo === 'VENDEDORA') mudarAba('meta'); else if (S.cargo === 'ESTOQUISTA') mudarAba('mural'); else verResultados(); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba(casaAba_()); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'saude') { abrirCheckup(); return; } if (a.tipo === 'recordacao') { abrirPerfil(S.usuario); return; } if (a.tipo === 'produto_quente') { abrirQuentes(); return; } if (a.tipo === 'avaliacao_baixa') { if (chefe()) verResultados(); else mudarAba(casaAba_()); return; } if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { if (S.cargo === 'VENDEDORA') mudarAba('meta'); else if (S.cargo === 'ESTOQUISTA') mudarAba('mural'); else verResultados(); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba(casaAba_()); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide'); blocoNotif(o);
 }));
@@ -5511,11 +5584,11 @@ async function blocoNotif(o) {
 }
 ativarMencao($('mu-txt'));
 $('mu-ok').addEventListener('click', () => {
-  const tx = $('mu-txt').value.trim(); if (!tx && !MU_FOTO) { toast('Escreva algo ou escolha uma foto 🙂'); return; }
-  $('mu-ok').disabled = true; $('mu-ok').textContent = 'Publicando…';
-  rodar('postarConquista', [S.token, MU_TIPO, tx, MU_FOTO, mencoesDe($('mu-txt'))], (r) => {
+  const tx = $('mu-txt').value.trim(); if (!tx && !MU_FOTO && !MU_VIDEO) { toast('Escreva algo ou escolha uma foto 🙂'); return; }
+  $('mu-ok').disabled = true; $('mu-ok').textContent = MU_VIDEO ? 'Enviando o vídeo… (pode levar 1 minuto)' : 'Publicando…';
+  rodar(MU_VIDEO ? 'postarVideo' : 'postarConquista', MU_VIDEO ? [S.token, MU_TIPO, tx, MU_VIDEO.b64, MU_VIDEO.mime, MU_VIDEO.capa, mencoesDe($('mu-txt'))] : [S.token, MU_TIPO, tx, MU_FOTO, mencoesDe($('mu-txt'))], (r) => { MU_VIDEO = null; muThumbs_();
     limparMencoes($('mu-txt'));
-    $('mu-ok').disabled = false; $('mu-ok').textContent = 'Publicar no mural'; $('mu-txt').value = ''; $('mu-comp').open = false; MU_FOTO = null; $('mu-prev').classList.add('hide'); $('mu-fnome').textContent = ''; $('mu-foto').value = '';
+    $('mu-ok').disabled = false; $('mu-ok').textContent = 'Publicar no mural'; $('mu-txt').value = ''; $('mu-comp').open = false; MU_FOTO = null; MU_VIDEO = null; muThumbs_(); $('mu-foto').value = '';
     toast('Publicado! A equipe vai ver 🎉'); $('mu-loja').value = 'TODAS'; desenharMural(r);
   }, () => { $('mu-ok').disabled = false; $('mu-ok').textContent = 'Publicar no mural'; });
 });
