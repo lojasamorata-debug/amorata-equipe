@@ -171,7 +171,13 @@ body.ocupado #eu-acoes .btn, body.ocupado .fila-ac .btn { opacity:.55; pointer-e
 .pf-med { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; } .pf-med span { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:5px 8px; font-size:12px; }
 .pf-lb { font-size:12px; font-weight:800; letter-spacing:.06em; color:var(--muted); margin:16px 2px 8px; } .pf-rec { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:12px; margin-bottom:8px; } .pf-rec .cab { display:flex; align-items:center; gap:8px; } .pf-rec .tx { margin-top:8px; font-size:14.5px; } .pf-rec img { width:100%; border-radius:12px; margin-top:8px; }
 .pf-elo { background:var(--accentbg); border-left:3px solid #e8a33a; border-radius:10px; padding:8px 10px; font-size:13px; font-style:italic; margin-bottom:6px; }
-.pf-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:3px; } .pf-grid .pg { position:relative; aspect-ratio:1; border:0; padding:0; background:var(--accentbg); border-radius:6px; overflow:hidden; cursor:pointer; } .pf-grid img { width:100%; height:100%; object-fit:cover; } .pf-grid .pt { font-size:11px; padding:6px; display:block; color:var(--fg); }
+.pf-abre { width:100%; } .pf-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; margin:0 -16px; } .pf-grid .pg { position:relative; aspect-ratio:1; border:0; padding:0; background:var(--accentbg); border-radius:0; overflow:hidden; cursor:pointer; } .pf-grid img { width:100%; height:100%; object-fit:cover; } .pf-grid .pt { font-size:11px; padding:6px; display:block; color:var(--fg); }
+body:not(.adm) #mu-filtro-box { display:none; }
+@media (max-width:700px) { #mu-lista .post.ig, #mu-lista .post.destq, #mu-lista .post.elog { margin-left:-14px; margin-right:-14px; border-radius:0; border-left:0; border-right:0; margin-bottom:10px; } #mu-lista .post.destq { margin:0 0 10px; border-radius:18px; } }
+.post.ig .ac .reac { font-size:13px; color:var(--muted); margin-right:6px; } .post.ig .dots { padding:6px 0 0; }
+.post.ig .cab span { display:block; margin-top:1px; } .post.ig .car { margin-top:0; border-radius:0; } .post.ig .carw .cn { top:10px; } .post.ig .vidf { border-radius:0; margin-top:0; } .post.ig .vid .play { width:64px; height:64px; border-radius:32px; font-size:28px; }
+.post.ig .ac { padding:6px 8px 2px 6px; } .post.ig .ac .btn.sm { border:0; background:none; font-size:20px; padding:4px 6px; min-height:0; box-shadow:none; } .post.ig .ac .btn.sm.on { background:none; } .post.ig .ac .reac { margin-left:6px; }
+.post.ig .tx { padding:2px 12px 10px; font-size:14.5px; } .post.ig .tx > b { font-weight:700; } .post.ig .coms { border-top:1px solid var(--line); }
 #agora:empty, body.ini-res #agora { display:none !important; } .agora { margin-top:6px; }
 .ag-hero { background:#5b4a7a; color:#fff; border-radius:18px; padding:16px; margin-top:6px; } .ag-hero.sua { background:#1e7a46; }
 .ag-hero .k { font-size:12px; font-weight:700; letter-spacing:.06em; opacity:.8; } .ag-hero .t { font-size:24px; font-weight:800; margin:4px 0 2px; line-height:1.2; } .ag-hero .s { font-size:13px; opacity:.9; }
@@ -460,7 +466,7 @@ body.fila-v #eu-acoes .btn.lk { flex:1 1 auto; padding:6px 8px; font-size:13px; 
 }
 #mu-lista .rpick { display:flex; gap:4px; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:4px 8px; width:max-content; margin:6px 0 0; box-shadow:0 4px 14px rgba(0,0,0,.08); }
 #mu-lista .rpick.hide { display:none; } #mu-lista .rpick button { border:0; background:none; font-size:24px; padding:2px 4px; cursor:pointer; transition:transform .1s; } #mu-lista .rpick button:active { transform:scale(1.3); }
-#mu-lista .reac { font-size:13px; color:var(--muted); } #mu-lista .btn.on { background:var(--accentbg); border-color:var(--accent); }
+#mu-lista .reac { font-size:13px; color:var(--muted); } #mu-lista .btn.on { background:var(--accentbg); border-color:var(--accent); } #mu-lista .post.ig .ac .btn { border:0; background:none; font-size:22px; padding:4px 6px; }
 #mu-lista .ed { font-size:11.5px; color:var(--muted); font-style:italic; } #mu-lista .com .mnu { border:0; background:none; color:var(--muted); font-size:18px; padding:0 4px; cursor:pointer; align-self:flex-start; }
 #mu-lista .edbox textarea { width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; padding:8px; font:inherit; }
 #st-strip { display:flex; gap:12px; overflow-x:auto; padding:10px 2px 6px; scrollbar-width:none; } #st-strip::-webkit-scrollbar { display:none; }
@@ -2900,9 +2906,12 @@ function abrirPerfil(usuario) {
     b.append(el('div', 'sub', 'Carregando…'));
     const pinta = (r) => { b.replaceChildren();
       const h = el('div', 'pf-h'); const ft = avatar(r.foto, r.nome); ft.classList.add('pf-av'); h.append(ft, el('b', '', primeiroNome(r.nome)), el('div', 'sm', r.cargo + ' · ' + r.loja));
-      const st = el('div', 'pf-st'); [[r.posts.length, 'posts'], [r.medalhas.length, 'medalhas'], [r.cinco, 'avaliações 5★'], [r.recordacoes.length, 'recordações']].forEach(([n, l]) => { const d = el('div'); d.append(el('b', '', String(n)), el('span', '', l)); st.append(d); }); h.append(st);
-      if (r.medalhas.length) { const md = el('div', 'pf-med'); r.medalhas.slice(0, 12).forEach((m) => md.append(el('span', '', m.ic + ' ' + m.nome))); h.append(md); }
+      const st = el('div', 'pf-st'); [[r.posts.length, 'posts'], [r.medalhas.length, 'medalhas'], [r.cinco, 'avaliações 5★']].forEach(([n, l]) => { const d = el('div'); d.append(el('b', '', String(n)), el('span', '', l)); st.append(d); }); h.append(st);
+      if (r.medalhas.length) { const md = el('div', 'pf-med'); r.medalhas.slice(0, 3).forEach((m) => md.append(el('span', '', m.ic + ' ' + m.nome))); if (r.medalhas.length > 3) { const mx = el('span', '', '+' + (r.medalhas.length - 3)); mx.style.cursor = 'pointer'; mx.addEventListener('click', () => { md.replaceChildren(...r.medalhas.map((m) => el('span', '', m.ic + ' ' + m.nome))); }); md.append(mx); } h.append(md); }
       b.append(h);
+      if (r.elogios.length) { b.append(el('div', 'pf-lb', 'O QUE AS CLIENTES DISSERAM')); r.elogios.forEach((x) => b.append(el('div', 'pf-elo', '“' + x.texto + '” · ' + x.quando.slice(0, 5)))); }
+      if (r.posts.length) { b.append(el('div', 'pf-lb', 'PUBLICAÇÕES')); const g = el('div', 'pf-grid'); r.posts.forEach((x) => { const d = el('button', 'pg'); d.type = 'button'; if (x.foto) { const i = el('img'); i.src = x.foto; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; d.append(i); if (x.video) d.append(el('span', 'play', '▶')); } else d.append(el('span', 'pt', x.texto || '✨'));
+        d.addEventListener('click', () => { const dd = $('det'); if (dd) dd.querySelector('.dhead button').click(); MU_FOCO = x.id; MU_ABA = 'tudo'; mudarAba('mural'); }); g.append(d); }); b.append(g); }
       // deixar uma recordação
       const cx = el('div', 'card'), ta = el('textarea'); ta.maxLength = 500; ta.rows = 3; ta.placeholder = r.eu ? 'Guarde um momento especial no seu álbum…' : 'Deixe um recado de carinho para ' + primeiroNome(r.nome) + ' 💜';
       let foto = null; const fi = el('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.className = 'hide'; const fb = el('button', 'btn sm', '📷 Foto'), pv = el('img'); pv.className = 'hide'; pv.style.cssText = 'width:100%;border-radius:10px;margin-top:6px';
@@ -2910,13 +2919,12 @@ function abrirPerfil(usuario) {
       const ok = el('button', 'btn pri', '💌 Guardar no álbum'); const ln = el('div'); ln.style.cssText = 'display:flex;gap:8px;justify-content:space-between;margin-top:8px'; ln.append(fb, ok);
       ok.addEventListener('click', () => { const t = ta.value.trim(); if (!t && !foto) { toast('Escreva uma mensagem ou escolha uma foto 💜'); return; } ok.disabled = true; ok.textContent = 'Guardando…';
         rodar('deixarRecordacao', [S.token, r.usuario, t, foto], (x) => { toast('Recordação guardada 💜'); pinta(x); }, () => { ok.disabled = false; ok.textContent = '💌 Guardar no álbum'; }); });
-      cx.append(el('b', '', r.eu ? '💌 Meu álbum' : '💌 Deixar uma recordação'), ta, fi, pv, ln); b.append(cx);
-      if (r.recordacoes.length) { b.append(el('div', 'pf-lb', 'RECORDAÇÕES')); r.recordacoes.forEach((x) => { const c = el('div', 'pf-rec'), cab = el('div', 'cab'); const t = el('div'); t.append(el('b', '', x.de), el('span', 'sm', ' · ' + String(x.quando).slice(0, 5))); cab.append(avatar(x.avatar, x.de), t);
+      cx.append(ta, fi, pv, ln); cx.classList.add('hide'); b.append(el('div', 'pf-lb', '💌 RECORDAÇÕES' + (r.recordacoes.length ? ' · ' + r.recordacoes.length : '')));
+      const abre = el('button', 'btn pri pf-abre', r.eu ? '💌 Guardar uma recordação no meu álbum' : '💌 Deixar uma recordação para ' + primeiroNome(r.nome)); abre.addEventListener('click', () => { abre.classList.add('hide'); cx.classList.remove('hide'); ta.focus(); }); b.append(abre, cx);
+      if (!r.recordacoes.length) b.append(el('div', 'sub', r.eu ? 'Ainda não tem recordações. Quando alguém deixar um recado de carinho, ele aparece aqui 💜' : 'Seja a primeira a deixar um recado de carinho 💜'));
+      if (r.recordacoes.length) {  r.recordacoes.forEach((x) => { const c = el('div', 'pf-rec'), cab = el('div', 'cab'); const t = el('div'); t.append(el('b', '', x.de), el('span', 'sm', ' · ' + String(x.quando).slice(0, 5))); cab.append(avatar(x.avatar, x.de), t);
         if (x.podeApagar) { const ap = el('button', 'btn sm', '🗑'); ap.style.marginLeft = 'auto'; ap.addEventListener('click', () => escolher('Apagar esta recordação?', '', [['Apagar', 'bad', () => { fechar(); rodar('apagarRecordacao', [S.token, x.id], pinta); }]])); cab.append(ap); }
         c.append(cab); if (x.texto) c.append(el('div', 'tx', x.texto)); if (x.foto) { const i = el('img'); i.src = x.foto; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; c.append(i); } b.append(c); }); }
-      if (r.elogios.length) { b.append(el('div', 'pf-lb', 'O QUE AS CLIENTES DISSERAM')); r.elogios.forEach((x) => b.append(el('div', 'pf-elo', '“' + x.texto + '” · ' + x.quando.slice(0, 5)))); }
-      if (r.posts.length) { b.append(el('div', 'pf-lb', 'PUBLICAÇÕES')); const g = el('div', 'pf-grid'); r.posts.forEach((x) => { const d = el('button', 'pg'); d.type = 'button'; if (x.foto) { const i = el('img'); i.src = x.foto; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; d.append(i); if (x.video) d.append(el('span', 'play', '▶')); } else d.append(el('span', 'pt', x.texto || '✨'));
-        d.addEventListener('click', () => { const dd = $('det'); if (dd) dd.querySelector('.dhead button').click(); MU_FOCO = x.id; MU_ABA = 'tudo'; mudarAba('mural'); }); g.append(d); }); b.append(g); }
     };
     rodar('perfilPessoa', [S.token, usuario], pinta, (e) => b.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e))));
   });
@@ -3279,8 +3287,7 @@ function desenharMural(r) {
   if (!lista.length) box.append(el('div', 'vazio', MU_ABA === 'tudo' ? 'Ainda não tem nada no mural. Seja a primeira a compartilhar uma conquista! 🌟' : 'Nada aqui por enquanto.'));
   lista.forEach((p) => {
     if (p.tipoK === 'destaque') { const c = el('div', 'post destq' + (p === fix ? ' fix' : '')); c.dataset.id = p.id; c.append(el('div', 'k', '📌 DESTAQUES DA SEMANA'), ...String(p.texto || '').split('\n').map((l, i) => el('div', i ? 'l' : 't', l))); box.append(c); return; }
-    const c = el('div', 'post'), cab = el('div', 'cab'); const t = el('div'); t.append(el('b', '', primeiroNome(p.nome) + (p.eu ? ' (você)' : '')), el('span', '', p.loja + ' · ' + p.quando)); cab.append(avatar(p.avatar, p.nome), t); c.append(cab);
-    c.append(el('span', 'chip', p.tipo));
+    const c = el('div', 'post ig'), cab = el('div', 'cab'); const t = el('div'); t.append(el('b', '', primeiroNome(p.nome) + (p.eu ? ' (você)' : '')), el('span', '', p.loja + ' · ' + quandoRel(p.quando) + ' · ' + p.tipo)); cab.append(avatar(p.avatar, p.nome), t); c.append(cab);
     if (p.video) { const v = el('div', 'vid'); const i = document.createElement('img'); i.className = 'ft'; i.src = p.video.capa; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; v.append(i, el('span', 'play', '▶'));
       v.addEventListener('click', () => { if (!p.video.id) return; const f = document.createElement('iframe'); f.src = 'https://drive.google.com/file/d/' + p.video.id + '/preview'; f.allow = 'autoplay; fullscreen'; f.allowFullscreen = true; f.className = 'vidf'; v.replaceWith(f); }, { once: true }); c.append(v); }
     else if ((p.fotos || []).length > 1) { const car = el('div', 'car'), n = el('span', 'cn', '1/' + p.fotos.length), dots = el('div', 'dots');
@@ -3289,26 +3296,29 @@ function desenharMural(r) {
       const w = el('div', 'carw'); w.append(car, n); c.append(w, dots); }
     else if (p.foto) { const i = document.createElement('img'); i.className = 'ft'; i.src = p.foto; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; c.append(i); }
     if (p.usuario && p.usuario !== 'sistema') { cab.style.cursor = 'pointer'; cab.addEventListener('click', () => abrirPerfil(p.usuario)); }
-    if (p.texto) { const tx = el('div', 'tx'); tx.append(comMencoes(p.texto)); c.append(tx); }
+    let txEl = null; if (p.texto) { txEl = el('div', 'tx'); txEl.append(el('b', '', primeiroNome(p.nome) + ' '), comMencoes(p.texto)); if (p.editado) txEl.append(el('span', 'ed', ' · editado')); }
     c.dataset.id = p.id;
-    if (p.editado) { const ed = el('div', 'ed', 'editado'); c.append(ed); }
     const ac = el('div', 'ac'); const like = el('button', 'btn sm', ''); const resumo = el('span', 'reac');
-    const pintar = () => { like.textContent = (p.minha || (p.curti ? '❤️' : '🤍')) + ' ' + (p.curtidas || ''); like.classList.toggle('on', !!p.minha || p.curti); resumo.textContent = Object.keys(p.reacoes || {}).sort((a, b) => p.reacoes[b] - p.reacoes[a]).map((e) => e + (p.reacoes[e] > 1 ? p.reacoes[e] : '')).join(' '); };
+    const pintar = () => { like.textContent = (p.minha || (p.curti ? '❤️' : '🤍')); like.classList.toggle('on', !!p.minha || p.curti); resumo.textContent = Object.keys(p.reacoes || {}).sort((a, b) => p.reacoes[b] - p.reacoes[a]).map((e) => e + (c.classList.contains('ig') ? '' : (p.reacoes[e] > 1 ? p.reacoes[e] : ''))).join(c.classList.contains('ig') ? '' : ' ') + (c.classList.contains('ig') && p.curtidas ? ' ' + p.curtidas : ''); };
     const picker = el('div', 'rpick hide'); REACOES_APP.forEach((em) => { const b = el('button', '', em); b.addEventListener('click', () => { picker.classList.add('hide'); reagirPost(p, em, pintar); }); picker.append(b); });
     const cbox = el('div', 'coms'); const desenharComs = (lst) => { cbox.replaceChildren(); lst.forEach((x) => { const d = el('div', 'com'); const t = el('div'); t.style.flex = '1'; t.append(el('b', '', primeiroNome(x.nome)), comMencoes(x.texto)); if (x.editado) t.append(el('span', 'ed', ' (editado)')); d.append(avatar(x.avatar, x.nome), t); const meu = x.usuario === S.usuario, adm = S.cargo === 'ADMIN', ger = S.cargo === 'GERENTE' && S.lojas.indexOf(p.loja) >= 0; if (x.id && (meu || adm || ger)) { const mb = el('button', 'mnu', '⋯'); mb.title = 'Opções'; mb.addEventListener('click', () => escolher('Comentário', '', [].concat(meu || adm ? [['✏️ Editar', '', () => { fechar(); editarTexto(t, x.texto, 300, (nv) => rodar('editarComentario', [S.token, x.id, nv], (l) => { p.comentarios = l; desenharComs(l); toast('Comentário editado'); })); }]] : [], [['🗑️ Apagar', 'bad', () => { fechar(); rodar('apagarComentario', [S.token, x.id], (l) => { p.comentarios = l; desenharComs(l); cb.textContent = '💬 ' + l.length; toast('Comentário apagado'); }); }]]))); d.append(mb); } cbox.append(d); }); const f = el('div', 'envia'); const inp = el('input'); inp.placeholder = 'Comentar… (@ marca uma colega)'; inp.maxLength = 300; ativarMencao(inp); const b = el('button', 'btn sm pri', 'Enviar'); const go = () => { const v = inp.value.trim(); if (!v) return; b.disabled = true; rodar('comentar', [S.token, p.id, v, mencoesDe(inp)], (l) => { p.comentarios = l; desenharComs(l); cb.textContent = '💬 ' + l.length; }, () => { b.disabled = false; }); }; b.addEventListener('click', go); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }); f.append(inp, b); cbox.append(f); };
     desenharComs(p.comentarios || []); if (!(p.comentarios || []).length) cbox.classList.add('hide');
-    const cb = el('button', 'btn sm', '💬 ' + (p.comentarios || []).length); cb.addEventListener('click', () => { cbox.classList.toggle('hide'); const i = cbox.querySelector('input'); if (i && !cbox.classList.contains('hide')) i.focus(); });
+    const cb = el('button', 'btn sm', '💬' + ((p.comentarios || []).length ? ' ' + (p.comentarios || []).length : '')); cb.addEventListener('click', () => { cbox.classList.toggle('hide'); const i = cbox.querySelector('input'); if (i && !cbox.classList.contains('hide')) i.focus(); });
     pintar(); like.addEventListener('click', () => picker.classList.toggle('hide'));
-    const esq = el('div'); esq.style.cssText = 'display:flex;gap:6px;align-items:center'; esq.append(like, cb, resumo); ac.append(esq);
+    const esq = el('div'); esq.style.cssText = 'display:flex;gap:6px;align-items:center'; esq.append(like, cb); ac.append(esq); resumo.style.marginLeft = 'auto'; ac.append(resumo);
     if (p.podeApagar || p.podeEditar) {
       const mb = el('button', 'btn sm', '⋯'); mb.title = 'Opções';
       mb.addEventListener('click', () => escolher('Publicação', '', [].concat(p.podeEditar ? [['✏️ Editar texto', '', () => { fechar(); const tx0 = c.querySelector('.tx') || (() => { const z = el('div', 'tx'); c.insertBefore(z, ac); return z; })(); editarTexto(tx0, p.texto || '', 500, (nv) => rodar('editarPost', [S.token, p.id, nv], (r2) => { toast('Publicação editada ✏️'); desenharMural(r2); })); }]] : [], p.podeApagar ? [['🗑️ Apagar publicação', 'bad', () => { fechar(); escolher('Apagar publicação?', 'Ela sai do mural para todas.', [['Apagar', 'bad', () => { fechar(); rodar('apagarPost', [S.token, p.id], desenharMural); }]]); }]] : [])));
       ac.append(mb);
     }
-    c.append(ac, picker, cbox); box.append(c);
+    c.append(ac, picker); if (txEl) c.append(txEl); c.append(cbox); box.append(c);
   });
   if (MU_FOCO) { const alvo = box.querySelector('[data-id="' + MU_FOCO + '"]'); MU_FOCO = ''; if (alvo) { alvo.classList.add('foco'); alvo.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => alvo.classList.remove('foco'), 2500); } }
 }
+// '06/11/2026 10:00:00' → 'há 12 min', 'há 3 h', 'ontem', '04/11'
+function quandoRel(q) { const m = String(q || '').match(/(\d{2})\/(\d{2})\/(\d{4})\D+(\d{1,2}):(\d{2})/); if (!m) return String(q || '').slice(0, 5);
+  const d = new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5]), min = Math.round((Date.now() - d) / 60000);
+  if (min < 1) return 'agora'; if (min < 60) return 'há ' + min + ' min'; if (min < 24 * 60) return 'há ' + Math.round(min / 60) + ' h'; if (min < 48 * 60) return 'ontem'; return m[1] + '/' + m[2]; }
 const REACOES_APP = ['❤️', '😂', '😮', '👏', '🔥', '🙏'];
 // reação: resposta na hora; o servidor confirma em segundo plano
 function reagirPost(p, em, pintar) {
