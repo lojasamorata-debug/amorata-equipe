@@ -5030,6 +5030,7 @@ function desenharDRE(res, r) {
   ln('= Receita líquida', (x) => x.liquida, 't'); ln('(–) CMV (custo das peças vendidas)', (x) => -x.cmv); ln('= Lucro bruto', (x) => x.lucroBruto, 't');
   r.grupos.forEach(([k, n]) => { if (![a, p, y].some((x) => x.desp[k])) return; ln('(–) ' + n, (x) => -(x.desp[k] || 0), '', () => detalheFinCat(k, n)); });
   if ([a, p, y].some((x) => x.cartao)) ln('(–) Taxas da maquininha (recebíveis)', (x) => -x.cartao);
+  if ([a, p, y].some((x) => x.entregas)) ln('(+) Taxas de entrega cobradas das clientes', (x) => x.entregas || 0);
   if ([a, p, y].some((x) => x.rendimentos)) ln('(+) Rendimentos de aplicação', (x) => x.rendimentos);
   ln('= Resultado do mês', (x) => x.resultado, 'r'); c.append(t); res.append(c);
   const av = []; if (!Object.keys(a.desp).length) av.push('Ainda não há despesas em ' + finMesLbl(a.mes) + ': lance em 🧾 Despesas ou classifique o extrato em 🏦 Extratos.');
@@ -5048,7 +5049,7 @@ function desenharFinDesp(res, r) {
   if (r.falta.length) res.append(el('div', 'aviso-meta', '⚠️ Lançadas no mês anterior e ainda não neste: ' + r.falta.join(', ')));
   const bloco = (tit, l, edita) => { const c = el('div', 'card'); c.append(el('b', '', tit)); if (!l.length) c.append(el('div', 'sm', 'Nada aqui.')); l.forEach((d) => { const it = el('div', 'fin-it'), t = el('div'); t.append(el('b', '', d.descricao), el('small', '', (r.cats[d.categoria] ? r.cats[d.categoria][0] + ' ' : '') + finDest(d.destino) + (d.data ? ' · ' + isoBR(d.data).slice(0, 5) : ''))); it.append(t, el('b', '', rs(d.valor))); if (edita) { it.style.cursor = 'pointer'; it.addEventListener('click', () => formDespesa(d, r)); } c.append(it); }); c.append(el('div', 'fin-tot', 'Total ' + rs(l.reduce((a, d) => a + d.valor, 0)))); res.append(c); };
   const fixas = r.lista.filter((d) => d.origem === 'fixa').map((d) => Object.assign({}, d, r.fixas.find((f) => f.id === d.id) || {}, { fixa: true }));
-  bloco('📌 Fixas (repetem todo mês)', fixas, true); bloco('📝 Lançadas neste mês', r.lista.filter((d) => d.origem === 'manual'), true); bloco('🏦 Do extrato (classificadas)', r.lista.filter((d) => d.origem === 'extrato' && d.categoria !== 'rendimento'), false);
+  bloco('📌 Fixas (repetem todo mês)', fixas, true); bloco('📝 Lançadas neste mês', r.lista.filter((d) => d.origem === 'manual'), true); bloco('🏦 Do extrato (classificadas)', r.lista.filter((d) => d.origem === 'extrato' && d.categoria !== 'rendimento' && d.categoria !== 'entrega'), false);
   // empresas e DAS
   const cf = el('details', 'card'); cf.append(el('summary', '', '⚙️ Empresas e % do DAS de cada loja')); const ins = {}; FIN_LOJAS().forEach((l) => { const x = ((r.cfg || {}).lojas || {})[l] || {}, ln = el('div', 'fin-cf'), e = el('input'), d = el('input'); e.placeholder = 'Empresa (razão social)'; e.value = x.empresa || ''; d.placeholder = '% DAS'; d.inputMode = 'decimal'; d.value = x.das === '' || x.das == null ? '' : String(x.das).replace('.', ','); ln.append(el('b', '', l), e, d); ins[l] = [e, d]; cf.append(ln); });
   const sv = el('button', 'btn pri', 'Salvar'); sv.addEventListener('click', () => { const o = { lojas: {} }; Object.keys(ins).forEach((l) => { o.lojas[l] = { empresa: ins[l][0].value, das: ins[l][1].value.replace(',', '.') }; }); rodar('finCfgSalvar', [S.token, o], () => toast('Salvo ✅')); });
@@ -5085,7 +5086,7 @@ function desenharFinExt(res, r) {
 }
 function painelClass(x, r, depois) {
   const p = el('div', 'fin-pc'), cs = el('select'), ds = el('select'), mm = el('input'), ap = el('input'), lb = el('label', 'sm');
-  cs.append(new Option('— categoria —', '')); Object.keys(r.cats).filter((k) => x.valor < 0 ? ['recebiveis', 'rendimento', 'outra_entrada'].indexOf(k) < 0 : ['recebiveis', 'rendimento', 'outra_entrada', 'interna'].indexOf(k) >= 0).forEach((k) => cs.append(new Option(r.cats[k][0] + ' ' + r.cats[k][1], k))); cs.value = x.categoria || '';
+  cs.append(new Option('— categoria —', '')); Object.keys(r.cats).filter((k) => x.valor < 0 ? ['recebiveis', 'rendimento', 'outra_entrada', 'entrega'].indexOf(k) < 0 : ['recebiveis', 'rendimento', 'entrega', 'outra_entrada', 'interna'].indexOf(k) >= 0).forEach((k) => cs.append(new Option(r.cats[k][0] + ' ' + r.cats[k][1], k))); cs.value = x.categoria || '';
   FIN_LOJAS().forEach((l) => ds.append(new Option(l === x.loja ? l + ' (desta conta)' : l, l))); ds.append(new Option('Rateio pela venda das lojas', 'RATEIO_VENDA'), new Option('Dividir igual entre as lojas', 'RATEIO_IGUAL')); ds.value = x.destino || x.loja;
   mm.type = 'month'; mm.value = x.competencia || x.data.slice(0, 7); ap.type = 'checkbox'; ap.checked = true; lb.append(ap, document.createTextNode(' Lembrar: classificar igual os próximos parecidos'));
   const ok = el('button', 'btn pri', 'Salvar'); ok.addEventListener('click', () => { if (!cs.value) { toast('Escolha a categoria.'); return; } ok.disabled = true; rodar('finClassificar', [S.token, [x.id], cs.value, ds.value, mm.value, ap.checked], (o) => { toast(o.atualizados > 1 ? 'Classificado + ' + (o.atualizados - 1) + ' parecido(s) ✅' : 'Classificado ✅'); FIN.aberto = ''; depois(o); }, () => { ok.disabled = false; }); });
