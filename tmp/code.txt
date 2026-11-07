@@ -1,4 +1,18 @@
 function zzDebug(){ const t0=Date.now(); const r=finDRE_('Sumaúma','2026-10'); Logger.log(((Date.now()-t0)/1000)+'s '+JSON.stringify(r.cols.map((c)=>({mes:c.mes,bruta:c.bruta,bonus:c.bonus,troca:c.troca,cred:c.credito,simples:c.simples,cmv:c.cmv,liq:c.liquida,lb:c.lucroBruto,res:c.resultado,semCusto:c.semCusto,aliq:c.aliq,falta:c.faltaApi})))); }
+// Fila da vez – Lojas Amorata
+// Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
+// O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
+const ACESSOS_ID = '18rrkMYle6_2XjZmy_Z6TwYjuKPD6txVJdfczMNNpleQ';
+const DADOS_ID = '1OvmNgq5l19wIWiRuFNhgUCMMFhSwRPanYKkbfRDjvm8';
+const LOJAS = ['Cerâmica', 'Via Verde', 'Cruzeiro do Sul', 'Via Norte', 'Sumaúma'];
+const TZ = { 'Cerâmica': 'America/Rio_Branco', 'Via Verde': 'America/Rio_Branco', 'Cruzeiro do Sul': 'America/Rio_Branco', 'Via Norte': 'America/Manaus', 'Sumaúma': 'America/Manaus' };
+const MOTIVOS = {
+  perda: ['Só olhando', 'Voltará depois', 'Não gostou do modelo', 'Não tinha o tamanho/cor', 'Produto em falta', 'Achou caro', 'Troca/devolução', 'Outro'],
+  pausa: ['Almoço/lanche', 'Banheiro', 'Estoque/arrumação', 'Atendimento online', 'Reunião', 'Fim do turno', 'Outro'],
+  foraDaVez: ['Cliente pediu por ela', 'Cliente dela retornando', 'A da vez não estava', 'Outro'],
+  ordem: ['Combinado da equipe', 'Erro na ordem', 'Outro'],
+};
+
 function doGet(e) {
   if (e && e.parameter && e.parameter.av) return paginaAvaliar_(e.parameter.av);
   // o app agora é usado só pelo endereço do GitHub; este endereço do Google leva para lá
