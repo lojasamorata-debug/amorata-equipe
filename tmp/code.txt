@@ -1,4 +1,3 @@
-function zzDebug(){ const t0=Date.now(); const r=finDRE_('Sumaúma','2026-10'); Logger.log(((Date.now()-t0)/1000)+'s '+JSON.stringify(r.cols.map((c)=>({mes:c.mes,bruta:c.bruta,bonus:c.bonus,troca:c.troca,cred:c.credito,simples:c.simples,cmv:c.cmv,liq:c.liquida,lb:c.lucroBruto,res:c.resultado,semCusto:c.semCusto,aliq:c.aliq,falta:c.faltaApi})))); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
@@ -2900,6 +2899,7 @@ function dsEstoque10_() {
   try { const prD = PropertiesService.getScriptProperties(), hjD = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd'), hD = +Utilities.formatDate(new Date(), 'America/Rio_Branco', 'H');
     if (prD.getProperty('VID_LIMPA') !== hjD && hD >= 3) { prD.setProperty('VID_LIMPA', hjD); limparVideos_(); }
     if (new Date().getDay() === 1 && hD >= 8 && prD.getProperty('DEST_SEM') !== hjD) { prD.setProperty('DEST_SEM', hjD); destaqueSemana_(); } } catch (e) { console.warn('destaque: ' + e.message); }
+  try { finPreparar_(); } catch (e) {}
   try { const prQ = PropertiesService.getScriptProperties(), hjQ = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd'); if (prQ.getProperty('PQ_DIA') !== hjQ && +Utilities.formatDate(new Date(), 'America/Rio_Branco', 'H') >= 11) { prQ.setProperty('PQ_DIA', hjQ); quenteDiario_(); } } catch (e) { console.warn('quente: ' + e.message); }
   try { const prS = PropertiesService.getScriptProperties(), hjS = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd'); if (prS.getProperty('SAUDE_ULT') !== hjS && +Utilities.formatDate(new Date(), 'America/Rio_Branco', 'H') >= 7) { prS.setProperty('SAUDE_ULT', hjS); checkup_(true); } } catch (e) { console.warn('check-up: ' + e.message); }
   try { const pr0 = PropertiesService.getScriptProperties(), hj = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd'); if (pr0.getProperty('LIMPA_ULT') !== hj) { pr0.setProperty('LIMPA_ULT', hj); limparProps_(); } const ub = pr0.getProperty('BK_ULT') || ''; if (ub < somaDia_(hj, -1) && +Utilities.formatDate(new Date(), 'America/Rio_Branco', 'H') >= 2) backupDiario_(); } catch (e) { console.warn('rotina diária: ' + e.message); }
@@ -5572,4 +5572,11 @@ function finConc_(loja, mes) {
     ok: { n: ok.length, valor: soma(ok, (x) => x.r.bruto) }, soUse: soUse.sort((a, b) => a.d < b.d ? -1 : 1).slice(0, 300), soUseTot: { n: soUse.length, valor: soma(soUse, (u) => u.val) },
     soMaq: soMaq.sort((a, b) => a.data < b.data ? -1 : 1).slice(0, 300).map((r) => ({ data: r.data, hora: r.hora, meio: r.meio, parc: r.parc, bruto: r.bruto, origem: r.origem })), soMaqTot: { n: soMaq.length, valor: soma(soMaq, (r) => r.bruto) },
     porMeio: Object.keys(porMeio).sort().map((k) => ({ k: k, n: porMeio[k].n, bruto: Math.round(porMeio[k].bruto * 100) / 100, taxa: Math.round(porMeio[k].taxa * 100) / 100, pct: porMeio[k].bruto ? Math.round(porMeio[k].taxa / porMeio[k].bruto * 10000) / 100 : 0 })) };
+}
+
+// de madrugada (0h–6h), guarda 1 mês fechado por rodada (últimos 13 meses de cada loja): a DRE e o Simples (12 meses) abrem rápido
+function finPreparar_() {
+  const h = +Utilities.formatDate(new Date(), 'America/Rio_Branco', 'H'); if (h > 6) return; if (!dsCfg_().key) return;
+  const ja = new Set(aba_('FinMes', H_FMS).getDataRange().getDisplayValues().slice(1).map((r) => r[0] + '|' + r[1])), m0 = dia_('Via Verde').slice(0, 7);
+  for (let k = 1; k <= 13; k++) { const m = finMesAnt_(m0, k); for (const l of LOJAS) { if (!ja.has(l + '|' + m)) { finMes_(l, m); return; } } }
 }
