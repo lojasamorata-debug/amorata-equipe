@@ -889,7 +889,7 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
 
     <div id="v-gest" class="hide">
       <div class="filtros um"><select id="g-loja"></select></div>
-      <div class="seg grade"><button id="sg-imp" class="on">📊 Vendas e fechamento</button><button id="sg-esc">🗓️ Escala</button><button id="sg-ck">📋 Tarefas</button><button id="sg-met">🎯 Metas</button><button id="sg-eq">👥 Equipe</button><button id="sg-bh">⏱️ Banco de horas</button><button id="sg-pla">🌱 Planos</button><button id="sg-tre">🎓 Treinos</button><button id="sg-fin" class="hide">💼 Financeiro</button><button id="sg-pre" class="hide">🎁 Prêmios</button><button id="sg-rh" class="hide">📁 RH</button></div>
+      <div class="seg grade"><button id="sg-imp" class="on">📊 Vendas e fechamento</button><button id="sg-esc">🗓️ Escala</button><button id="sg-ck">📋 Tarefas</button><button id="sg-met">🎯 Metas</button><button id="sg-eq">👥 Equipe</button><button id="sg-bh">⏱️ Banco de horas</button><button id="sg-pla">🌱 Planos</button><button id="sg-tre">🎓 Treinos</button><button id="sg-pre" class="hide">🎁 Prêmios</button><button id="sg-rh" class="hide">📁 RH</button></div>
 
       <div id="g-imp">
         <details class="card hide" id="imp-arq" style="margin-top:12px"><summary><b>📁 Importar arquivo e API do USE</b> <span class="sub">· só se as vendas não entrarem sozinhas</span></summary>
@@ -979,7 +979,6 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
       <div id="g-pre" class="hide"></div>
       <div id="g-pla" class="hide"></div>
       <div id="g-tre" class="hide"></div>
-      <div id="g-fin" class="hide"></div>
       <div id="g-rh" class="hide"></div>
       <div id="g-bh" class="hide"></div>
     </div>
@@ -2145,18 +2144,18 @@ function abrirContrato(rh) {
 // gerente/admin: "Meus resultados" abre os cards do Início (fora dele, o Início mostra só o menu)
 function verResultados() { mudarAba('ini'); document.body.classList.add('ini-res'); rolarTopo_(); }
 $('i-res-v').addEventListener('click', () => mudarAba('ini'));
-const MENU_TXT = { sd: 'Check-up do app', aj: 'Ajuda e conta', cb: 'Cashback', res: 'Resultados e relatórios', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
+const MENU_TXT = { fin: 'Financeiro', sd: 'Check-up do app', aj: 'Ajuda e conta', cb: 'Cashback', res: 'Resultados e relatórios', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
 const NAV_TXT = { ini: 'Agora', dia: 'Agora', fila: 'Fila', meta: 'Metas', mural: 'Mural', est: 'Estoque', gest: 'Gestão', rh: 'Meu RH' };
 const casaAba_ = () => (chefe() ? 'ini' : S && S.cargo === 'AUXILIAR' ? 'fila' : 'dia');
-function abaVisivel_(k) { if (k === 'sd') return !!S && S.cargo === 'ADMIN'; if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
-function irAba_(k) { if (k === 'sd') { abrirCheckup(); return; } if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
+function abaVisivel_(k) { if (k === 'sd' || k === 'fin') return !!S && S.cargo === 'ADMIN'; if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
+function irAba_(k) { if (k === 'sd') { abrirCheckup(); return; } if (k === 'fin') { abrirFinanceiro(); return; } if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
 function menuSub_(k) {
   const rhN = (typeof RH !== 'undefined' && RH && RH.novos) || 0;
   if (k === 'rh') return rhN ? [rhN + (rhN === 1 ? ' novo para ver' : ' novos para ver'), 'al', rhN] : ['holerite, ponto, férias', ''];
   if (k === 'fila') { if (E && E.fila && S) { const p = chefe() ? null : E.fila.find((x) => x.usuario === S.usuario); if (p && p.pos) return [p.pos === 1 ? 'é a sua vez!' : 'você é a ' + p.pos + 'ª da vez', p.pos === 1 ? 'ok' : '']; return [E.fila.length ? E.fila.length + ' na fila' : 'ninguém na fila', '']; } return ['quem atende agora', '']; }
   if (k === 'res') { const R = typeof INI !== 'undefined' && INI && INI.rede; if (R && R.meta && R.pct != null) return [pc(R.pct) + ' da meta' + (R.fechaPct != null && R.fechaPct < 1 ? ' · no ritmo ' + pc(R.fechaPct) : ''), R.pct >= 1 ? 'ok' : (R.fechaPct != null && R.fechaPct < 1 ? 'al' : '')]; return ['vendas, metas e equipe', '']; }
   if (k === 'meta') { if (MH && MH.batida) return ['meta do mês batida!', 'ok']; if (MH && !MH.loja && MH.pct != null) return [pc(MH.pct) + ' da meta do mês', '']; return ['metas do mês', '']; }
-  const fixo = { sd: ['saúde do sistema: limites, rotinas e Drive', ''], aj: ['tour, senha, notificações e sair', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
+  const fixo = { fin: ['DRE, despesas, extratos e recebíveis', ''], sd: ['saúde do sistema: limites, rotinas e Drive', ''], aj: ['tour, senha, notificações e sair', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
   return fixo[k] || ['', ''];
 }
 // 🩺 check-up do app (ADMIN): roda agora e mostra o que está bem e o que precisa de atenção
@@ -2185,7 +2184,7 @@ function desenharMenu() {
   if (chefe()) { const v = $('v-ini'), ag = $('agora'); if (ag && ag.parentNode !== v) v.prepend(ag); if (ag) { if (ag.nextElementSibling !== m) ag.after(m); } else if (m.parentNode !== v || v.firstElementChild !== m) v.prepend(m); }
   else { const ag = $('agora'), vd = $('v-dia'); if (ag && ag.parentNode !== vd) vd.prepend(ag); const ref = $('eu-meta'); if (ref && ref.parentNode && m.previousElementSibling !== ref) ref.after(m); }
   try { desenharAgora(); segDuplo_(); } catch (e) {}
-  const ks = ['res', 'dia', 'ini', 'fila', 'cb', 'meta', 'est', 'mural', 'apr', 'gest', 'prod', 'rel', 'rh', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k) && !(chefe() && (k === 'rel' || (k === 'prod' && abaVisivel_('est')))));
+  const ks = ['res', 'dia', 'ini', 'fila', 'cb', 'meta', 'est', 'mural', 'apr', 'gest', 'fin', 'prod', 'rel', 'rh', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k) && !(chefe() && (k === 'rel' || (k === 'prod' && abaVisivel_('est')))));
   m.replaceChildren(...ks.map((k) => {
     const [sub, cls, n] = menuSub_(k), b = el('button', 'mt'); b.type = 'button'; b.id = 'mt-' + k;
     const ic = el('span', 'mi'); ic.append(icoSvg(k)); const tx = el('span'); tx.append(el('b', '', MENU_TXT[k])); const sm = el('small', cls, sub); tx.append(sm);
@@ -4949,8 +4948,8 @@ function formBHSaldo(p, tipo) {
   const ov = el('div', 'bh-ov'); ov.id = 'bh-ov'; ov.append(f); ov.addEventListener('click', (e) => { if (e.target === ov) escolherFechar(); }); document.body.append(ov); setTimeout(() => hr.focus(), 100);
 }
 function escolherFechar() { const o = $('bh-ov'); if (o) o.remove(); }
-function abaGest(q) { G_ABA = q; ['imp', 'met', 'ck', 'esc', 'bh', 'eq', 'pre', 'pla', 'rh', 'tre', 'fin'].forEach((x) => { $('sg-' + x).classList.toggle('on', x === q); $('g-' + x).classList.toggle('hide', x !== q); }); carregarGestao(); }
-['imp', 'met', 'ck', 'esc', 'bh', 'eq', 'pre', 'pla', 'rh', 'tre', 'fin'].forEach((x) => $('sg-' + x).addEventListener('click', () => abaGest(x)));
+function abaGest(q) { G_ABA = q; ['imp', 'met', 'ck', 'esc', 'bh', 'eq', 'pre', 'pla', 'rh', 'tre'].forEach((x) => { $('sg-' + x).classList.toggle('on', x === q); $('g-' + x).classList.toggle('hide', x !== q); }); carregarGestao(); }
+['imp', 'met', 'ck', 'esc', 'bh', 'eq', 'pre', 'pla', 'rh', 'tre'].forEach((x) => $('sg-' + x).addEventListener('click', () => abaGest(x)));
 ['ABERTURA', 'FECHAMENTO'].forEach((t) => $('gc-ok-' + t).addEventListener('click', () => rodar('salvarChecklist', [S.token, $('g-loja').value, t, $('gc-' + t).value.split('\n')], (r) => { desenharCkEd(r); toast('Checklist salvo ✅'); if ($('g-loja').value === loja) desenharCk(r); })));
 function desenharCkEd(r) { r.turnos.forEach((t) => { $('gc-' + t.turno).value = t.itens.map((x) => x.texto).join('\n'); }); CKE = r; desenharTarefasEd(r); }
 let CKE = null; const DS_C = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -4984,8 +4983,7 @@ $('gt-nova').addEventListener('click', () => formTarefa(null));
 $('tab-gest').addEventListener('click', () => mudarAba('gest'));
 $('g-loja').addEventListener('change', carregarGestao);
 function carregarGestao() {
-  const lj = $('g-loja').value; $('sg-pre').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('sg-rh').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('sg-fin').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('g-loja').parentNode.classList.toggle('hide', G_ABA === 'pre' || G_ABA === 'rh' || G_ABA === 'fin');
-  if (G_ABA === 'fin') { carregarFin(); return; }
+  const lj = $('g-loja').value; $('sg-pre').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('sg-rh').classList.toggle('hide', !S || S.cargo !== 'ADMIN'); $('g-loja').parentNode.classList.toggle('hide', G_ABA === 'pre' || G_ABA === 'rh' || G_ABA === 'fin');
   if (G_ABA === 'pre') { rodar('premiosAdm', [S.token], desenharPremiosAdm); return; }
   if (G_ABA === 'rh') { rodar('rhLista', [S.token, RH_SEL], desenharRHAdm); return; }
   if (G_ABA === 'pla') { rodar('planosLoja', [S.token, lj, ''], desenharPlanos); return; }
@@ -5003,6 +5001,7 @@ const FIN = { sub: 'dre', loja: 'REDE', mes: '', cats: null, lojas: [], filtro: 
 const finMesLbl = (m) => { const n = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']; return n[+m.slice(5, 7) - 1] + '/' + m.slice(2, 4); };
 const finR = (v) => v == null ? '—' : (v < 0 ? '-' : '') + BRL.format(Math.abs(v)).replace(/,\d\d$/, '').replace('R$', '').trim();
 const finDest = (d) => d === 'RATEIO_VENDA' ? 'rateio pela venda' : d === 'RATEIO_IGUAL' ? 'dividido igual' : d || '';
+function abrirFinanceiro() { abrirDet('💼 Financeiro', (b) => { const g = el('div'); g.id = 'g-fin'; b.append(g); carregarFin(); }); }
 function carregarFin() {
   const b = $('g-fin'); if (!FIN.mes) { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); FIN.mes = d.toISOString().slice(0, 7); }
   b.replaceChildren(); const sg = el('div', 'seg fin-sg'); [['dre', '📊 DRE'], ['desp', '🧾 Despesas'], ['ext', '🏦 Extratos'], ['rec', '💳 Recebíveis']].forEach(([k, t]) => { const x = el('button', k === FIN.sub ? 'on' : '', t); x.addEventListener('click', () => { FIN.sub = k; carregarFin(); }); sg.append(x); }); b.append(sg);
@@ -5062,8 +5061,8 @@ function formDespesa(d, r) {
     FIN_LOJAS().forEach((l) => sl.append(new Option(l, l))); sl.append(new Option('Rateio pela venda de cada loja', 'RATEIO_VENDA'), new Option('Dividir igual entre as lojas', 'RATEIO_IGUAL')); sl.value = st.destino;
     const fx = el('div', 'seg'); const pf = () => { fx.replaceChildren(); [[false, 'Só este mês'], [true, 'Fixa (repete todo mês)']].forEach(([v, t]) => { const x = el('button', v === st.fixa ? 'on' : '', t); x.type = 'button'; x.addEventListener('click', () => { st.fixa = v; pf(); }); fx.append(x); }); }; pf();
     [['DESCRIÇÃO', ds], ['VALOR (R$)', vl], ['DE QUAL LOJA?', sl], [d && d.fixa ? 'DESDE O MÊS' : 'MÊS DE COMPETÊNCIA', mm], ['REPETE?', fx]].forEach(([l, i]) => { c.append(el('div', 'fin-lb', l), i); });
-    const ok = el('button', 'btn pri', 'Salvar'); ok.style.cssText = 'width:100%;margin-top:12px'; ok.addEventListener('click', () => { ok.disabled = true; rodar('finDespesaSalvar', [S.token, { id: d && d.id, categoria: st.categoria, descricao: ds.value, valor: vl.value.replace(/\./g, '').replace(',', '.'), destino: sl.value, competencia: mm.value, fixa: st.fixa, ate: d && d.ate }], () => { toast('Despesa salva ✅'); $('det').querySelector('.dhead button').click(); carregarFin(); }, () => { ok.disabled = false; }); });
-    c.append(ok); if (d) { const ap = el('button', 'btn', d.fixa ? 'Parar de repetir a partir deste mês' : 'Apagar'); ap.style.cssText = 'width:100%;margin-top:8px'; ap.addEventListener('click', () => rodar('finDespesaApagar', [S.token, d.id, FIN.mes], () => { toast('Feito'); $('det').querySelector('.dhead button').click(); carregarFin(); })); c.append(ap); }
+    const ok = el('button', 'btn pri', 'Salvar'); ok.style.cssText = 'width:100%;margin-top:12px'; ok.addEventListener('click', () => { ok.disabled = true; rodar('finDespesaSalvar', [S.token, { id: d && d.id, categoria: st.categoria, descricao: ds.value, valor: vl.value.replace(/\./g, '').replace(',', '.'), destino: sl.value, competencia: mm.value, fixa: st.fixa, ate: d && d.ate }], () => { toast('Despesa salva ✅'); b.closest('.tc').querySelector('.dhead button').click(); carregarFin(); }, () => { ok.disabled = false; }); });
+    c.append(ok); if (d) { const ap = el('button', 'btn', d.fixa ? 'Parar de repetir a partir deste mês' : 'Apagar'); ap.style.cssText = 'width:100%;margin-top:8px'; ap.addEventListener('click', () => rodar('finDespesaApagar', [S.token, d.id, FIN.mes], () => { toast('Feito'); b.closest('.tc').querySelector('.dhead button').click(); carregarFin(); })); c.append(ap); }
     b.append(c); });
 }
 // --- extrato OFX (lido no aparelho) ---
@@ -6263,6 +6262,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && T)
     rh: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     aj: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/>',
     sd: '<path d="M3 12h4l2-5 4 10 2-5h6"/>',
+    fin: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M8 6V4h8v2M3 11h18M12 10v3"/>',
     cb: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .9 3 2-1.3 2-3 2c-1.4 0-2.6-.6-3-1.6M12 6.5V8M12 16v1.5"/>',
   };
   const svg = (k) => { const d = document.createElement('span'); d.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + (I[k] || I.ini) + '</svg>'; return d.firstChild; };
