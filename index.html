@@ -5035,7 +5035,6 @@ function desenharDRE(res, r) {
   ln('= Resultado do mês', (x) => x.resultado, 'r'); c.append(t); res.append(c);
   const av = []; if (a.semCatN) av.push('⚠️ ' + a.semCatN + ' saída(s) do extrato de ' + finMesLbl(a.mes) + ' ainda sem categoria (' + rs(a.semCatV) + '). Enquanto não forem classificadas em 🏦 Extratos, não entram na DRE e o resultado fica maior do que é.');
   if (!Object.keys(a.desp).length) av.push('Ainda não há despesas em ' + finMesLbl(a.mes) + ': lance em 🧾 Despesas ou classifique o extrato em 🏦 Extratos.');
-  if (a.cartaoEst) av.push('⏳ Taxas da maquininha estimadas' + (FIN.loja === 'REDE' ? ' em ' + a.cartaoEst + ' loja(s)' : '') + ': importe o relatório de vendas da InfinitePay em 💳 Recebíveis para usar o valor exato.');
   if (a.semCusto) av.push(a.semCusto + ' peça(s) vendida(s) sem custo de compra no USE (ficaram com custo zero no CMV).');
   if (a.faltaApi.length) av.push('Não consegui buscar as vendas de: ' + a.faltaApi.join(', ') + '.');
   if (a.simplesEstimado) av.push('⏳ Simples ainda estimado em ' + Object.keys(a.aliq).filter((l) => a.aliq[l].estimado).join(', ') + ': classifique o pagamento do DAS no extrato como 🏛️ DAS, com o mês de competência (ex.: DAS de outubro pago em novembro → outubro). Aí a linha passa a usar o valor pago.');
