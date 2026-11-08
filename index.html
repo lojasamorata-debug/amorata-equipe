@@ -5026,7 +5026,7 @@ function desenharDRE(res, r) {
   const kp = el('div', 'fin-kpi'); [[finR(a.liquida), 'receita líquida', ''], [pc(a.lucroBruto, a.liquida), 'margem bruta', ''], [finR(a.resultado), 'resultado · ' + pc(a.resultado, a.liquida), a.resultado >= 0 ? 'g' : 'r']].forEach(([v, l, c]) => { const k = el('div'); k.append(el('b', c, v), el('span', '', l)); kp.append(k); }); res.append(kp);
   const c = el('div', 'card'), t = el('table', 'fin-t'), hd = el('tr'); hd.append(el('th', '', ''), el('th', '', finMesLbl(a.mes)), el('th', '', finMesLbl(p.mes)), el('th', '', finMesLbl(y.mes))); t.append(hd);
   const ln = (rot, f, cls, det, base) => { const tr = el('tr', cls || ''); const td0 = el('td', '', rot); tr.append(td0); [a, p, y].forEach((col, i) => { const v = f(col), td = el('td', v < 0 ? 'neg' : ''); td.append(document.createTextNode(finR(v))); if (i === 0 && base !== false && a.bruta) td.append(el('small', '', pc(Math.abs(v), a.bruta))); tr.append(td); }); if (det) { tr.style.cursor = 'pointer'; tr.addEventListener('click', det); } t.append(tr); };
-  ln('Receita bruta de vendas', (x) => x.bruta); ln('(–) Cashback / bônus usado', (x) => -x.bonus); ln('(–) Trocas e crédito de loja', (x) => -(x.troca + x.credito)); ln(a.simplesEstimado ? '(–) Simples Nacional ⏳ estimado' : '(–) Simples Nacional (DAS)', (x) => -x.simples, '', () => toast(Object.keys(a.aliq).map((l) => l + ': ' + (a.aliq[l].das ? 'DAS pago ' + rs(Number(String(a.aliq[l].fonte).replace(/[^\d.]/g, ''))) + ' = ' : 'estimado ') + (Math.round(a.aliq[l].pct * 10000) / 100).toString().replace('.', ',') + '% do faturamento').join(' | '), 7000));
+  ln('Receita bruta de vendas', (x) => x.bruta); ln('(–) Descontos concedidos (inclui cashback)', (x) => -((x.desconto || 0) + x.bonus), '', () => toast('Descontos dados nas vendas: ' + rs(a.desconto || 0) + ' · cashback/bônus usado: ' + rs(a.bonus) + '. A receita bruta é o valor de tabela das peças (antes do desconto).', 7000)); ln('(–) Trocas e crédito de loja', (x) => -(x.troca + x.credito)); ln(a.simplesEstimado ? '(–) Simples Nacional ⏳ estimado' : '(–) Simples Nacional (DAS)', (x) => -x.simples, '', () => toast(Object.keys(a.aliq).map((l) => l + ': ' + (a.aliq[l].das ? 'DAS pago ' + rs(Number(String(a.aliq[l].fonte).replace(/[^\d.]/g, ''))) + ' = ' : 'estimado ') + (Math.round(a.aliq[l].pct * 10000) / 100).toString().replace('.', ',') + '% do faturamento').join(' | '), 7000));
   ln('= Receita líquida', (x) => x.liquida, 't'); ln('(–) CMV (custo das peças vendidas)', (x) => -x.cmv); if ([a, p, y].some((x) => x.difal)) ln('(–) ICMS DIFAL (' + (a.difalPct != null && FIN.loja !== 'REDE' ? String(a.difalPct).replace('.', ',') + '% do custo vendido' : '12% AC / 13% AM do custo vendido') + ')', (x) => -(x.difal || 0), '', () => toast('DIFAL previsto = % sobre o custo das peças vendidas no mês (o pagamento real fica no caixa). Ajuste a % em 🧾 Despesas › ⚙️ Empresas, DAS e DIFAL.', 6000)); ln('= Lucro bruto', (x) => x.lucroBruto, 't');
   r.grupos.forEach(([k, n]) => { if (![a, p, y].some((x) => x.desp[k])) return; ln('(–) ' + n, (x) => -(x.desp[k] || 0), '', () => detalheFinCat(k, n)); });
   if ([a, p, y].some((x) => x.cartao)) ln('(–) Taxas da maquininha (recebíveis)', (x) => -x.cartao);
@@ -5067,14 +5067,70 @@ function formDespesa(d, r) {
     b.append(c); });
 }
 // --- extrato OFX (lido no aparelho) ---
+// texto de um PDF com posição (para ler extratos e relatórios em PDF)
+async function itensPDF(f) { const lib = await carregarPdfJs(), doc = await lib.getDocument({ data: await f.arrayBuffer() }).promise, out = [];
+  for (let p = 1; p <= doc.numPages; p++) { const pg = await doc.getPage(p), vh = pg.getViewport({ scale: 1 }).height, tc = await pg.getTextContent();
+    tc.items.forEach((i) => { if (!i.str || !i.str.trim()) return; const hh = Math.abs(i.height || i.transform[3]) || 8; out.push({ s: i.str, x: i.transform[4], w: i.width || 0, y: vh - i.transform[5] - hh, p: p, h: hh }); }); }
+  return out; }
+// lê extrato bancário em PDF (itens de texto com posição: s, x, y, p, h) → { conta, linhas: [{ id, data, valor, memo }] }
+function lerPDFExtrato(itens) {
+  const MES = { jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6, jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12 };
+  const ord = itens.filter((i) => String(i.s).trim()).sort((a, b) => a.p - b.p || a.y - b.y || a.x - b.x), L = [];
+  ord.forEach((i) => { const u = L[L.length - 1]; if (u && u.p === i.p && Math.abs(u.y - i.y) <= Math.max(2.5, (i.h || 8) * 0.45)) u.it.push(i); else L.push({ p: i.p, y: i.y, it: [i] }); });
+  const linhas = L.map((l) => { const it = l.it.sort((a, b) => a.x - b.x); let t = '', fim = null;
+    it.forEach((i) => { const h = i.h || 8; if (fim != null) t += i.x - fim > h * 1.6 ? ' | ' : ' '; t += String(i.s).trim(); fim = i.x + (i.w || String(i.s).length * h * 0.5); }); return t.replace(/\s+/g, ' ').trim(); });
+  const topo = linhas.slice(0, 25).join(' ') + ' ' + (linhas.join(' ').match(/nubank|nu pagamentos|cloudwalk|infinitepay|pagseguro|cora scfi|bradesco/i) || [''])[0], cm = topo.match(/Conta:?\s*([\d][\d.\-]{3,})/i);
+  const banco = /pagseguro|pagbank/i.test(topo) ? 'PagBank' : /nubank|nu pagamentos/i.test(topo) ? 'Nubank' : /cora/i.test(topo) ? 'Cora' : /infinitepay|cloudwalk/i.test(topo) ? 'InfinitePay' : /bradesco/i.test(topo) ? 'Bradesco' : 'PDF';
+  const reD1 = /^(\d{2})\/(\d{2})\/(\d{4})\b/, reD2 = /^(\d{1,2})\s+(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-zç]*\.?,?\s+(\d{4})\b/i;
+  const reV = /([+\-−–]?) ?(?:R\$ ?)?([+\-−–]?) ?(\d{1,3}(?:\.\d{3})*,\d{2})(?!\d)/g;
+  const pula = /^(\| )?(saldo|total de|valores em|emitido|extrato gerado|per[ií]odo|p[aá]g(ina)? \d|central de ajuda|ouvidoria|tem alguma|caso a solu|data\b|rendimento l[ií]quido \| [+\-])|saldo do dia|saldo (final|inicial)|saldo dispon/i;
+  let dia = '', sec = 0; const out = [], vistos = {};
+  linhas.forEach((t) => {
+    let m = t.match(reD1), resto = t;
+    if (m && /^\s*(-|a)\s+\d/.test(t.slice(m[0].length))) m = null;
+    if (m) { dia = m[3] + '-' + m[2] + '-' + m[1]; resto = t.slice(m[0].length).trim(); }
+    else if ((m = t.match(reD2)) && !/^\s*(-|a)\s+\d/.test(t.slice(m[0].length))) { dia = m[3] + '-' + String(MES[m[2].toLowerCase().slice(0, 3)]).padStart(2, '0') + '-' + m[1].padStart(2, '0'); resto = t.slice(m[0].length).trim(); }
+    if (/total de entradas/i.test(resto)) { sec = 1; return; } if (/total de sa[ií]das/i.test(resto)) { sec = -1; return; }
+    if (!dia || pula.test(resto)) return;
+    const vs = [...resto.matchAll(reV)]; if (!vs.length) return; const v = vs[vs.length - 1];
+    let val = Number(v[3].replace(/\./g, '').replace(',', '.')); if (!val) return;
+    const neg = /[\-−–]/.test(v[1] + v[2]), pos = /\+/.test(v[1] + v[2]);
+    if (neg) val = -val; else if (!pos) { if (/receb|dep[oó]sito|resgate|estorno|rendimento/i.test(resto)) {} else if (/envia|pagamento|pgto|d[eé]bito|tarifa|sa[ií]da|compra|aplica|boleto/i.test(resto)) val = -val; else if (sec) val *= sec; }
+    let memo = resto.slice(0, v.index).replace(/\b\d{2}:\d{2}\b/g, ' ').replace(/[\d•.]{2,}[\/\-][\d\-•]+/g, ' ').replace(/R\$/g, ' ').replace(/\|/g, ' ').replace(/\s+/g, ' ').replace(/[\s\-–]+$/, '').trim();
+    if (!memo || !/[a-zà-ú]{3}/i.test(memo)) return;
+    const k = dia + '_' + val.toFixed(2) + '_' + memo.slice(0, 30); vistos[k] = (vistos[k] || 0) + 1;
+    out.push({ id: 'P' + dia.replace(/-/g, '') + '_' + Math.round(Math.abs(val) * 100) + (val < 0 ? 'S' : 'E') + '_' + memo.replace(/[^\w]/g, '').slice(0, 12) + vistos[k], data: dia, valor: Math.round(val * 100) / 100, memo: memo.slice(0, 140) });
+  });
+  return { conta: banco + (cm ? ' ' + cm[1] : ' PDF'), linhas: out };
+}
+// relatório de vendas da InfinitePay em PDF → mesmas linhas do CSV (lerInfinite)
+function lerPDFVendasIP(itens) {
+  const MES = { jan: '01', fev: '02', mar: '03', abr: '04', mai: '05', jun: '06', jul: '07', ago: '08', set: '09', out: '10', nov: '11', dez: '12' };
+  const ord = itens.filter((i) => String(i.s).trim()).sort((a, b) => a.p - b.p || a.y - b.y || a.x - b.x), L = [];
+  ord.forEach((i) => { const u = L[L.length - 1]; if (u && u.p === i.p && Math.abs(u.y - i.y) <= Math.max(2.5, (i.h || 8) * 0.45)) u.it.push(i); else L.push({ p: i.p, y: i.y, h: i.h || 8, it: [i] }); });
+  L.forEach((l) => { l.t = l.it.sort((a, b) => a.x - b.x).map((i) => String(i.s).trim()).join(' ').replace(/\s+/g, ' '); });
+  const reSt = /\b(Aprovada|Recusada|Estornada|Cancelada|Pendente|Contestada|Chargeback)\b/, num = (s) => Number(String(s).replace(/\s/g, '').replace(/[^\d,\-]/g, '').replace(',', '.')) || 0, out = [], vistos = {};
+  L.forEach((l, k) => { const st = l.t.match(reSt); if (!st || !/\d,\d{2}/.test(l.t)) return;
+    const viz = (j) => L[j] && L[j].p === l.p && Math.abs(L[j].y - l.y) < l.h * 2.6 && !reSt.test(L[j].t) ? L[j].t : '';
+    const bloco = [viz(k - 1), l.t, viz(k + 1)].join(' ');
+    const d = bloco.match(/(\d{1,2}) (jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-z]*,? (\d{4})/i), h = bloco.match(/\b(\d{2}:\d{2})\b/); if (!d) return;
+    const data = d[3] + '-' + MES[d[2].toLowerCase()] + '-' + d[1].padStart(2, '0'), hora = h ? h[1] : '';
+    const antes = l.t.slice(0, st.index).replace(/\d{1,2} \w{3},? \d{4}/, '').replace(/·/g, ' ').replace(/\b\d{2}:\d{2}\b/, '').trim().split(' '), ident = antes[antes.length - 1] || '';
+    const vals = [...l.t.slice(st.index).matchAll(/([+\-−]?)\s*(?:R\$\s*)?([+\-−]?)\s*(\d{1,3}(?:\.\d{3})*,\d{2})/g)].map((m) => (/[\-−]/.test(m[1] + m[2]) ? -1 : 1) * num(m[3]));
+    const meio = (bloco.match(/\b(Crédito|Débito|Pix|Boleto|Dinheiro)\b/) || [])[1] || (/^E\w{30,}$/.test(ident) ? 'Pix' : /^([2-9]|1\d)x$/.test((bloco.match(/\b(\d{1,2}x)\b/) || [''])[0]) ? 'Crédito' : ''), parc = (bloco.match(/\b(\d{1,2}x)\b/) || bloco.match(/À Vista/) || [''])[0], origem = (bloco.match(/Maquininha|Gestão de Cobrança|Gestão de|Link de Pagamento|Link|Online|Tap/) || [''])[0];
+    const id0 = 'IPP_' + ident + '_' + data.replace(/-/g, '').slice(0, 8).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1$2$3') + hora.replace(':', ''); vistos[id0] = (vistos[id0] || 0) + 1;
+    out.push({ id: id0 + (vistos[id0] > 1 ? '_' + vistos[id0] : ''), data: data, hora: hora, meio: meio, bandeira: '', parcelas: parc === 'À Vista' ? '1x' : parc, origem: origem.replace(/^Gestão de$/, 'Gestão de Cobrança'), status: st[1], bruto: vals[0] || 0, liquido: vals[1] || 0, taxa: Math.round(((vals[0] || 0) - (vals[1] || 0)) * 100) / 100 });
+  });
+  return out;
+}
 function lerOFX(txt) { const conta = ((txt.match(/<ACCTID>([^<\r\n]+)/) || [])[1] || '').trim(), banco = ((txt.match(/<ORG>([^<\r\n]+)/) || [])[1] || '').trim(), out = [];
   (txt.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/g) || []).forEach((t) => { const g = (k) => ((t.match(new RegExp('<' + k + '>([^<\\r\\n]*)')) || [])[1] || '').trim(); const dt = g('DTPOSTED'); if (dt.length < 8) return;
     out.push({ id: g('FITID'), data: dt.slice(0, 4) + '-' + dt.slice(4, 6) + '-' + dt.slice(6, 8), valor: Number(g('TRNAMT').replace(',', '.')), memo: g('MEMO') || g('NAME') }); });
   return { conta: (banco ? banco.split(' ')[0] + ' ' : '') + conta, linhas: out }; }
 function desenharFinExt(res, r) {
   res.replaceChildren(); FIN.cats = r.cats;
-  const imp = el('div', 'card'), fi = el('input'); fi.type = 'file'; fi.accept = '.ofx,.OFX'; fi.className = 'hide'; const bt = el('button', 'btn pri', '📥 Importar extrato (OFX) de ' + FIN.loja); bt.style.width = '100%'; bt.addEventListener('click', () => fi.click());
-  fi.addEventListener('change', async () => { const f = fi.files[0]; if (!f) return; const x = lerOFX(await f.text()); if (!x.linhas.length) { toast('Não achei lançamentos neste arquivo. Ele é um OFX?'); return; } bt.disabled = true; bt.textContent = 'Importando ' + x.linhas.length + ' lançamentos…';
+  const imp = el('div', 'card'), fi = el('input'); fi.type = 'file'; fi.accept = '.ofx,.OFX,.pdf,.PDF,application/pdf'; fi.className = 'hide'; const bt = el('button', 'btn pri', '📥 Importar extrato (OFX ou PDF) de ' + FIN.loja); bt.style.width = '100%'; bt.addEventListener('click', () => fi.click());
+  fi.addEventListener('change', async () => { const f = fi.files[0]; if (!f) return; let x; try { x = /\.pdf$/i.test(f.name) || f.type === 'application/pdf' ? lerPDFExtrato(await itensPDF(f)) : lerOFX(await f.text()); } catch (e) { toast('Não consegui ler este arquivo: ' + e.message); fi.value = ''; return; } if (!x.linhas.length) { toast('Não achei lançamentos neste arquivo. É o extrato do banco (OFX ou PDF)?'); fi.value = ''; return; } bt.disabled = true; bt.textContent = 'Importando ' + x.linhas.length + ' lançamentos…';
     rodar('finImportarExtrato', [S.token, FIN.loja, x.conta, f.name, x.linhas], (o) => { toast(o.novas + ' novos · ' + o.auto + ' já classificados sozinhos' + (o.duplicadas ? ' · ' + o.duplicadas + ' já existiam' : ''), 5000); carregarFin(); }, () => { bt.disabled = false; }); fi.value = ''; });
   const bd = el('button', 'btn', '🔄 Buscar extratos no Drive (todas as lojas)'); bd.style.cssText = 'width:100%;margin-top:8px';
   bd.addEventListener('click', () => { bd.disabled = true; bd.textContent = 'Procurando arquivos .ofx nas pastas das lojas…';
@@ -5085,7 +5141,7 @@ function desenharFinExt(res, r) {
   arq.addEventListener('toggle', () => { if (!arq.open || arqOk) return; arqOk = true; const w = el('div', 'sm', 'Carregando…'); arq.append(w);
     rodar('finArquivosDrive', [S.token, FIN.loja], (l) => { w.replaceChildren(); if (!l.length) { w.textContent = 'Nenhum ainda. Toque em "Buscar extratos no Drive".'; return; }
       l.forEach((a) => w.append(el('div', '', '• ' + a.nome + ' — ' + a.conta + ' · ' + a.novas + ' novos de ' + a.lidas + (a.obs ? ' · ' + a.obs : '')))); }, () => { w.textContent = 'Não consegui carregar.'; }); });
-  imp.append(bt, fi, bd, el('div', 'sm', 'O app também procura sozinho, toda madrugada, os .ofx novos nas pastas de contabilidade de cada loja (lançamentos a partir de jan/2026). Cada lançamento entra uma vez só.'), arq); res.append(imp);
+  imp.append(bt, fi, bd, el('div', 'sm', 'Importar: OFX ou PDF do banco/InfinitePay, direto do celular. Buscar no Drive: lê os .ofx novos das pastas de contabilidade das lojas — só quando você tocar. Cada lançamento entra uma vez só (PDF e OFX do mesmo mês não duplicam).'), arq); res.append(imp);
   const l = r.lista, sem = l.filter((x) => !x.categoria); const fl = el('div', 'fin-ch'); [['sem', 'Sem categoria (' + sem.length + ')'], ['todos', 'Todos (' + l.length + ')']].forEach(([k, t]) => { const x = el('button', k === FIN.filtro ? 'on' : '', t); x.addEventListener('click', () => { FIN.filtro = k; desenharFinExt(res, r); }); fl.append(x); }); res.append(fl);
   const tot = (f) => l.filter(f).reduce((a, x) => a + x.valor, 0); res.append(el('div', 'sm', 'Entradas ' + rs(tot((x) => x.valor > 0)) + ' · Saídas ' + rs(-tot((x) => x.valor < 0))));
   const vis = FIN.filtro === 'sem' ? sem : l; if (!vis.length) res.append(el('div', 'vazio', FIN.filtro === 'sem' ? (l.length ? 'Tudo classificado ✅' : 'Nenhum lançamento neste mês. Importe o extrato.') : 'Nada aqui.'));
@@ -5110,10 +5166,10 @@ function lerInfinite(txt) { const L = lerCSV(txt.replace(/^﻿/, '')), h = L[0] 
   const g = { b: ix('Meio - Bandeira'), p: ix('Meio - Parcelas'), o: ix('Tipo - Origem'), id: ix('Identificador'), st: ix('Status'), v: ix('Valor (R$)'), l: ix('Líquido (R$)'), t: ix('Taxa Aplicada - Valor(R$)'), n: ix('NSU') };
   return L.slice(1).filter((r) => r.length > 5 && r[iD]).map((r) => { const m = r[iD].match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}:\d{2})/); return m ? { id: 'IP' + (r[g.n] || '') + '_' + (r[g.id] || '') + '_' + m[3] + m[2] + m[1] + m[4].replace(':', ''), data: m[3] + '-' + m[2] + '-' + m[1], hora: m[4], meio: r[iM], bandeira: r[g.b], parcelas: r[g.p], origem: r[g.o], status: r[g.st], bruto: numBR_(r[g.v]), liquido: numBR_(r[g.l]), taxa: numBR_(r[g.t]) } : null; }).filter(Boolean); }
 function desenharFinRec(res) {
-  res.replaceChildren(); const imp = el('div', 'card'), fi = el('input'); fi.type = 'file'; fi.accept = '.csv,.CSV'; fi.className = 'hide'; const bt = el('button', 'btn pri', '📥 Importar recebíveis (CSV da InfinitePay) de ' + FIN.loja); bt.style.width = '100%'; bt.addEventListener('click', () => fi.click());
-  fi.addEventListener('change', async () => { const f = fi.files[0]; if (!f) return; const x = lerInfinite(await f.text()); if (!x || !x.length) { toast('Não reconheci este arquivo. Use o relatório de vendas da InfinitePay (CSV).'); return; } bt.disabled = true; bt.textContent = 'Importando ' + x.length + ' transações…';
+  res.replaceChildren(); const imp = el('div', 'card'), fi = el('input'); fi.type = 'file'; fi.accept = '.csv,.CSV,.pdf,.PDF,application/pdf'; fi.className = 'hide'; const bt = el('button', 'btn pri', '📥 Importar recebíveis (CSV ou PDF da InfinitePay) de ' + FIN.loja); bt.style.width = '100%'; bt.addEventListener('click', () => fi.click());
+  fi.addEventListener('change', async () => { const f = fi.files[0]; if (!f) return; let x; try { x = /\.pdf$/i.test(f.name) || f.type === 'application/pdf' ? lerPDFVendasIP(await itensPDF(f)) : lerInfinite(await f.text()); } catch (e) { toast('Não consegui ler este arquivo: ' + e.message); fi.value = ''; return; } if (!x || !x.length) { toast('Não reconheci este arquivo. Use o Relatório de Vendas da InfinitePay (CSV ou PDF).'); fi.value = ''; return; } bt.disabled = true; bt.textContent = 'Importando ' + x.length + ' transações…';
     rodar('finImportarReceb', [S.token, FIN.loja, f.name, x], (o) => { toast(o.novas + ' transações novas' + (o.duplicadas ? ' · ' + o.duplicadas + ' já existiam' : ''), 4000); carregarFin(); }, () => { bt.disabled = false; }); fi.value = ''; });
-  imp.append(bt, fi, el('div', 'sm', 'InfinitePay: Relatórios › Vendas › Exportar CSV. Pode importar de novo sem duplicar.')); res.append(imp);
+  imp.append(bt, fi, el('div', 'sm', 'InfinitePay: Relatório de Vendas em CSV ou PDF (o PDF que vai para a contabilidade serve). Pode importar de novo sem duplicar.')); res.append(imp);
   const out = el('div'); res.append(out); out.append(el('div', 'sub', 'Conferindo com as vendas do USE…'));
   rodar('finConciliacao', [S.token, FIN.loja, FIN.mes], (r) => { out.replaceChildren(); if (r.vazio) { out.append(el('div', 'vazio', 'Nenhum recebível de ' + FIN.loja + ' em ' + finMesLbl(FIN.mes) + '. Importe o CSV da maquininha.')); return; }
     const kp = el('div', 'fin-kpi'); [[rs(r.maq.bruto).replace(/,\d\d$/, ''), 'na maquininha (' + r.maq.n + ')', ''], [rs(r.maq.taxa).replace(/,\d\d$/, ''), 'taxas · ' + (r.maq.bruto ? (Math.round(r.maq.taxa / r.maq.bruto * 10000) / 100).toString().replace('.', ',') : 0) + '%', 'r'], [Math.round(r.ok.valor / Math.max(r.maq.bruto, 1) * 100) + '%', 'conciliado', 'g']].forEach(([v, l, c]) => { const k = el('div'); k.append(el('b', c, v), el('span', '', l)); kp.append(k); }); out.append(kp);
