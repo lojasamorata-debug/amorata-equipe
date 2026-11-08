@@ -5472,7 +5472,9 @@ function finDespesasMes0_(mes) {
   try { finMigrarDifal_(); } catch (e) {} try { finReparar2_(); } catch (e) {} const out = [];
   finAba_('FinDespesas', H_FDP).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (r[8] === 'NAO' || !r[0]) return; const fixa = r[1] === 'FIXA';
     if (fixa ? (r[6] <= mes && (!r[7] || r[7] >= mes)) : r[6] === mes) out.push({ id: r[0], origem: fixa ? 'fixa' : 'manual', categoria: r[2], descricao: r[3], valor: finNum_(r[4]), destino: r[5] }); });
-  finAba_('FinLanc', H_FLC).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (!r[0] || r[8] !== mes || !r[6] || !FIN_CATS[r[6]]) return; const v = finNum_(r[4]);
+  const sem = {}; out.semCat = sem;
+  finAba_('FinLanc', H_FLC).getDataRange().getDisplayValues().slice(1).forEach((r) => { if (r[0] && !r[6] && r[3].slice(0, 7) === mes) { const v0 = finNum_(r[4]); if (v0 < 0) { const o = sem[r[1]] = sem[r[1]] || { n: 0, v: 0 }; o.n++; o.v -= v0; } }
+    if (!r[0] || r[8] !== mes || !r[6] || !FIN_CATS[r[6]]) return; const v = finNum_(r[4]);
     if ((FIN_CATS[r[6]][2] === 'dre' || FIN_CATS[r[6]][2] === 'imposto') && v) out.push({ id: r[0], origem: 'extrato', categoria: r[6], descricao: r[5] + (v > 0 ? ' (estorno/devolução)' : ''), valor: -v, destino: r[7] || r[1], data: r[3] });
     if (FIN_CATS[r[6]][2] === 'receita' && v > 0) out.push({ id: r[0], origem: 'extrato', categoria: r[6], descricao: r[5], valor: v, destino: r[7] || r[1], data: r[3] }); });
   return out;
@@ -5490,7 +5492,8 @@ function finColuna_(lojaSel, mes, cfg) {
   lojas.forEach((l) => { const m = ms[l]; if (!m) { c.faltaApi.push(l); return; } c.bonus += m.bonus; c.desconto += m.desconto || 0; c.troca += m.troca; c.credito += m.credito; c.bruta += m.pago + m.bonus + (m.desconto || 0) + m.troca + m.credito; c.cmv += m.cmv; c.semCusto += m.semCusto;
     const pd = ((cfg.lojas || {})[l] || {}).difal; const pdf = pd === '' || pd == null ? finDifalPad_(l) : finNum_(pd); c.difal += m.cmv * pdf / 100; c.difalPct = pdf;
     if (das[l]) { c.simples += das[l]; c.aliq[l] = { pct: m.pago ? das[l] / m.pago : 0, fonte: 'DAS pago ' + Math.round(das[l] * 100) / 100, das: true }; }
-    else { const al = finAliquota_(l, mes, cfg); al.estimado = true; c.aliq[l] = al; c.simples += m.pago * al.pct; c.simplesEstimado = (c.simplesEstimado || 0) + 1; } });
+    else { let al = null; for (let k = 1; k <= 4 && !al; k++) { const mk = finMesAnt_(mes, k); let dv = 0; finDespesasMes_(mk).forEach((d) => { if (d.categoria === 'das' && d.destino === l) dv += d.valor; }); if (dv > 0) { let pk = 0; try { pk = finMes_(l, mk).pago; } catch (e) {} if (pk > 0) al = { pct: dv / pk, fonte: '% do DAS de ' + mk }; } }
+      if (!al || (cfg.lojas || {})[l] && ((cfg.lojas || {})[l] || {}).das) al = finAliquota_(l, mes, cfg); al.estimado = true; c.aliq[l] = al; c.simples += m.pago * al.pct; c.simplesEstimado = (c.simplesEstimado || 0) + 1; } });
   // taxas de cartão: pelos recebíveis importados do mês
   const rcb = FIN_RC_ || (FIN_RC_ = finAba_('FinReceb', H_FRC).getDataRange().getDisplayValues().slice(1).filter((r) => r[7] === 'Aprovada'));
   lojas.forEach((l) => { const m = ms[l]; let real = 0, tem = false; rcb.forEach((r) => { if (r[1] === l && r[2].slice(0, 7) === mes) { tem = true; real += finNum_(r[10]); } });
@@ -5500,6 +5503,7 @@ function finColuna_(lojaSel, mes, cfg) {
     const tc = hist.c[0] > 5000 ? hist.c[1] / hist.c[0] : 0.048, td = hist.d[0] > 2000 ? hist.d[1] / hist.d[0] : 0.009; let cred = 0, deb = 0;
     Object.keys(m.formas || {}).forEach((f) => { if (/CR[EÉ]DITO|LINK/i.test(f)) cred += m.formas[f]; else if (/D[EÉ]BITO/i.test(f)) deb += m.formas[f]; });
     c.cartao += cred * tc + deb * td; c.cartaoEst = (c.cartaoEst || 0) + 1; });
+  const sc = finDespesasMes_(mes).semCat || {}; c.semCatN = 0; c.semCatV = 0; lojas.forEach((l) => { if (sc[l]) { c.semCatN += sc[l].n; c.semCatV += sc[l].v; } });
   c.cartaoFonte = c.cartaoEst ? 'estimadas' : c.cartao ? 'recebíveis importados' : '';
   finDespesasMes_(mes).forEach((d) => { if (d.categoria === 'das') return; const pt = finParte_(d.destino, lojaSel, d.destino === 'RATEIO_VENDA' && lojaSel !== 'REDE' ? pesosDe() : {}); if (!pt) return; if (d.categoria === 'rendimento') { c.rendimentos += d.valor * pt; return; } if (d.categoria === 'entrega') { c.entregas += d.valor * pt; return; }  c.desp[d.categoria] = (c.desp[d.categoria] || 0) + d.valor * pt; });
   if (c.cartao && c.desp.taxas) c.desp.taxas_aviso = 1;

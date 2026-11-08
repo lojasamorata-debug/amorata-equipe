@@ -1,5 +1,5 @@
 function zzDebug() {
-  const out = {}; out.drive = finDriveImportar_(200000);
-  ["Cerâmica","Via Verde","Cruzeiro do Sul","Via Norte","Sumaúma"].forEach((l) => { ["2026-09","2026-10"].forEach((m) => { const c = finColuna_(l, m, finCfg_()); out[l+" "+m] = { bruta: c.bruta, desc: c.desconto + c.bonus, simples: c.simples, est: c.simplesEstimado||0, liq: c.liquida, cmv: c.cmv, difal: c.difal, desp: c.desp, cartao: c.cartao, cEst: c.cartaoEst||0, rend: c.rendimentos, ent: c.entregas, res: c.resultado }; }); });
+  const out = {};
+  ["Cerâmica","Via Verde","Cruzeiro do Sul","Via Norte","Sumaúma"].forEach((l) => { ["2026-09","2026-10"].forEach((m) => { const c = finColuna_(l, m, finCfg_()); out[l+" "+m] = { simples: c.simples, aliq: c.aliq[l], semN: c.semCatN, semV: c.semCatV, desp: Object.keys(c.desp).length, res: c.resultado }; }); });
   Logger.log(JSON.stringify(out));
 }
