@@ -196,7 +196,7 @@ body:not(.adm) #mu-filtro-box { display:none; }
 .tr-d { background:#fff7e8; border-color:#f0d3a6; } .tr-d .cnt { display:flex; gap:6px; margin-top:8px; } .tr-d .cnt button { flex:1; height:36px; border-radius:10px; border:0; background:#efe6d6; font:inherit; font-size:14px; cursor:pointer; } .tr-d .cnt button.on { background:#e8862a; color:#fff; }
 .tr-tb { width:100%; border-collapse:collapse; font-size:13px; } .tr-tb th { text-align:left; color:var(--muted); font-weight:600; font-size:11.5px; padding:6px 4px; } .tr-tb td { padding:9px 4px; border-top:1px solid var(--line); } .tr-tb td.up { color:#1e7a46; font-weight:700; } .tr-tb td.dn { color:#b3261e; }
 .ag-tr { margin:0 0 6px; }
-.fin-sg { display:grid !important; grid-template-columns:repeat(4,1fr); gap:6px; overflow:visible !important; } .fin-sg button { padding:8px 2px !important; font-size:12px !important; white-space:nowrap; min-width:0; }
+.fin-sg { display:grid !important; grid-template-columns:repeat(3,1fr); gap:6px; overflow:visible !important; } .fin-sg button { padding:8px 2px !important; font-size:12px !important; white-space:nowrap; min-width:0; }
 .fin-lc .h > div { flex:1; min-width:0; } .fin-lc .h > b { flex:none; font-family:inherit; }
 .fin-f { display:flex; gap:8px; margin:10px 0 6px; } .fin-f input { border:1px solid var(--line); border-radius:10px; padding:8px 10px; font:inherit; background:var(--panel); }
 .fin-ch { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin:0 0 10px; } .fin-ch button { flex:none; border:1px solid var(--line); background:var(--panel); border-radius:999px; padding:6px 11px; font:inherit; font-size:12.5px; font-weight:600; color:var(--fg); cursor:pointer; } .fin-ch button.on { background:var(--accent); border-color:var(--accent); color:#fff; }
@@ -209,6 +209,12 @@ body:not(.adm) #mu-filtro-box { display:none; }
 .fin-cf { display:grid; grid-template-columns:80px 1fr 54px 54px; gap:6px; align-items:center; margin-top:8px; font-size:12.5px; } .fin-cf input { border:1px solid var(--line); border-radius:8px; padding:7px; font:inherit; min-width:0; }
 .fin-lc { overflow:hidden; max-width:100%; box-sizing:border-box; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:9px 11px; margin-bottom:6px; } .fin-lc .h { display:flex; justify-content:space-between; gap:8px; cursor:pointer; } .fin-lc .h b { font-size:13px; } .fin-lc .h small { display:block; color:var(--muted); font-size:11px; } .fin-lc .h .fneg { color:#b3261e; white-space:nowrap; } .fin-lc .h .fpos { color:#1e7a46; white-space:nowrap; }
 .fin-lc.sel { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 10%, var(--panel)); } .fin-lc .ck { flex:none; width:20px; height:20px; margin:2px 4px 0 0; accent-color:var(--accent); pointer-events:none; } .fin-lote { position:sticky; bottom:0; z-index:5; background:var(--panel); border:1px solid var(--accent); border-radius:14px; padding:10px 11px; margin-top:8px; box-shadow:0 -4px 16px rgba(0,0,0,.12); } .fin-lote select, .fin-lote input[type=month] { width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; padding:8px; font:inherit; background:var(--panel); margin-top:6px; } .fin-lote label { display:block; margin:8px 0; } .fin-lote .btn { width:100%; margin-top:6px; }
+.fin-ponte .fp { padding:8px 0; border-bottom:1px solid var(--line); } .fin-ponte .fp.tot { font-weight:700; } .fin-ponte .fp-h { display:flex; justify-content:space-between; gap:8px; font-size:13.5px; } .fin-ponte .fp-h b { white-space:nowrap; } .fin-ponte .fp-bar { height:6px; background:var(--line); border-radius:4px; margin:5px 0 3px; overflow:hidden; } .fin-ponte .fp-bar i { display:block; height:100%; border-radius:4px; } .fin-ponte .fp-bar i.p { background:#1e7a46; } .fin-ponte .fp-bar i.n { background:#b3261e; } .fin-ponte .fp.tot .fp-bar i { background:var(--accent); }
+.fin-dica { margin-top:10px; padding:10px; border-radius:10px; background:color-mix(in srgb, var(--accent) 12%, var(--panel)); font-size:13.5px; font-weight:600; }
+.fin-fx { width:100%; border-collapse:collapse; margin-top:8px; font-size:13px; } .fin-fx td { padding:6px 2px; border-bottom:1px solid var(--line); } .fin-fx td:last-child { text-align:right; white-space:nowrap; } .fin-fx tr.g td { font-weight:700; padding-top:12px; } .fin-fx tr.c td:first-child { padding-left:14px; color:var(--muted); } .fin-fx tr.tot td { font-weight:800; border-top:2px solid var(--fg); }
+.fin-arq { width:100%; border-collapse:collapse; margin-top:10px; font-size:12.5px; } .fin-arq th { font-weight:600; color:var(--muted); padding:4px 2px; } .fin-arq td { padding:7px 2px; border-top:1px solid var(--line); text-align:center; cursor:pointer; } .fin-arq td:first-child { text-align:left; font-weight:600; cursor:default; white-space:nowrap; } .fin-arq td.on { background:color-mix(in srgb, var(--accent) 16%, transparent); border-radius:8px; }
+.fin-arqd .fa-i { display:flex; gap:10px; align-items:flex-start; padding:7px 0; border-bottom:1px solid var(--line); } .fin-arqd .fa-i > span { flex:none; width:22px; text-align:center; } .fin-arqd .fa-i b { font-size:13.5px; }
+.fin-kpi { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; } .fin-kpi .card { padding:10px; margin:0 0 10px; } .fin-kpi b { font-size:17px; }
 .fin-pc { border-top:1px solid var(--line); margin-top:8px; padding-top:4px; } .fin-pc select, .fin-pc input[type=month] { width:100%; max-width:100%; min-width:0; text-overflow:ellipsis; border:1px solid var(--line); border-radius:10px; padding:8px; font:inherit; background:var(--panel); box-sizing:border-box; } .fin-pc label { display:block; margin:10px 0; } .fin-pc .btn { width:100%; }
 .mu-eu { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 12px; margin:0 0 10px; font:inherit; color:var(--fg); cursor:pointer; } .mu-eu b { display:block; font-size:14.5px; } .mu-eu span { font-size:12px; color:var(--muted); } .mu-eu i { margin-left:auto; font-style:normal; font-size:22px; color:var(--muted); } .mu-eu .av { box-shadow:0 0 0 2px #fff, 0 0 0 4px #e8862a; }
 .bp-sub { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin:0 0 10px; } .bp-sub button { flex:none; border:0; background:var(--accentbg); color:var(--accent); border-radius:10px; padding:6px 10px; font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; } .bp-sub button.on { background:#e8862a; color:#fff; }
@@ -1728,8 +1734,8 @@ function desenhar(e) {
     if (fg) {
       meuCard.classList.remove('hide');
       $('eu-estado').textContent = fg.motivo === 'folga na escala' ? 'Hoje é sua folga 🌴' : 'Fora da fila';
-      $('eu-det').textContent = fg.motivo === 'folga na escala' ? 'Bom descanso! Se for trabalhar, a gerente te inclui na fila.' : 'Para gerente, participar da fila é opcional.';
-      if (chefe()) ac.append(bt('Participar da fila hoje', 'big', () => fazer('entrar', eu, null, 'Você entrou na fila!')));
+      $('eu-det').textContent = fg.motivo === 'folga na escala' ? 'Bom descanso! Se for trabalhar hoje, entre na fila você mesma.' : 'Para gerente, participar da fila é opcional.';
+      ac.append(bt(chefe() ? 'Participar da fila hoje' : 'Vou trabalhar hoje · entrar na fila', 'big', () => fazer('entrar', eu, null, 'Você entrou na fila!')));
     } else meuCard.classList.add('hide');
   }
   // folga e gerentes (só a gerente vê e pode incluir)
@@ -1737,7 +1743,7 @@ function desenhar(e) {
   $('folga-box').classList.toggle('hide', !chefe() || !fl.length);
   $('n-folga').textContent = fl.length || '';
   const lfg = $('l-folga'); lfg.replaceChildren();
-  fl.forEach((p) => lfg.append(linha(p, el('span', '', p.motivo), [bt('Pôr na fila', '', () => fazer('entrar', p.usuario))], false)));
+  fl.forEach((p) => lfg.append(linha(p, el('span', '', p.motivo), [], false)));
   // destaque: próxima da vez
   { const hz = $('vez-hero'), p0 = e.fila[0]; hz.replaceChildren(); hz.className = '';
     if (p0) { const sou = p0.usuario === eu; if (sou) hz.classList.add('eu'); const tx = el('div'); tx.append(el('div', 'lb', 'Próxima da vez'), el('div', 'nm', sou ? 'Você! 🙋‍♀️' : primeiroNome(p0.nome)), el('div', 'sv', sou ? 'a próxima cliente é sua' : 'esperando há ' + espera(agora() - p0.desde))); hz.append(avatar(p0.foto, p0.nome), tx); }
@@ -1747,7 +1753,6 @@ function desenhar(e) {
   if (!e.fila.length) lf.append(el('div', 'vazio', 'Ninguém na fila.'));
   e.fila.forEach((p, i) => {
     const ops = [];
-    if (chefe()) { if (i > 0) ops.push(bt('▲', '', () => mover(p, -1))); if (i < e.fila.length - 1) ops.push(bt('▼', '', () => mover(p, 1))); ops.push(bt('▶', 'pri', () => atender(p))); ops.push(bt('⏸', '', () => pausa(p))); }
     lf.append(linha(p, el('span', '', 'esperando ' + espera(agora() - p.desde)), ops, p.usuario === eu));
   });
   // atendimento
@@ -1757,14 +1762,14 @@ function desenhar(e) {
     const x = el('span'); const t = el('span', 'timer', mmss(agora() - p.inicio)); t.dataset.ini = p.inicio; x.append(t);
     if (p.foraDaVez) x.append(el('span', 'badge', 'fora da vez: ' + p.foraDaVez));
     if (nCli(p) > 1) x.append(el('span', 'badge', '👥 ' + nCli(p) + ' clientes'));
-    la.append(linha(p, x, chefe() && p.usuario !== eu ? [bt('Encerrar', 'pri', () => encerrar(p))] : [], p.usuario === eu));
+    la.append(linha(p, x, [], p.usuario === eu));
   });
   // fora
   const lo = $('l-fora'); lo.replaceChildren(); $('n-fora').textContent = e.fora.length || '';
   if (!e.fora.length) lo.append(el('div', 'vazio', 'Todas na fila ou atendendo.'));
   e.fora.forEach((p) => {
     const info = p.motivo ? p.motivo + ' · há ' + espera(agora() - p.desde) : 'ainda não entrou';
-    lo.append(linha(p, el('span', '', info), chefe() && p.usuario !== eu ? [bt('Pôr na fila', '', () => fazer('entrar', p.usuario))] : [], p.usuario === eu));
+    lo.append(linha(p, el('span', '', info), [], p.usuario === eu));
   });
   try { aneisStatus(); } catch (x) {}
   // hoje
@@ -5005,10 +5010,10 @@ const finDest = (d) => d === 'RATEIO_VENDA' ? 'rateio pela venda' : d === 'RATEI
 function abrirFinanceiro() { abrirDet('💼 Financeiro', (b) => { const g = el('div'); g.id = 'g-fin'; b.append(g); carregarFin(); }); }
 function carregarFin() {
   const b = $('g-fin'); if (!FIN.mes) { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); FIN.mes = d.toISOString().slice(0, 7); }
-  b.replaceChildren(); const sg = el('div', 'seg fin-sg'); [['dre', '📊 DRE'], ['desp', '🧾 Despesas'], ['ext', '🏦 Extratos'], ['rec', '💳 Recebíveis']].forEach(([k, t]) => { const x = el('button', k === FIN.sub ? 'on' : '', t); x.addEventListener('click', () => { FIN.sub = k; carregarFin(); }); sg.append(x); }); b.append(sg);
+  b.replaceChildren(); const sg = el('div', 'seg fin-sg'); [['dre', '📊 DRE'], ['caixa', '💰 Caixa'], ['desp', '🧾 Despesas'], ['ext', '🏦 Extratos'], ['rec', '💳 Recebíveis'], ['arq', '✅ Arquivos']].filter((x) => FIN_NOVO || (x[0] !== 'caixa' && x[0] !== 'arq')).forEach(([k, t]) => { const x = el('button', k === FIN.sub ? 'on' : '', t); x.addEventListener('click', () => { FIN.sub = k; carregarFin(); }); sg.append(x); }); b.append(sg);
   const fx = el('div', 'fin-f'), ms = el('input'); ms.type = 'month'; ms.value = FIN.mes; ms.addEventListener('change', () => { if (ms.value) { FIN.mes = ms.value; carregarFin(); } });
-  const ch = el('div', 'fin-ch'); (FIN.sub === 'desp' ? [] : (FIN.sub === 'dre' ? ['REDE'] : []).concat(FIN_LOJAS())).forEach((l) => { const x = el('button', l === FIN.loja ? 'on' : '', l === 'REDE' ? 'Rede' : l); x.addEventListener('click', () => { FIN.loja = l; carregarFin(); }); ch.append(x); });
-  if (FIN.sub !== 'dre' && FIN.sub !== 'desp' && FIN.loja === 'REDE') FIN.loja = FIN_LOJAS()[0];
+  const ch = el('div', 'fin-ch'); (FIN.sub === 'desp' || FIN.sub === 'arq' ? [] : (FIN.sub === 'dre' || FIN.sub === 'caixa' ? ['REDE'] : []).concat(FIN_LOJAS())).forEach((l) => { const x = el('button', l === FIN.loja ? 'on' : '', l === 'REDE' ? 'Rede' : l); x.addEventListener('click', () => { FIN.loja = l; carregarFin(); }); ch.append(x); });
+  if (FIN.sub !== 'dre' && FIN.sub !== 'desp' && FIN.sub !== 'caixa' && FIN.sub !== 'arq' && FIN.loja === 'REDE') FIN.loja = FIN_LOJAS()[0];
   [...ch.children].forEach((x) => x.classList.toggle('on', x.textContent === (FIN.loja === 'REDE' ? 'Rede' : FIN.loja)));
   fx.append(ms); b.append(fx, ch); const res = el('div'); b.append(res); res.append(el('div', 'sub', FIN.sub === 'dre' ? 'Montando a DRE (na primeira vez de cada mês o app busca as vendas no USE, pode levar até 1 minuto)…' : 'Carregando…'));
   if (FIN.sub === 'dre' && FIN.loja !== 'REDE') rodar('finDRE', [S.token, FIN.loja, FIN.mes], (r) => desenharDRE(res, r), (e) => res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e))));
@@ -5021,6 +5026,8 @@ function carregarFin() {
   if (FIN.sub === 'desp') rodar('finDespesas', [S.token, FIN.mes], (r) => desenharFinDesp(res, r));
   if (FIN.sub === 'ext') rodar('finExtrato', [S.token, FIN.loja, FIN.mes], (r) => desenharFinExt(res, r));
   if (FIN.sub === 'rec') desenharFinRec(res);
+  if (FIN.sub === 'caixa') carregarCaixa(res);
+  if (FIN.sub === 'arq') rodar('finArquivos', [S.token, FIN.mes], (r) => desenharArq(res, r), (e) => res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e))));
 }
 const FIN_GNOME = { pessoal: '👥 Pessoal', ocupacao: '🏬 Ocupação', comerciais: '🛍️ Comerciais', administrativas: '📊 Administrativas', impostos: '🧾 Impostos e taxas', financeiro: '📈 Financeiro', outras_receitas: '➕ Outras receitas', '': '💼 Fora do DRE (caixa)' };
 function finSelConta(cats, filtro, valor) { const s = el('select'); s.append(new Option('— conta —', '')); const gs = {}; Object.keys(cats).filter(filtro).forEach((k) => { const g = cats[k][3] || ''; (gs[g] = gs[g] || []).push(k); });
@@ -5193,6 +5200,71 @@ function lerOFX(txt) { const conta = ((txt.match(/<ACCTID>([^<\r\n]+)/) || [])[1
   (txt.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/g) || []).forEach((t) => { const g = (k) => ((t.match(new RegExp('<' + k + '>([^<\\r\\n]*)')) || [])[1] || '').trim(); const dt = g('DTPOSTED'); if (dt.length < 8) return;
     out.push({ id: g('FITID'), data: dt.slice(0, 4) + '-' + dt.slice(4, 6) + '-' + dt.slice(6, 8), valor: Number(g('TRNAMT').replace(',', '.')), memo: g('MEMO') || g('NAME') }); });
   return { conta: (banco ? banco.split(' ')[0] + ' ' : '') + conta, linhas: out }; }
+// ---------- 💰 Caixa: fluxo pelo extrato + ponte "lucro → dinheiro na conta" ----------
+const FIN_NOVO = false; // liga as abas Caixa e Arquivos quando o servidor novo estiver publicado
+const FIN_FXN = { vendas: 'Vendas recebidas (maquininha, Pix)', outras: 'Outras entradas', interna: 'Transferências entre contas da loja', receitas: 'Rendimentos e entregas', sem_e: 'Entradas sem categoria', fornecedor: 'Fornecedores (mercadoria)', ja_lancado: 'Boleto do shopping, folha e guias (já lançados)', das: 'DAS (Simples)', difal: 'DIFAL', retirada: 'Retiradas dos sócios', provisao: '13º, férias e rescisões', financeiras: 'Juros e empréstimos', sem_s: 'Saídas sem categoria', outros: 'Outros' };
+function finSomaFluxo(a, r) { if (!a) a = { fluxo: {}, ponte: {}, dre: {}, formas: {}, real: 0, n: 0, grupos: r.grupos, cats: r.cats, mes: r.mes, loja: 'REDE' }; ['fluxo', 'ponte', 'dre', 'formas'].forEach((k) => { Object.keys(r[k] || {}).forEach((q) => { if (typeof r[k][q] === 'number') a[k][q] = (a[k][q] || 0) + r[k][q]; else if (r[k][q]) a[k][q] = r[k][q]; }); }); a.real += r.real; a.n += r.n; return a; }
+function carregarCaixa(res) {
+  const tok = FIN.mes + 'caixa' + FIN.loja; FIN.tok = tok; let arq = null, fx = null; const fim = () => { if (FIN.tok === tok && arq && fx) desenharCaixa(res, fx, arq); };
+  rodar('finArquivos', [S.token, FIN.mes], (a) => { arq = a; fim(); }, () => { arq = { lojas: [] }; fim(); });
+  if (FIN.loja !== 'REDE') { rodar('finFluxo', [S.token, FIN.loja, FIN.mes], (r) => { fx = r; fim(); }, (e) => res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e)))); return; }
+  const ls = FIN_LOJAS(); let tot = null; const prox = (i) => { if (FIN.tok !== tok) return; if (i >= ls.length) { fx = tot; fim(); return; } res.replaceChildren(el('div', 'sub', 'Montando o caixa da rede: ' + ls[i] + ' (' + (i + 1) + '/' + ls.length + ')…'));
+    rodar('finFluxo', [S.token, ls[i], FIN.mes], (r) => { tot = finSomaFluxo(tot, r); prox(i + 1); }, () => prox(i + 1)); }; prox(0);
+}
+function desenharCaixa(res, r, arq) {
+  res.replaceChildren(); const p = r.ponte, d = r.dre, f = r.fluxo, g = (k) => f[k] || 0, ml = finMesLbl(r.mes), lojas = r.loja === 'REDE' ? FIN_LOJAS() : [r.loja];
+  // aviso: extratos faltando
+  const falta = []; (arq.lojas || []).filter((l) => lojas.indexOf(l.loja) >= 0).forEach((l) => { l.contas.forEach((c) => { const o = c.meses[r.mes]; if (o && o.st !== 'ok' && o.st !== 'futuro') falta.push(l.loja + ' · ' + c.nome + (o.st === 'parcial' ? ' (só até ' + isoBR(o.ate).slice(0, 5) + ')' : '')); }); });
+  if (falta.length) { const a = el('div', 'aviso-meta', '⚠️ Faltam extratos de ' + ml + ': ' + falta.join(' · ') + '. Sem eles o caixa fica incompleto — veja ✅ Arquivos.'); res.append(a); }
+  const k = el('div', 'fin-kpi'); [[p.lucro, 'lucro na DRE'], [r.real, 'sobrou no banco'], [r.real - p.lucro, 'diferença']].forEach(([v, t]) => { const c = el('div', 'card'); c.append(el('b', v < 0 ? 'fneg' : '', finR(v)), el('div', 'sm', t)); k.append(c); }); res.append(k);
+  // ponte
+  const itens = [['vendas', 'Vendas: entrou no banco × vendido no USE', 'Vendas em dinheiro que ficaram na loja (' + rs(r.formas.dinheiro || 0) + '), crediário Bemol/carnê (' + rs(r.formas.crediario || 0) + '), taxas da maquininha e vendas do fim do mês que só caem no mês seguinte.'],
+    ['estoque', 'Compras de mercadoria × custo do que foi vendido', 'Pago a fornecedores ' + rs(-g('fornecedor')) + ' · custo das peças vendidas ' + rs(d.cmv || 0) + '. Quando compra mais do que vende, o dinheiro vira estoque: não é prejuízo, mas é dinheiro parado na arara.'],
+    ['retirada', 'Retiradas dos sócios', 'Lucro que saiu da conta para os sócios.'],
+    ['despesas', 'Despesas: mês da DRE × mês do pagamento', 'Na DRE ' + rs(d.despesas || 0) + ' · pago no extrato neste mês ' + rs(-(Object.keys(f).filter((q) => /^g_/.test(q)).reduce((a, q) => a + f[q], 0) + g('ja_lancado') + g('financeiras'))) + '. Ex.: folha de outubro paga em novembro.'],
+    ['prov', 'Provisões de 13º e férias (na DRE, ainda não pagas)', 'Esse dinheiro deveria ficar guardado para o 13º e as férias.'],
+    ['provPaga', '13º, férias e rescisões pagos', 'Saíram do caixa, mas já estavam nas provisões dos meses anteriores.'],
+    ['simples', 'Simples: DRE × DAS pago no mês', 'Na DRE ' + rs(d.simples || 0) + (d.simplesEstimado ? ' (estimado)' : '') + ' · DAS pago ' + rs(-g('das')) + '. O DAS pago no mês costuma ser do mês anterior.'],
+    ['difal', 'DIFAL: DRE × pago no mês', 'Na DRE ' + rs(d.difal || 0) + ' (% do custo vendido) · pago ' + rs(-g('difal')) + '.'],
+    ['receitas', 'Rendimentos e entregas', ''],
+    ['outros', 'Sem categoria e outros', 'Classifique os lançamentos sem categoria no 🏦 Extratos para este número diminuir.']].filter((x) => Math.abs(p[x[0]] || 0) >= 1).sort((a, b) => Math.abs(p[b[0]]) - Math.abs(p[a[0]]));
+  const c1 = el('div', 'card fin-ponte'), mx = Math.max(1, ...itens.map((x) => Math.abs(p[x[0]])), Math.abs(p.lucro), Math.abs(r.real));
+  c1.append(el('h3', '', '🔎 Para onde foi o lucro de ' + ml), el('div', 'sm', 'Começa no lucro da DRE e mostra o que aumentou (+) ou tirou (−) dinheiro da conta até chegar no que sobrou no banco.'));
+  const linha = (t, v, cls, ex) => { const w = el('div', 'fp ' + (cls || '')), h = el('div', 'fp-h'); h.append(el('span', '', t), el('b', v < 0 ? 'fneg' : 'fpos', (v > 0 && cls !== 'tot' ? '+' : '') + finR(v))); const bar = el('div', 'fp-bar'), i = el('i', v < 0 ? 'n' : 'p'); i.style.width = Math.max(2, Math.abs(v) / mx * 100) + '%'; bar.append(i); w.append(h, bar); if (ex) w.append(el('div', 'sm', ex)); return w; };
+  c1.append(linha('Lucro líquido na DRE', p.lucro, 'tot')); itens.forEach((x) => c1.append(linha(x[1], p[x[0]], '', x[2]))); c1.append(linha('= Sobrou no banco (movimento do mês)', r.real, 'tot'));
+  const pior = itens.filter((x) => p[x[0]] < 0 && x[0] !== 'outros')[0]; if (pior && p.lucro > 0 && r.real < p.lucro) c1.append(el('div', 'fin-dica', '💡 O que mais segurou o dinheiro em ' + ml + ': ' + pior[1].split(':')[0].toLowerCase() + ' (' + finR(p[pior[0]]) + ').'));
+  res.append(c1);
+  // fluxo de caixa
+  const c2 = el('div', 'card'), tb = el('table', 'fin-fx'); c2.append(el('h3', '', '💰 Fluxo de caixa de ' + ml), el('div', 'sm', 'O que entrou e saiu de verdade nos extratos importados (' + r.n + ' lançamentos), pela data do pagamento.'));
+  const nome = (q) => FIN_FXN[q] || (/^g_/.test(q) ? 'Despesas · ' + (((r.grupos || []).find((x) => x[0] === q.slice(2)) || [0, q.slice(2)])[1]) : q);
+  const bloco = (tit, ks) => { const tot = ks.reduce((a, q) => a + f[q], 0); const tr = el('tr', 'g'); tr.append(el('td', '', tit), el('td', tot < 0 ? 'fneg' : 'fpos', finR(tot))); tb.append(tr); ks.sort((a, b) => Math.abs(f[b]) - Math.abs(f[a])).forEach((q) => { const t2 = el('tr', 'c'); t2.append(el('td', '', nome(q)), el('td', f[q] < 0 ? 'fneg' : '', finR(f[q]))); tb.append(t2); }); };
+  const ks = Object.keys(f).filter((q) => Math.abs(f[q]) >= 0.5); bloco('Entradas', ks.filter((q) => f[q] > 0)); bloco('Saídas', ks.filter((q) => f[q] < 0));
+  const tf = el('tr', 'tot'); tf.append(el('td', '', '= Saldo do mês'), el('td', r.real < 0 ? 'fneg' : 'fpos', finR(r.real))); tb.append(tf); c2.append(tb);
+  if (g('interna')) c2.append(el('div', 'sm', '🔁 Transferências entre contas da loja: quando os extratos de todas as contas estão importados, elas se anulam. Se aparecem como entrada, normalmente é o dinheiro das vendas vindo da InfinitePay.'));
+  res.append(c2);
+  const c3 = el('div', 'card'); c3.append(el('h3', '', '🧾 Vendas no USE por forma de pagamento'), el('div', 'sm', 'Dinheiro ' + rs(r.formas.dinheiro || 0) + ' · Pix ' + rs(r.formas.pix || 0) + ' · Cartão ' + rs(r.formas.cartao || 0) + ' · Crediário/Bemol/carnê ' + rs(r.formas.crediario || 0)), el('div', 'sm', 'O dinheiro em espécie só aparece no banco se for depositado — se ele for usado para pagar contas na loja, essas saídas não aparecem no extrato.')); res.append(c3);
+}
+// ---------- ✅ Arquivos: checklist automático do que já foi importado ----------
+function desenharArq(res, a) {
+  res.replaceChildren(); const ST = { ok: '✅', parcial: '⚠️', falta: '❌', futuro: '·', na: '—' };
+  const stLoja = (l, m) => { const s = l.contas.map((c) => c.meses[m].st).filter((x) => x !== 'na'); if (!s.length) return 'falta'; if (s.every((x) => x === 'futuro')) return 'futuro'; if (s.every((x) => x === 'ok' || x === 'futuro')) return 'ok'; return s.some((x) => x === 'ok' || x === 'parcial') ? 'parcial' : 'falta'; };
+  if (!FIN.arq || !a.lojas.some((l) => l.loja === FIN.arq.loja) || a.meses.indexOf(FIN.arq.m) < 0) FIN.arq = { loja: (a.lojas.find((l) => stLoja(l, a.mes) !== 'ok') || a.lojas[0]).loja, m: a.mes };
+  const c = el('div', 'card'), tb = el('table', 'fin-arq'), hd = el('tr'); hd.append(el('th', '', 'Extratos')); a.meses.forEach((m) => hd.append(el('th', '', finMesLbl(m).split('/')[0]))); tb.append(hd);
+  a.lojas.forEach((l) => { const tr = el('tr'); tr.append(el('td', '', l.loja)); a.meses.forEach((m) => { const td = el('td', FIN.arq.loja === l.loja && FIN.arq.m === m ? 'on' : '', ST[stLoja(l, m)]); td.addEventListener('click', () => { FIN.arq = { loja: l.loja, m: m }; desenharArq(res, a); }); tr.append(td); }); tb.append(tr); });
+  c.append(el('h3', '', '✅ Checklist dos arquivos'), el('div', 'sm', 'Confere sozinho o que já foi importado em cada loja. ✅ completo · ⚠️ incompleto · ❌ não importado. Toque num quadrinho para ver o detalhe.'), tb); res.append(c);
+  const l = a.lojas.find((x) => x.loja === FIN.arq.loja), m = FIN.arq.m, d = el('div', 'card fin-arqd'); d.append(el('h3', '', l.loja + ' · ' + finMesLbl(m)));
+  const item = (st, t, ex) => { const x = el('div', 'fa-i'); x.append(el('span', '', ST[st] || st), el('div', '', '')); x.lastChild.append(el('b', '', t)); if (ex) x.lastChild.append(el('div', 'sm', ex)); d.append(x); };
+  d.append(el('div', 'fin-lb', 'EXTRATOS DAS CONTAS')); if (!l.contas.length) d.append(el('div', 'sm', 'Nenhuma conta conhecida ainda. Importe o primeiro extrato desta loja em 🏦 Extratos.'));
+  l.contas.forEach((cc) => { const o = cc.meses[m]; item(o.st, cc.nome, o.st === 'futuro' ? 'mês ainda não começou' : o.n ? isoBR(o.de).slice(0, 5) + ' a ' + isoBR(o.ate).slice(0, 5) + ' · ' + o.n + ' lançamentos' + (o.st === 'parcial' ? ' · falta o fim do mês' : '') : 'não importado'); });
+  const rc = l.receb[m]; if (rc.st !== 'na') { d.append(el('div', 'fin-lb', 'VENDAS DA MAQUININHA')); item(rc.st, 'Relatório de vendas da InfinitePay', rc.n ? rc.n + ' vendas · até ' + isoBR(rc.ate).slice(0, 5) : 'não importado (💳 Recebíveis)'); }
+  const dc = l.docs[m]; d.append(el('div', 'fin-lb', 'DOCUMENTOS DO MÊS'));
+  if (dc.boleto !== 'na') item(dc.boleto, 'Boleto do shopping', dc.boleto === 'ok' ? 'aluguel lançado' : dc.boleto === 'futuro' ? 'ainda não chegou' : 'leia o PDF em 🧾 Despesas');
+  item(dc.folha, 'Folha (recibos de pagamento)', dc.folha === 'ok' ? 'salários lançados' : dc.folha === 'futuro' ? 'mês em andamento' : 'leia o PDF dos recibos em 🧾 Despesas');
+  item(dc.das, 'DAS do Simples (competência ' + finMesLbl(m) + ')', dc.das === 'ok' ? 'classificado' : dc.das === 'futuro' ? 'vence no mês seguinte' : 'classifique o pagamento do DAS no extrato do mês seguinte');
+  const sc = l.semCat[m]; d.append(el('div', 'fin-lb', 'CLASSIFICAÇÃO')); item(sc ? 'parcial' : 'ok', sc ? sc + ' lançamento(s) sem categoria' : 'Tudo classificado', '');
+  if (sc) { const b = el('button', 'btn pri', '🏷️ Classificar agora'); b.style.cssText = 'width:100%;margin-top:8px'; b.addEventListener('click', () => { FIN.sub = 'ext'; FIN.loja = l.loja; FIN.mes = m; FIN.filtro = 'sem'; carregarFin(); }); d.append(b); }
+  res.append(d);
+}
 function desenharFinExt(res, r) {
   res.replaceChildren(); FIN.cats = r.cats;
   const imp = el('div', 'card'), fi = el('input'); fi.type = 'file'; fi.accept = '.ofx,.OFX,.pdf,.PDF,application/pdf'; fi.className = 'hide'; const bt = el('button', 'btn pri', '📥 Importar extrato (OFX ou PDF) de ' + FIN.loja); bt.style.width = '100%'; bt.addEventListener('click', () => fi.click());
