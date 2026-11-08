@@ -5201,7 +5201,7 @@ function lerOFX(txt) { const conta = ((txt.match(/<ACCTID>([^<\r\n]+)/) || [])[1
     out.push({ id: g('FITID'), data: dt.slice(0, 4) + '-' + dt.slice(4, 6) + '-' + dt.slice(6, 8), valor: Number(g('TRNAMT').replace(',', '.')), memo: g('MEMO') || g('NAME') }); });
   return { conta: (banco ? banco.split(' ')[0] + ' ' : '') + conta, linhas: out }; }
 // ---------- 💰 Caixa: fluxo pelo extrato + ponte "lucro → dinheiro na conta" ----------
-const FIN_NOVO = false; // liga as abas Caixa e Arquivos quando o servidor novo estiver publicado
+const FIN_NOVO = true; // liga as abas Caixa e Arquivos quando o servidor novo estiver publicado
 const FIN_FXN = { vendas: 'Vendas recebidas (maquininha, Pix)', outras: 'Outras entradas', interna: 'Transferências entre contas da loja', receitas: 'Rendimentos e entregas', sem_e: 'Entradas sem categoria', fornecedor: 'Fornecedores (mercadoria)', ja_lancado: 'Boleto do shopping, folha e guias (já lançados)', das: 'DAS (Simples)', difal: 'DIFAL', retirada: 'Retiradas dos sócios', provisao: '13º, férias e rescisões', financeiras: 'Juros e empréstimos', sem_s: 'Saídas sem categoria', outros: 'Outros' };
 function finSomaFluxo(a, r) { if (!a) a = { fluxo: {}, ponte: {}, dre: {}, formas: {}, real: 0, n: 0, grupos: r.grupos, cats: r.cats, mes: r.mes, loja: 'REDE' }; ['fluxo', 'ponte', 'dre', 'formas'].forEach((k) => { Object.keys(r[k] || {}).forEach((q) => { if (typeof r[k][q] === 'number') a[k][q] = (a[k][q] || 0) + r[k][q]; else if (r[k][q]) a[k][q] = r[k][q]; }); }); a.real += r.real; a.n += r.n; return a; }
 function carregarCaixa(res) {
