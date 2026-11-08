@@ -5061,7 +5061,10 @@ function detalheFinCat(k, nome) {
     if (!l.length) b.append(el('div', 'vazio', 'Nada lançado.')); l.forEach((d) => { const it = el('div', 'fin-it'); const t = el('div'); t.append(el('b', '', d.descricao), el('small', '', (d.origem === 'extrato' ? '🏦 extrato ' + (d.data ? isoBR(d.data).slice(0, 5) : '') : d.origem === 'fixa' ? '📌 fixa' : '📝 lançada') + ' · ' + finDest(d.destino))); it.append(t, el('b', '', rs(d.valor))); b.append(it); }); }));
 }
 function desenharFinDesp(res, r) {
-  res.replaceChildren(); FIN.cats = r.cats; const nv = el('button', 'btn pri', '＋ Lançar despesa'); nv.style.cssText = 'width:100%;margin:6px 0 10px'; nv.addEventListener('click', () => formDespesa(null, r)); res.append(nv);
+  res.replaceChildren(); FIN.cats = r.cats; const nv = el('button', 'btn pri', '＋ Lançar despesa'); nv.style.cssText = 'width:100%;margin:6px 0 6px'; nv.addEventListener('click', () => formDespesa(null, r)); res.append(nv);
+  const fd = el('input'); fd.type = 'file'; fd.accept = '.pdf,application/pdf'; fd.className = 'hide'; const bd = el('button', 'btn', '📄 Ler boleto do shopping ou recibos da folha (PDF)'); bd.style.cssText = 'width:100%;margin:0 0 10px'; bd.addEventListener('click', () => fd.click());
+  fd.addEventListener('change', async () => { const f = fd.files[0]; if (!f) return; let d = null; try { d = lerDocFinanceiro(await itensPDF(f)); } catch (e) { toast('Não consegui ler o PDF: ' + e.message); } fd.value = ''; if (!d || !d.linhas.length) { toast('Não reconheci este PDF. Por enquanto leio o boleto do shopping (demonstrativo de contas) e os recibos de pagamento da folha.', 6000); return; } formDoc(d, f.name, r); });
+  res.append(bd, fd);
   if (r.falta.length) res.append(el('div', 'aviso-meta', '⚠️ Lançadas no mês anterior e ainda não neste: ' + r.falta.join(', ')));
   const bloco = (tit, l, edita) => { const c = el('div', 'card'); c.append(el('b', '', tit)); if (!l.length) c.append(el('div', 'sm', 'Nada aqui.')); l.forEach((d) => { const it = el('div', 'fin-it'), t = el('div'); t.append(el('b', '', d.descricao), el('small', '', (r.cats[d.categoria] ? r.cats[d.categoria][0] + ' ' : '') + finDest(d.destino) + (d.data ? ' · ' + isoBR(d.data).slice(0, 5) : ''))); it.append(t, el('b', '', rs(d.valor))); if (edita) { it.style.cursor = 'pointer'; it.addEventListener('click', () => formDespesa(d, r)); } c.append(it); }); c.append(el('div', 'fin-tot', 'Total ' + rs(l.reduce((a, d) => a + d.valor, 0)))); res.append(c); };
   const fixas = r.lista.filter((d) => d.origem === 'fixa').map((d) => Object.assign({}, d, r.fixas.find((f) => f.id === d.id) || {}, { fixa: true }));
@@ -5070,6 +5073,18 @@ function desenharFinDesp(res, r) {
   const cf = el('details', 'card'); cf.append(el('summary', '', '⚙️ Empresas, DAS e DIFAL de cada loja')); const ins = {}; FIN_LOJAS().forEach((l) => { const x = ((r.cfg || {}).lojas || {})[l] || {}, ln = el('div', 'fin-cf'), e = el('input'), d = el('input'); e.placeholder = 'Empresa (razão social)'; e.value = x.empresa || ''; d.placeholder = '% DAS'; d.inputMode = 'decimal'; d.value = x.das === '' || x.das == null ? '' : String(x.das).replace('.', ','); const f = el('input'); f.placeholder = '% DIFAL'; f.inputMode = 'decimal'; f.value = x.difal === '' || x.difal == null ? String((r.difalPad || {})[l] || (['Via Norte', 'Sumaúma'].includes(l) ? 13 : 12)) : String(x.difal).replace('.', ','); ln.append(el('b', '', l), e, d, f); ins[l] = [e, d, f]; cf.append(ln); });
   const sv = el('button', 'btn pri', 'Salvar'); sv.addEventListener('click', () => { const o = { lojas: {} }; Object.keys(ins).forEach((l) => { o.lojas[l] = { empresa: ins[l][0].value, das: ins[l][1].value.replace(',', '.'), difal: ins[l][2].value.replace(',', '.') }; }); rodar('finCfgSalvar', [S.token, o], () => toast('Salvo ✅')); });
   cf.append(el('div', 'sm', 'DAS: só se quiser fixar uma % (o normal é classificar o DAS pago no extrato). DIFAL: % sobre o custo das peças vendidas que entra na DRE (padrão: Acre 12%, Amazonas 13%).'), sv); res.append(cf);
+}
+function formDoc(d, nome, r) {
+  abrirDet('📄 ' + d.titulo + (d.competencia ? ' · ' + finMesLbl(d.competencia) : ''), (b) => { const c = el('div', 'card'), sl = el('select'), linhas = [];
+    FIN_LOJAS().forEach((l) => sl.append(new Option(l, l))); sl.value = d.loja || (FIN.loja !== 'REDE' ? FIN.loja : FIN_LOJAS()[0]);
+    c.append(el('div', 'sm', d.tipo === 'folha' ? d.pessoas + ' recibo(s) lido(s) (vias repetidas contadas uma vez). O DRE usa o valor bruto (vencimentos) + FGTS do mês; os descontos (INSS, IR, VT, compras) são da funcionária.' : 'Itens do demonstrativo de contas. Confira a conta de cada linha.'), el('div', 'fin-lb', 'LOJA' + (d.loja ? ' (pelo CNPJ do documento)' : '')), sl);
+    const tot = el('div', 'sm'), rec = () => { const s = linhas.reduce((a, q) => a + (Number(String(q.v.value).replace(/\./g, '').replace(',', '.')) || 0), 0); tot.textContent = 'Total lançado ' + rs(s) + (d.tipo === 'boleto' && d.total ? ' · valor do boleto ' + rs(d.total) + (Math.abs(s - d.total) > 0.01 ? ' ⚠️ não bate' : ' ✅') : ''); };
+    d.linhas.forEach((x) => { const row = el('div', 'fin-it'), w = el('div'); w.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:4px'; const cs = finSelConta(r.cats, (k) => r.cats[k][2] === 'dre' || k === 'uso_provisao', x.categoria), ds = el('input'), v = el('input'), mm = el('input');
+      ds.value = x.descricao; v.value = String(x.valor.toFixed(2)).replace('.', ','); v.inputMode = 'decimal'; mm.type = 'month'; mm.value = x.competencia || FIN.mes; v.addEventListener('input', rec); w.append(ds, cs, v, mm); row.append(w); c.append(row); linhas.push({ c: cs, d: ds, v: v, m: mm }); });
+    c.append(tot); rec();
+    const ok = el('button', 'btn pri', 'Lançar no DRE'); ok.style.cssText = 'width:100%;margin-top:12px'; ok.addEventListener('click', () => { const l = linhas.map((q) => ({ categoria: q.c.value, descricao: q.d.value, valor: String(q.v.value).replace(/\./g, '').replace(',', '.'), competencia: q.m.value })).filter((q) => Number(q.valor) > 0); if (l.some((q) => !q.categoria)) { toast('Escolha a conta de todas as linhas.'); return; } ok.disabled = true;
+      rodar('finDespesasLote', [S.token, sl.value, l, nome + '|' + d.competencia + '|' + d.total], (o) => { toast(o.lancadas + ' lançamentos feitos em ' + sl.value + ' ✅ · no extrato, classifique o pagamento como 🔗 "despesa já lançada"', 7000); b.closest('.tc').querySelector('.dhead button').click(); carregarFin(); }, () => { ok.disabled = false; }); });
+    c.append(ok, el('div', 'sm', 'Depois, no extrato, o pagamento do boleto / dos salários / das guias vai na conta 🔗 "Pagamento de despesa já lançada", para não contar duas vezes.')); b.append(c); });
 }
 function formDespesa(d, r) {
   abrirDet(d ? '✏️ Despesa' : '＋ Nova despesa', (b) => { const st = { categoria: d ? d.categoria : 'pessoal', fixa: !!(d && d.fixa), destino: d ? d.destino : FIN_LOJAS()[0] };
@@ -5138,6 +5153,40 @@ function lerPDFVendasIP(itens) {
     out.push({ id: id0 + (vistos[id0] > 1 ? '_' + vistos[id0] : ''), data: data, hora: hora, meio: meio, bandeira: '', parcelas: parc === 'À Vista' || !parc ? 'À Vista' : parc.replace('x', ''), origem: origem.replace(/^Gestão de$/, 'Gestão de Cobrança'), status: st[1], bruto: vals[0] || 0, liquido: vals[1] || 0, taxa: Math.round(((vals[0] || 0) - (vals[1] || 0)) * 100) / 100 });
   });
   return out;
+}
+// boleto de shopping (demonstrativo de contas) e recibos de pagamento da folha → linhas para lançar como despesas
+const FIN_CNPJ = { '60364682': 'Cerâmica', '40576004': 'Via Verde', '60248043': 'Cruzeiro do Sul', '58254416': 'Via Norte', '61528990': 'Sumaúma' };
+function pdfLinhas_(itens) { const ord = itens.filter((i) => String(i.s).trim()).sort((a, b) => a.p - b.p || a.y - b.y || a.x - b.x), L = [];
+  ord.forEach((i) => { const u = L[L.length - 1]; if (u && u.p === i.p && Math.abs(u.y - i.y) <= Math.max(2.5, (i.h || 8) * 0.45)) u.it.push(i); else L.push({ p: i.p, y: i.y, it: [i] }); });
+  L.forEach((l) => { l.it.sort((a, b) => a.x - b.x); l.t = l.it.map((i) => String(i.s).trim()).join(' ').replace(/\s+/g, ' '); }); return L; }
+const numBRp = (s) => Number(String(s).replace(/\./g, '').replace(',', '.')) || 0;
+function lerDocFinanceiro(itens) {
+  const L = pdfLinhas_(itens), tudo = L.map((l) => l.t).join('\n'), cn = (tudo.match(/(\d{2})\.(\d{3})\.(\d{3})\/0001-\d{2}/g) || []).map((c) => c.replace(/\D/g, '').slice(0, 8)).find((c) => FIN_CNPJ[c]);
+  const loja = cn ? FIN_CNPJ[cn] : '';
+  if (/DEMONSTRATIVO DE CONTAS/i.test(tudo)) { // boleto do shopping
+    const mapa = [[/aluguel/i, 'aluguel'], [/fundo de promo/i, 'condominio'], [/encargo comum|condom/i, 'condominio'], [/ar condicionado|climatiza/i, 'energia'], [/energia/i, 'energia'], [/[aá]gua|esgoto/i, 'agua'], [/iptu/i, 'iptu'], [/dedetiz|limpeza|seguran|vigil/i, 'limpeza'], [/manuten|reforma|obra/i, 'manutencao'], [/internet|telefon/i, 'internet']];
+    const out = []; let comp = '';
+    L.forEach((l) => { if (/total|valor do documento|multa|juros|vencimento|mensagem|benefici|pagador/i.test(l.t)) return; const m = l.t.match(/^(?:(?:ALUGUEL|ENCARGOS|FUNDO DE PROMO[ÇC][ÃA]O|OUTRAS RECEITAS)\s+)?(.+?)\s+(\d{2})\/(\d{4})\s+(\d{1,3}(?:\.\d{3})*,\d{2})(?:\s|$)/i); if (!m) return;
+      const desc = m[1].trim(), v = numBRp(m[4]); if (!v) return; comp = comp || m[3] + '-' + m[2]; const k = (mapa.find(([re]) => re.test(desc)) || [null, 'ocupacao'])[1]; out.push({ categoria: k, descricao: desc, valor: v, competencia: m[3] + '-' + m[2] }); });
+    const tot = (tudo.match(/Valor do Documento[\s\S]{0,400}?(\d{1,3}(?:\.\d{3})*,\d{2})/i) || [])[1];
+    return { tipo: 'boleto', loja: loja, competencia: comp, linhas: out, total: tot ? numBRp(tot) : out.reduce((a, x) => a + x.valor, 0), titulo: 'Boleto do shopping' };
+  }
+  if (/Folha Mensal|Recibo de Pagamento|Total de Vencimentos/i.test(tudo)) { // recibos da folha (cada funcionária pode vir em 2 vias)
+    const MES = { janeiro: '01', fevereiro: '02', 'março': '03', marco: '03', abril: '04', maio: '05', junho: '06', julho: '07', agosto: '08', setembro: '09', outubro: '10', novembro: '11', dezembro: '12' };
+    const cm = tudo.match(/(janeiro|fevereiro|mar[çc]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro) de (\d{4})/i), comp = cm ? cm[2] + '-' + MES[cm[1].toLowerCase()] : '';
+    const vistos = {}, soma = {}, pessoas = []; let atual = null, xV = 0, xD = 0, fgtsProx = false;
+    L.forEach((l, i) => { const hv = l.it.find((x) => /^Vencimentos$/i.test(String(x.s).trim())), hd = l.it.find((x) => /^Descontos$/i.test(String(x.s).trim())); if (hv && hd) { xV = hv.x + (hv.w || 0); xD = hd.x + (hd.w || 0); return; }
+      const nm = l.t.match(/^(\d+)\s+([A-ZÀ-Ú][A-ZÀ-Ú .'-]{5,}?)\s+\d{6}\s+\d+\s+\d+$/); if (nm && L[i - 1] && /Nome do Funcion/i.test(L[i - 1].t)) { const k = nm[1] + nm[2]; atual = vistos[k] ? null : { nome: nm[2].trim(), v: {} }; if (atual) { vistos[k] = 1; pessoas.push(atual); } return; }
+      if (!atual) return; if (/F\.?G\.?T\.?S do M[eê]s/i.test(l.t)) { fgtsProx = true; return; }
+      if (fgtsProx) { fgtsProx = false; const vs = l.it.filter((x) => /^\d{1,3}(\.\d{3})*,\d{2}$/.test(String(x.s).trim())); if (vs.length >= 4) atual.fgts = numBRp(vs[3].s); return; }
+      const cod = l.t.match(/^(\d{1,4})\s+(.+?)\s+[\d:.,]+\s/); if (!cod || !xV) return; const vals = l.it.filter((x) => /^\d{1,3}(\.\d{3})*,\d{2}$/.test(String(x.s).trim()));
+      vals.forEach((x) => { const fim = x.x + (x.w || 0); if (Math.abs(fim - xV) < Math.abs(fim - xD) && Math.abs(fim - xV) < 40) { const d = cod[2].toUpperCase(); const k = /PRO-?LABORE/.test(d) ? 'prolabore' : /COMISS|DSR|PREMIO|PRÊMIO|BONIF/.test(d) ? 'comissoes' : /HORA EXTRA|ADICIONAL|NOTURNO/.test(d) ? 'horas_extras' : /F[EÉ]RIAS|13[ºO°]|D[EÉ]CIMO|RESCIS|AVISO PR/.test(d) ? 'uso_provisao' : 'salarios'; atual.v[k] = (atual.v[k] || 0) + numBRp(x.s); } }); });
+    pessoas.forEach((p) => { Object.keys(p.v).forEach((k) => { soma[k] = (soma[k] || 0) + p.v[k]; }); if (p.fgts) soma.fgts = (soma.fgts || 0) + p.fgts; });
+    const nomes = { salarios: 'Salários (folha ' + comp + ')', comissoes: 'Comissões, DSR e prêmios (folha ' + comp + ')', horas_extras: 'Horas extras e adicionais (folha ' + comp + ')', prolabore: 'Pró-labore (folha ' + comp + ')', fgts: 'FGTS do mês (folha ' + comp + ')', uso_provisao: '13º/férias/rescisão na folha ' + comp };
+    const linhas = Object.keys(soma).map((k) => ({ categoria: k, descricao: nomes[k] || k, valor: Math.round(soma[k] * 100) / 100, competencia: comp }));
+    return { tipo: 'folha', loja: loja, competencia: comp, linhas: linhas, pessoas: pessoas.length, total: linhas.reduce((a, x) => a + x.valor, 0), titulo: 'Recibos da folha' };
+  }
+  return null;
 }
 function lerOFX(txt) { const conta = ((txt.match(/<ACCTID>([^<\r\n]+)/) || [])[1] || '').trim(), banco = ((txt.match(/<ORG>([^<\r\n]+)/) || [])[1] || '').trim(), out = [];
   (txt.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/g) || []).forEach((t) => { const g = (k) => ((t.match(new RegExp('<' + k + '>([^<\\r\\n]*)')) || [])[1] || '').trim(); const dt = g('DTPOSTED'); if (dt.length < 8) return;
