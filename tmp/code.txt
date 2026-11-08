@@ -5483,7 +5483,7 @@ function finDespesasMes0_(mes) {
 function finParte_(dest, loja, pesos) { if (loja === 'REDE') return 1; if (dest === loja) return 1; if (dest === 'RATEIO_IGUAL') return 1 / LOJAS.length; if (dest === 'RATEIO_VENDA') { const t = Object.keys(pesos).reduce((a, k) => a + pesos[k], 0); return t ? (pesos[loja] || 0) / t : 0; } return 0; }
 function finColuna_(lojaSel, mes, cfg) {
   const lojas = lojaSel === 'REDE' ? LOJAS.slice() : [lojaSel], ms = {}; let pesos = null;
-  lojas.forEach((l) => { try { ms[l] = finMes_(l, mes); } catch (e) { ms[l] = null; } });
+  lojas.forEach((l) => { try { ms[l] = finMes_(l, mes); } catch (e) { try { Utilities.sleep(1500); ms[l] = finMes_(l, mes); } catch (e2) { ms[l] = null; } } });
   // pesos do rateio pela venda: só busca as outras lojas se houver despesa rateada
   const pesosDe = () => { if (pesos) return pesos; pesos = {}; LOJAS.forEach((l) => { try { pesos[l] = (ms[l] || finMes_(l, mes)).pago; } catch (e) { pesos[l] = 0; } }); return pesos; };
   const c = { mes: mes, bruta: 0, bonus: 0, desconto: 0, troca: 0, credito: 0, simples: 0, cmv: 0, cartao: 0, cartaoFonte: '', desp: {}, rendimentos: 0, entregas: 0, difal: 0, aliq: {}, semCusto: 0, faltaApi: [] };
