@@ -1,0 +1,6 @@
+function zzDebug() {
+  const t0 = Date.now(), out = {};
+  ["2026-10","2026-09","2026-08","2025-10","2025-09","2026-07"].forEach((m) => LOJAS.forEach((l) => { if (Date.now() - t0 > 300000) return; try { const x = finMes_(l, m); out[l + " " + m] = Math.round(x.pago + x.desconto - x.acrescimo); } catch (e) { out[l + " " + m] = "ERRO " + e.message; } }));
+  const c = finColuna_("Cruzeiro do Sul", "2026-08", finCfg_()); out.cz = { bruta: c.bruta, desc: c.desconto, juros: c.acrescimo, liq: c.liquida + c.simples };
+  Logger.log(JSON.stringify(out));
+}
