@@ -1,5 +1,3 @@
-function zzDebug() { const out = []; [['Sumaúma','2026-10'],['Cerâmica','2026-10'],['Cruzeiro do Sul','2026-10'],['Sumaúma','2026-09'],['Cruzeiro do Sul','2026-09'],['Sumaúma','2026-11'],['Cerâmica','2026-11']].forEach(([l, m]) => { try { const r = finConc_(l, m); if (r.vazio) { out.push(l + ' ' + m + ' vazio'); return; } const bad = r.dias.filter((d) => !d.ok); out.push('### ' + l + ' ' + m + ' dias=' + r.dias.length + ' ok=' + (r.dias.length - bad.length) + ' expl=' + JSON.stringify(r.explicados) + ' soUse=' + JSON.stringify(r.soUseTot) + ' soMaq=' + JSON.stringify(r.soMaqTot));
- bad.forEach((d) => out.push(d.d + ' soUse=' + JSON.stringify(d.soUse.map((x) => [x.h, x.m, x.val])) + ' soMaq=' + JSON.stringify(d.soMaq.map((x) => [x.h, x.m, x.val, x.parc, x.origem])))); } catch (e) { out.push(l + ' ERRO ' + e.message); } }); Logger.log(out.join('\n')); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
