@@ -5685,11 +5685,12 @@ function finFluxo_(loja, mes) {
 function finConciliacao(token, loja, mes) { finAdm_(token); return finConc_(loja, mes); }
 function finConc_(loja, mes) {
   loja = lojaCanon_(loja); if (!loja) throw new Error('Escolha a loja.'); const ln = Object.keys(LOJA_COD).find((k) => LOJA_COD[k] === loja), hoje = dia_(loja);
-  const de = mes + '-01', fim = somaDia_(finMesAnt_(mes, -1) + '-01', -1), ate = fim < hoje ? fim : hoje;
+  const de = mes + '-01', fim = somaDia_(finMesAnt_(mes, -1) + '-01', -1), ate0 = fim < hoje ? fim : hoje; let ate = ate0;
   const rc = finAba_('FinReceb', H_FRC).getDataRange().getDisplayValues().slice(1).filter((r) => r[1] === loja && r[2] >= somaDia_(de, -1) && r[2] <= somaDia_(ate, 1) && r[7] === 'Aprovada').map((r) => { const semHora = !r[3] || /^0?0:00$/.test(String(r[3]).trim()), off = semHora ? 0 : TZ[loja] === 'America/Rio_Branco' ? 2 : TZ[loja] === 'America/Manaus' ? 1 : 0, hm = String(r[3] || '00:00').split(':'), mm = (+hm[0] || 0) * 60 + (+hm[1] || 0) - off * 60, dd = mm < 0 ? somaDia_(r[2], -1) : r[2], m2 = (mm + 1440) % 1440;
     return { id: r[0], data: dd, hora: semHora ? '' : String(Math.floor(m2 / 60)).padStart(2, '0') + ':' + String(m2 % 60).padStart(2, '0'), meio: r[4], band: r[5], parc: r[6], bruto: finNum_(r[8]), liq: finNum_(r[9]), taxa: finNum_(r[10]), origem: r[11] }; }).filter((r) => r.data >= de && r.data <= ate);
   if (!rc.length) return { loja: loja, mes: mes, vazio: true };
-  const ck = 'fincv3_' + ln + mes, hit = cacheGrandeGet_(ck); let us = hit;
+  const ultMaq = rc.reduce((a, r) => r.data > a ? r.data : a, ''); if (ultMaq && ultMaq < ate) ate = ultMaq; // dias que ainda não estão no relatório da InfinitePay não entram
+  const ck = 'fincv3_' + ln + mes + ate.slice(8), hit = cacheGrandeGet_(ck); let us = hit;
   if (!us) { us = []; let pag = 1, n = 0, tot = 0;
     do { const r = dsGet_('/api/v1/vendas', { dataVendaInicio: de, dataVendaFim: ate, loja: ln, itensPorPagina: 1000, pagina: pag }); if (r.status === 204) break; if (r.status !== 200 || !r.json) throw new Error('A API do USE respondeu ' + r.status + '.');
       const it = r.json.itens || []; tot = r.json.totalItens || it.length; n += it.length;
@@ -5706,10 +5707,13 @@ function finConc_(loja, mes) {
   const soma_ = (c, alvo, f) => { const n = Math.min(c.length, 22); for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const s2 = f(c[i]) + f(c[j]); if (Math.abs(s2 - alvo) <= 0.011) return [c[i], c[j]]; for (let k = j + 1; k < n; k++) if (Math.abs(s2 + f(c[k]) - alvo) <= 0.011) return [c[i], c[j], c[k]]; } return null; };
   us.forEach((u) => { const b = melhor(u, (r) => r.data === u.d && r.meio === u.m && Math.abs(r.bruto - u.val) <= 0.011); if (b) marca([u], [b], 'ok'); });
   us.forEach((u) => { if (u.ok) return; const b = melhor(u, (r) => r.data === u.d && Math.abs(r.bruto - u.val) <= 0.011 && perto(r.hora, u.h, 60)); if (b) marca([u], [b], 'troca'); });
-  us.forEach((u) => { if (u.ok) return; const c = rc.filter((r) => !r.usado && r.data === u.d && r.bruto < u.val && perto(r.hora, u.h, 40)).sort((a, b) => dist(a.hora, u.h) - dist(b.hora, u.h)); const s = soma_(c, u.val, (r) => r.bruto); if (s) marca([u], s, 'dividido'); });
-  rc.forEach((r) => { if (r.usado) return; const c = us.filter((u) => !u.ok && u.d === r.data && u.val < r.bruto && perto(r.hora, u.h, 40)).sort((a, b) => dist(a.h, r.hora) - dist(b.h, r.hora)); const s = soma_(c, r.bruto, (u) => u.val); if (s) marca(s, [r], 'junto'); });
-  us.forEach((u) => { if (u.ok || u.m !== 'Crédito') return; const b = melhor(u, (r) => r.data === u.d && r.meio === 'Crédito' && r.bruto > u.val && r.bruto <= u.val * 1.15 + 0.01 && perto(r.hora, u.h, 30)); if (b) marca([u], [b], 'juros'); });
-  us.forEach((u) => { if (u.ok) return; const b = melhor(u, (r) => r.data === u.d && r.meio === u.m && Math.abs(r.bruto - u.val) < 1 && perto(r.hora, u.h, 30)); if (b) marca([u], [b], 'centavos'); });
+  us.forEach((u) => { if (u.ok) return; const c = rc.filter((r) => !r.usado && r.data === u.d && r.bruto < u.val && perto(r.hora, u.h, 90)).sort((a, b) => dist(a.hora, u.h) - dist(b.hora, u.h)); const s = soma_(c, u.val, (r) => r.bruto); if (s) marca([u], s, 'dividido'); });
+  rc.forEach((r) => { if (r.usado) return; const c = us.filter((u) => !u.ok && u.d === r.data && u.val < r.bruto && perto(r.hora, u.h, 90)).sort((a, b) => dist(a.h, r.hora) - dist(b.h, r.hora)); const s = soma_(c, r.bruto, (u) => u.val); if (s) marca(s, [r], 'junto'); });
+  us.forEach((u) => { if (u.ok || u.m !== 'Crédito') return; const b = melhor(u, (r) => r.data === u.d && r.meio === 'Crédito' && r.bruto > u.val && r.bruto <= u.val * 1.15 + 0.01 && perto(r.hora, u.h, 90)); if (b) marca([u], [b], 'juros'); });
+  us.forEach((u) => { if (u.ok) return; const b = melhor(u, (r) => r.data === u.d && r.meio === u.m && Math.abs(r.bruto - u.val) < 2 && perto(r.hora, u.h, 90)); if (b) marca([u], [b], 'centavos'); });
+  // no fim do dia: o que sobrou dos dois lados se compensa (Pix arredondado, cliente pagou em partes em horários diferentes)
+  { const pd = {}; us.forEach((u) => { if (!u.ok) (pd[u.d] = pd[u.d] || { u: [], r: [] }).u.push(u); }); rc.forEach((r) => { if (!r.usado) (pd[r.data] = pd[r.data] || { u: [], r: [] }).r.push(r); });
+    Object.keys(pd).forEach((d) => { const o = pd[d]; if (!o.u.length || !o.r.length) return; const su = o.u.reduce((a, u) => a + u.val, 0), sr = o.r.reduce((a, r) => a + r.bruto, 0); if (Math.abs(su - sr) <= 2) marca(o.u, o.r, 'compensa'); }); }
   us.forEach((u) => { if (u.ok) return; const b = melhor(u, (r) => r.meio === u.m && Math.abs(r.bruto - u.val) <= 0.011 && Math.abs((new Date(r.data) - new Date(u.d)) / 864e5) === 1); if (b) marca([u], [b], 'outroDia'); });
   const soUse = us.filter((u) => !u.ok), soMaq = rc.filter((r) => !r.usado);
   // dia a dia (data da venda/transação, não a data do recebimento): USE x maquininha por meio
