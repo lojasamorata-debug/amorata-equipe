@@ -537,6 +537,7 @@ body.fila-v #eu-acoes .btn.lk { flex:1 1 auto; padding:6px 8px; font-size:13px; 
 #stv .cont { flex:1; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; } #stv .cont video, #stv .cont img { max-width:100%; max-height:100%; }
 #stv .aud { text-align:center; } #stv .aud .av { width:120px; height:120px; font-size:44px; margin:0 auto 14px; animation:stpulso 1.6s infinite; } @keyframes stpulso { 50% { transform:scale(1.06); } }
 #stv .leg { position:absolute; left:0; right:0; bottom:16px; text-align:center; padding:8px 18px; font-size:16px; text-shadow:0 1px 4px rgba(0,0,0,.8); }
+#stv .stpausa { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:64px; height:64px; border-radius:50%; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; font-size:28px; z-index:5; pointer-events:none; } #stv .stpausa.on { display:flex; } #stv .cont { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 #stv .tapE, #stv .tapD { position:absolute; top:0; bottom:0; width:35%; z-index:2; } #stv .tapE { left:0; } #stv .tapD { right:0; }
 #stv .rod { display:flex; justify-content:space-between; align-items:center; padding:10px 14px calc(14px + env(safe-area-inset-bottom)); font-size:14px; } #stv .rod button { background:rgba(255,255,255,.15); color:#fff; border:0; border-radius:999px; padding:8px 14px; font:inherit; }
 #stv .streac { display:flex; gap:6px; margin:0 auto; } #stv .streac button { background:rgba(255,255,255,.12); border:0; border-radius:50%; width:44px; height:44px; font-size:24px; padding:0; cursor:pointer; } #stv .streac button.on { background:rgba(255,255,255,.4); transform:scale(1.1); }
@@ -3524,11 +3525,11 @@ function b64Blob(b64, mime) { const bin = atob(b64), by = new Uint8Array(bin.len
 function verStatus(gi, ii) {
   const ant = $('stv'); if (ant) ant.remove(); if (!ST || !ST.grupos[gi]) return;
   { const sb = $('st-bolha'); if (sb) sb.remove(); }
-  const g = ST.grupos[gi], v = el('div'); v.id = 'stv'; let tm = null, raf = null, midia = null;
+  const g = ST.grupos[gi], v = el('div'); v.id = 'stv'; let tm = null, raf = null, midia = null, ctl = null; const DUR_FOTO = 15000; // foto/texto: 15 s
   const bars = el('div', 'stbars'); g.itens.forEach(() => { const i = el('i'); i.append(el('b')); bars.append(i); });
   const top = el('div', 'top'), x = el('button', 'x', '×'), nm = el('div', 'nm'); top.append(avatar(g.foto, g.nome), nm, x);
   const cont = el('div', 'cont'), tE = el('div', 'tapE'), tD = el('div', 'tapD'), rod = el('div', 'rod'); v.append(bars, top, cont, rod); document.body.append(v);
-  const parar = () => { clearTimeout(tm); cancelAnimationFrame(raf); if (midia) { try { midia.pause(); } catch (e) {} } };
+  const pz = el('div', 'stpausa', '⏸'); v.append(pz); const parar = () => { clearTimeout(tm); cancelAnimationFrame(raf); if (midia) { try { midia.pause(); } catch (e) {} } ctl = null; pz.classList.remove('on'); };
   const fecha = () => { parar(); v.remove(); desenharStatus(); };
   x.addEventListener('click', fecha);
   const mostrar = (k) => {
@@ -3542,10 +3543,11 @@ function verStatus(gi, ii) {
       rod.append(rr);
     }
     const tocar = (url) => {
-      const fill = bars.children[k].firstChild, ini = Date.now();
-      const anim = (durMs) => { const pass = () => { const pc = midia && midia.duration && isFinite(midia.duration) ? midia.currentTime / midia.duration : (Date.now() - ini) / durMs; fill.style.width = Math.min(100, pc * 100) + '%'; raf = requestAnimationFrame(pass); }; pass(); };
+      const fill = bars.children[k].firstChild; let t0 = Date.now(), gasto = 0, pausado = false, durFoto = DUR_FOTO;
+      const anim = (durMs) => { const pass = () => { const pc = midia && midia.duration && isFinite(midia.duration) ? midia.currentTime / midia.duration : (gasto + (pausado ? 0 : Date.now() - t0)) / durMs; fill.style.width = Math.min(100, pc * 100) + '%'; raf = requestAnimationFrame(pass); }; pass(); };
+      ctl = { pausado: () => pausado, pausar: () => { if (pausado) return; pausado = true; pz.classList.add('on'); if (midia) { try { midia.pause(); } catch (e) {} } else { clearTimeout(tm); gasto += Date.now() - t0; } }, seguir: () => { if (!pausado) return; pausado = false; pz.classList.remove('on'); if (midia) { midia.play().catch(() => {}); } else { t0 = Date.now(); tm = setTimeout(() => mostrar(k + 1), Math.max(300, durFoto - gasto)); } } };
       cont.replaceChildren(tE, tD);
-      if (it.tipo === 'foto') { const im = el('img'); im.src = url; cont.append(im); midia = null; anim(5000); tm = setTimeout(() => mostrar(k + 1), 5000); }
+      if (it.tipo === 'foto') { const im = el('img'); im.src = url; cont.append(im); midia = null; anim(DUR_FOTO); tm = setTimeout(() => mostrar(k + 1), DUR_FOTO); }
       else if (it.tipo === 'video') { const vd = el('video'); vd.src = url; vd.playsInline = true; vd.setAttribute('playsinline', ''); vd.autoplay = true; vd.controls = false; cont.append(vd); midia = vd; vd.onended = () => mostrar(k + 1); vd.play().catch(() => { vd.controls = true; }); anim((it.duracao || 30) * 1000); }
       else { const w = el('div', 'aud'); w.append(avatar(g.foto, g.nome), el('div', '', '🎙️ Áudio')); const au = el('audio'); au.src = url; au.autoplay = true; cont.append(w, au); midia = au; au.onended = () => mostrar(k + 1); au.play().catch(() => { au.controls = true; w.append(au); }); anim((it.duracao || 30) * 1000); }
       if (it.texto) cont.append(el('div', 'leg', it.texto));
@@ -3553,7 +3555,11 @@ function verStatus(gi, ii) {
     if (STB[it.id]) tocar(STB[it.id]);
     else google.script.run.withSuccessHandler((f) => { STB[it.id] = URL.createObjectURL(b64Blob(f.b64, f.mime)); it.visto = true; if (ii === k && v.isConnected) tocar(STB[it.id]); }).withFailureHandler((e) => { cont.replaceChildren(tE, tD, el('div', '', (e && e.message) || 'Não deu para abrir.')); tm = setTimeout(() => mostrar(k + 1), 2000); }).statusAbrir(S.token, it.id);
   };
-  tE.addEventListener('click', () => mostrar(ii - 1)); tD.addEventListener('click', () => mostrar(ii + 1));
+  // toque: lado esquerdo volta, lado direito avança, meio pausa/continua; segurar em qualquer lugar pausa enquanto segura
+  let hold = null, segurou = false, px = 0;
+  cont.addEventListener('pointerdown', (ev) => { if (ev.target.closest('button, .streac')) return; px = ev.clientX; segurou = false; clearTimeout(hold); hold = setTimeout(() => { if (ctl && !ctl.pausado()) { segurou = true; ctl.pausar(); } }, 250); });
+  const solta = (ev) => { if (hold === null) return; clearTimeout(hold); hold = null; if (segurou) { segurou = false; if (ctl) ctl.seguir(); return; } if (ev.type !== 'pointerup') return; const w = cont.getBoundingClientRect(), r = (px - w.left) / w.width; if (r < 0.3) mostrar(ii - 1); else if (r > 0.7) mostrar(ii + 1); else if (ctl) { if (ctl.pausado()) ctl.seguir(); else ctl.pausar(); } };
+  cont.addEventListener('pointerup', solta); cont.addEventListener('pointercancel', solta); cont.addEventListener('contextmenu', (ev) => ev.preventDefault());
   g.novo = false; mostrar(ii);
 }
 function novoStatus() {
