@@ -2008,7 +2008,7 @@ function rrCombinados(r) {
 // ---------- cashback da cliente: consulta rápida no balcão ----------
 function abrirCashback() {
   abrirDet('💰 Cashback da cliente', (b) => {
-    const f = el('div', 'card cb-f'), inp = el('input'); inp.type = 'search'; inp.placeholder = 'Nome da cliente ou CPF'; inp.autocomplete = 'off'; inp.enterKeyHint = 'search';
+    const f = el('div', 'card cb-f'), inp = el('input'); inp.type = 'search'; inp.placeholder = 'Nome, CPF ou celular da cliente'; inp.autocomplete = 'off'; inp.enterKeyHint = 'search';
     const bt = el('button', 'btn pri big', 'Consultar'); f.append(inp, bt, el('div', 'sub', 'Mostra o cashback ainda não usado e dentro da validade, de todas as lojas (a cliente pode usar em qualquer uma), direto do sistema.'));
     const res = el('div', 'cb-res'); b.append(f, res); setTimeout(() => inp.focus(), 200);
     const fmtD = (d) => d ? d.slice(8, 10) + '/' + d.slice(5, 7) : '';
