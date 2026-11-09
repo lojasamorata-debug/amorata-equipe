@@ -725,6 +725,7 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
     <input id="ls" type="password" autocomplete="current-password" style="margin:4px 0 4px">
     <div class="err" id="lerr"></div>
     <button class="btn pri big" id="lbtn">Entrar</button>
+    <button class="btn big hide" id="lbio" style="margin-top:10px">😊 Entrar com Face ID</button>
   </div>
 
   <div id="v-tab" class="hide">
@@ -1174,7 +1175,7 @@ function entrar() {
   google.script.run.withSuccessHandler((s) => {
     S = s; if (S.moodHoje) S.moodDia = hojeStr(); $('lbtn').disabled = false; $('lerr').textContent = ''; $('ls').value = '';
     if (!loja || S.lojas.indexOf(loja) < 0) loja = S.lojas[0];
-    salvar(); abrir();
+    salvar(); abrir(); bioOferecer();
   }).withFailureHandler((e) => { $('lbtn').disabled = false; SENHA_TMP = ''; $('lerr').textContent = amigavel((e && e.message) || 'Não foi possível entrar.'); })
     .login($('lu').value, $('ls').value);
 }
@@ -1182,7 +1183,7 @@ function sair(msg) {
   document.body.classList.remove('fila-v'); { const sb = $('st-bolha'); if (sb) sb.remove(); const cb = $('camp-bolha'); if (cb) cb.remove(); } CAMP = null; S = null; RR_P = null; RR = null; protecao(false); E = null; MH = null; clearInterval(timerPoll); clearInterval(timerExtra); $('pend').replaceChildren(); $('pend').classList.add('hide'); $('cmn-top').replaceChildren();
   try { localStorage.removeItem('amorata_fila'); Object.keys(localStorage).filter((k) => k.indexOf('amc_') === 0).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
   document.querySelectorAll('.tc, #gate, #strec, #tour').forEach((x) => x.remove()); try { AV_N = null; } catch (e) {} try { clearInterval(window.__REU_POLL); } catch (e) {}
-  $('v-app').classList.add('hide'); $('v-login').classList.remove('hide'); $('lerr').textContent = msg || '';
+  $('v-app').classList.add('hide'); $('v-login').classList.remove('hide'); $('lerr').textContent = msg || ''; try { bioBotao(); } catch (e) {}
 }
 function abrir() {
   $('v-login').classList.add('hide'); $('v-app').classList.remove('hide');
@@ -1790,6 +1791,38 @@ function desenhar(e) {
 setInterval(() => { document.querySelectorAll('.timer[data-ini]').forEach((t) => { const ms = agora() - Number(t.dataset.ini); t.textContent = mmss(ms); t.classList.toggle('lg', ms > 20 * 60000); }); }, 1000);
 
 $('lbtn').addEventListener('click', entrar);
+// ---------- 😊 entrar com Face ID / digital ----------
+const b64u = { de: (s) => { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const b = atob(s), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }, para: (buf) => btoa(String.fromCharCode.apply(null, new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') };
+const bioGet = () => { try { return JSON.parse(localStorage.getItem('amorata_bio') || 'null'); } catch (e) { return null; } };
+const bioSet = (o) => { try { if (o) localStorage.setItem('amorata_bio', JSON.stringify(o)); else localStorage.removeItem('amorata_bio'); } catch (e) {} };
+const bioNome = () => /iPhone|iPad|Mac/i.test(navigator.userAgent) ? 'Face ID' : 'digital ou rosto';
+async function bioPode() { try { return !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch (e) { return false; } }
+function bioBotao() { const b = $('lbio'), o = bioGet(); if (!b) return; if (!o) { b.classList.add('hide'); return; } b.textContent = '😊 Entrar com ' + bioNome() + ' · ' + String(o.nome || o.usuario).split(' ')[0]; b.classList.remove('hide'); }
+async function bioAtivarUI(aoFim) {
+  if (!(await bioPode())) { toast('Este celular não tem Face ID ou digital disponível para o app.'); return; }
+  let cred; try { const rnd = crypto.getRandomValues(new Uint8Array(32)), uid = new TextEncoder().encode(S.usuario).slice(0, 60);
+    cred = await navigator.credentials.create({ publicKey: { rp: { name: 'Amorata Equipe' }, user: { id: uid, name: S.usuario, displayName: S.nome || S.usuario }, challenge: rnd, pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }], authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' }, timeout: 60000, attestation: 'none' } });
+  } catch (e) { toast(e && e.name === 'NotAllowedError' ? 'Cancelado.' : 'Não deu para ativar: ' + ((e && e.message) || e)); return; }
+  rodar('bioAtivar', [S.token, (navigator.userAgent.match(/\(([^)]+)\)/) || [0, ''])[1]], (r) => { bioSet({ id: r.id, chave: r.chave, cred: b64u.para(cred.rawId), usuario: S.usuario, nome: S.nome }); toast('Pronto! Na próxima vez é só entrar com ' + bioNome() + ' 😊'); if (aoFim) aoFim(); });
+}
+async function bioEntrarUI() {
+  const o = bioGet(); if (!o) return; const b = $('lbio'); b.disabled = true; $('lerr').textContent = '';
+  try { await navigator.credentials.get({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), allowCredentials: [{ type: 'public-key', id: b64u.de(o.cred) }], userVerification: 'required', timeout: 60000 } }); }
+  catch (e) { b.disabled = false; $('lerr').textContent = e && e.name === 'NotAllowedError' ? 'Não confirmou. Tente de novo ou entre com a senha.' : 'Não deu para usar ' + bioNome() + ' agora. Entre com a senha.'; return; }
+  $('lerr').textContent = 'Entrando…';
+  google.script.run.withSuccessHandler((s) => { S = s; if (S.moodHoje) S.moodDia = hojeStr(); b.disabled = false; $('lerr').textContent = ''; if (!loja || S.lojas.indexOf(loja) < 0) loja = S.lojas[0]; salvar(); abrir(); })
+    .withFailureHandler((e) => { b.disabled = false; const m = (e && e.message) || ''; if (/BIO_INVALIDA/.test(m)) { bioSet(null); bioBotao(); } $('lerr').textContent = amigavel(m.replace(/^.*BIO_INVALIDA:\s*/, '') || 'Não foi possível entrar.'); }).bioEntrar(o.id, o.chave);
+}
+function bioConfig() {
+  const o = bioGet(), meu = o && S && o.usuario === S.usuario;
+  if (meu) escolher('😊 Entrar com ' + bioNome(), 'Está ativado neste celular. Quando o app pedir login, toque em "Entrar com ' + bioNome() + '" em vez de digitar a senha.', [['Desativar neste celular', 'bad', () => { fechar(); rodar('bioDesativar', [S.token, o.id], () => {}); bioSet(null); toast('Desativado.'); }], ['Fechar', '', () => fechar()]]);
+  else escolher('😊 Entrar com ' + bioNome(), 'Da próxima vez que o app pedir login, você entra com ' + bioNome() + ', sem digitar a senha. Vale só para este celular.', [['Ativar', 'pri', () => { fechar(); bioAtivarUI(); }], ['Agora não', '', () => fechar()]]);
+}
+function bioOferecer() { // depois de entrar com a senha, oferece uma vez por celular/usuária
+  if (!S || S.trocarSenha) return; const o = bioGet(); if (o && o.usuario === S.usuario) return; let ja = false; try { ja = localStorage.getItem('amorata_bio_nao_' + S.usuario) === '1'; } catch (e) {} if (ja) return;
+  bioPode().then((ok) => { if (!ok) return; setTimeout(() => { if (!S || document.querySelector('.sheet-bg, #gate, #tour, .tc')) return; try { localStorage.setItem('amorata_bio_nao_' + S.usuario, '1'); } catch (e) {} escolher('😊 Entrar com ' + bioNome() + '?', 'Da próxima vez que o app pedir login, você entra com ' + bioNome() + ' em vez de digitar a senha. Dá para mudar depois no menu do perfil.', [['Ativar', 'pri', () => { fechar(); bioAtivarUI(); }], ['Agora não', '', () => fechar()]]); }, 9000); });
+}
+$('lbio').addEventListener('click', bioEntrarUI); bioBotao();
 $('ls').addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
 try { const tu = $('t-user'), tl = $('t-loja'); [tu, tl].forEach((x) => { if (x) { x.style.cursor = 'pointer'; x.addEventListener('click', () => { if (S) abrirAjudaConta_(); }); } }); } catch (e) {}
 try { const bn = $('bnav'); if (bn && bn.parentNode !== document.body) document.body.appendChild(bn); } catch (e) {} // barra de baixo direto no body: fica presa no rodapé ao rolar
@@ -1800,7 +1833,7 @@ $('b-ajuda').addEventListener('click', abrirAjudaConta_);
 function abrirAjudaConta_() {
   const op = []; let pa = null; try { pa = typeof passosAba === 'function' && aba && !(aba === 'ini' && !document.body.classList.contains('ini-res')) && aba !== 'dia' ? passosAba(aba) : null; } catch (e) {}
   if (pa && pa.length) op.push(['🧭 Como usar esta tela', 'pri', () => { fechar(); iniciarTour(pa); }]);
-  op.push(['🗺️ Tour pelo app', pa && pa.length ? '' : 'pri', () => { fechar(); iniciarTour(); }], ['📖 Guia rápido', '', () => { fechar(); mostrarGuia(true); }], ['🔑 Trocar minha senha', '', () => { fechar(); trocarSenhaUI('', false); }], ['🔔 Notificações', '', () => { fechar(); verNotificacoes(); }], ['⟳ Atualizar o app', '', () => { fechar(); atualizarApp(); }], ['📜 Termo de uso', '', () => { fechar(); mostrarTermo(null); }], ['🚪 Sair da conta', 'bad', () => { fechar(); $('b-sair').click(); }]);
+  op.push(['🗺️ Tour pelo app', pa && pa.length ? '' : 'pri', () => { fechar(); iniciarTour(); }], ['📖 Guia rápido', '', () => { fechar(); mostrarGuia(true); }], ['🔑 Trocar minha senha', '', () => { fechar(); trocarSenhaUI('', false); }], ['😊 Entrar com ' + bioNome(), '', () => { fechar(); bioConfig(); }], ['🔔 Notificações', '', () => { fechar(); verNotificacoes(); }], ['⟳ Atualizar o app', '', () => { fechar(); atualizarApp(); }], ['📜 Termo de uso', '', () => { fechar(); mostrarTermo(null); }], ['🚪 Sair da conta', 'bad', () => { fechar(); $('b-sair').click(); }]);
   escolher('❓ Ajuda e conta', S ? primeiroNome(S.nome) + ' · ' + (S.cargo === 'ADMIN' ? 'administração' : cargoTxt(S.cargo).toLowerCase()) : '', op);
 }
 $('sel-loja').addEventListener('change', (e) => { loja = e.target.value; salvar(); E = null; atualizar(); carregarCk(); });
