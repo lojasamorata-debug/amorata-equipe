@@ -1,8 +1,3 @@
-function zzDebug() { const adm = usuarios_().find((x) => x.ativo && x.cargo === 'ADMIN'), t = Utilities.getUuid(); CacheService.getScriptCache().put('t_' + t, JSON.stringify({ usuario: adm.usuario }), 600);
- const out = []; [['Sumaúma', '2026-10'], ['Via Verde', '2026-11'], ['Cruzeiro do Sul', '2026-11'], ['Sumaúma', '2026-11']].forEach(([l, m]) => { const t0 = Date.now(); try { const r = pde_(t, l, m); out.push('### ' + l + ' ' + m + ' · ' + (Date.now() - t0) + ' ms');
-   r.consultoras.forEach((c) => out.push([c.primeiro, 'meta', c.pctRitmo && c.pctRitmo.toFixed(3), 'on', c.pctOnRitmo && c.pctOnRitmo.toFixed(3), 'iri', c.iri && c.iri.toFixed(2), '(' + Math.round(c.iriL) + '/' + Math.round(c.iriB) + ')', 'pa', c.pa && c.pa.toFixed(2), 'tkm', c.tkm && Math.round(c.tkm), 'fg', c.fgHit + '/' + c.fgDias, 'rg', c.rgDias].join(' ')));
-   if (l === 'Sumaúma' && m === '2026-11') out.push('JSON ' + JSON.stringify(r)); } catch (e) { out.push(l + ' ERRO ' + e.message); } });
- Logger.log(out.join('\n')); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
