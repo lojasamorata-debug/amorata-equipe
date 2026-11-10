@@ -3622,6 +3622,34 @@ function desenharStatus() {
   ST.grupos.forEach((g, gi) => { if (g.eu) return; const d = el('div', 'st'); const a = avatar(g.foto, g.nome); a.classList.add('st-ring'); if (!g.novo) a.classList.add('visto'); d.append(a, el('div', '', g.nome)); d.addEventListener('click', () => verStatus(gi, Math.max(0, g.itens.findIndex((i) => !i.visto)))); b.append(d); });
   aneisStatus(); bolhaStatus();
 }
+// 📣 compartilhar uma conquista (foguete, meta do dia, medalha) no mural ou no status, com uma imagem pronta
+function imgConquista(c) {
+  const W = 1080, H = 1500, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#5b4a7a'); gr.addColorStop(1, '#a3588a'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  g.fillStyle = 'rgba(255,255,255,.55)'; for (let i = 0; i < 70; i++) { g.beginPath(); g.arc(Math.random() * W, Math.random() * H, Math.random() * 3 + 1, 0, 7); g.fill(); }
+  const F = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif', T = (t, y, sz, cor, peso, fam) => { g.font = (peso || 400) + ' ' + sz + 'px ' + (fam || F); g.fillStyle = cor; g.textAlign = 'center'; g.fillText(t, W / 2, y); };
+  const quebra = (t, sz, peso, max) => { g.font = (peso || 400) + ' ' + sz + 'px ' + F; const out = []; let l = ''; String(t).split(' ').forEach((w) => { const tt = l ? l + ' ' + w : w; if (g.measureText(tt).width > max && l) { out.push(l); l = w; } else l = tt; }); if (l) out.push(l); return out; };
+  T('A M O R A T A', 140, 34, 'rgba(255,255,255,.85)', 400, 'Georgia,serif');
+  T(c.emoji, 520, 260, '#fff'); T(String(c.mini || '').toUpperCase(), 660, 34, '#ffd77a', 700);
+  let y = 760; quebra(c.titulo, 72, 700, 940).forEach((l) => { T(l, y, 72, '#fff', 700); y += 86; });
+  y += 10; quebra(c.sub || '', 38, 400, 900).slice(0, 4).forEach((l) => { T(l, y, 38, 'rgba(255,255,255,.9)'); y += 52; });
+  g.fillStyle = 'rgba(255,255,255,.16)'; const bw = 640; g.beginPath(); g.roundRect ? g.roundRect((W - bw) / 2, H - 260, bw, 110, 55) : g.rect((W - bw) / 2, H - 260, bw, 110); g.fill();
+  T('💜 ' + primeiroNome(S.nome) + (S.loja && S.loja !== 'TODAS' ? ' · ' + S.loja : ''), H - 190, 44, '#fff', 600);
+  return cv.toDataURL('image/jpeg', 0.85);
+}
+function abrirCompartilhar(c) {
+  const ant = $('festa'); if (ant) ant.remove(); const f = el('div'); f.id = 'festa'; const fc = el('div', 'fc'), img = el('img'); let du = ''; try { du = imgConquista(c); } catch (e) {}
+  img.src = du; img.style.cssText = 'width:62%;border-radius:14px;display:block;margin:0 auto 12px;box-shadow:0 6px 18px rgba(0,0,0,.18)';
+  const tx = el('textarea'); tx.rows = 2; tx.maxLength = 280; tx.placeholder = 'Quer escrever algo? (opcional)'; tx.style.cssText = 'width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:none;margin-bottom:8px';
+  const mu = el('button', 'btn pri big', '📣 Publicar no mural'), st = el('button', 'btn big', '✨ Postar no status (24 h)'), x = el('button', 'btn sm', 'Cancelar'); x.style.cssText = 'margin:2px auto 0;border:0;background:none;color:var(--muted)';
+  const sai = () => f.remove(), bts = el('div'); bts.style.cssText = 'display:flex;flex-direction:column;gap:8px'; x.addEventListener('click', sai); f.addEventListener('click', (ev) => { if (ev.target === f) sai(); });
+  mu.addEventListener('click', () => { const t = tx.value.trim(); sai(); toast('Publicando no mural…');
+    const ok = () => { toast('Publicado no mural 🎉'); if (aba === 'mural') { try { carregarMural(); } catch (e) {} } };
+    if (c.medalhas) rodar('compartilharConquista', [S.token, c.medalhas, t], ok); else rodar('postarConquista', [S.token, c.tipo || 'outro', c.texto + (t ? '\n' + t : ''), du || null], ok); });
+  st.addEventListener('click', () => { if (!du) { toast('Não deu para montar a imagem.'); return; } const t = tx.value.trim(); sai(); toast('Postando no status…');
+    rodar('statusPostar', [S.token, 'foto', du, (t || c.texto).slice(0, 140), 0], (r) => { ST = r; try { desenharStatus(); } catch (e) {} toast('Status publicado! Some em 24 h ✨'); }); });
+  bts.append(tx, mu, st, x); fc.append(el('div', 'mini', 'Compartilhar conquista'), img, bts); f.append(fc); document.body.append(f);
+}
 // 🚀 foguete decolando a cada nível da meta do dia batido (1× · 1,5× · 2× · 3×) — mostra uma vez por nível, por dia
 const FOG_TXT = ['', 'Meta do dia batida!', '1,5× a meta do dia!', '2× a meta do dia!', '3× a meta do dia! Foguete máximo!'];
 function checarFoguetes() {
@@ -3639,7 +3667,9 @@ function decolarFoguete(r, de) {
   const sai = () => f.remove(); document.body.append(f);
   setTimeout(() => { if (!f.isConnected) return; const c = el('div', 'fc2'); c.append(el('div', 'qt', '🚀'.repeat(r.nivel)), el('div', 'mini', r.nivel + 'º foguete do dia'), el('h3', '', FOG_TXT[r.nivel] || 'Foguete!'),
       el('p', '', 'Você já vendeu ' + rs(r.venda) + ' hoje (meta do dia ' + rs(r.metaDia) + ').' + (r.prox ? ' Próximo foguete em ' + rs(r.prox) + ': faltam ' + rs(Math.max(0, r.prox - r.venda)) + ' 💜' : ' Você chegou ao topo de hoje! 💜')));
-    const ok = el('button', 'btn pri big', 'Bora! 🚀'); ok.addEventListener('click', sai); c.append(ok); f.append(c); }, 2600 + (n - 1) * 350);
+    const ok = el('button', 'btn pri big', 'Bora! 🚀'), sh = el('button', 'btn big', '📣 Compartilhar'); ok.addEventListener('click', sai);
+    sh.addEventListener('click', () => { sai(); abrirCompartilhar({ emoji: '🚀'.repeat(Math.min(r.nivel, 4)), mini: r.nivel + 'º foguete do dia', titulo: FOG_TXT[r.nivel] || 'Foguete!', sub: 'Vendi ' + rs(r.venda) + ' hoje 💜', tipo: 'meta', texto: '🚀 ' + primeiroNome(S.nome) + ' conquistou o ' + r.nivel + 'º foguete do dia: ' + (FOG_TXT[r.nivel] || '') }); });
+    const bx = el('div'); bx.style.cssText = 'display:flex;flex-direction:column;gap:8px'; bx.append(ok, sh); c.append(bx); f.append(c); }, 2600 + (n - 1) * 350);
   f.addEventListener('click', (ev) => { if (ev.target === f && f.querySelector('.fc2')) sai(); });
 }
 setInterval(() => { if (!document.hidden) checarFoguetes(); }, 10 * 60000);
@@ -3660,7 +3690,8 @@ function cardMetaBatida() {
   const sai = () => f.remove(); f.addEventListener('click', (ev) => { if (ev.target === f) sai(); });
   const bts = el('div'); bts.style.cssText = 'display:flex;flex-direction:column;gap:8px';
   const ok = el('button', 'btn pri big', 'Obrigada! 💜'), ver = el('button', 'btn sm', 'Ver quem também bateu'); ver.style.cssText = 'margin:2px auto 0;border:0;background:none;color:var(--muted)';
-  ok.addEventListener('click', sai); ver.addEventListener('click', () => { sai(); listaCampeas(); }); bts.append(ok, ver); fc.append(bts); f.append(fc); document.body.append(f);
+  const sh = el('button', 'btn big', '📣 Compartilhar'); sh.addEventListener('click', () => { sai(); abrirCompartilhar({ emoji: '🏆', mini: 'Meta do dia batida', titulo: 'Bati a meta de ' + wd + '!', sub: eu.venda && eu.meta ? 'Vendi ' + rs(eu.venda) + ' para uma meta de ' + rs(eu.meta) : '', tipo: 'meta', texto: '🏆 ' + primeiroNome(S.nome) + ' bateu a meta do dia ' + isoBR(CAMP.d).slice(0, 5) + '!' }); });
+  ok.addEventListener('click', sai); ver.addEventListener('click', () => { sai(); listaCampeas(); }); bts.append(ok, sh, ver); fc.append(bts); f.append(fc); document.body.append(f);
 }
 function bolhaCampeas() {
   const ant = $('camp-bolha'); if (ant) ant.remove(); if (!S || !CAMP || !CAMP.lista || !CAMP.lista.length || telaLoja()) return;
@@ -6220,7 +6251,7 @@ function gradeMedalhas(box, r) {
     const d = el('div', 'medalha' + (m.vezes ? '' : ' off')); d.append(el('i', '', m.emoji), document.createTextNode(m.nome));
     if (m.niveis && m.vezes) d.append(el('sup', '', ['', '🥉', '🥈', '🥇'][Math.min(3, m.vezes)])); else if (m.vezes > 1) d.append(el('sup', '', '×' + m.vezes));
     if ((!m.vezes || (m.niveis && m.vezes < 3)) && m.prog) { const pb = el('div', 'pb'), i = el('i'); i.style.width = Math.min(100, m.prog[0] / m.prog[1] * 100) + '%'; pb.append(i); d.append(pb, el('small', '', m.prog[0] + '/' + m.prog[1])); }
-    d.addEventListener('click', () => escolher(m.emoji + ' ' + m.nome, m.desc + (m.vezes ? ' · Você já ganhou' + (m.vezes > 1 ? ' ' + m.vezes + ' vezes' : '') + (m.quando ? ' (última: ' + m.quando.slice(0, 10) + ')' : '') : (m.prog ? ' · Seu progresso: ' + m.prog[0] + ' de ' + m.prog[1] + '.' : '') + ' Ainda não conquistada: bora!'), []));
+    d.addEventListener('click', () => escolher(m.emoji + ' ' + m.nome, m.desc + (m.vezes ? ' · Você já ganhou' + (m.vezes > 1 ? ' ' + m.vezes + ' vezes' : '') + (m.quando ? ' (última: ' + m.quando.slice(0, 10) + ')' : '') : (m.prog ? ' · Seu progresso: ' + m.prog[0] + ' de ' + m.prog[1] + '.' : '') + ' Ainda não conquistada: bora!'), m.vezes ? [['📣 Compartilhar no mural ou status', 'pri', () => { fechar(); abrirCompartilhar({ emoji: m.emoji, mini: 'Minha medalha', titulo: m.nome, sub: m.desc || '', medalhas: [{ emoji: m.emoji, nome: m.nome }], texto: m.emoji + ' ' + primeiroNome(S.nome) + ' ganhou a medalha "' + m.nome + '"!' }); }]] : []));
     box.append(d);
   });
 }
@@ -6243,13 +6274,7 @@ function comemorar(novas) {
   const comp = el('button', 'btn pri big', '📣 Compartilhar com a equipe'), ok = el('button', 'btn big', 'Agora não'), ver = el('button', 'btn sm', 'Ver minhas medalhas');
   ver.style.cssText = 'margin:2px auto 0;border:0;background:none;color:var(--muted)';
   ok.addEventListener('click', sai); ver.addEventListener('click', () => { sai(); mudarAba('mural'); abaMural('con'); });
-  comp.addEventListener('click', () => {
-    bts.replaceChildren(); const tx = el('textarea'); tx.rows = 2; tx.maxLength = 300; tx.placeholder = 'Quer deixar um recado para a equipe? (opcional)'; tx.style.cssText = 'width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:none';
-    const pub = el('button', 'btn pri big', 'Publicar no mural 🎉'), volta = el('button', 'btn sm', 'Cancelar'); volta.style.cssText = 'margin:0 auto;border:0;background:none;color:var(--muted)';
-    volta.addEventListener('click', sai);
-    pub.addEventListener('click', () => { sai(); toast('Compartilhado com a equipe 🎉'); rodar('compartilharConquista', [S.token, novas.map((x) => ({ emoji: x.emoji, nome: x.nome, premio: !!x.premio })), tx.value], () => { if (aba === 'mural') { try { carregarMural(); } catch (e) {} } }); });
-    bts.append(tx, pub, volta); setTimeout(() => tx.focus(), 50);
-  });
+  comp.addEventListener('click', () => { sai(); abrirCompartilhar({ emoji: m.emoji, mini: m.premio ? 'Prêmio desbloqueado' : novas.length > 1 ? novas.length + ' novas conquistas' : 'Nova medalha', titulo: m.nome, sub: m.desc || '', medalhas: novas.map((x) => ({ emoji: x.emoji, nome: x.nome, premio: !!x.premio })), texto: m.emoji + ' ' + primeiroNome(S.nome) + ' ganhou a medalha "' + m.nome + '"!' }); });
   bts.append(comp, ok, ver); fc.append(bts); f.append(fc); document.body.append(f);
 }
 function checarMedalhas(cb) {
