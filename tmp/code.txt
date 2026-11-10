@@ -2458,13 +2458,11 @@ function pde_(token, lojaSel, mes) {
       const r = hist.find((h) => similaridade_(h[2], c.nome) >= 2); let pc = null, sc = 0; cal.pessoas.forEach((p2) => { const x = similaridade_(p2.nome, c.nome); if (x > sc) { sc = x; pc = p2; } }); if (sc < 2) pc = null;
       const trab = (k) => !fechadaDia_(loja, k) && (!pc || !pc.cobre[k] || !!pc.trab[k]);
       const metaMes = r ? num_(r[3]) || 0 : c.meta, sp = dm.filter(trab).reduce((a, k) => a + pesoDia_(loja, k), 0) || 1;
-      // Foguetes (igual à planilha de calendário): meta do dia dinâmica = (meta do mês − vendido nos dias anteriores) ÷ dias trabalhados que faltam (incluindo o dia);
-      // depois de bater a meta, a conta segue com a meta desafio (130%). Bateu a meta do dia = 1 🚀 · 1,5× = 2 · 2× = 3 · 3× = 4. Pontua o % de dias com foguete.
+      // Foguetes: meta do dia = a mesma do app (meta do mês × peso do dia ÷ soma dos pesos dos dias que ela trabalha).
+      // Bateu a meta do dia = 1 🚀 · 1,5× = 2 · 2× = 3 · 3× = 4 (como na planilha). Pontua o % de dias com foguete.
       const vDia = {}, onDia = {}; vb.forEach((x) => { if (x[0] >= de && x[0] <= ate && casa(x[1], x[8])) { vDia[x[0]] = (vDia[x[0]] || 0) + x[3]; if (x[2] && x[3] > 0) onDia[x[0]] = 1; } });
-      const W = dm.filter((k) => k <= lim ? (trab(k) || (vDia[k] || 0) > 0) : trab(k));
-      let dias = 0, hit = 0, dOn = 0, fq = 0, ac = 0; W.forEach((k, ix) => { if (k > lim) return; const rest = W.length - ix, v = vDia[k] || 0;
-        const md = metaMes - ac > 0 ? (metaMes - ac) / rest : metaMes * 1.3 - ac > 0 ? (metaMes * 1.3 - ac) / rest : 0;
-        dias++; if (v > 0 && v >= md) { hit++; const r = md > 0 ? v / md : 99; fq += r >= 3 ? 4 : r >= 2 ? 3 : r >= 1.5 ? 2 : 1; } if (onDia[k]) dOn++; ac += v; });
+      let dias = 0, hit = 0, dOn = 0, fq = 0; dm.filter((k) => k <= lim).forEach((k) => { const v = vDia[k] || 0; if (!trab(k) && !(v > 0)) return;
+        dias++; const md = metaMes * pesoDia_(loja, k) / sp; if (v > 0 && v >= md) { hit++; const r = md > 0 ? v / md : 99; fq += r >= 3 ? 4 : r >= 2 ? 3 : r >= 1.5 ? 2 : 1; } if (onDia[k]) dOn++; });
       let il = 0, ib = 0; if (iri) Object.keys(iri).forEach((nm) => { if (dono[nm] === c.nome) { il += iri[nm].l; ib += iri[nm].b; } });
       const dp = m.diasPassados || 0, rit = (x, alvo2) => !alvo2 ? null : encerrado || !dp ? x / alvo2 : x / dp * m.diasTotal / alvo2;
       out.push({ nome: c.nome, primeiro: primeiroNomeS_(c.nome), loja: loja, eu: c.eu, usuario: pu ? pu.usuario : '', meta: c.meta, venda: c.venda, pctAgora: c.pct, pctRitmo: encerrado ? c.pct : (c.fechaPct != null ? c.fechaPct : c.pct),
