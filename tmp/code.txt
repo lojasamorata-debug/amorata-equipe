@@ -1,6 +1,3 @@
-function zzDebug() { const cf = dsCfg_(), out = []; const limpa = (o) => JSON.stringify(o, (k, v) => /key|token|secret|hash/i.test(k) ? '[oculto]' : v).slice(0, 700);
- cf.keys.forEach((k, i) => { ['/api/v1/me', '/api/v1/me/usage', '/api/v1/usage', '/api/v1/consumo', '/api/v1/creditos', '/api/v1/me/consumo', '/api/v1/me/creditos', '/api/v1/quota'].forEach((rota) => { try { const r = UrlFetchApp.fetch(cf.base + rota, { method: 'get', headers: { 'X-Api-Key': k, Accept: 'application/json' }, muteHttpExceptions: true }); const h = r.getAllHeaders(), hh = Object.keys(h).filter((x) => /rate|limit|credit|quota|remain|usage|consum/i.test(x)).map((x) => x + '=' + h[x]).join(' '); let j = null; try { j = JSON.parse(r.getContentText()); } catch (e) {} out.push('chave ' + (i + 1) + ' ' + rota + ' -> ' + r.getResponseCode() + ' ' + hh + ' ' + (j ? limpa(j) : r.getContentText().slice(0, 120))); } catch (e) { out.push('chave ' + (i + 1) + ' ' + rota + ' ERRO ' + e.message); } }); });
- Logger.log(out.join('\n')); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
 // O estado da fila fica guardado no próprio script; cada atendimento e evento vai para a planilha "Fila Amorata – dados".
