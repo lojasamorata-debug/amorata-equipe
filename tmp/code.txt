@@ -1,7 +1,7 @@
 function zzDebug() { const adm = usuarios_().find((x) => x.ativo && x.cargo === 'ADMIN'), t = Utilities.getUuid(); CacheService.getScriptCache().put('t_' + t, JSON.stringify({ usuario: adm.usuario }), 600);
- const out = []; ['2026-10', '2026-11'].forEach((m) => { const t0 = Date.now(); try { const r = pde(t, 'TODAS', m); out.push('### ' + m + ' ' + r.consultoras.length + ' consultoras · ' + (Date.now() - t0) + ' ms · avisos ' + JSON.stringify(r.avisos));
-   r.consultoras.forEach((c) => out.push([c.loja, c.primeiro, 'meta', c.pctRitmo && c.pctRitmo.toFixed(3), 'on', c.pctOnRitmo && c.pctOnRitmo.toFixed(3), 'iri', c.iri && c.iri.toFixed(2), 'pa', c.pa && c.pa.toFixed(2), 'tkm', c.tkm && Math.round(c.tkm), 'fg', c.fgHit + '/' + c.fgDias, 'rg', c.rgDias].join(' ')));
-   if (m === '2026-11') CacheService.getScriptCache().put('zzpde', JSON.stringify(r), 600); } catch (e) { out.push(m + ' ERRO ' + e.message + ' ' + (e.stack || '').slice(0, 300)); } });
+ const out = []; [['Sumaúma', '2026-10'], ['Via Verde', '2026-11'], ['Cruzeiro do Sul', '2026-11'], ['Sumaúma', '2026-11']].forEach(([l, m]) => { const t0 = Date.now(); try { const r = pde_(t, l, m); out.push('### ' + l + ' ' + m + ' · ' + (Date.now() - t0) + ' ms');
+   r.consultoras.forEach((c) => out.push([c.primeiro, 'meta', c.pctRitmo && c.pctRitmo.toFixed(3), 'on', c.pctOnRitmo && c.pctOnRitmo.toFixed(3), 'iri', c.iri && c.iri.toFixed(2), '(' + Math.round(c.iriL) + '/' + Math.round(c.iriB) + ')', 'pa', c.pa && c.pa.toFixed(2), 'tkm', c.tkm && Math.round(c.tkm), 'fg', c.fgHit + '/' + c.fgDias, 'rg', c.rgDias].join(' ')));
+   if (l === 'Sumaúma' && m === '2026-11') out.push('JSON ' + JSON.stringify(r)); } catch (e) { out.push(l + ' ERRO ' + e.message); } });
  Logger.log(out.join('\n')); }
 // Fila da vez – Lojas Amorata
 // Página web: cada vendedora entra com usuário e senha (planilha "Acessos – Painel Amorata (privado)").
@@ -2421,7 +2421,7 @@ function pdeAdv_(mes) { try { return JSON.parse(PropertiesService.getScriptPrope
 function pdeIri_(loja, mes) {
   const ln = lojaNumDe_(loja); let lig = []; try { lig = dsLojas_(); } catch (e) {} if (!ln || lig.indexOf(String(ln)) < 0) return null;
   const sh = aba_('PdeIri', H_PIRI), hoje = dia_(loja), ontem = somaDia_(hoje, -1), de = mes + '-01', ult = somaDia_(finMesAnt_(mes, -1) + '-01', -1), fim = ult < ontem ? ult : ontem;
-  let rows = sh.getDataRange().getDisplayValues().slice(1).filter((r) => r[0] === loja && String(r[1]).slice(0, 7) === mes);
+  let rows = sh.getDataRange().getValues().slice(1).map((r) => [String(r[0]), r[1] instanceof Date ? Utilities.formatDate(r[1], 'America/Rio_Branco', 'yyyy-MM-dd') : String(r[1]).slice(0, 10), String(r[2] || ''), Number(r[3]) || 0, Number(r[4]) || 0]).filter((r) => r[0] === loja && r[1].slice(0, 7) === mes);
   const feito = {}; rows.forEach((r) => { feito[r[1]] = 1; }); const falta = []; for (let d = de; d <= fim; d = somaDia_(d, 1)) if (!feito[d]) falta.push(d);
   if (falta.length) {
     const ag = {}; let pag = 1, n = 0, tot = null;
@@ -2434,13 +2434,17 @@ function pdeIri_(loja, mes) {
       pag++; } while (n < tot && pag <= 40);
     const novas = []; falta.forEach((d) => { const ks = Object.keys(ag).filter((k) => k.slice(0, 10) === d); if (!ks.length) novas.push([loja, "'" + d, '', 0, 0]); ks.forEach((k) => novas.push([loja, "'" + d, k.slice(11), Math.round(ag[k][0] * 100) / 100, Math.round(ag[k][1] * 100) / 100])); });
     if (novas.length) sh.getRange(sh.getLastRow() + 1, 1, novas.length, 5).setValues(novas);
-    rows = rows.concat(novas.map((r) => [r[0], r[1].slice(1), r[2], String(r[3]), String(r[4])]));
+    rows = rows.concat(novas.map((r) => [r[0], r[1].slice(1), r[2], r[3], r[4]]));
   }
-  const out = {}; rows.forEach((r) => { if (!r[2]) return; const o = out[r[2]] = out[r[2]] || { l: 0, b: 0 }; o.l += num_(r[3]) || 0; o.b += num_(r[4]) || 0; });
+  const out = {}; rows.forEach((r) => { if (!r[2]) return; const o = out[r[2]] = out[r[2]] || { l: 0, b: 0 }; o.l += r[3]; o.b += r[4]; });
   if (hoje.slice(0, 7) === mes) { try { dsDiaBruto_(ln, hoje, false).forEach((x) => { if (!x[13]) return; const o = out[x[11]] = out[x[11]] || { l: 0, b: 0 }; o.l += x[9]; o.b += x[13]; }); } catch (e) {} }
   return out;
 }
 function pde(token, lojaSel, mes) {
+  const u0 = sessao_(token), ck = 'pde1_' + (PropertiesService.getScriptProperties().getProperty('PDE_V') || '0') + '_' + u0.usuario + '_' + norm_(String(lojaSel || 'TODAS')).replace(/\W/g, '') + '_' + mes, hit = cacheGrandeGet_(ck); if (hit) return hit;
+  const r = pde_(token, lojaSel, mes); cacheGrandePut_(ck, r, 600); return r;
+}
+function pde_(token, lojaSel, mes) {
   const u = sessao_(token); if (['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(u.cargo) < 0) throw new Error('O PDE é das consultoras de vendas.');
   const hj = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd'); mes = /^\d{4}-\d{2}$/.test(String(mes || '')) ? mes : hj.slice(0, 7);
   const de = mes + '-01', ate = somaDia_(finMesAnt_(mes, -1) + '-01', -1), minhas = lojasDe_(u);
@@ -2453,11 +2457,12 @@ function pde(token, lojaSel, mes) {
     let iri = null; try { iri = pdeIri_(loja, mes); } catch (e) { avisos.push(loja + ': IRI indisponível (' + e.message + ')'); }
     m.consultoras.forEach((c) => {
       if (!c.meta) return; const pu = us.find((x) => x.ativo && x.loja === loja && mesmaPessoa_(x.nome, c.nome)); if (pu && pu.cargo !== 'VENDEDORA') return;
+      const p1 = norm_(primeiro_(c.nome)), casa = (nm, usr) => (pu && usr ? usr === pu.usuario : (similaridade_(c.nome, nm) >= 2 || norm_(primeiro_(nm)) === p1));
       const r = hist.find((h) => similaridade_(h[2], c.nome) >= 2); let pc = null, sc = 0; cal.pessoas.forEach((p2) => { const x = similaridade_(p2.nome, c.nome); if (x > sc) { sc = x; pc = p2; } }); if (sc < 2) pc = null;
       const trab = (k) => !fechadaDia_(loja, k) && (!pc || !pc.cobre[k] || !!pc.trab[k]);
       const metaMes = r ? num_(r[3]) || 0 : c.meta, sp = dm.filter(trab).reduce((a, k) => a + pesoDia_(loja, k), 0) || 1;
-      let dias = 0, hit = 0, dOn = 0; dm.filter((k) => k <= lim && trab(k)).forEach((k) => { dias++; const dela = vb.filter((x) => x[0] === k && similaridade_(c.nome, x[1]) >= 2), v = dela.reduce((a, x) => a + x[3], 0); if (v >= metaMes * pesoDia_(loja, k) / sp && v > 0) hit++; if (dela.some((x) => x[2] && x[3] > 0)) dOn++; });
-      let il = 0, ib = 0; if (iri) Object.keys(iri).forEach((nm) => { if (similaridade_(c.nome, nm) >= 2) { il += iri[nm].l; ib += iri[nm].b; } });
+      let dias = 0, hit = 0, dOn = 0; dm.filter((k) => k <= lim && trab(k)).forEach((k) => { dias++; const dela = vb.filter((x) => x[0] === k && casa(x[1], x[8])), v = dela.reduce((a, x) => a + x[3], 0); if (v >= metaMes * pesoDia_(loja, k) / sp && v > 0) hit++; if (dela.some((x) => x[2] && x[3] > 0)) dOn++; });
+      let il = 0, ib = 0; if (iri) Object.keys(iri).forEach((nm) => { if (casa(nm, '')) { il += iri[nm].l; ib += iri[nm].b; } });
       const dp = m.diasPassados || 0, rit = (x, alvo2) => !alvo2 ? null : encerrado || !dp ? x / alvo2 : x / dp * m.diasTotal / alvo2;
       out.push({ nome: c.nome, primeiro: primeiroNomeS_(c.nome), loja: loja, eu: c.eu, usuario: pu ? pu.usuario : '', meta: c.meta, venda: c.venda, pctAgora: c.pct, pctRitmo: encerrado ? c.pct : (c.fechaPct != null ? c.fechaPct : c.pct),
         metaOn: c.metaOnline, online: c.online, pctOnAgora: c.pctOnline, pctOnRitmo: rit(c.online || 0, c.metaOnline), pa: c.pa, tkm: c.tkm, iri: ib ? il / ib : null, iriL: il, iriB: ib, iriSem: !iri,
@@ -2469,12 +2474,12 @@ function pde(token, lojaSel, mes) {
 }
 function pdeAdvertencia(token, mes, loja, nome, on) {
   const u = sessao_(token); if (u.cargo !== 'ADMIN' && u.cargo !== 'GERENTE') throw new Error('Só a gerência.'); loja = lojaCanon_(loja); if (lojasDe_(u).indexOf(loja) < 0) throw new Error('Sem acesso a esta loja.');
-  const a = pdeAdv_(mes), k = loja + '|' + nome; if (on) a[k] = { por: u.usuario, em: agoraBR_() }; else delete a[k]; PropertiesService.getScriptProperties().setProperty('PDE_ADV_' + mes, JSON.stringify(a)); return true;
+  const a = pdeAdv_(mes), k = loja + '|' + nome; if (on) a[k] = { por: u.usuario, em: agoraBR_() }; else delete a[k]; const pp = PropertiesService.getScriptProperties(); pp.setProperty('PDE_ADV_' + mes, JSON.stringify(a)); pp.setProperty('PDE_V', String(Date.now())); return true;
 }
 function pdeSalvarPremios(token, premios) {
   const u = sessao_(token); if (u.cargo !== 'ADMIN') throw new Error('Só a administração.');
   const p = (premios || []).map((x) => [Number(x[0]), Number(x[1])]).filter((x) => isFinite(x[0]) && isFinite(x[1]) && x[0] > 0 && x[1] >= 0).sort((a, b) => a[0] - b[0]); if (!p.length) throw new Error('Informe as faixas.');
-  const c = pdeCfg_(); c.premios = p; PropertiesService.getScriptProperties().setProperty('PDE_CFG', JSON.stringify({ premios: p })); return c;
+  const c = pdeCfg_(); c.premios = p; const pp = PropertiesService.getScriptProperties(); pp.setProperty('PDE_CFG', JSON.stringify({ premios: p })); pp.setProperty('PDE_V', String(Date.now())); return c;
 }
 // ---------- reposição (reabastecimento) das peças vendidas: lojas ligadas à API ----------
 const REPO_INICIO = '2026-11-05';
