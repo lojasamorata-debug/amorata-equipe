@@ -1150,7 +1150,7 @@ if (HOSPEDADO) {
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
 const PCT = new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDigits: 0 });
-let MH = null, timerExtra = null;
+let MH = null, VH = null, timerExtra = null;
 let S = null;          // sessão {token, usuario, nome, cargo, lojas, motivos}
 let loja = null, E = null, skew = 0, ocupado = false, timerPoll = null;
 const chefe = () => S && (S.cargo === 'GERENTE' || S.cargo === 'ADMIN');
@@ -1205,7 +1205,7 @@ function entrar() {
     .login($('lu').value, $('ls').value);
 }
 function sair(msg) {
-  document.body.classList.remove('fila-v'); { const sb = $('st-bolha'); if (sb) sb.remove(); const cb = $('camp-bolha'); if (cb) cb.remove(); } CAMP = null; S = null; RR_P = null; RR = null; protecao(false); E = null; MH = null; clearInterval(timerPoll); clearInterval(timerExtra); $('pend').replaceChildren(); $('pend').classList.add('hide'); $('cmn-top').replaceChildren();
+  document.body.classList.remove('fila-v'); { const sb = $('st-bolha'); if (sb) sb.remove(); const cb = $('camp-bolha'); if (cb) cb.remove(); } CAMP = null; S = null; RR_P = null; RR = null; protecao(false); E = null; MH = null; VH = null; clearInterval(timerPoll); clearInterval(timerExtra); $('pend').replaceChildren(); $('pend').classList.add('hide'); $('cmn-top').replaceChildren();
   try { localStorage.removeItem('amorata_fila'); Object.keys(localStorage).filter((k) => k.indexOf('amc_') === 0).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
   document.querySelectorAll('.tc, #gate, #strec, #tour').forEach((x) => x.remove()); try { AV_N = null; } catch (e) {} try { clearInterval(window.__REU_POLL); } catch (e) {}
   $('v-app').classList.add('hide'); $('v-login').classList.remove('hide'); $('lerr').textContent = msg || ''; try { bioBotao(); } catch (e) {}
@@ -1223,7 +1223,7 @@ function abrir() {
   const sel = $('sel-loja'); sel.replaceChildren(...S.lojas.map((l) => new Option(l, l)));
   sel.value = loja; $('sel-loja-box').classList.toggle('hide', S.lojas.length < 2);
   prepararFiltros(); botaoAjudaAba(); { let a0 = '', d0 = null; try { a0 = sessionStorage.getItem('amorata_aba') || ''; d0 = JSON.parse(sessionStorage.getItem('amorata_det') || 'null'); } catch (e) {} const ok = a0 && $('tab-' + a0) && !$('tab-' + a0).classList.contains('hide'); mudarAba(ok ? a0 : (chefe() ? 'ini' : 'dia')); if (d0 && typeof window[d0.n] === 'function') setTimeout(() => { try { window[d0.n].apply(null, d0.a || []); } catch (e) {} }, 700); }
-  carregarMetaHoje(); carregarPendencias(); carregarCk(); carregarReuniao(); carregarPlano(); setTimeout(desenharPush, 1200); carregarCmn(); carregarMe(); carregarCart(); clearInterval(timerExtra); timerExtra = setInterval(() => { if (!document.hidden) { carregarMetaHoje(); carregarPendencias(); carregarCmn(); } }, 900000);
+  carregarMetaHoje(); carregarVendHoje(); carregarPendencias(); carregarCk(); carregarReuniao(); carregarPlano(); setTimeout(desenharPush, 1200); carregarCmn(); carregarMe(); carregarCart(); clearInterval(timerExtra); timerExtra = setInterval(() => { if (!document.hidden) { carregarMetaHoje(); carregarVendHoje(); carregarPendencias(); carregarCmn(); } }, 900000);
   setTimeout(tirarSplash, 400);
   atualizar(); clearInterval(timerPoll); timerPoll = setInterval(() => { if (!document.hidden && (aba === 'fila' || (aba === casaAba_() && !chefe() && ++TICK_AG % 2 === 0))) { atualizar(); if (S && S.cargo === 'ADMIN' && ++TICK_REDE % 3 === 0) carregarRedeFila(); } }, 5000);
 }
@@ -1412,6 +1412,15 @@ function pedirTrocaUI(r) {
   if (!s1.options.length || !s2.options.length) { o.append(el('div', 'vazio', 'Não encontrei dias de trabalho e de folga nas próximas 3 semanas para trocar.'), c); }
   else o.append(l1, s1, l2, s2, mt, ok, c);
   $('sheet').classList.remove('hide');
+}
+// vendido de hoje da vendedora pelo USE (o app importa as vendas do dia ao longo do dia): é o número do card "vendido" na tela Agora
+function carregarVendHoje() {
+  if (!S || chefe() || S.cargo === 'AUXILIAR' || S.cargo === 'ESTOQUISTA') return;
+  google.script.run.withSuccessHandler((r) => {
+    const eu = ((r && r.consultoras) || []).filter((c) => c.eu);
+    VH = { dia: diaISO(0), venda: eu.reduce((a, c) => a + (c.venda || 0), 0), tem: eu.length > 0 };
+    try { desenharAgora(); } catch (e) {}
+  }).withFailureHandler(() => {}).metas(S.token, 'TODAS', 'hoje');
 }
 function carregarMetaHoje() { if (S) google.script.run.withSuccessHandler((m) => { MH = m; desenharMetaHoje(); if (aba === casaAba_()) desenharMenu(); }).withFailureHandler(() => {}).minhaMetaHoje(S.token); }
 function desenharMetaHoje() {
@@ -2911,7 +2920,7 @@ function abrirHistoricoFila(lj, dia) {
 }
 // ---------- tela "Agora": o que fazer neste momento, por cargo ----------
 const AJUDA = {
-  vendido: ['Vendido hoje', 'Soma das vendas que você marcou como "Vendeu" na fila hoje. O valor oficial vem do USE ao longo do dia.'],
+  vendido: ['Vendido hoje', 'Suas vendas de hoje no USE (caixa), atualizadas ao longo do dia, mais ou menos de hora em hora. Venda recém-passada no caixa pode levar um pouco para aparecer.'],
   falta: ['Falta para a meta', 'Quanto ainda falta para bater a sua meta de hoje. Cada venda a mais diminui esse número.'],
   conv: ['Conversão', 'De cada cliente que você atendeu hoje, quantas compraram. Para subir: ofereça o provador para toda cliente e mostre uma peça a mais.'],
   loja: ['Loja agora', 'Quem está na fila, atendendo e em pausa neste minuto. O ideal é cada vendedora com no máximo 2 clientes ao mesmo tempo.'],
@@ -2952,7 +2961,11 @@ function desenharAgora() {
     else { t = 'Você ainda não entrou na fila'; sub = 'chegou na loja? entre na fila para receber clientes'; bt = '👥 Entrar na fila'; }
     h.append(k, el('div', 't', t), el('div', 's', sub)); if (bt) { const g = el('button', 'go', bt); g.addEventListener('click', () => mudarAba('fila')); h.append(g); } box.append(h);
     // HOJE: três números grandes
-    const mh = (e.hoje && e.hoje.meu) || {}, vend = mh.rs || 0, meta = MH && !MH.loja && !MH.folga ? MH.porDia || 0 : 0, falta = Math.max(0, meta - vend);
+    // vendido: USE de hoje (oficial); se o USE ainda não trouxe nada hoje, vale o valor marcado na fila
+    const mh = (e.hoje && e.hoje.meu) || {}, use = VH && VH.dia === diaISO(0) ? VH.venda || 0 : 0, vend = use > 0 ? use : mh.rs || 0;
+    // meta de hoje: o porDia do servidor já desconta as vendas de hoje do que falta no mês; devolve essa parte para a meta do dia não encolher ao longo do dia
+    let meta = MH && !MH.loja && !MH.folga ? MH.porDia || 0 : 0; if (meta && use > 0 && MH.falta > 0) meta = Math.round(meta + use * meta / MH.falta);
+    const falta = Math.max(0, meta - vend);
     box.append(tit('HOJE'));
     const row = el('div', 'ag-row'), kp = (v, l, cls, chave) => { const c = el('div', 'ag-k'); const q = ajudaQ(chave); if (q) c.append(q); c.append(el('div', 'v ' + (cls || ''), v), el('div', 'l', l)); row.append(c); };
     kp(rs(vend).replace(/,\d\d$/, ''), 'vendido', '', 'vendido');
