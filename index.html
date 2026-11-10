@@ -220,6 +220,17 @@ html, body, .wrap, #det { overscroll-behavior-y: contain; }
 .ptr { position:fixed; top:0; left:50%; transform:translate(-50%,-50px); z-index:9500; width:38px; height:38px; border-radius:50%; background:var(--panel); box-shadow:0 2px 10px rgba(0,0,0,.18); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .15s; pointer-events:none; font-weight:700; color:var(--accent); }
 .ptr.on, .ptr.gira { opacity:1; } .ptr.pronto span { transform:rotate(180deg); } .ptr span { transition:transform .15s; display:inline-block; } .ptr.gira { transform:translate(-50%, 14px); transition:transform .2s, opacity .2s; } .ptr.gira span { animation:ptrgira .8s linear infinite; } .ptr.gira span::before { content:''; }
 @keyframes ptrgira { to { transform:rotate(360deg); } }
+.pde-hero { background:linear-gradient(150deg,var(--accent),#7a64a0); color:#fff; text-align:center; } .pde-hero .sm { color:#eee; } .pde-hero .pt { font-size:46px; font-weight:800; line-height:1.05; } .pde-hero .pr { font-size:22px; font-weight:700; margin-top:2px; }
+.pde-bar { height:10px; border-radius:6px; background:rgba(255,255,255,.25); position:relative; margin:12px 0 4px; } .pde-bar i { display:block; height:100%; border-radius:6px; background:#ffd36b; } .pde-bar b { position:absolute; top:-4px; width:2px; height:18px; background:#fff; opacity:.8; }
+.pde-marks { display:flex; justify-content:space-between; font-size:10px; opacity:.9; padding-left:70px; }
+.pde-dica { display:flex; gap:10px; padding:10px; border-radius:12px; background:color-mix(in srgb, var(--accent) 8%, var(--panel)); margin-bottom:8px; align-items:flex-start; } .pde-dica .ic { font-size:22px; } .pde-dica .gan { margin-left:auto; text-align:right; white-space:nowrap; font-weight:700; color:#1e7a46; } .pde-dica .gan small { display:block; font-weight:500; color:var(--muted); }
+.pde-pil { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--line); } .pde-pil > div { text-align:left; } .pde-pil .n { font-weight:600; } .pde-pil .v { font-weight:700; white-space:nowrap; } .pde-pil .mini { height:6px; background:var(--line); border-radius:4px; margin-top:4px; overflow:hidden; } .pde-pil .mini i { display:block; height:100%; background:var(--accent); }
+.pde-ind { display:grid; grid-template-columns:1fr auto; gap:2px 10px; font-size:13px; padding:7px 0; border-bottom:1px dashed var(--line); } .pde-ind .sm { grid-column:1; } .pde-ind b { grid-column:2; grid-row:1 / span 2; align-self:center; text-align:right; }
+.pde-sl { margin:10px 0; } .pde-sl label { display:flex; justify-content:space-between; font-size:13px; } .pde-sl label b { color:var(--accent); } .pde-sl input { width:100%; accent-color:var(--accent); }
+.pde-res { position:sticky; bottom:0; background:var(--accent); color:#fff; border-radius:14px; padding:12px; display:flex; justify-content:space-between; align-items:center; margin-top:8px; } .pde-res .pt { font-size:28px; font-weight:800; } .pde-res .pr { font-size:20px; font-weight:800; } .pde-res .sm { color:#ddd; }
+.pde-seg { display:flex; gap:4px; background:var(--panel); border-radius:12px; padding:3px; margin:8px 0 10px; } .pde-seg button { flex:1; border:0; background:none; padding:8px; border-radius:10px; font:inherit; font-size:13px; } .pde-seg button.on { background:var(--accent); color:#fff; font-weight:600; }
+.pde-t { width:100%; border-collapse:collapse; font-size:13px; } .pde-t td, .pde-t th { padding:8px 4px; border-bottom:1px solid var(--line); text-align:left; } .pde-t th { color:var(--muted); font-weight:600; } .pde-t .r { text-align:right; }
+.pde-t .tag { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; } .tag.t0 { background:#f3e8e8; color:#b3261e; } .tag.t2 { background:#e7f4ec; color:#1e7a46; } .tag.t4 { background:#fff3d6; color:#8a6200; }
 .fin-pc { border-top:1px solid var(--line); margin-top:8px; padding-top:4px; } .fin-pc select, .fin-pc input[type=month] { width:100%; max-width:100%; min-width:0; text-overflow:ellipsis; border:1px solid var(--line); border-radius:10px; padding:8px; font:inherit; background:var(--panel); box-sizing:border-box; } .fin-pc label { display:block; margin:10px 0; } .fin-pc .btn { width:100%; }
 .mu-eu { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 12px; margin:0 0 10px; font:inherit; color:var(--fg); cursor:pointer; } .mu-eu b { display:block; font-size:14.5px; } .mu-eu span { font-size:12px; color:var(--muted); } .mu-eu i { margin-left:auto; font-style:normal; font-size:22px; color:var(--muted); } .mu-eu .av { box-shadow:0 0 0 2px #fff, 0 0 0 4px #e8862a; }
 .bp-sub { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin:0 0 10px; } .bp-sub button { flex:none; border:0; background:var(--accentbg); color:var(--accent); border-radius:10px; padding:6px 10px; font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; } .bp-sub button.on { background:#e8862a; color:#fff; }
@@ -2040,6 +2051,101 @@ function rrCombinados(r) {
   });
 }
 // ---------- cashback da cliente: consulta rápida no balcão ----------
+// ---------- 🏆 PDE · Programa de Desempenho Extraordinário ----------
+const PDE = { mes: '', loja: '', sub: 'mes', sel: null, r: null };
+const pdeMesAtual = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const PDE_NOME = { mg: 'Meta geral', on: 'Meta online', iri: 'IRI (cashback)', pa: 'PA (peças por atendimento)', tkm: 'Ticket médio', fg: '🚀 Foguetes (meta do dia)', rg: 'Regularidade online' };
+const pdeFx = (fx, v) => { if (v == null || !isFinite(v)) return 0; let p = null; fx.forEach((f) => { if (v >= f[0] - 1e-9) p = f[1]; }); return p == null ? 0 : p; };
+function pdeVals(c, cfg) { const pct = (x) => x == null ? null : x * 100; return { mg: pct(c.pctRitmo), on: c.metaOn ? pct(c.pctOnRitmo) || 0 : null, iri: c.iri, pa: c.pa, tkm: c.tkm, fg: c.fgDias ? c.fgHit / c.fgDias * 100 : 0, rg: c.fgDias ? c.rgDias / c.fgDias * 100 : 0 }; }
+function pdeCalc(v, cfg, adv) {
+  const F = cfg.faixas, P = cfg.pesos, M = cfg.max, pts = {}; Object.keys(PDE_NOME).forEach((k) => { pts[k] = k === 'mg' ? (v.mg != null && v.mg >= F.mg[0][0] - 1e-9 ? pdeFx(F.mg, v.mg) : 0) : pdeFx(F[k], v[k]); });
+  const des = adv ? 'advertência ativa' : (v.mg == null || v.mg < F.mg[0][0] - 1e-9) ? 'abaixo de ' + F.mg[0][0] + '% da meta' : '';
+  const fin = (pts.mg + pts.on + pts.iri) / M.fin * P.fin, ef = (pts.pa + pts.tkm) / M.ef * P.ef, ex = (pts.fg + pts.rg) / M.ex * P.ex, t = fin + ef + ex;
+  return { pts: pts, fin: fin, ef: ef, ex: ex, t: t, des: des, premio: des ? 0 : pdePremio(t, cfg) };
+}
+const pdePremio = (t, cfg) => { let v = 0; cfg.premios.forEach((p) => { if (t >= p[0] - 1e-9) v = p[1]; }); return v; };
+const n1p = (x) => (Math.round(x * 10) / 10).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const pdeFmt = (k, x) => x == null ? '—' : k === 'tkm' ? rs(x) : k === 'pa' || k === 'iri' ? (Math.round(x * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : Math.round(x) + '%';
+function abrirPde() {
+  PDE.mes = PDE.mes || pdeMesAtual(); PDE.sel = null; PDE.sub = 'mes'; if (!PDE.loja) PDE.loja = S.cargo === 'ADMIN' ? 'TODAS' : (S.lojas[0] || '');
+  abrirDet('🏆 PDE', (b) => { b.append(el('div', 'sub', 'Carregando o PDE…')); pdeCarregar(b); });
+}
+function pdeCarregar(b) {
+  const tok = Date.now(); PDE.tok = tok; const erro = (e) => b.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e)));
+  if (PDE.loja !== 'TODAS') { b.replaceChildren(el('div', 'sub', 'Calculando…')); rodar('pde', [S.token, PDE.loja, PDE.mes], (r) => { if (PDE.tok !== tok) return; PDE.r = r; pdeDesenhar(b); }, erro); return; }
+  const ls = S.lojas.slice(); let tot = null; const prox = (i) => { if (PDE.tok !== tok) return; if (i >= ls.length) { PDE.r = tot; pdeDesenhar(b); return; } b.replaceChildren(el('div', 'sub', 'Calculando o PDE da rede: ' + ls[i] + ' (' + (i + 1) + '/' + ls.length + ')…'));
+    rodar('pde', [S.token, ls[i], PDE.mes], (r) => { if (!tot) tot = r; else { tot.consultoras = tot.consultoras.concat(r.consultoras); tot.avisos = tot.avisos.concat(r.avisos); } prox(i + 1); }, (e) => { if (!tot) { erro(e); return; } tot.avisos.push(ls[i] + ': ' + ((e && e.message) || e)); prox(i + 1); }); };
+  prox(0);
+}
+function pdeTopo(b, r) {
+  const ml = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'], mesL = (m) => ml[+m.slice(5, 7) - 1] + '/' + m.slice(2, 4), ant = (() => { const y = +PDE.mes.slice(0, 4), m = +PDE.mes.slice(5, 7); return m === 1 ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0'); })(), atual = pdeMesAtual();
+  const ch = el('div', 'chips'); [[ant, '‹ ' + mesL(ant)], [PDE.mes, mesL(PDE.mes) + (PDE.mes === atual ? ' · atual' : '')]].concat(PDE.mes < atual ? [[atual, 'atual ›']] : []).forEach(([m, t]) => { const x = el('button', m === PDE.mes ? 'on' : '', t); x.addEventListener('click', () => { if (m === PDE.mes) return; PDE.mes = m; PDE.sel = null; pdeCarregar(b); }); ch.append(x); }); b.append(ch);
+  if (r.chefe && !PDE.sel) { const cl = el('div', 'chips'); (S.cargo === 'ADMIN' ? ['TODAS'] : []).concat(S.lojas).forEach((l) => { const x = el('button', l === PDE.loja ? 'on' : '', l === 'TODAS' ? 'Rede' : l); x.addEventListener('click', () => { PDE.loja = l; pdeCarregar(b); }); cl.append(x); }); b.append(cl); }
+}
+function pdeDesenhar(b) {
+  const r = PDE.r; b.replaceChildren(); pdeTopo(b, r); (r.avisos || []).forEach((a) => b.append(el('div', 'aviso-meta', '⚠️ ' + a)));
+  if (!r.chefe || PDE.sel) { const c = PDE.sel || r.consultoras[0]; if (!c) { b.append(el('div', 'vazio', 'Sem meta cadastrada para você neste mês.')); return; } pdeDetalhe(b, r, c); return; }
+  const lista = r.consultoras.map((c) => ({ c: c, k: pdeCalc(pdeVals(c, r.cfg), r.cfg, c.adv) })).sort((a, b2) => (b2.k.des ? -1 : b2.k.t) - (a.k.des ? -1 : a.k.t));
+  const tot = lista.reduce((a, x) => a + x.k.premio, 0), dentro = lista.filter((x) => x.k.premio > 0).length;
+  const c1 = el('div', 'card'); c1.append(el('h3', '', r.encerrado ? 'Resultado do mês' : 'Previsão de premiação · no ritmo de hoje'), el('div', 'sm', lista.length + ' consultora(s) · ' + dentro + ' na premiação · total ' + (r.encerrado ? 'a pagar ' : 'previsto ') + rs(tot) + (r.encerrado ? ' · pagamento ' + r.cfg.pagamento : ''))); b.append(c1);
+  const c2 = el('div', 'card'), tb = el('table', 'pde-t'), hd = el('tr'); ['Consultora', 'Meta', 'Pontos', 'Prêmio'].forEach((t, i) => hd.append(el('th', i ? 'r' : '', t))); tb.append(hd);
+  lista.forEach(({ c, k }) => { const tr = el('tr'); tr.append(el('td', '', c.primeiro + (PDE.loja === 'TODAS' ? ' · ' + c.loja : '')), el('td', 'r', c.pctRitmo != null ? Math.round(c.pctRitmo * 100) + '%' : '—'), el('td', 'r', k.des ? '—' : n1p(k.t)));
+    const tg = el('span', 'tag ' + (k.premio ? (k.premio >= 450 ? 't4' : 't2') : 't0'), k.premio ? rs(k.premio) : k.des ? (c.adv ? 'advertência' : 'abaixo da meta') : 'R$ 0'); const td = el('td', 'r'); td.append(tg); tr.append(td);
+    tr.style.cursor = 'pointer'; tr.addEventListener('click', () => { PDE.sel = c; PDE.sub = 'mes'; pdeDesenhar(b); }); tb.append(tr); });
+  c2.append(tb, el('div', 'sm', 'Toque numa consultora para ver os indicadores, o que ela precisa melhorar e simular.')); b.append(c2);
+  if (lista.length > 1) { const c3 = el('div', 'card'); c3.append(el('h3', '', 'Onde a equipe mais perde pontos'));
+    const perda = Object.keys(PDE_NOME).filter((x) => x !== 'mg').map((x) => { const mx = Math.max(...r.cfg.faixas[x].map((f) => f[1])), w = x === 'mg' || x === 'on' || x === 'iri' ? r.cfg.pesos.fin / r.cfg.max.fin : x === 'pa' || x === 'tkm' ? r.cfg.pesos.ef / r.cfg.max.ef : r.cfg.pesos.ex / r.cfg.max.ex; return { x: x, p: lista.reduce((a, y) => a + (mx - y.k.pts[x]) * w, 0) / lista.length }; }).sort((a, b2) => b2.p - a.p).slice(0, 3);
+    perda.forEach((p) => { const d = el('div', 'pde-ind'); d.append(el('span', '', PDE_NOME[p.x]), el('b', '', '−' + n1p(p.p) + ' pts em média')); c3.append(d); }); b.append(c3); }
+  pdeRegras(b, r, true);
+}
+function pdeDetalhe(b, r, c) {
+  if (r.chefe) { const v = el('button', 'btn sm', '‹ Voltar ao ranking'); v.addEventListener('click', () => { PDE.sel = null; pdeDesenhar(b); }); b.append(v); }
+  const seg = el('div', 'seg pde-seg'); [['mes', 'Mês'], ['sim', 'Simular'], ['regras', 'Regras']].forEach(([k, t]) => { const x = el('button', PDE.sub === k ? 'on' : '', t); x.addEventListener('click', () => { PDE.sub = k; pdeDesenhar(b); }); seg.append(x); }); b.append(seg);
+  const V = pdeVals(c, r.cfg), K = pdeCalc(V, r.cfg, c.adv);
+  if (PDE.sub === 'regras') { pdeRegras(b, r, false); return; }
+  if (PDE.sub === 'sim') { pdeSim(b, r, c, V); return; }
+  const h = el('div', 'card pde-hero'), prox = r.cfg.premios.map((p) => p[0]).find((x) => x > K.t + 1e-9);
+  h.append(el('div', 'sm', (r.chefe ? c.primeiro + ' · ' : '') + (r.encerrado ? 'Resultado do mês' : 'Se o mês fechasse no ritmo de hoje')), el('div', 'pt', K.des ? '—' : n1p(K.t)), el('div', 'sm', K.des ? 'fora da premiação: ' + K.des : 'pontos'), el('div', 'pr', rs(K.premio)));
+  if (!K.des) h.append(el('div', 'sm', prox ? 'faltam ' + n1p(prox - K.t) + ' ponto(s) para ' + rs(pdePremio(prox, r.cfg)) : 'prêmio máximo! 🎉'));
+  const bar = el('div', 'pde-bar'), fi = el('i'); fi.style.width = Math.min(100, (K.des ? 0 : K.t) / 105 * 100) + '%'; bar.append(fi); r.cfg.premios.forEach((p) => { const m = el('b'); m.style.left = p[0] / 105 * 100 + '%'; bar.append(m); }); h.append(bar);
+  const mk = el('div', 'pde-marks'); r.cfg.premios.forEach((p) => mk.append(el('span', '', p[0] + ' · ' + rs(p[1]).replace(',00', '')))); h.append(mk); b.append(h);
+  if (!r.encerrado) { const dc = el('div', 'card'); dc.append(el('h3', '', '💡 O que mais vale a pena agora')); pdeDicas(c, V, K, r).forEach((d) => { const w = el('div', 'pde-dica'), t = el('div'); t.append(el('b', '', d.t), el('div', 'sm', d.como)); const g = el('div', 'gan', d.g); if (d.p) g.append(el('small', '', d.p)); w.append(el('div', 'ic', d.ic), t, g); dc.append(w); }); b.append(dc); }
+  const pc = el('div', 'card'); pc.append(el('h3', '', 'Pilares')); [['💰 Resultado financeiro', K.fin, r.cfg.pesos.fin], ['⚙️ Eficiência', K.ef, r.cfg.pesos.ef], ['📈 Expansão e constância', K.ex, r.cfg.pesos.ex]].forEach(([n, v, m]) => { const d = el('div', 'pde-pil'), l = el('div'); l.style.flex = '1'; const mi = el('div', 'mini'), i = el('i'); i.style.width = Math.max(0, v / m * 100) + '%'; mi.append(i); l.append(el('div', 'n', n), mi); d.append(l, el('div', 'v', n1p(v) + ' / ' + m)); pc.append(d); }); b.append(pc);
+  const ic = el('div', 'card'); ic.append(el('h3', '', 'Indicadores'));
+  const agora = { mg: rs(c.venda) + ' de ' + rs(c.meta) + (r.encerrado ? '' : ' · ritmo'), on: c.metaOn ? rs(c.online || 0) + ' de ' + rs(c.metaOn) : 'sem meta online', iri: c.iriSem ? 'loja sem API' : c.iriB ? rs(c.iriL) + ' ÷ ' + rs(c.iriB) : 'sem cashback usado', pa: 'peças ÷ vendas', tkm: 'valor ÷ vendas', fg: c.fgHit + ' de ' + c.fgDias + ' dias', rg: c.rgDias + ' de ' + c.fgDias + ' dias' };
+  Object.keys(PDE_NOME).forEach((k) => { const d = el('div', 'pde-ind'); d.append(el('span', '', PDE_NOME[k]), el('span', 'sm', agora[k]), el('b', '', pdeFmt(k, V[k]) + ' · ' + K.pts[k] + ' pts')); ic.append(d); }); b.append(ic);
+  const al = el('div', 'aviso-meta', '⚠️ Para participar: bater ' + r.cfg.faixas.mg[0][0] + '% da meta do mês e não ter advertência ativa.' + (V.mg != null ? (r.encerrado ? ' Você fechou em ' : ' No ritmo de hoje você fecha em ') + Math.round(V.mg) + '%' + (V.mg >= r.cfg.faixas.mg[0][0] ? ' ✅' : ' ❌') : '')); b.append(al);
+  if (r.chefe) { const ad = el('label', 'sm'), ck = el('input'); ck.type = 'checkbox'; ck.checked = !!c.adv; ad.append(ck, document.createTextNode(' Advertência disciplinar ativa neste mês (tira da premiação)')); ck.addEventListener('change', () => rodar('pdeAdvertencia', [S.token, PDE.mes, c.loja, c.nome, ck.checked], () => { c.adv = ck.checked; toast('Salvo'); pdeDesenhar(b); })); const cw = el('div', 'card'); cw.append(ad); b.append(cw); }
+}
+function pdeDicas(c, V, K, r) {
+  const out = [], cfg = r.cfg, F = cfg.faixas;
+  if (K.des && !c.adv) { const falta = ((F.mg[0][0] / 100) - (V.mg || 0) / 100) * (c.meta || 0); return [{ ic: '⚠️', t: 'Bater ' + F.mg[0][0] + '% da meta', como: 'no ritmo de hoje faltam ' + rs(Math.max(0, falta)) + ' até o fim do mês', g: 'entra no PDE', p: '' }]; }
+  if (K.des) return [{ ic: '⚠️', t: 'Advertência ativa', como: 'neste mês não participa da premiação', g: '', p: '' }];
+  const como = { mg: (b2) => 'vender mais ' + rs(Math.max(0, (b2 - V.mg) / 100 * c.meta)) + ' no mês', on: (b2) => 'mais ' + rs(Math.max(0, (b2 - (V.on || 0)) / 100 * (c.metaOn || 0))) + ' no online', iri: (b2) => 'quando a cliente usar o cashback, vender ' + String(b2).replace('.', ',') + 'x o valor dele', pa: (b2) => 'subir para ' + String(b2).replace('.', ',') + ' peças por atendimento', tkm: (b2) => 'ticket médio de ' + rs(b2), fg: (b2) => 'bater a meta do dia em ' + b2 + '% dos dias trabalhados', rg: (b2) => 'vender online em ' + b2 + '% dos dias trabalhados' };
+  Object.keys(PDE_NOME).forEach((k) => { if (k === 'on' && !c.metaOn) return; const nx = F[k].map((f) => f[0]).find((x) => x > (V[k] || 0) + 1e-9); if (nx == null) return; const v2 = Object.assign({}, V, { [k]: nx }), k2 = pdeCalc(v2, cfg, false); if (k2.t - K.t < 0.05) return;
+    out.push({ ic: k2.premio > K.premio ? '🎯' : '⬆️', t: PDE_NOME[k], como: como[k](nx), g: '+' + n1p(k2.t - K.t) + ' pts', p: n1p(k2.t) + ' → ' + rs(k2.premio), ganho: k2.premio - K.premio, dt: k2.t - K.t }); });
+  out.sort((a, b2) => b2.ganho - a.ganho || b2.dt - a.dt); const top = out.slice(0, 4);
+  if (top.length >= 2) { const v3 = Object.assign({}, V); const ks = []; out.slice(0, 3).forEach((d) => { const k = Object.keys(PDE_NOME).find((x) => PDE_NOME[x] === d.t); const nx = F[k].map((f) => f[0]).find((x) => x > (V[k] || 0) + 1e-9); v3[k] = nx; ks.push(PDE_NOME[k].replace(/ \(.*/, '')); }); const k3 = pdeCalc(v3, cfg, false); top.push({ ic: '🚀', t: 'Juntando ' + ks.join(' + '), como: 'cada um na próxima faixa', g: n1p(k3.t) + ' pts', p: rs(k3.premio) }); }
+  if (!top.length) top.push({ ic: '🏆', t: 'Tudo na faixa máxima', como: 'continue assim!', g: '', p: '' });
+  return top;
+}
+function pdeSim(b, r, c, V0) {
+  const RG = { mg: [90, 150, 1], on: [0, 150, 1], iri: [4, 15, 0.1], pa: [1.5, 2.8, 0.01], tkm: [150, 350, 1], fg: [0, 100, 1], rg: [0, 100, 1] }, S2 = {}; Object.keys(RG).forEach((k) => { S2[k] = V0[k] == null ? RG[k][0] : Math.round(V0[k] * 100) / 100; });
+  const cd = el('div', 'card'), res = el('div', 'pde-res'), pt = el('div', 'pt'), pr = el('div', 'pr'), pil = el('div', 'sm');
+  const upd = () => { const k = pdeCalc(S2, r.cfg, c.adv); pt.textContent = k.des ? '—' : n1p(k.t); pr.textContent = k.des ? k.des : rs(k.premio); pil.textContent = k.des ? '' : 'Fin ' + n1p(k.fin) + ' · Efic ' + n1p(k.ef) + ' · Exp ' + n1p(k.ex); Object.keys(RG).forEach((x) => { lbs[x].textContent = pdeFmt(x, S2[x]) + ' · ' + k.pts[x] + ' pts'; }); };
+  const lbs = {}, ins = {}; Object.keys(RG).forEach((k) => { const w = el('div', 'pde-sl'), lb = el('label'), v = el('b'); lb.append(document.createTextNode(PDE_NOME[k]), v); lbs[k] = v; const i = el('input'); i.type = 'range'; i.min = RG[k][0]; i.max = RG[k][1]; i.step = RG[k][2]; i.value = S2[k]; ins[k] = i; i.addEventListener('input', () => { S2[k] = +i.value; upd(); }); w.append(lb, i); cd.append(w); });
+  const vb = el('button', 'btn sm', '↺ Voltar aos números de agora'); vb.addEventListener('click', () => { Object.keys(RG).forEach((k) => { S2[k] = V0[k] == null ? RG[k][0] : Math.round(V0[k] * 100) / 100; ins[k].value = S2[k]; }); upd(); }); cd.append(vb);
+  const l = el('div'); l.append(el('div', 'sm', 'Total'), pt); const rr = el('div'); rr.style.textAlign = 'right'; rr.append(pil, pr); res.append(l, rr);
+  b.append(el('div', 'sm', 'Mexa nos indicadores e veja os pontos e o prêmio. Começa com os números ' + (r.encerrado ? 'finais do mês.' : 'no ritmo de hoje.')), cd, res); upd();
+}
+function pdeRegras(b, r, resumo) {
+  const cfg = r.cfg, c = el('div', 'card'); c.append(el('h3', '', '📜 Regras do PDE'));
+  if (!resumo) { c.append(el('div', 'sm', 'Para participar: ' + cfg.faixas.mg[0][0] + '% da meta do mês e nenhuma advertência ativa. Pilares: Financeiro (meta geral + online + IRI) vale ' + cfg.pesos.fin + ', Eficiência (PA + ticket) vale ' + cfg.pesos.ef + ' e Expansão (foguetes + regularidade online) vale ' + cfg.pesos.ex + '. As faixas valem "a partir de".'));
+    Object.keys(PDE_NOME).forEach((k) => { const d = el('div', 'pde-ind'); d.append(el('span', '', PDE_NOME[k]), el('span', 'sm', cfg.faixas[k].map((f) => (k === 'tkm' ? 'R$' + f[0] : k === 'pa' || k === 'iri' ? String(f[0]).replace('.', ',') : f[0] + '%') + '→' + f[1]).join(' · '))); c.append(d); }); }
+  c.append(el('div', 'fin-lb', 'PRÊMIO (' + cfg.pagamento + ')')); cfg.premios.forEach((p, i) => { const nx = cfg.premios[i + 1]; c.append(el('div', 'sm', p[0] + (nx ? ' a ' + (nx[0] - 0.1).toString().replace('.', ',') : ' ou mais') + ' pontos → ' + rs(p[1]))); });
+  if (r.admin) { const e = el('button', 'btn sm', '✏️ Editar faixas do prêmio'); e.addEventListener('click', () => { const t = prompt('Pontos mínimos = valor, separados por ponto e vírgula:', cfg.premios.map((p) => p[0] + '=' + p[1]).join('; ')); if (t == null) return; const ps = t.split(';').map((x) => x.split('=').map((y) => +String(y).trim().replace(',', '.'))).filter((x) => x.length === 2); rodar('pdeSalvarPremios', [S.token, ps], (c2) => { r.cfg = c2; toast('Faixas salvas'); pdeDesenhar(b.closest('.dbody') || b); }); }); c.append(e); }
+  b.append(c);
+}
 function abrirCashback() {
   abrirDet('💰 Cashback da cliente', (b) => {
     const f = el('div', 'card cb-f'), inp = el('input'); inp.type = 'search'; inp.placeholder = 'Nome, CPF ou celular da cliente'; inp.autocomplete = 'off'; inp.enterKeyHint = 'search';
@@ -2189,18 +2295,18 @@ function abrirContrato(rh) {
 // gerente/admin: "Meus resultados" abre os cards do Início (fora dele, o Início mostra só o menu)
 function verResultados() { mudarAba('ini'); document.body.classList.add('ini-res'); rolarTopo_(); }
 $('i-res-v').addEventListener('click', () => mudarAba('ini'));
-const MENU_TXT = { fin: 'Financeiro', sd: 'Check-up do app', aj: 'Ajuda e conta', cb: 'Cashback', res: 'Resultados e relatórios', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
+const MENU_TXT = { pde: 'PDE · premiação', fin: 'Financeiro', sd: 'Check-up do app', aj: 'Ajuda e conta', cb: 'Cashback', res: 'Resultados e relatórios', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
 const NAV_TXT = { ini: 'Agora', dia: 'Agora', fila: 'Fila', meta: 'Metas', mural: 'Mural', est: 'Estoque', gest: 'Gestão', rh: 'Meu RH' };
 const casaAba_ = () => (chefe() ? 'ini' : S && S.cargo === 'AUXILIAR' ? 'fila' : 'dia');
-function abaVisivel_(k) { if (k === 'sd' || k === 'fin') return !!S && S.cargo === 'ADMIN'; if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
-function irAba_(k) { if (k === 'sd') { abrirCheckup(); return; } if (k === 'fin') { abrirFinanceiro(); return; } if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
+function abaVisivel_(k) { if (k === 'pde') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0; if (k === 'sd' || k === 'fin') return !!S && S.cargo === 'ADMIN'; if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
+function irAba_(k) { if (k === 'pde') { abrirPde(); return; } if (k === 'sd') { abrirCheckup(); return; } if (k === 'fin') { abrirFinanceiro(); return; } if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
 function menuSub_(k) {
   const rhN = (typeof RH !== 'undefined' && RH && RH.novos) || 0;
   if (k === 'rh') return rhN ? [rhN + (rhN === 1 ? ' novo para ver' : ' novos para ver'), 'al', rhN] : ['holerite, ponto, férias', ''];
   if (k === 'fila') { if (E && E.fila && S) { const p = chefe() ? null : E.fila.find((x) => x.usuario === S.usuario); if (p && p.pos) return [p.pos === 1 ? 'é a sua vez!' : 'você é a ' + p.pos + 'ª da vez', p.pos === 1 ? 'ok' : '']; return [E.fila.length ? E.fila.length + ' na fila' : 'ninguém na fila', '']; } return ['quem atende agora', '']; }
   if (k === 'res') { const R = typeof INI !== 'undefined' && INI && INI.rede; if (R && R.meta && R.pct != null) return [pc(R.pct) + ' da meta' + (R.fechaPct != null && R.fechaPct < 1 ? ' · no ritmo ' + pc(R.fechaPct) : ''), R.pct >= 1 ? 'ok' : (R.fechaPct != null && R.fechaPct < 1 ? 'al' : '')]; return ['vendas, metas e equipe', '']; }
   if (k === 'meta') { if (MH && MH.batida) return ['meta do mês batida!', 'ok']; if (MH && !MH.loja && MH.pct != null) return [pc(MH.pct) + ' da meta do mês', '']; return ['metas do mês', '']; }
-  const fixo = { fin: ['DRE, despesas, extratos e recebíveis', ''], sd: ['saúde do sistema: limites, rotinas e Drive', ''], aj: ['tour, senha, notificações e sair', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
+  const fixo = { pde: [chefe() ? 'pontos e prêmios da equipe' : 'seus pontos e prêmio do mês', ''], fin: ['DRE, despesas, extratos e recebíveis', ''], sd: ['saúde do sistema: limites, rotinas e Drive', ''], aj: ['tour, senha, notificações e sair', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
   return fixo[k] || ['', ''];
 }
 // 🩺 check-up do app (ADMIN): roda agora e mostra o que está bem e o que precisa de atenção
@@ -2229,7 +2335,7 @@ function desenharMenu() {
   if (chefe()) { const v = $('v-ini'), ag = $('agora'); if (ag && ag.parentNode !== v) v.prepend(ag); if (ag) { if (ag.nextElementSibling !== m) ag.after(m); } else if (m.parentNode !== v || v.firstElementChild !== m) v.prepend(m); }
   else { const ag = $('agora'), vd = $('v-dia'); if (ag && ag.parentNode !== vd) vd.prepend(ag); const ref = $('eu-meta'); if (ref && ref.parentNode && m.previousElementSibling !== ref) ref.after(m); }
   try { desenharAgora(); segDuplo_(); } catch (e) {}
-  const ks = ['res', 'dia', 'ini', 'fila', 'cb', 'meta', 'est', 'mural', 'apr', 'gest', 'fin', 'prod', 'rel', 'rh', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k) && !(chefe() && (k === 'rel' || (k === 'prod' && abaVisivel_('est')))));
+  const ks = ['res', 'dia', 'ini', 'fila', 'cb', 'meta', 'pde', 'est', 'mural', 'apr', 'gest', 'fin', 'prod', 'rel', 'rh', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k) && !(chefe() && (k === 'rel' || (k === 'prod' && abaVisivel_('est')))));
   m.replaceChildren(...ks.map((k) => {
     const [sub, cls, n] = menuSub_(k), b = el('button', 'mt'); b.type = 'button'; b.id = 'mt-' + k;
     const ic = el('span', 'mi'); ic.append(icoSvg(k)); const tx = el('span'); tx.append(el('b', '', MENU_TXT[k])); const sm = el('small', cls, sub); tx.append(sm);
@@ -6574,6 +6680,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && T)
     rh: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     aj: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/>',
     sd: '<path d="M3 12h4l2-5 4 10 2-5h6"/>',
+    pde: '<path d="M8 4h8v4a4 4 0 0 1-8 0z"/><path d="M8 6H5c0 2 1.3 3.5 3 4M16 6h3c0 2-1.3 3.5-3 4M12 12v4M9 20h6M10 16h4v4h-4z"/>',
     fin: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M8 6V4h8v2M3 11h18M12 10v3"/>',
     cb: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .9 3 2-1.3 2-3 2c-1.4 0-2.6-.6-3-1.6M12 6.5V8M12 16v1.5"/>',
   };
@@ -6594,7 +6701,7 @@ setTimeout(tirarSplash, 6000);
 
 // ---------- 🔄 puxar para atualizar: recarrega só a tela aberta (não volta para o início) ----------
 let DET_PEND = null;
-['abrirFinanceiro', 'abrirIndicadores', 'abrirAvaliacoes', 'abrirConferencia', 'abrirReferencias', 'abrirMeuRH', 'abrirCheckup', 'abrirReuniao', 'abrirReposicao', 'abrirEntradas', 'abrirHistoricoFila', 'abrirEstoqueFila', 'abrirMetaFila', 'abrirAcompanhamento', 'abrirPerfil', 'abrirFicha', 'abrirFechamento', 'abrirCashback'].forEach((n) => {
+['abrirFinanceiro', 'abrirIndicadores', 'abrirAvaliacoes', 'abrirConferencia', 'abrirReferencias', 'abrirMeuRH', 'abrirCheckup', 'abrirReuniao', 'abrirReposicao', 'abrirEntradas', 'abrirHistoricoFila', 'abrirEstoqueFila', 'abrirMetaFila', 'abrirAcompanhamento', 'abrirPerfil', 'abrirFicha', 'abrirFechamento', 'abrirCashback', 'abrirPde'].forEach((n) => {
   const f = window[n]; if (typeof f !== 'function') return; window[n] = function () { const a = [].slice.call(arguments); let ok = true; try { JSON.stringify(a); } catch (e) { ok = false; } DET_PEND = { n: n, a: ok && a.every((x) => x == null || typeof x !== 'object' || Array.isArray(x)) ? a : [], t: Date.now() }; return f.apply(this, arguments); };
 });
 function atualizarTela() {
