@@ -3739,7 +3739,7 @@ function pvPecasUI(b) {
 function pvCobrarTap(b, p) {
   const v = Math.round(p.total * 100), ops = [['Débito', 'pri', () => ir('debit', 1, v)], ['Crédito à vista', '', () => ir('credit', 1, v)]];
   [2, 3, 4, 5, 6].forEach((n) => { if (v / n >= 100) ops.push(['Crédito ' + n + 'x de ' + rs(p.total / n), '', () => ir('credit', n, v)]); });
-  if (S.cargo === 'ADMIN') ops.push(['🧪 Teste: R$ 1,00 no débito', '', () => ir('debit', 1, 100)]);
+  if (S.cargo === 'ADMIN') ops.push(['🧪 Teste: R$ 1,00 no crédito', '', () => ir('credit', 1, 100)], ['🧪 Teste: R$ 1,00 no débito', '', () => ir('debit', 1, 100)]);
   function ir(met, n, cent) {
     const q = { amount: cent, payment_method: met, order_id: p.tk, result_url: p.tapVolta, app_client_referrer: 'amorata-equipe' }; if (met === 'credit') q.installments = n; if (/iPhone|iPad|iPod/.test(navigator.userAgent)) q.af_force_deeplink = 'true';
     const url = 'infinitepaydash://infinitetap-app?' + Object.keys(q).map((k) => k + '=' + encodeURIComponent(q[k])).join('&');
