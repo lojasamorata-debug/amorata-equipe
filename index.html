@@ -3757,6 +3757,26 @@ function pvCobrarTap(b, p) {
   escolher('Cobrar ' + rs(p.total) + ' · ' + p.num, 'A cliente aproxima o cartão no seu celular. Ao terminar, a pré-venda fica paga sozinha.', ops);
 }
 // voltou da InfinitePay: confere se a pré-venda já ficou paga
+// abre o WhatsApp direto no app (no app instalado no iPhone, o wa.me abria uma tela em branco do navegador)
+function abrirWhats(fone, tx) {
+  const n = '55' + String(fone || '').replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, ''), t0 = Date.now();
+  window.location.href = 'whatsapp://send?phone=' + n + '&text=' + encodeURIComponent(tx);
+  setTimeout(() => { if (!document.hidden && Date.now() - t0 < 3000) window.open('https://wa.me/' + n + '?text=' + encodeURIComponent(tx), '_blank'); }, 1500);
+}
+// 🔔 enquanto espera a cliente pagar o link: confere a cada 10 s e avisa na tela quando cair
+function pvVigiar(b, p) {
+  clearInterval(pvVigiar.t); const ini = Date.now();
+  pvVigiar.t = setInterval(() => { if (Date.now() - ini > 30 * 60000) { clearInterval(pvVigiar.t); return; } if (document.hidden) return;
+    google.script.run.withSuccessHandler((np) => { if (!np || np.status !== 'paga') return; clearInterval(pvVigiar.t); pvCobrarTap.esperando = null; pvPagou(np); if (b && b.isConnected) pvCaixaUI(b, np); }).withFailureHandler(() => {}).pvVer(S.token, p.id);
+  }, 10000);
+}
+function pvPagou(p) {
+  try { navigator.vibrate && navigator.vibrate([200, 100, 200, 100, 400]); } catch (e) {}
+  try { const ac = new (window.AudioContext || window.webkitAudioContext)(); [0, 0.18, 0.36].forEach((t, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = [660, 880, 1320][i]; g.gain.setValueAtTime(0.2, ac.currentTime + t); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.35); o.connect(g); g.connect(ac.destination); o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.4); }); } catch (e) {}
+  const ant = $('festa'); if (ant) ant.remove(); const f = el('div'); f.id = 'festa'; const fc = el('div', 'fc');
+  fc.append(el('div', '', '💰'), el('h2', '', 'Pagamento aprovado!'), el('div', 'sub', (p.cliente ? primeiroNome(p.cliente) + ' pagou a ' : 'A cliente pagou a ') + p.num + ' · ' + rs(p.total) + (p.pagamento ? ' · ' + String(p.pagamento).replace(/ · NSU.*$/, '') : '') + '. Pode separar as peças!'));
+  fc.firstChild.style.cssText = 'font-size:64px'; const ok = el('button', 'btn pri big', 'Oba! 💜'); ok.addEventListener('click', () => f.remove()); fc.append(ok); f.append(fc); f.addEventListener('click', (ev) => { if (ev.target === f) f.remove(); }); document.body.append(f);
+}
 document.addEventListener('visibilitychange', () => { const w = pvCobrarTap.esperando; if (document.hidden || !w || Date.now() - w.t > 15 * 60000) return;
   const conf = (n) => rodar('pvLista', [S.token, PVD.loja, ''], (r) => { const p = r.lista.find((x) => x.id === w.id); if (!p) return; if (p.status === 'paga') { pvCobrarTap.esperando = null; toast('✅ Pagamento aprovado!'); if (w.b && w.b.isConnected) pvCaixaUI(w.b, p); } else if (n < 4) setTimeout(() => conf(n + 1), 4000); });
   setTimeout(() => conf(0), 1500); });
@@ -3784,7 +3804,7 @@ function pvPixUI(p, b) {
   cp.addEventListener('click', () => { try { navigator.clipboard.writeText(cod).then(() => toast('Código copiado ✓')); } catch (e) { ta.select(); document.execCommand('copy'); toast('Código copiado ✓'); } });
   wa.addEventListener('click', () => { let fone = String(p.fone || '').replace(/\D/g, ''); if (fone.length < 10) { const n = prompt('Celular da cliente com DDD:', ''); if (n == null) return; fone = String(n).replace(/\D/g, ''); if (fone.length < 10) { toast('Celular inválido.'); return; } p.fone = fone; }
     // só o código na mensagem: a cliente copia a mensagem inteira e cola no banco
-    window.open('https://wa.me/55' + fone.replace(/^55(?=\d{10,11}$)/, '') + '?text=' + encodeURIComponent(cod), '_blank'); });
+    abrirWhats(fone, cod); });
   x.addEventListener('click', () => f.remove()); f.addEventListener('click', (ev) => { if (ev.target === f) f.remove(); });
   const ok = el('button', 'btn big', '✅ O Pix caiu na conta da loja'); ok.addEventListener('click', () => escolher('Confirmar o Pix de ' + rs(p.total) + '?', 'Confira na conta da loja se o Pix caiu antes de confirmar.', [['Sim, o Pix caiu', 'pri', () => rodar('pvPagoManual', [S.token, p.id, 'Pix'], (np) => { f.remove(); toast('Paga ✓'); if (b) pvCaixaUI(b, np); })]]));
   const bts = el('div', 'pv-bts'); bts.append(cp, wa, ok, x);
@@ -3801,7 +3821,8 @@ function pvEnviarLink(b, p, bt) {
   rodar('pvLinkPagamento', [S.token, p.id, fone], (r) => { bt.disabled = false; bt.textContent = '🔗 Reenviar link de pagamento'; p.linkPag = r.url; pvCobrarTap.esperando = { id: p.id, b: b, t: Date.now() };
     const tx = 'Oi, ' + (r.cliente ? primeiroNome(r.cliente) : 'tudo bem') + '! Segue o link para pagamento da sua compra na Amorata (' + r.num + ' · ' + rs(Number(String(r.total).replace(',', '.'))) + '): ' + r.url + '\nPode pagar no Pix ou no cartão' + (r.semJuros ? ' em até ' + r.semJuros + 'x sem juros' : '') + ' 💜';
     fone = String(r.fone || fone).replace(/\D/g, '');
-    if (fone.length >= 10) { window.open('https://wa.me/55' + fone.replace(/^55(?=\d{10,11}$)/, '') + '?text=' + encodeURIComponent(tx), '_blank'); return; }
+    pvVigiar(b, p);
+    if (fone.length >= 10) { abrirWhats(fone, tx); return; }
     if (navigator.share) { navigator.share({ text: tx }).catch(() => {}); return; }
     try { navigator.clipboard.writeText(tx); toast('Link copiado: cole no WhatsApp da cliente.'); } catch (e) { escolher('Link de pagamento', r.url, []); }
   }, (m) => { bt.disabled = false; bt.textContent = t0; if (/SEM_CELULAR/.test(String(m)) && pedir()) pvEnviarLink(b, p, bt); });
@@ -3822,6 +3843,7 @@ function pvCaixaUI(b, p) {
   const top = [];
   if (p.cod) { const c = etapa(1, p.canal === 'online' ? 'Vendedora · online' : 'Vendedora'); c.append(codBarras(p.cod, 2, 64), el('div', 'pv-cod', p.cod + ' · ' + primeiroNome(p.vendedora) + (p.canal === 'online' ? ' ON-LINE' : ''))); top.push(c); }
   if (p.cpf) { const c = etapa(p.cod ? 2 : 1, 'Cliente · CPF'); c.append(codBarras(p.cpf, 2, 64), el('div', 'pv-cod', (p.cliente ? primeiroNome(p.cliente) + ' · ' : '') + p.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') + (p.nova ? ' · NOVA' : ''))); top.push(c); }
+  if (cobrar && p.linkPag) pvVigiar(b, p); else if (!cobrar) clearInterval(pvVigiar.t);
   if (cobrar && p.tk) { const cb = el('div', 'card pv-cobrar'), bw = el('div', 'pv-bts'); cb.append(el('b', '', '📲 Como a cliente vai pagar?'), el('div', 'sub', 'Total ' + rs(p.total) + '. A pré-venda fica paga sozinha no cartão por aproximação e no link.'));
     const tap = el('button', 'btn pri big', '💳 Cartão por aproximação no meu celular'); tap.addEventListener('click', () => pvCobrarTap(b, p));
     const lk = el('button', 'btn big', p.linkPag ? '🔗 Reenviar link de pagamento' : '🔗 Enviar link de pagamento (Pix ou cartão)'); lk.addEventListener('click', () => pvEnviarLink(b, p, lk));
@@ -3830,7 +3852,7 @@ function pvCaixaUI(b, p) {
     bw.append(tap, lk, px); cb.append(bw); b.append(cb); }
   if (p.pagamento && p.status === 'paga') b.append(el('div', 'card pv-pago', '✅ A cliente já pagou (' + p.pagamento + '). Caixa: lance a venda no USE bipando os códigos abaixo e marque "Lançada no USE".'));
   if (p.link && p.status !== 'desistiu' && p.status !== 'cancelada') { const cp = el('div', 'card pv-comp'); cp.append(el('b', '', '🧾 Comprovante de troca digital'), el('div', 'sub', 'A cliente leva no celular: peças e prazo de troca (só nesta loja, ' + (p.prazo || 7) + ' dias). A nota fiscal sai quando o caixa lançar no USE.'));
-    const bw = el('div', 'pv-bts'); if (p.fone) { const wa = el('button', 'btn pri big', '📲 Enviar pelo WhatsApp'); wa.addEventListener('click', () => { const tx = 'Oi, ' + (p.cliente ? primeiroNome(p.cliente) : 'tudo bem') + '! Obrigada pela compra na Amorata 💜\nAqui está o seu comprovante de troca (' + p.num + '): ' + p.link; window.open('https://wa.me/55' + String(p.fone).replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, '') + '?text=' + encodeURIComponent(tx), '_blank'); }); bw.append(wa); }
+    const bw = el('div', 'pv-bts'); if (p.fone) { const wa = el('button', 'btn pri big', '📲 Enviar pelo WhatsApp'); wa.addEventListener('click', () => { const tx = 'Oi, ' + (p.cliente ? primeiroNome(p.cliente) : 'tudo bem') + '! Obrigada pela compra na Amorata 💜\nAqui está o seu comprovante de troca (' + p.num + '): ' + p.link; abrirWhats(p.fone, tx); }); bw.append(wa); }
     const ver = el('button', 'btn big', 'Ver o comprovante'); ver.addEventListener('click', () => window.open(p.link, '_blank')); bw.append(ver); cp.append(bw); b.append(cp); }
   if (cobrar) { const ds = el('button', 'btn big', 'Cliente desistiu'); ds.addEventListener('click', () => escolher('Por que não fechou?', p.num, ['Achou caro', 'Não tinha o tamanho/cor', 'Vai pensar', 'Desistiu do pagamento', 'Outro'].map((m) => [m, '', () => rodar('pvStatus', [S.token, p.id, 'desistiu', m], () => { toast('Registrado.'); pvListaUI(b); })]))); const vt0 = el('button', 'btn big', '← Pré-vendas de hoje'); vt0.addEventListener('click', () => pvListaUI(b)); b.append(ds, vt0); return; }
   top.forEach((c) => b.append(c));
