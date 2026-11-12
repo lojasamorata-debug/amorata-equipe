@@ -3755,10 +3755,12 @@ document.addEventListener('visibilitychange', () => { const w = pvCobrarTap.espe
   setTimeout(() => conf(0), 1500); });
 // 🔗 link de pagamento da InfinitePay (cai na conta da loja da pré-venda); a pré-venda fica paga sozinha quando a cliente pagar
 function pvEnviarLink(b, p, bt) {
+  let fone = String(p.fone || '').replace(/\D/g, '');
+  if (fone.length < 10) { const f = prompt('Celular da cliente com DDD (o link vai direto para o WhatsApp dela):', ''); if (f == null) return; fone = String(f).replace(/\D/g, ''); if (fone.length < 10 || fone.length > 13) { toast('Celular inválido: coloque o DDD e o número.'); return; } p.fone = fone; }
   const t0 = bt.textContent; bt.disabled = true; bt.textContent = 'Gerando o link…';
-  rodar('pvLinkPagamento', [S.token, p.id], (r) => { bt.disabled = false; bt.textContent = '🔗 Reenviar link de pagamento'; p.linkPag = r.url; pvCobrarTap.esperando = { id: p.id, b: b, t: Date.now() };
-    const tx = 'Oi, ' + (r.cliente ? primeiroNome(r.cliente) : 'tudo bem') + '! Segue o link para pagamento da sua compra na Amorata (' + r.num + ' · ' + rs(Number(String(r.total).replace(',', '.'))) + '): ' + r.url + '\nPode pagar no Pix ou no cartão 💜';
-    const fone = String(r.fone || '').replace(/\D/g, '');
+  rodar('pvLinkPagamento', [S.token, p.id, fone], (r) => { bt.disabled = false; bt.textContent = '🔗 Reenviar link de pagamento'; p.linkPag = r.url; pvCobrarTap.esperando = { id: p.id, b: b, t: Date.now() };
+    const tx = 'Oi, ' + (r.cliente ? primeiroNome(r.cliente) : 'tudo bem') + '! Segue o link para pagamento da sua compra na Amorata (' + r.num + ' · ' + rs(Number(String(r.total).replace(',', '.'))) + '): ' + r.url + '\nPode pagar no Pix ou no cartão' + (r.semJuros ? ' em até ' + r.semJuros + 'x sem juros' : '') + ' 💜';
+    fone = String(r.fone || fone).replace(/\D/g, '');
     if (fone.length >= 10) { window.open('https://wa.me/55' + fone.replace(/^55(?=\d{10,11}$)/, '') + '?text=' + encodeURIComponent(tx), '_blank'); return; }
     if (navigator.share) { navigator.share({ text: tx }).catch(() => {}); return; }
     try { navigator.clipboard.writeText(tx); toast('Link copiado: cole no WhatsApp da cliente.'); } catch (e) { escolher('Link de pagamento', r.url, []); }
@@ -3766,8 +3768,9 @@ function pvEnviarLink(b, p, bt) {
 }
 function pvTagsUI(b) {
   rodar('pvTagsCfg', [S.token, null], (r) => { b.replaceChildren(); const c = el('div', 'card'); c.append(el('b', '', '⚙️ InfiniteTag de cada loja'), el('div', 'sub', 'O @ da conta InfinitePay de cada CNPJ (sem o $). O link de pagamento cai na conta da loja da pré-venda.')); const ins = {};
-    r.lojas.forEach((l) => { const w = el('label', 'pv-lb', l), i = el('input'); i.value = r.tags[l] || ''; i.placeholder = 'ex.: amorata-' + l.toLowerCase().split(' ')[0]; w.append(i); c.append(w); ins[l] = i; });
-    const sv = el('button', 'btn pri big', 'Salvar'); sv.addEventListener('click', () => { const o = {}; Object.keys(ins).forEach((l) => { o[l] = ins[l].value; }); rodar('pvTagsCfg', [S.token, o], () => { toast('Salvo ✓'); pvListaUI(b); }); });
+    c.append(el('div', 'sub', 'Chave do Checkout Integrado (começa com inchk_): com ela, a loja assume a taxa em até ' + r.parcelasSemJuros + 'x (a cliente paga sem juros). Crie no app ou na Conta Web da InfinitePay › Configurações do Checkout › Checkout Integrado. Deixe em branco para manter; digite - para apagar.')); const ks = {};
+    r.lojas.forEach((l) => { const w = el('label', 'pv-lb', l), i = el('input'), k = el('input'); i.value = r.tags[l] || ''; i.placeholder = 'InfiniteTag, ex.: amorata-' + l.toLowerCase().split(' ')[0]; k.type = 'password'; k.autocomplete = 'off'; k.placeholder = r.temChave[l] ? '✓ chave cadastrada' : 'chave inchk_… (sem ela, a taxa vai para a cliente)'; k.style.marginTop = '4px'; w.append(i, k); c.append(w); ins[l] = i; ks[l] = k; });
+    const sv = el('button', 'btn pri big', 'Salvar'); sv.addEventListener('click', () => { const o = { chaves: {} }; Object.keys(ins).forEach((l) => { o[l] = ins[l].value; o.chaves[l] = ks[l].value.trim(); }); rodar('pvTagsCfg', [S.token, o], () => { toast('Salvo ✓'); pvListaUI(b); }); });
     const vt = el('button', 'btn big', '← Voltar'); vt.addEventListener('click', () => pvListaUI(b)); c.append(sv, vt); b.append(c); });
 }
 // tela para mostrar no caixa: número, CPF, vendedora e o código de barras de cada peça
