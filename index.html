@@ -3735,6 +3735,8 @@ function pvPecasUI(b) {
     des(); res.replaceChildren(c); };
   const buscar = () => { const t = inp.value.trim(); if (!t) return; res.replaceChildren(el('div', 'sub', 'Buscando…'));
     rodar('estoqueBuscar', [S.token, t, PVD.loja, false, 0], (r) => { res.replaceChildren(); if (r.msg) { res.append(el('div', 'card', r.msg)); return; } if (!r.itens.length) { res.append(el('div', 'card', 'Nenhuma peça com saldo para "' + t + '".')); return; }
+      // leu o código da etiqueta: já sabe a cor e o tamanho, entra direto
+      if (r.skus && r.skus.length === 1) { const k = r.skus[0], ex = PVD.itens.find((i) => i.ref === k.ref && i.cor === k.cor && i.tam === k.tam); if (ex) ex.qt++; else PVD.itens.push({ ref: k.ref, nome: k.nome, cor: k.cor, tam: k.tam, preco: k.preco, qt: 1 }); toast('✓ ' + k.nome + ' · ' + k.cor + ' · ' + k.tam + (k.qt > 0 ? '' : ' (sem saldo no sistema)')); inp.value = ''; desCar(); return; }
       if (r.itens.length === 1) { escolherTam(r.itens[0]); return; } const c = el('div', 'card'); r.itens.slice(0, 15).forEach((m) => { const row = el('div', 'pv-row'), tx = el('div'); tx.append(el('b', '', m.nome), el('div', 'sub', 'ref ' + m.ref + ' · ' + m.total + ' na loja')); row.append(tx, el('b', '', rs(m.preco))); row.addEventListener('click', () => escolherTam(m)); c.append(row); }); res.append(c); }); };
   inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') buscar(); }); inp.addEventListener('search', buscar);
   cam.addEventListener('click', () => lerCodigoCamera((cod) => { inp.value = cod; buscar(); }));
