@@ -3849,9 +3849,9 @@ function pvCaixaUI(b, p) {
   // na ordem em que o USE pede: 1 vendedora, 2 cliente, 3 produtos — um código por vez, bem separados (o leitor não pega o vizinho)
   const etapa = (n, tit) => { const c = el('div', 'card pv-et'); c.append(el('div', 'pv-etn', n + ' · ' + tit)); return c; };
   const top = [];
-  // no USE, vendedor e cliente têm 2 campos (nº da loja e o código): o código de barras leva a loja + TAB + o código
+  // no USE, o cliente tem 2 campos (nº da loja e o código): o código de barras leva a loja + TAB + o CPF; o vendedor já vem com a loja, vai só o código
   const lj = { 'Cerâmica': 1, 'Via Verde': 2, 'Cruzeiro do Sul': 3, 'Via Norte': 4, 'Sumaúma': 5 }[p.loja] || '', comLoja = (x) => (lj ? lj + '\t' : '') + x;
-  if (p.cod) { const c = etapa(1, p.canal === 'online' ? 'Vendedora · online' : 'Vendedora'); c.append(codBarras(comLoja(p.cod), 2, 90), el('div', 'pv-cod', (lj ? lj + ' ⇥ ' : '') + p.cod + ' · ' + primeiroNome(p.vendedora) + (p.canal === 'online' ? ' ON-LINE' : ''))); top.push(c); }
+  if (p.cod) { const c = etapa(1, p.canal === 'online' ? 'Vendedora · online' : 'Vendedora'); c.append(codBarras(p.cod, 2, 90), el('div', 'pv-cod', p.cod + ' · ' + primeiroNome(p.vendedora) + (p.canal === 'online' ? ' ON-LINE' : ''))); top.push(c); }
   if (p.cpf) { const c = etapa(p.cod ? 2 : 1, 'Cliente · CPF'); c.append(codBarras(comLoja(p.cpf), 2, 90), el('div', 'pv-cod', (lj ? lj + ' ⇥ ' : '') + (p.cliente ? primeiroNome(p.cliente) + ' · ' : '') + p.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') + (p.nova ? ' · NOVA' : ''))); top.push(c); }
   if (cobrar && p.linkPag) pvVigiar(b, p); else if (!cobrar) clearInterval(pvVigiar.t);
   if (cobrar && p.tk) { const cb = el('div', 'card pv-cobrar'), bw = el('div', 'pv-bts'); cb.append(el('b', '', '📲 Como a cliente vai pagar?'), el('div', 'sub', 'Total ' + rs(p.total) + '. A pré-venda fica paga sozinha no cartão por aproximação e no link.'));
