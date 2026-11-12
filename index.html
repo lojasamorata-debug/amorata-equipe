@@ -3757,6 +3757,12 @@ function pvCobrarTap(b, p) {
 document.addEventListener('visibilitychange', () => { const w = pvCobrarTap.esperando; if (document.hidden || !w || Date.now() - w.t > 15 * 60000) return;
   const conf = (n) => rodar('pvLista', [S.token, PVD.loja, ''], (r) => { const p = r.lista.find((x) => x.id === w.id); if (!p) return; if (p.status === 'paga') { pvCobrarTap.esperando = null; toast('✅ Pagamento aprovado!'); if (w.b && w.b.isConnected) pvCaixaUI(w.b, p); } else if (n < 4) setTimeout(() => conf(n + 1), 4000); });
   setTimeout(() => conf(0), 1500); });
+// link curto do pagamento (…/amorata-equipe/?pg=código): a cliente abre e vai direto para o checkout da InfinitePay
+(function () { const pg = new URLSearchParams(location.search).get('pg'); if (!pg) return;
+  const tela = (ic, t, s2) => { let o = document.getElementById('pg-tela'); if (!o) { o = document.createElement('div'); o.id = 'pg-tela'; o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#f7f4f1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif;color:#1f1e1d'; (document.body || document.documentElement).append(o); } o.innerHTML = '<div style="font-family:Georgia,serif;letter-spacing:6px;color:#5b4a7a;margin-bottom:18px">AMORATA</div><div style="font-size:54px">' + ic + '</div><h2 style="margin:10px 0 6px">' + t + '</h2><p style="color:#6b6862;max-width:340px">' + (s2 || '') + '</p>'; };
+  const ir = () => { tela('💳', 'Abrindo o pagamento…', 'Você vai pagar com segurança pela InfinitePay (Pix ou cartão).');
+    google.script.run.withSuccessHandler((r) => { if (r && r.url) location.replace(r.url); else tela('💜', 'Este pedido já está pago', 'Obrigada pela compra!'); }).withFailureHandler((e) => tela('⚠️', 'Não foi possível abrir o pagamento', String((e && e.message) || e).replace(/^Error:\s*/, ''))).pvAbrirPagamento(pg); };
+  if (document.body) ir(); else document.addEventListener('DOMContentLoaded', ir); })();
 // 🔗 link de pagamento da InfinitePay (cai na conta da loja da pré-venda); a pré-venda fica paga sozinha quando a cliente pagar
 function pvEnviarLink(b, p, bt) {
   let fone = String(p.fone || '').replace(/\D/g, '');
