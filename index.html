@@ -1501,7 +1501,7 @@ function atualizar() { if (!S || ocupado) return; rodar('estado', [S.token, loja
 let ULT_BT = null, ULT_BT_T = 0;
 document.addEventListener('pointerdown', (e) => { const b = e.target && e.target.closest && e.target.closest('button, .btn'); if (b) { ULT_BT = b; ULT_BT_T = Date.now(); } }, true);
 function marcarCarregando() { const b = Date.now() - ULT_BT_T < 1500 ? ULT_BT : null; if (!b || !b.isConnected || b.classList.contains('carregando')) return () => {}; b.classList.add('carregando'); const sp = el('span', 'spin'); b.prepend(sp); return () => { b.classList.remove('carregando'); sp.remove(); }; }
-const REG_TXT = { atender: 'Registrando o atendimento…', encerrar: 'Registrando…', entrar: 'Entrando na fila…', pausa: 'Saindo da fila…', mais: 'Abrindo mais uma cliente…', cancelar: 'Desfazendo…', mover: 'Mudando a ordem…' };
+const REG_TXT = { retirar: 'Retirando da fila…', atender: 'Registrando o atendimento…', encerrar: 'Registrando…', entrar: 'Entrando na fila…', pausa: 'Saindo da fila…', mais: 'Abrindo mais uma cliente…', cancelar: 'Desfazendo…', mover: 'Mudando a ordem…' };
 function regAviso_(txt, ok) { // aviso grande no meio da tela: a vendedora vê na hora que o toque foi recebido
   let r = $('reg-ov'); if (!r) { r = el('div'); r.id = 'reg-ov'; document.body.append(r); }
   r.className = ok ? 'ok' : ''; r.replaceChildren(el('span', ok ? '' : 'spin'), el('b', '', txt)); r.style.display = 'flex';
@@ -1792,8 +1792,11 @@ function desenhar(e) {
   // fila
   const lf = $('l-fila'); lf.replaceChildren(); $('n-fila').textContent = e.fila.length || '';
   if (!e.fila.length) lf.append(el('div', 'vazio', 'Ninguém na fila.'));
+  // ADM pode retirar alguém da fila (ex.: foi embora e esqueceu de sair)
+  const retirarBt = (p) => { const b = el('button', 'btn sm', 'Retirar'); b.addEventListener('click', () => escolher('Retirar ' + primeiroNome(p.nome) + ' da fila?', 'Ela sai da fila e precisa entrar de novo quando voltar. Fica registrado no histórico.', [['Retirar da fila', 'pri', () => fazer('retirar', p.usuario)]])); return b; };
+  const admRet = (p) => S.cargo === 'ADMIN' && p.usuario !== eu ? [retirarBt(p)] : [];
   e.fila.forEach((p, i) => {
-    const ops = [];
+    const ops = admRet(p);
     lf.append(linha(p, el('span', '', 'esperando ' + espera(agora() - p.desde)), ops, p.usuario === eu));
   });
   // atendimento
@@ -1810,7 +1813,7 @@ function desenhar(e) {
   if (!e.fora.length) lo.append(el('div', 'vazio', 'Todas na fila ou atendendo.'));
   e.fora.forEach((p) => {
     const info = p.motivo ? p.motivo + ' · há ' + espera(agora() - p.desde) : 'ainda não entrou';
-    lo.append(linha(p, el('span', '', info), [], p.usuario === eu));
+    lo.append(linha(p, el('span', '', info), p.motivo ? admRet(p) : [], p.usuario === eu));
   });
   try { aneisStatus(); } catch (x) {}
   // hoje
