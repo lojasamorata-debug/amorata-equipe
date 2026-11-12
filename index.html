@@ -3750,7 +3750,8 @@ function pvCobrarTap(b, p) {
 }
 // voltou da InfinitePay: confere se a pré-venda já ficou paga
 document.addEventListener('visibilitychange', () => { const w = pvCobrarTap.esperando; if (document.hidden || !w || Date.now() - w.t > 15 * 60000) return;
-  setTimeout(() => rodar('pvLista', [S.token, PVD.loja, ''], (r) => { const p = r.lista.find((x) => x.id === w.id); if (!p) return; if (p.status === 'paga') { pvCobrarTap.esperando = null; toast('✅ Pagamento aprovado!'); if (w.b && w.b.isConnected) pvCaixaUI(w.b, p); } }), 1500); });
+  const conf = (n) => rodar('pvLista', [S.token, PVD.loja, ''], (r) => { const p = r.lista.find((x) => x.id === w.id); if (!p) return; if (p.status === 'paga') { pvCobrarTap.esperando = null; toast('✅ Pagamento aprovado!'); if (w.b && w.b.isConnected) pvCaixaUI(w.b, p); } else if (n < 4) setTimeout(() => conf(n + 1), 4000); });
+  setTimeout(() => conf(0), 1500); });
 // tela para mostrar no caixa: número, CPF, vendedora e o código de barras de cada peça
 function pvCaixaUI(b, p) {
   b.replaceChildren(); const h = el('div', 'pv-hero'); h.append(el('div', 'k', p.status === 'paga' ? 'Paga · o caixa lança no USE' : 'Mostre esta tela no caixa'), el('div', 'n', p.num), el('div', 's', primeiroNome(p.vendedora) + ' · ' + p.itens.reduce((a, i) => a + i.qt, 0) + ' peça(s) · ' + rs(p.total) + (p.reservaAte ? ' · reservada até ' + p.reservaAte.slice(11, 16) : ''))); b.append(h);
