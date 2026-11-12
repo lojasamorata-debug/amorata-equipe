@@ -3763,6 +3763,30 @@ document.addEventListener('visibilitychange', () => { const w = pvCobrarTap.espe
   const ir = () => { tela('💳', 'Abrindo o pagamento…', 'Você vai pagar com segurança pela InfinitePay (Pix ou cartão).');
     google.script.run.withSuccessHandler((r) => { if (r && r.url) location.replace(r.url); else tela('💜', 'Este pedido já está pago', 'Obrigada pela compra!'); }).withFailureHandler((e) => tela('⚠️', 'Não foi possível abrir o pagamento', String((e && e.message) || e).replace(/^Error:\s*/, ''))).pvAbrirPagamento(pg); };
   if (document.body) ir(); else document.addEventListener('DOMContentLoaded', ir); })();
+// 💠 Pix copia e cola com o valor (padrão do Banco Central, gerado aqui mesmo: sem taxa e sem serviço de fora); confirmação manual ("Recebi no Pix")
+function pixCodigo(chave, nome, cidade, valor, txid) {
+  const lim = (t, n) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').slice(0, n);
+  const f = (id, v) => id + String(v.length).padStart(2, '0') + v;
+  const mai = f('00', 'br.gov.bcb.pix') + f('01', String(chave).trim());
+  let s = f('00', '01') + f('26', mai) + f('52', '0000') + f('53', '986') + f('54', Number(valor).toFixed(2)) + f('58', 'BR') + f('59', lim(nome, 25)) + f('60', lim(cidade, 15)) + f('62', f('05', String(txid).replace(/[^A-Za-z0-9]/g, '').slice(0, 25) || '***')) + '6304';
+  let crc = 0xFFFF; for (let i = 0; i < s.length; i++) { crc ^= s.charCodeAt(i) << 8; for (let j = 0; j < 8; j++) crc = crc & 0x8000 ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF; }
+  return s + crc.toString(16).toUpperCase().padStart(4, '0');
+}
+function carregarQR() { if (window.qrcode) return Promise.resolve(); return new Promise((ok, err) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'; sc.onload = ok; sc.onerror = err; document.head.append(sc); }); }
+function pvPixUI(p) {
+  const cod = pixCodigo(p.pix.chave, p.pix.nome, p.pix.cidade, p.total, p.num), ant = $('festa'); if (ant) ant.remove();
+  const f = el('div'); f.id = 'festa'; const fc = el('div', 'fc'), qr = el('div'); qr.style.cssText = 'width:220px;height:220px;margin:6px auto 10px;background:#fff;display:flex;align-items:center;justify-content:center;border-radius:12px'; qr.textContent = 'Gerando o QR Code…';
+  const ta = el('textarea'); ta.readOnly = true; ta.rows = 3; ta.value = cod; ta.style.cssText = 'width:100%;box-sizing:border-box;font:12px monospace;border:1px solid var(--line);border-radius:10px;padding:8px;resize:none';
+  const cp = el('button', 'btn pri big', '📋 Copiar o código Pix'), wa = el('button', 'btn big', '📲 Enviar no WhatsApp da cliente'), x = el('button', 'btn sm', 'Fechar'); x.style.cssText = 'margin:4px auto 0;border:0;background:none;color:var(--muted)';
+  cp.addEventListener('click', () => { try { navigator.clipboard.writeText(cod).then(() => toast('Código copiado ✓')); } catch (e) { ta.select(); document.execCommand('copy'); toast('Código copiado ✓'); } });
+  wa.addEventListener('click', () => { let fone = String(p.fone || '').replace(/\D/g, ''); if (fone.length < 10) { const n = prompt('Celular da cliente com DDD:', ''); if (n == null) return; fone = String(n).replace(/\D/g, ''); if (fone.length < 10) { toast('Celular inválido.'); return; } }
+    const tx = 'Oi, ' + (p.cliente ? primeiroNome(p.cliente) : 'tudo bem') + '! Segue o Pix copia e cola da sua compra na Amorata (' + p.num + ' · ' + rs(p.total) + '). É só copiar o código abaixo e colar no app do seu banco, na opção Pix copia e cola 💜\n\n' + cod;
+    window.open('https://wa.me/55' + fone.replace(/^55(?=\d{10,11}$)/, '') + '?text=' + encodeURIComponent(tx), '_blank'); });
+  x.addEventListener('click', () => f.remove()); f.addEventListener('click', (ev) => { if (ev.target === f) f.remove(); });
+  const bts = el('div', 'pv-bts'); bts.append(cp, wa, x);
+  fc.append(el('div', 'mini', '💠 Pix ' + rs(p.total) + ' · ' + p.num), qr, ta, el('div', 'sub', 'Chave: ' + p.pix.chave + '. Depois que o Pix cair na conta da loja, toque em "Recebi no Pix da loja".'), bts); f.append(fc); document.body.append(f);
+  carregarQR().then(() => { const q = qrcode(0, 'M'); q.addData(cod); q.make(); qr.innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); const sv = qr.querySelector('svg'); if (sv) { sv.style.width = '100%'; sv.style.height = '100%'; } }).catch(() => { qr.textContent = 'Sem internet para o QR: use o código copia e cola.'; });
+}
 // 🔗 link de pagamento da InfinitePay (cai na conta da loja da pré-venda); a pré-venda fica paga sozinha quando a cliente pagar
 function pvEnviarLink(b, p, bt) {
   let fone = String(p.fone || '').replace(/\D/g, '');
@@ -3778,9 +3802,9 @@ function pvEnviarLink(b, p, bt) {
 }
 function pvTagsUI(b) {
   rodar('pvTagsCfg', [S.token, null], (r) => { b.replaceChildren(); const c = el('div', 'card'); c.append(el('b', '', '⚙️ InfiniteTag de cada loja'), el('div', 'sub', 'O @ da conta InfinitePay de cada CNPJ (sem o $). O link de pagamento cai na conta da loja da pré-venda.')); const ins = {};
-    c.append(el('div', 'sub', 'Chave do Checkout Integrado (começa com inchk_): com ela, a loja assume a taxa em até ' + r.parcelasSemJuros + 'x (a cliente paga sem juros). Crie no app ou na Conta Web da InfinitePay › Configurações do Checkout › Checkout Integrado. Deixe em branco para manter; digite - para apagar.')); const ks = {};
-    r.lojas.forEach((l) => { const w = el('label', 'pv-lb', l), i = el('input'), k = el('input'); i.value = r.tags[l] || ''; i.placeholder = 'InfiniteTag, ex.: amorata-' + l.toLowerCase().split(' ')[0]; k.type = 'password'; k.autocomplete = 'off'; k.placeholder = r.temChave[l] ? '✓ chave cadastrada' : 'chave inchk_… (sem ela, a taxa vai para a cliente)'; k.style.marginTop = '4px'; w.append(i, k); c.append(w); ins[l] = i; ks[l] = k; });
-    const sv = el('button', 'btn pri big', 'Salvar'); sv.addEventListener('click', () => { const o = { chaves: {} }; Object.keys(ins).forEach((l) => { o[l] = ins[l].value; o.chaves[l] = ks[l].value.trim(); }); rodar('pvTagsCfg', [S.token, o], () => { toast('Salvo ✓'); pvListaUI(b); }); });
+    c.append(el('div', 'sub', 'Chave do Checkout Integrado (começa com inchk_): com ela, a loja assume a taxa em até ' + r.parcelasSemJuros + 'x (a cliente paga sem juros). Crie no app ou na Conta Web da InfinitePay › Configurações do Checkout › Checkout Integrado. Deixe em branco para manter; digite - para apagar.')); const ks = {}, pxs = {};
+    r.lojas.forEach((l) => { const w = el('label', 'pv-lb', l), i = el('input'), k = el('input'); i.value = r.tags[l] || ''; i.placeholder = 'InfiniteTag, ex.: amorata-' + l.toLowerCase().split(' ')[0]; k.type = 'password'; k.autocomplete = 'off'; k.placeholder = r.temChave[l] ? '✓ chave cadastrada' : 'chave inchk_… (sem ela, a taxa vai para a cliente)'; k.style.marginTop = '4px'; const pxi = el('input'); pxi.value = (r.pix || {})[l] || ''; pxi.placeholder = 'chave Pix da loja (para o Pix copia e cola)'; pxi.style.marginTop = '4px'; w.append(i, k, pxi); c.append(w); ins[l] = i; ks[l] = k; pxs[l] = pxi; });
+    const sv = el('button', 'btn pri big', 'Salvar'); sv.addEventListener('click', () => { const o = { chaves: {}, pix: {} }; Object.keys(ins).forEach((l) => { o[l] = ins[l].value; o.chaves[l] = ks[l].value.trim(); o.pix[l] = pxs[l].value.trim(); }); rodar('pvTagsCfg', [S.token, o], () => { toast('Salvo ✓'); pvListaUI(b); }); });
     const vt = el('button', 'btn big', '← Voltar'); vt.addEventListener('click', () => pvListaUI(b)); c.append(sv, vt); b.append(c); });
 }
 // tela para mostrar no caixa: número, CPF, vendedora e o código de barras de cada peça
@@ -3793,6 +3817,7 @@ function pvCaixaUI(b, p) {
   if (cobrar && p.tk) { const cb = el('div', 'card pv-cobrar'), bw = el('div', 'pv-bts'); cb.append(el('b', '', '📲 Como a cliente vai pagar?'), el('div', 'sub', 'Total ' + rs(p.total) + '. A pré-venda fica paga sozinha no cartão por aproximação e no link.'));
     const tap = el('button', 'btn pri big', '💳 Cartão por aproximação no meu celular'); tap.addEventListener('click', () => pvCobrarTap(b, p));
     const lk = el('button', 'btn big', p.linkPag ? '🔗 Reenviar link de pagamento' : '🔗 Enviar link de pagamento (Pix ou cartão)'); lk.addEventListener('click', () => pvEnviarLink(b, p, lk));
+    if (p.pix) { const pc = el('button', 'btn big', '💠 Pix copia e cola / QR Code'); pc.addEventListener('click', () => pvPixUI(p)); bw.append(pc); }
     const px = el('button', 'btn big', '✅ Recebi no Pix da loja'); px.addEventListener('click', () => escolher('Confirmar o Pix de ' + rs(p.total) + '?', 'Confira na conta da loja se o Pix caiu antes de confirmar.', [['Sim, o Pix caiu', 'pri', () => rodar('pvPagoManual', [S.token, p.id, 'Pix'], (np) => { toast('Paga ✓'); pvCaixaUI(b, np); })]]));
     bw.append(tap, lk, px); cb.append(bw); b.append(cb); }
   if (p.pagamento && p.status === 'paga') b.append(el('div', 'card pv-pago', '✅ A cliente já pagou (' + p.pagamento + '). Caixa: lance a venda no USE bipando os códigos abaixo e marque "Lançada no USE".'));
