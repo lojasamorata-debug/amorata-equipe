@@ -1769,6 +1769,7 @@ function desenhar(e) {
       else if (!chefe()) { ac.append(bt('✅ Vendeu', 'ok big', () => encerrar(at, 0, 'v')), bt('✖️ Não vendeu', 'bad big', () => encerrar(at, 0, 'n'))); }
       else ac.append(bt('Encerrar atendimento', 'pri big', () => encerrar(at, 0)));
       ac.append(bt('👥 + Outra cliente', chefe() ? 'big' : 'lk', () => maisCli(at)));
+      if (abaVisivel_('pv')) ac.append(bt('🛍️ Fazer pré-venda (sem sair da fila)', 'lk', () => abrirPreVenda()));
       if (!chefe() && cl.length === 1) ac.append(bt('Mais opções', 'lk', () => encerrar(at, 0)));
     } else if (naFila) {
       $('eu-estado').textContent = naFila.pos === 1 ? 'É a sua vez a seguir!' : 'Sua posição: ' + naFila.pos + 'º da vez';
@@ -3733,6 +3734,23 @@ function pvPecasUI(b) {
   cam.addEventListener('click', () => lerCodigoCamera((cod) => { inp.value = cod; buscar(); }));
   desCar(); setTimeout(() => inp.focus(), 200);
 }
+// 💳 cobrança por aproximação no celular (InfiniteTap da InfinitePay): abre o app da InfinitePay com o valor e o código da pré-venda;
+// ao terminar, a InfinitePay abre a página de volta do app, que marca a pré-venda como paga (NSU e autorização)
+function pvCobrarTap(b, p) {
+  const v = Math.round(p.total * 100), ops = [['Débito', 'pri', () => ir('debit', 1, v)], ['Crédito à vista', '', () => ir('credit', 1, v)]];
+  [2, 3, 4, 5, 6].forEach((n) => { if (v / n >= 100) ops.push(['Crédito ' + n + 'x de ' + rs(p.total / n), '', () => ir('credit', n, v)]); });
+  if (S.cargo === 'ADMIN') ops.push(['🧪 Teste: R$ 1,00 no débito', '', () => ir('debit', 1, 100)]);
+  function ir(met, n, cent) {
+    const q = { amount: cent, payment_method: met, order_id: p.tk, result_url: p.tapVolta, app_client_referrer: 'amorata-equipe' }; if (met === 'credit') q.installments = n; if (/iPhone|iPad|iPod/.test(navigator.userAgent)) q.af_force_deeplink = 'true';
+    const url = 'infinitepaydash://infinitetap-app?' + Object.keys(q).map((k) => k + '=' + encodeURIComponent(q[k])).join('&');
+    toast('Abrindo a InfinitePay…'); pvCobrarTap.esperando = { id: p.id, b: b, t: Date.now() }; window.location.href = url;
+    setTimeout(() => { if (!document.hidden && pvCobrarTap.esperando && Date.now() - pvCobrarTap.esperando.t < 4000) toast('Não abriu? Confira se o app da InfinitePay está instalado e logado na conta da loja.'); }, 2500);
+  }
+  escolher('Cobrar ' + rs(p.total) + ' · ' + p.num, 'A cliente aproxima o cartão no seu celular. Ao terminar, a pré-venda fica paga sozinha.', ops);
+}
+// voltou da InfinitePay: confere se a pré-venda já ficou paga
+document.addEventListener('visibilitychange', () => { const w = pvCobrarTap.esperando; if (document.hidden || !w || Date.now() - w.t > 15 * 60000) return;
+  setTimeout(() => rodar('pvLista', [S.token, PVD.loja, ''], (r) => { const p = r.lista.find((x) => x.id === w.id); if (!p) return; if (p.status === 'paga') { pvCobrarTap.esperando = null; toast('✅ Pagamento aprovado!'); if (w.b && w.b.isConnected) pvCaixaUI(w.b, p); } }), 1500); });
 // tela para mostrar no caixa: número, CPF, vendedora e o código de barras de cada peça
 function pvCaixaUI(b, p) {
   b.replaceChildren(); const h = el('div', 'pv-hero'); h.append(el('div', 'k', p.status === 'paga' ? 'Paga · o caixa lança no USE' : 'Mostre esta tela no caixa'), el('div', 'n', p.num), el('div', 's', primeiroNome(p.vendedora) + ' · ' + p.itens.reduce((a, i) => a + i.qt, 0) + ' peça(s) · ' + rs(p.total) + (p.reservaAte ? ' · reservada até ' + p.reservaAte.slice(11, 16) : ''))); b.append(h);
@@ -3748,6 +3766,7 @@ function pvCaixaUI(b, p) {
   const c = el('div', 'card'); p.itens.forEach((it) => { const d = el('div', 'pv-it'); const cod = it.cb || it.prod; for (let q = 0; q < it.qt; q++) { if (cod) d.append(codBarras(cod, 2, 64)); }
     d.append(el('div', 'pv-nm', it.nome + ' · ' + it.cor + ' · ' + it.tam + (it.qt > 1 ? ' · ' + it.qt + ' un' : '')), el('div', 'pv-cod', cod ? cod + ' · ref ' + it.ref : 'ref ' + it.ref + ' (sem código de barras: digite a referência)')); c.append(d); });
   b.append(c, el('div', 'sub', 'Aumente o brilho da tela. Se o leitor não pegar, o caixa digita os números embaixo das barras.'));
+  if ((p.status === 'aberta' || p.status === 'reservada') && p.tk) { const tap = el('button', 'btn pri big', '💳 Cobrar por aproximação no celular'); tap.addEventListener('click', () => pvCobrarTap(b, p)); b.append(tap); }
   if (p.status === 'aberta' || p.status === 'reservada' || p.status === 'paga') { const bts = el('div', 'pv-bts'), ok = el('button', 'btn pri big', p.status === 'paga' ? '✓ Lançada no USE' : '✓ Venda concluída'), ds = el('button', 'btn big', p.status === 'paga' ? 'Cancelar (devolveu o dinheiro)' : 'Cliente desistiu');
     ok.addEventListener('click', () => rodar('pvStatus', [S.token, p.id, 'vendida', ''], () => { toast('Pré-venda concluída ✓'); pvListaUI(b); }));
     ds.addEventListener('click', () => p.status === 'paga' ? escolher('Cancelar ' + p.num + '?', 'Use só se a cliente desistiu e recebeu o dinheiro de volta.', [['Cancelar a pré-venda', 'pri', () => rodar('pvStatus', [S.token, p.id, 'cancelada', 'devolveu o dinheiro'], () => { toast('Cancelada.'); pvListaUI(b); })]]) : escolher('Por que não fechou?', p.num, ['Achou caro', 'Não tinha o tamanho/cor', 'Vai pensar', 'Desistiu no caixa', 'Outro'].map((m) => [m, '', () => rodar('pvStatus', [S.token, p.id, 'desistiu', m], () => { toast('Registrado.'); pvListaUI(b); })])));
