@@ -1177,6 +1177,7 @@ function amigavel(m) {
   if (/Failed to fetch|NetworkError|Load failed|network|Sem conex|conexão/i.test(m)) return 'Sem conexão com a internet. Confira o Wi-Fi ou os dados e tente de novo.';
   if (/too many times|invoked too many|Service invoked|quota|Limite excedido|Serviço chamado/i.test(m)) return 'O sistema está muito ocupado agora. Espere um minutinho e tente de novo.';
   if (/Lock|bloqueio|Timeout|timed out|tempo limite/i.test(m)) return 'Demorou mais que o normal. Tente de novo.';
+  if (/SEM_CELULAR/.test(m)) return 'O cadastro da cliente não tem celular: digite o número.';
   if (tecnico(m)) return 'Algo deu errado aqui. Já registramos para o suporte. Tente de novo.';
   return m;
 }
@@ -3791,7 +3792,9 @@ function pvPixUI(p, b) {
 // 🔗 link de pagamento da InfinitePay (cai na conta da loja da pré-venda); a pré-venda fica paga sozinha quando a cliente pagar
 function pvEnviarLink(b, p, bt) {
   let fone = String(p.fone || '').replace(/\D/g, '');
-  if (fone.length < 10) { const f = prompt('Celular da cliente com DDD (o link vai direto para o WhatsApp dela):', ''); if (f == null) return; fone = String(f).replace(/\D/g, ''); if (fone.length < 10 || fone.length > 13) { toast('Celular inválido: coloque o DDD e o número.'); return; } p.fone = fone; }
+  // sem celular na pré-venda: com CPF, o servidor puxa do cadastro do USE; só pergunta se o cadastro também não tiver
+  const pedir = () => { const f = prompt('Celular da cliente com DDD (o link vai direto para o WhatsApp dela):', ''); if (f == null) return false; const n = String(f).replace(/\D/g, ''); if (n.length < 10 || n.length > 13) { toast('Celular inválido: coloque o DDD e o número.'); return false; } p.fone = fone = n; return true; };
+  if (fone.length < 10 && !p.cpf && !pedir()) return;
   const t0 = bt.textContent; bt.disabled = true; bt.textContent = 'Gerando o link…';
   rodar('pvLinkPagamento', [S.token, p.id, fone], (r) => { bt.disabled = false; bt.textContent = '🔗 Reenviar link de pagamento'; p.linkPag = r.url; pvCobrarTap.esperando = { id: p.id, b: b, t: Date.now() };
     const tx = 'Oi, ' + (r.cliente ? primeiroNome(r.cliente) : 'tudo bem') + '! Segue o link para pagamento da sua compra na Amorata (' + r.num + ' · ' + rs(Number(String(r.total).replace(',', '.'))) + '): ' + r.url + '\nPode pagar no Pix ou no cartão' + (r.semJuros ? ' em até ' + r.semJuros + 'x sem juros' : '') + ' 💜';
@@ -3799,7 +3802,7 @@ function pvEnviarLink(b, p, bt) {
     if (fone.length >= 10) { window.open('https://wa.me/55' + fone.replace(/^55(?=\d{10,11}$)/, '') + '?text=' + encodeURIComponent(tx), '_blank'); return; }
     if (navigator.share) { navigator.share({ text: tx }).catch(() => {}); return; }
     try { navigator.clipboard.writeText(tx); toast('Link copiado: cole no WhatsApp da cliente.'); } catch (e) { escolher('Link de pagamento', r.url, []); }
-  }, () => { bt.disabled = false; bt.textContent = t0; });
+  }, (m) => { bt.disabled = false; bt.textContent = t0; if (/SEM_CELULAR/.test(String(m)) && pedir()) pvEnviarLink(b, p, bt); });
 }
 function pvTagsUI(b) {
   rodar('pvTagsCfg', [S.token, null], (r) => { b.replaceChildren(); const c = el('div', 'card'); c.append(el('b', '', '⚙️ InfiniteTag de cada loja'), el('div', 'sub', 'O @ da conta InfinitePay de cada CNPJ (sem o $). O link de pagamento cai na conta da loja da pré-venda.')); const ins = {};
