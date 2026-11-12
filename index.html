@@ -3668,6 +3668,7 @@ function abrirPreVenda() {
 function pvListaUI(b) {
   b.replaceChildren(); if (chefe() && (S.lojas || []).length > 1) { const sl = el('select'); S.lojas.forEach((l) => { const o = el('option', '', l); o.value = l; if (l === PVD.loja) o.selected = true; sl.append(o); }); sl.addEventListener('change', () => { PVD.loja = sl.value; pvListaUI(b); }); b.append(sl); }
   const nv = el('button', 'btn pri big', '+ Nova pré-venda'); nv.addEventListener('click', () => { PVD.itens = []; PVD.cliente = null; pvClienteUI(b); }); b.append(nv);
+  if (S.cargo === 'ADMIN') { const cf = el('button', 'btn sm', '⚙️ InfiniteTag das lojas'); cf.style.marginTop = '6px'; cf.addEventListener('click', () => pvTagsUI(b)); b.append(cf); }
   const box = el('div'); box.append(el('div', 'sub', 'Carregando as pré-vendas de hoje…')); b.append(box);
   rodar('pvLista', [S.token, PVD.loja, ''], (r) => {
     box.replaceChildren(); const k = el('div', 'pv-kpi'); [[r.total, 'pré-vendas'], [r.vendidas, 'viraram venda'], r.aLancar ? [r.aLancar, 'pagas a lançar no USE'] : [r.conversao == null ? '—' : Math.round(r.conversao * 100) + '%', 'conversão']].forEach(([v, t]) => { const d = el('div'); d.append(el('b', '', String(v)), el('span', '', t)); k.append(d); }); box.append(k);
@@ -3752,6 +3753,23 @@ function pvCobrarTap(b, p) {
 document.addEventListener('visibilitychange', () => { const w = pvCobrarTap.esperando; if (document.hidden || !w || Date.now() - w.t > 15 * 60000) return;
   const conf = (n) => rodar('pvLista', [S.token, PVD.loja, ''], (r) => { const p = r.lista.find((x) => x.id === w.id); if (!p) return; if (p.status === 'paga') { pvCobrarTap.esperando = null; toast('✅ Pagamento aprovado!'); if (w.b && w.b.isConnected) pvCaixaUI(w.b, p); } else if (n < 4) setTimeout(() => conf(n + 1), 4000); });
   setTimeout(() => conf(0), 1500); });
+// 🔗 link de pagamento da InfinitePay (cai na conta da loja da pré-venda); a pré-venda fica paga sozinha quando a cliente pagar
+function pvEnviarLink(b, p, bt) {
+  const t0 = bt.textContent; bt.disabled = true; bt.textContent = 'Gerando o link…';
+  rodar('pvLinkPagamento', [S.token, p.id], (r) => { bt.disabled = false; bt.textContent = '🔗 Reenviar link de pagamento'; p.linkPag = r.url; pvCobrarTap.esperando = { id: p.id, b: b, t: Date.now() };
+    const tx = 'Oi, ' + (r.cliente ? primeiroNome(r.cliente) : 'tudo bem') + '! Segue o link para pagamento da sua compra na Amorata (' + r.num + ' · ' + rs(Number(String(r.total).replace(',', '.'))) + '): ' + r.url + '\nPode pagar no Pix ou no cartão 💜';
+    const fone = String(r.fone || '').replace(/\D/g, '');
+    if (fone.length >= 10) { window.open('https://wa.me/55' + fone.replace(/^55(?=\d{10,11}$)/, '') + '?text=' + encodeURIComponent(tx), '_blank'); return; }
+    if (navigator.share) { navigator.share({ text: tx }).catch(() => {}); return; }
+    try { navigator.clipboard.writeText(tx); toast('Link copiado: cole no WhatsApp da cliente.'); } catch (e) { escolher('Link de pagamento', r.url, []); }
+  }, () => { bt.disabled = false; bt.textContent = t0; });
+}
+function pvTagsUI(b) {
+  rodar('pvTagsCfg', [S.token, null], (r) => { b.replaceChildren(); const c = el('div', 'card'); c.append(el('b', '', '⚙️ InfiniteTag de cada loja'), el('div', 'sub', 'O @ da conta InfinitePay de cada CNPJ (sem o $). O link de pagamento cai na conta da loja da pré-venda.')); const ins = {};
+    r.lojas.forEach((l) => { const w = el('label', 'pv-lb', l), i = el('input'); i.value = r.tags[l] || ''; i.placeholder = 'ex.: amorata-' + l.toLowerCase().split(' ')[0]; w.append(i); c.append(w); ins[l] = i; });
+    const sv = el('button', 'btn pri big', 'Salvar'); sv.addEventListener('click', () => { const o = {}; Object.keys(ins).forEach((l) => { o[l] = ins[l].value; }); rodar('pvTagsCfg', [S.token, o], () => { toast('Salvo ✓'); pvListaUI(b); }); });
+    const vt = el('button', 'btn big', '← Voltar'); vt.addEventListener('click', () => pvListaUI(b)); c.append(sv, vt); b.append(c); });
+}
 // tela para mostrar no caixa: número, CPF, vendedora e o código de barras de cada peça
 function pvCaixaUI(b, p) {
   b.replaceChildren(); const h = el('div', 'pv-hero'); h.append(el('div', 'k', p.status === 'paga' ? 'Paga · o caixa lança no USE' : 'Mostre esta tela no caixa'), el('div', 'n', p.num), el('div', 's', primeiroNome(p.vendedora) + ' · ' + p.itens.reduce((a, i) => a + i.qt, 0) + ' peça(s) · ' + rs(p.total) + (p.reservaAte ? ' · reservada até ' + p.reservaAte.slice(11, 16) : ''))); b.append(h);
@@ -3767,7 +3785,8 @@ function pvCaixaUI(b, p) {
   const c = el('div', 'card'); p.itens.forEach((it) => { const d = el('div', 'pv-it'); const cod = it.cb || it.prod; for (let q = 0; q < it.qt; q++) { if (cod) d.append(codBarras(cod, 2, 64)); }
     d.append(el('div', 'pv-nm', it.nome + ' · ' + it.cor + ' · ' + it.tam + (it.qt > 1 ? ' · ' + it.qt + ' un' : '')), el('div', 'pv-cod', cod ? cod + ' · ref ' + it.ref : 'ref ' + it.ref + ' (sem código de barras: digite a referência)')); c.append(d); });
   b.append(c, el('div', 'sub', 'Aumente o brilho da tela. Se o leitor não pegar, o caixa digita os números embaixo das barras.'));
-  if ((p.status === 'aberta' || p.status === 'reservada') && p.tk) { const tap = el('button', 'btn pri big', '💳 Cobrar por aproximação no celular'); tap.addEventListener('click', () => pvCobrarTap(b, p)); b.append(tap); }
+  if ((p.status === 'aberta' || p.status === 'reservada') && p.tk) { const tap = el('button', 'btn pri big', '💳 Cobrar por aproximação no celular'); tap.addEventListener('click', () => pvCobrarTap(b, p)); b.append(tap);
+    const lk = el('button', 'btn big', p.linkPag ? '🔗 Reenviar link de pagamento' : '🔗 Enviar link de pagamento (Pix ou cartão)'); lk.addEventListener('click', () => pvEnviarLink(b, p, lk)); b.append(lk); }
   if (p.status === 'aberta' || p.status === 'reservada' || p.status === 'paga') { const bts = el('div', 'pv-bts'), ok = el('button', 'btn pri big', p.status === 'paga' ? '✓ Lançada no USE' : '✓ Venda concluída'), ds = el('button', 'btn big', p.status === 'paga' ? 'Cancelar (devolveu o dinheiro)' : 'Cliente desistiu');
     ok.addEventListener('click', () => rodar('pvStatus', [S.token, p.id, 'vendida', ''], () => { toast('Pré-venda concluída ✓'); pvListaUI(b); }));
     ds.addEventListener('click', () => p.status === 'paga' ? escolher('Cancelar ' + p.num + '?', 'Use só se a cliente desistiu e recebeu o dinheiro de volta.', [['Cancelar a pré-venda', 'pri', () => rodar('pvStatus', [S.token, p.id, 'cancelada', 'devolveu o dinheiro'], () => { toast('Cancelada.'); pvListaUI(b); })]]) : escolher('Por que não fechou?', p.num, ['Achou caro', 'Não tinha o tamanho/cor', 'Vai pensar', 'Desistiu no caixa', 'Outro'].map((m) => [m, '', () => rodar('pvStatus', [S.token, p.id, 'desistiu', m], () => { toast('Registrado.'); pvListaUI(b); })])));
