@@ -306,6 +306,18 @@ html, body, .wrap, #det { overscroll-behavior-y: contain; }
 #festa .fc h3 { font-family:'Source Serif 4',Georgia,serif; font-weight:500; font-size:26px; margin:4px 0 6px; } #festa .fc p { margin:0 0 16px; color:var(--muted); font-size:14px; line-height:1.4; }
 #festa .cf { position:absolute; top:-12px; width:9px; height:14px; border-radius:2px; animation:cai linear forwards; z-index:1; }
 @keyframes pop { 0% { transform:scale(.6); opacity:0; } 100% { transform:scale(1); opacity:1; } } @keyframes gira { 0% { transform:scale(.3) rotate(-30deg); } 60% { transform:scale(1.2) rotate(8deg); } 100% { transform:scale(1) rotate(0); } }
+.pv-kpi{display:flex;gap:8px;margin:10px 0}.pv-kpi div{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}.pv-kpi b{display:block;font-size:20px}.pv-kpi span{font-size:11px;color:var(--muted)}
+.pv-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}.pv-row:last-child{border:0}
+.pv-st{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap}.pv-st.a{background:#fff3d6;color:#9a6b00}.pv-st.f{background:#e3f4ea;color:#2e7d4f}.pv-st.x{background:#f6e3e3;color:#a33}
+.pv-pass{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);font-weight:700;margin:4px 0 8px}
+.pv-cash{background:#e3f4ea;color:#2e7d4f;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:600;margin:8px 0}
+.pv-lb{display:block;font-size:12px;color:var(--muted);margin-top:8px}.pv-lb input{display:block;width:100%;box-sizing:border-box;margin-top:4px}
+.pv-chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:10px 0}.pv-lb2{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:8px 0 4px}
+.pv-busca{display:flex;gap:8px;margin-bottom:8px}.pv-busca input{flex:1}.pv-chips{display:flex;flex-wrap:wrap;gap:6px}.pv-chips .chip{border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:8px 12px;font:inherit}.pv-chips .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}.pv-chips .chip.off{opacity:.45}
+.pv-tot{display:flex;justify-content:space-between;font-weight:700;font-size:16px;padding-top:10px}
+.pv-hero{background:linear-gradient(135deg,#5b4a7a,#8a5a88);color:#fff;border-radius:18px;padding:14px 16px;margin-bottom:10px}.pv-hero .k{font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.85}.pv-hero .n{font-size:32px;font-weight:800;letter-spacing:1px}.pv-hero .s{font-size:13px;opacity:.9}
+.pv-bc{background:#fff;padding:6px 0}.pv-duo{display:flex;gap:10px}.pv-duo>div{flex:1;min-width:0;text-align:center}.pv-it{text-align:center;padding:8px 0;border-bottom:1px dashed var(--line)}.pv-it:last-child{border:0}.pv-nm{font-size:13px;margin-top:2px}.pv-cod{font-family:monospace;font-size:12px;color:var(--muted)}
+.pv-nova{background:#fff3d6;color:#7a5600;font-size:13px}.pv-bts{display:flex;flex-direction:column;gap:8px;margin:10px 0}
 @keyframes cai { to { transform:translateY(110vh) rotate(720deg); } }
 #fog { position:fixed; inset:0; z-index:9100; overflow:hidden; background:radial-gradient(ellipse at 50% 120%, #4b2f6e 0%, #1d1530 55%, #0c0a16 100%); display:flex; align-items:flex-end; justify-content:center; }
 #fog .estr { position:absolute; width:3px; height:3px; border-radius:50%; background:#fff; animation:pisca 1.6s ease-in-out infinite; }
@@ -2321,18 +2333,18 @@ function abrirContrato(rh) {
 // gerente/admin: "Meus resultados" abre os cards do Início (fora dele, o Início mostra só o menu)
 function verResultados() { mudarAba('ini'); document.body.classList.add('ini-res'); rolarTopo_(); }
 $('i-res-v').addEventListener('click', () => mudarAba('ini'));
-const MENU_TXT = { pde: 'PDE · premiação', fin: 'Financeiro', sd: 'Check-up do app', aj: 'Ajuda e conta', cb: 'Cashback', res: 'Resultados e relatórios', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
+const MENU_TXT = { pv: 'Pré-venda', pde: 'PDE · premiação', fin: 'Financeiro', sd: 'Check-up do app', aj: 'Ajuda e conta', cb: 'Cashback', res: 'Resultados e relatórios', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
 const NAV_TXT = { ini: 'Agora', dia: 'Agora', fila: 'Fila', meta: 'Metas', mural: 'Mural', est: 'Estoque', gest: 'Gestão', rh: 'Meu RH' };
 const casaAba_ = () => (chefe() ? 'ini' : S && S.cargo === 'AUXILIAR' ? 'fila' : 'dia');
-function abaVisivel_(k) { if (k === 'pde') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0; if (k === 'sd' || k === 'fin') return !!S && S.cargo === 'ADMIN'; if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
-function irAba_(k) { if (k === 'pde') { abrirPde(); return; } if (k === 'sd') { abrirCheckup(); return; } if (k === 'fin') { abrirFinanceiro(); return; } if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
+function abaVisivel_(k) { if (k === 'pv') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0 && (S.cargo !== 'ADMIN' || (S.lojas || []).length > 0); if (k === 'pde') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0; if (k === 'sd' || k === 'fin') return !!S && S.cargo === 'ADMIN'; if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
+function irAba_(k) { if (k === 'pv') { abrirPreVenda(); return; } if (k === 'pde') { abrirPde(); return; } if (k === 'sd') { abrirCheckup(); return; } if (k === 'fin') { abrirFinanceiro(); return; } if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
 function menuSub_(k) {
   const rhN = (typeof RH !== 'undefined' && RH && RH.novos) || 0;
   if (k === 'rh') return rhN ? [rhN + (rhN === 1 ? ' novo para ver' : ' novos para ver'), 'al', rhN] : ['holerite, ponto, férias', ''];
   if (k === 'fila') { if (E && E.fila && S) { const p = chefe() ? null : E.fila.find((x) => x.usuario === S.usuario); if (p && p.pos) return [p.pos === 1 ? 'é a sua vez!' : 'você é a ' + p.pos + 'ª da vez', p.pos === 1 ? 'ok' : '']; return [E.fila.length ? E.fila.length + ' na fila' : 'ninguém na fila', '']; } return ['quem atende agora', '']; }
   if (k === 'res') { const R = typeof INI !== 'undefined' && INI && INI.rede; if (R && R.meta && R.pct != null) return [pc(R.pct) + ' da meta' + (R.fechaPct != null && R.fechaPct < 1 ? ' · no ritmo ' + pc(R.fechaPct) : ''), R.pct >= 1 ? 'ok' : (R.fechaPct != null && R.fechaPct < 1 ? 'al' : '')]; return ['vendas, metas e equipe', '']; }
   if (k === 'meta') { if (MH && MH.batida) return ['meta do mês batida!', 'ok']; if (MH && !MH.loja && MH.pct != null) return [pc(MH.pct) + ' da meta do mês', '']; return ['metas do mês', '']; }
-  const fixo = { pde: [chefe() ? 'pontos e prêmios da equipe' : 'seus pontos e prêmio do mês', ''], fin: ['DRE, despesas, extratos e recebíveis', ''], sd: ['saúde do sistema: limites, rotinas e Drive', ''], aj: ['tour, senha, notificações e sair', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
+  const fixo = { pv: ['montar a compra e levar ao caixa', ''], pde: [chefe() ? 'pontos e prêmios da equipe' : 'seus pontos e prêmio do mês', ''], fin: ['DRE, despesas, extratos e recebíveis', ''], sd: ['saúde do sistema: limites, rotinas e Drive', ''], aj: ['tour, senha, notificações e sair', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
   return fixo[k] || ['', ''];
 }
 // 🩺 check-up do app (ADMIN): roda agora e mostra o que está bem e o que precisa de atenção
@@ -2361,7 +2373,7 @@ function desenharMenu() {
   if (chefe()) { const v = $('v-ini'), ag = $('agora'); if (ag && ag.parentNode !== v) v.prepend(ag); if (ag) { if (ag.nextElementSibling !== m) ag.after(m); } else if (m.parentNode !== v || v.firstElementChild !== m) v.prepend(m); }
   else { const ag = $('agora'), vd = $('v-dia'); if (ag && ag.parentNode !== vd) vd.prepend(ag); const ref = $('eu-meta'); if (ref && ref.parentNode && m.previousElementSibling !== ref) ref.after(m); }
   try { desenharAgora(); segDuplo_(); } catch (e) {}
-  const ks = ['res', 'dia', 'ini', 'fila', 'cb', 'meta', 'pde', 'est', 'mural', 'apr', 'gest', 'fin', 'prod', 'rel', 'rh', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k) && !(chefe() && (k === 'rel' || (k === 'prod' && abaVisivel_('est')))));
+  const ks = ['res', 'dia', 'ini', 'fila', 'pv', 'cb', 'meta', 'pde', 'est', 'mural', 'apr', 'gest', 'fin', 'prod', 'rel', 'rh', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k) && !(chefe() && (k === 'rel' || (k === 'prod' && abaVisivel_('est')))));
   m.replaceChildren(...ks.map((k) => {
     const [sub, cls, n] = menuSub_(k), b = el('button', 'mt'); b.type = 'button'; b.id = 'mt-' + k;
     const ic = el('span', 'mi'); ic.append(icoSvg(k)); const tx = el('span'); tx.append(el('b', '', MENU_TXT[k])); const sm = el('small', cls, sub); tx.append(sm);
@@ -3446,13 +3458,13 @@ function zxLer(fonte, w, h, recortes) {
   }
   return null;
 }
-async function lerCodigoCamera() {
+async function lerCodigoCamera(cbCod) { if (typeof cbCod !== 'function') cbCod = null;
   const ov = el('div'); ov.id = 'es-scan'; const cx = el('div', 'cx'), vd = el('video'); vd.setAttribute('playsinline', ''); vd.setAttribute('autoplay', ''); vd.muted = true; const mira = el('div', 'mira'); cx.append(vd, mira);
   const tx = el('div', 'tx', 'Segure a etiqueta a uns 20 cm (de perto o iPhone não foca), com o código dentro do retângulo, parado por 1 segundo. Se demorar, toque em Capturar.');
   const cap = el('button', 'btn pri big', '📸 Capturar agora'), dig = el('button', 'btn big', '⌨️ Digitar o número'), x = el('button', 'btn big', 'Fechar');
   ov.append(cx, tx, cap, dig, x); document.body.append(ov); let fim = false, stream = null, tm = null, ult = '';
   const fechar = () => { fim = true; clearTimeout(tm); try { (stream && stream.getTracks() || []).forEach((t) => t.stop()); } catch (e) {} ov.remove(); };
-  const achou = (cod) => { try { navigator.vibrate && navigator.vibrate(80); } catch (e) {} fechar(); $('es-q').value = cod; buscarEstoque(); };
+  const achou = (cod) => { try { navigator.vibrate && navigator.vibrate(80); } catch (e) {} fechar(); if (cbCod) { cbCod(cod); return; } $('es-q').value = cod; buscarEstoque(); };
   x.addEventListener('click', fechar);
   dig.addEventListener('click', () => { fechar(); $('es-q').value = ''; $('es-q').setAttribute('inputmode', 'numeric'); $('es-q').focus(); setTimeout(() => $('es-q').removeAttribute('inputmode'), 4000); toast('Digite os números que estão embaixo das barras'); });
   const FAIXA = [[0.08, 0.36, 0.92, 0.64]], TUDO = [[0.08, 0.36, 0.92, 0.64], [0.02, 0.25, 0.98, 0.75], [0, 0, 1, 1], [0.15, 0.42, 0.85, 0.58]];
@@ -3637,6 +3649,104 @@ function desenharStatus() {
   b.append(mi);
   ST.grupos.forEach((g, gi) => { if (g.eu) return; const d = el('div', 'st'); const a = avatar(g.foto, g.nome); a.classList.add('st-ring'); if (!g.novo) a.classList.add('visto'); d.append(a, el('div', '', g.nome)); d.addEventListener('click', () => verStatus(gi, Math.max(0, g.itens.findIndex((i) => !i.visto)))); b.append(d); });
   aneisStatus(); bolhaStatus();
+}
+// ---------- 🛍️ PRÉ-VENDA: monta a compra no app, o caixa bipa os códigos da tela no USE ----------
+const PVD = { loja: '', itens: [], cliente: null };
+const PV_ST = { aberta: ['no caixa', 'a'], reservada: ['reservada', 'a'], vendida: ['✓ vendida', 'f'], desistiu: ['desistiu', 'x'], cancelada: ['cancelada', 'x'] };
+// Code 128-B em SVG (o leitor do caixa lê da tela do celular)
+const C128 = ['212222','222122','222221','121223','121322','131222','122213','122312','132212','221213','221312','231212','112232','122132','122231','113222','123122','123221','223211','221132','221231','213212','223112','312131','311222','321122','321221','312212','322112','322211','212123','212321','232121','111323','131123','131321','112313','132113','132311','211313','231113','231311','112133','112331','132131','113123','113321','133121','313121','211331','231131','213113','213311','213131','311123','311321','331121','312113','312311','332111','314111','221411','431111','111224','111422','121124','121421','141122','141221','112214','112412','122114','122411','142112','142211','241211','221114','413111','241112','134111','111242','121142','121241','114212','124112','124211','411212','421112','421211','212141','214121','412121','111143','111341','131141','114113','114311','411113','411311','113141','114131','311141','411131','211412','211214','211232','2331112'];
+function codBarras(v, w, h) {
+  const cs = [104]; for (const ch of String(v)) cs.push(Math.max(0, ch.charCodeAt(0) - 32)); let sm = 104; cs.slice(1).forEach((c, i) => { sm += c * (i + 1); }); cs.push(sm % 103, 106);
+  let x = 10, r = ''; w = w || 2; h = h || 70; cs.forEach((c) => { const p = C128[c]; for (let i = 0; i < p.length; i++) { const bw = +p[i] * w; if (i % 2 === 0) r += '<rect x="' + x + '" y="0" width="' + bw + '" height="' + h + '"/>'; x += bw; } });
+  const d = el('div', 'pv-bc'); d.innerHTML = '<svg viewBox="0 0 ' + (x + 10) + ' ' + h + '" width="100%" height="' + h + '" preserveAspectRatio="xMidYMid meet" fill="#000">' + r + '</svg>'; return d;
+}
+function abrirPreVenda() {
+  PVD.loja = PVD.loja || (S.loja && S.loja !== 'TODAS' ? S.loja : (S.lojas || [])[0] || '');
+  abrirDet('🛍️ Pré-venda', (b) => pvListaUI(b));
+}
+function pvListaUI(b) {
+  b.replaceChildren(); if (chefe() && (S.lojas || []).length > 1) { const sl = el('select'); S.lojas.forEach((l) => { const o = el('option', '', l); o.value = l; if (l === PVD.loja) o.selected = true; sl.append(o); }); sl.addEventListener('change', () => { PVD.loja = sl.value; pvListaUI(b); }); b.append(sl); }
+  const nv = el('button', 'btn pri big', '+ Nova pré-venda'); nv.addEventListener('click', () => { PVD.itens = []; PVD.cliente = null; pvClienteUI(b); }); b.append(nv);
+  const box = el('div'); box.append(el('div', 'sub', 'Carregando as pré-vendas de hoje…')); b.append(box);
+  rodar('pvLista', [S.token, PVD.loja, ''], (r) => {
+    box.replaceChildren(); const k = el('div', 'pv-kpi'); [[r.total, 'pré-vendas'], [r.vendidas, 'viraram venda'], [r.conversao == null ? '—' : Math.round(r.conversao * 100) + '%', 'conversão']].forEach(([v, t]) => { const d = el('div'); d.append(el('b', '', String(v)), el('span', '', t)); k.append(d); }); box.append(k);
+    if (!r.lista.length) { box.append(el('div', 'card', 'Nenhuma pré-venda hoje' + (r.chefe ? ' na loja.' : '. Toque em "Nova pré-venda" quando a cliente for ao caixa.'))); return; }
+    const c = el('div', 'card'); r.lista.forEach((p) => { const row = el('div', 'pv-row'), tx = el('div'), st = PV_ST[p.status] || [p.status, 'a'];
+      tx.append(el('b', '', p.num + ' · ' + primeiroNome(p.vendedora)), el('div', 'sub', p.itens.reduce((a, i) => a + i.qt, 0) + ' peça(s) · ' + rs(p.total) + ' · ' + String(p.criada).slice(11, 16) + (p.cliente ? ' · ' + primeiroNome(p.cliente) : '') + (p.nova ? ' · cliente nova' : '')));
+      row.append(tx, el('span', 'pv-st ' + st[1], st[0] + (p.motivo ? ' · ' + p.motivo : ''))); row.addEventListener('click', () => pvCaixaUI(b, p)); c.append(row); }); box.append(c);
+    box.append(el('div', 'sub', 'A pré-venda vira "vendida" sozinha quando as peças aparecem nas vendas do USE (atualiza de hora em hora).'));
+  }, (e) => { box.replaceChildren(el('div', 'card', '⚠️ ' + amigavel((e && e.message) || String(e)))); });
+}
+// passo 1: cliente (CPF ou celular; se não tiver cadastro, cadastra)
+function pvClienteUI(b) {
+  b.replaceChildren(); b.append(el('div', 'pv-pass', 'Passo 1 de 2 · Cliente'));
+  const f = el('div', 'card'), inp = el('input'); inp.type = 'tel'; inp.placeholder = 'CPF ou celular com DDD'; inp.inputMode = 'numeric'; const bt = el('button', 'btn pri big', 'Buscar cliente'), pula = el('button', 'btn big', 'Seguir sem identificar a cliente');
+  f.append(inp, bt, pula); const res = el('div'); b.append(f, res); setTimeout(() => inp.focus(), 200);
+  pula.addEventListener('click', () => { PVD.cliente = null; pvPecasUI(b); });
+  const buscar = () => { const t = inp.value.replace(/\D/g, ''); if (t.length < 10) { toast('Digite o CPF (11 números) ou o celular com DDD.'); return; } bt.disabled = true; bt.textContent = 'Buscando…';
+    rodar('pvCliente', [S.token, PVD.loja, t], (r) => { bt.disabled = false; bt.textContent = 'Buscar cliente'; res.replaceChildren();
+      if (r.achou) { const c = el('div', 'card'), cl = r.cliente; c.append(el('b', '', '👩 ' + cl.nome), el('div', 'sub', (cl.cpf ? 'CPF ' + cl.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : 'celular ' + t) + (cl.nova ? ' · cadastrada pelo app (ainda pode não estar no USE)' : ' · cliente do USE')));
+        if (r.cash && r.cash.agora > 0) c.append(el('div', 'pv-cash', '💜 Tem ' + rs(r.cash.agora) + ' de cashback' + (r.cash.minimo ? ' (resgate em compras a partir de ' + rs(r.cash.minimo) + ')' : '')));
+        else c.append(el('div', 'sub', 'Sem cashback disponível agora.'));
+        const ok = el('button', 'btn pri big', 'Continuar com ' + primeiroNome(cl.nome)); ok.addEventListener('click', () => { PVD.cliente = { cpf: cl.cpf || (r.cpf || ''), nome: cl.nome, fone: cl.fone || r.fone, nova: false, cash: r.cash }; pvPecasUI(b); }); c.append(ok); res.append(c); return; }
+      res.append(pvCadastroUI(b, r.cpf, r.fone));
+    }, () => { bt.disabled = false; bt.textContent = 'Buscar cliente'; });
+  };
+  bt.addEventListener('click', buscar); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') buscar(); });
+}
+function pvCadastroUI(b, cpf, fone) {
+  const c = el('div', 'card'); c.append(el('div', 'sub', 'Não achamos essa cliente no sistema. Cadastre para ela ganhar o cashback:'));
+  const campo = (lb, tp, v, ph) => { const w = el('label', 'pv-lb', lb), i = el('input'); i.type = tp; if (v) i.value = v; if (ph) i.placeholder = ph; w.append(i); c.append(w); return i; };
+  const iCpf = campo('CPF', 'tel', cpf, '000.000.000-00'), iNome = campo('Nome completo', 'text', '', 'Nome e sobrenome'), iFone = campo('Celular (WhatsApp)', 'tel', fone, '(68) 99999-9999'), iNasc = campo('Data de nascimento', 'date', ''), iMail = campo('E-mail (opcional)', 'email', '');
+  iNome.autocapitalize = 'words'; const cons = el('label', 'pv-chk'), ck = el('input'); ck.type = 'checkbox'; ck.checked = true; cons.append(ck, document.createTextNode(' A cliente autorizou receber o cashback e mensagens da Amorata no WhatsApp.')); c.append(cons);
+  const ok = el('button', 'btn pri big', 'Salvar cliente e continuar'); c.append(ok);
+  ok.addEventListener('click', () => { const d = iCpf.value.replace(/\D/g, ''), f = iFone.value.replace(/\D/g, '');
+    if (!cpfOkCli(d)) { toast('CPF inválido: confira os números.'); iCpf.focus(); return; } if (iNome.value.trim().split(/\s+/).length < 2) { toast('Coloque o nome completo.'); iNome.focus(); return; } if (f.length < 10) { toast('Coloque o celular com DDD.'); iFone.focus(); return; }
+    PVD.cliente = { cpf: d, nome: iNome.value.trim(), fone: f, nasc: iNasc.value, email: iMail.value.trim(), consente: ck.checked, nova: true }; pvPecasUI(b); });
+  return c;
+}
+function cpfOkCli(d) { if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false; let s = 0; for (let i = 0; i < 9; i++) s += +d[i] * (10 - i); if ((s * 10) % 11 % 10 !== +d[9]) return false; s = 0; for (let i = 0; i < 10; i++) s += +d[i] * (11 - i); return (s * 10) % 11 % 10 === +d[10]; }
+// passo 2: peças (busca pelo nome, referência ou câmera) e gerar
+function pvPecasUI(b) {
+  b.replaceChildren(); b.append(el('div', 'pv-pass', 'Passo 2 de 2 · Peças' + (PVD.cliente ? ' · ' + primeiroNome(PVD.cliente.nome) + (PVD.cliente.nova ? ' (nova)' : '') : ' · sem cliente')));
+  if (PVD.cliente && PVD.cliente.cash && PVD.cliente.cash.agora > 0) b.append(el('div', 'pv-cash', '💜 ' + primeiroNome(PVD.cliente.nome) + ' tem ' + rs(PVD.cliente.cash.agora) + ' de cashback' + (PVD.cliente.cash.minimo ? ' (resgate a partir de ' + rs(PVD.cliente.cash.minimo) + ')' : '')));
+  const f = el('div', 'pv-busca'), inp = el('input'), cam = el('button', 'btn', '📷'); inp.type = 'search'; inp.placeholder = 'Buscar peça pelo nome ou referência'; inp.enterKeyHint = 'search'; f.append(inp, cam); const res = el('div'), car = el('div'); b.append(f, res, car);
+  const desCar = () => { car.replaceChildren(); if (!PVD.itens.length) return; const c = el('div', 'card'); c.append(el('div', 'pv-lb2', 'Peças da cliente'));
+    PVD.itens.forEach((it, i) => { const r = el('div', 'pv-row'), t = el('div'); t.append(el('b', '', it.nome), el('div', 'sub', it.cor + ' · ' + it.tam + ' · ref ' + it.ref + (it.qt > 1 ? ' · ' + it.qt + ' un' : ''))); const x = el('button', 'btn sm', '✕'); x.addEventListener('click', (e) => { e.stopPropagation(); PVD.itens.splice(i, 1); desCar(); }); const dir = el('div'); dir.style.cssText = 'display:flex;gap:8px;align-items:center'; dir.append(el('b', '', rs(it.preco * it.qt)), x); r.append(t, dir); c.append(r); });
+    const tot = PVD.itens.reduce((a, i) => a + i.preco * i.qt, 0), n = PVD.itens.reduce((a, i) => a + i.qt, 0); const tt = el('div', 'pv-tot'); tt.append(el('span', '', n + (n > 1 ? ' peças' : ' peça')), el('span', '', rs(tot))); c.append(tt);
+    const cash = PVD.cliente && PVD.cliente.cash; if (cash && cash.agora > 0 && cash.minimo && tot < cash.minimo) c.append(el('div', 'sub', '💡 Faltam ' + rs(cash.minimo - tot) + ' para ela poder usar o cashback.'));
+    const rv = el('label', 'pv-chk'), ck = el('input'); ck.type = 'checkbox'; rv.append(ck, document.createTextNode(' Reservar as peças por 2 h (a cliente volta depois)')); c.append(rv);
+    const g = el('button', 'btn pri big', 'Gerar pré-venda e levar ao caixa'); g.addEventListener('click', () => { g.disabled = true; g.textContent = 'Gerando…';
+      rodar('pvSalvar', [S.token, PVD.loja, { itens: PVD.itens.map((i) => ({ ref: i.ref, cor: i.cor, tam: i.tam, qt: i.qt })), cliente: PVD.cliente, reservar: ck.checked }], (p) => { PVD.itens = []; PVD.cliente = null; pvCaixaUI(b, p); }, () => { g.disabled = false; g.textContent = 'Gerar pré-venda e levar ao caixa'; }); });
+    c.append(g); car.append(c); };
+  const escolherTam = (m) => { const cores = Object.keys(m.cores); let cor = cores[0]; const c = el('div', 'card'), ch = el('div', 'pv-chips'), tz = el('div', 'pv-chips'); c.append(el('b', '', m.nome), el('div', 'sub', 'ref ' + m.ref + ' · ' + rs(m.preco)), el('div', 'pv-lb2', 'Cor'), ch, el('div', 'pv-lb2', 'Tamanho'), tz);
+    const des = () => { ch.replaceChildren(); cores.forEach((k) => { const bt = el('button', 'chip' + (k === cor ? ' on' : ''), k); bt.addEventListener('click', () => { cor = k; des(); }); ch.append(bt); });
+      tz.replaceChildren(); Object.keys(m.cores[cor]).forEach((t) => { const q = m.cores[cor][t], bt = el('button', 'chip' + (q > 0 ? '' : ' off'), t + ' · ' + q); bt.addEventListener('click', () => { if (q <= 0 && !confirm('Sem saldo no sistema. Colocar mesmo assim?')) return;
+        const ex = PVD.itens.find((i) => i.ref === m.ref && i.cor === cor && i.tam === t); if (ex) ex.qt++; else PVD.itens.push({ ref: m.ref, nome: m.nome, cor: cor, tam: t, preco: m.preco, qt: 1 }); toast('✓ ' + m.nome + ' · ' + cor + ' · ' + t); res.replaceChildren(); inp.value = ''; desCar(); }); tz.append(bt); }); };
+    des(); res.replaceChildren(c); };
+  const buscar = () => { const t = inp.value.trim(); if (!t) return; res.replaceChildren(el('div', 'sub', 'Buscando…'));
+    rodar('estoqueBuscar', [S.token, t, PVD.loja, false, 0], (r) => { res.replaceChildren(); if (r.msg) { res.append(el('div', 'card', r.msg)); return; } if (!r.itens.length) { res.append(el('div', 'card', 'Nenhuma peça com saldo para "' + t + '".')); return; }
+      if (r.itens.length === 1) { escolherTam(r.itens[0]); return; } const c = el('div', 'card'); r.itens.slice(0, 15).forEach((m) => { const row = el('div', 'pv-row'), tx = el('div'); tx.append(el('b', '', m.nome), el('div', 'sub', 'ref ' + m.ref + ' · ' + m.total + ' na loja')); row.append(tx, el('b', '', rs(m.preco))); row.addEventListener('click', () => escolherTam(m)); c.append(row); }); res.append(c); }); };
+  inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') buscar(); }); inp.addEventListener('search', buscar);
+  cam.addEventListener('click', () => lerCodigoCamera((cod) => { inp.value = cod; buscar(); }));
+  desCar(); setTimeout(() => inp.focus(), 200);
+}
+// tela para mostrar no caixa: número, CPF, vendedora e o código de barras de cada peça
+function pvCaixaUI(b, p) {
+  b.replaceChildren(); const h = el('div', 'pv-hero'); h.append(el('div', 'k', 'Mostre esta tela no caixa'), el('div', 'n', p.num), el('div', 's', primeiroNome(p.vendedora) + ' · ' + p.itens.reduce((a, i) => a + i.qt, 0) + ' peça(s) · ' + rs(p.total) + (p.reservaAte ? ' · reservada até ' + p.reservaAte.slice(11, 16) : ''))); b.append(h);
+  const top = el('div', 'card pv-duo');
+  if (p.cpf) { const d = el('div'); d.append(el('div', 'pv-lb2', 'Cliente · CPF'), codBarras(p.cpf, 1.6, 56), el('div', 'pv-cod', (p.cliente ? primeiroNome(p.cliente) + ' · ' : '') + p.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') + (p.nova ? ' · NOVA' : ''))); top.append(d); }
+  if (p.cod) { const d = el('div'); d.append(el('div', 'pv-lb2', 'Vendedora'), codBarras(p.cod, 1.6, 56), el('div', 'pv-cod', p.cod + ' · ' + primeiroNome(p.vendedora))); top.append(d); }
+  if (top.children.length) b.append(top);
+  if (p.nova) b.append(el('div', 'card pv-nova', '🆕 Cliente nova: cadastre no USE com estes dados antes de fechar a venda → ' + p.cliente + ' · CPF ' + p.cpf + ' · ' + String(p.fone).replace(/(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3')));
+  const c = el('div', 'card'); p.itens.forEach((it) => { const d = el('div', 'pv-it'); const cod = it.cb || it.prod; for (let q = 0; q < it.qt; q++) { if (cod) d.append(codBarras(cod, 2, 64)); }
+    d.append(el('div', 'pv-nm', it.nome + ' · ' + it.cor + ' · ' + it.tam + (it.qt > 1 ? ' · ' + it.qt + ' un' : '')), el('div', 'pv-cod', cod ? cod + ' · ref ' + it.ref : 'ref ' + it.ref + ' (sem código de barras: digite a referência)')); c.append(d); });
+  b.append(c, el('div', 'sub', 'Aumente o brilho da tela. Se o leitor não pegar, o caixa digita os números embaixo das barras.'));
+  if (p.status === 'aberta' || p.status === 'reservada') { const bts = el('div', 'pv-bts'), ok = el('button', 'btn pri big', '✓ Venda concluída'), ds = el('button', 'btn big', 'Cliente desistiu');
+    ok.addEventListener('click', () => rodar('pvStatus', [S.token, p.id, 'vendida', ''], () => { toast('Pré-venda concluída ✓'); pvListaUI(b); }));
+    ds.addEventListener('click', () => escolher('Por que não fechou?', p.num, ['Achou caro', 'Não tinha o tamanho/cor', 'Vai pensar', 'Desistiu no caixa', 'Outro'].map((m) => [m, '', () => rodar('pvStatus', [S.token, p.id, 'desistiu', m], () => { toast('Registrado.'); pvListaUI(b); })])));
+    bts.append(ok, ds); b.append(bts); }
+  const vt = el('button', 'btn big', '← Pré-vendas de hoje'); vt.addEventListener('click', () => pvListaUI(b)); b.append(vt);
 }
 // 📣 compartilhar uma conquista (foguete, meta do dia, medalha) no mural ou no status, com uma imagem pronta
 function imgConquista(c) {
@@ -6757,6 +6867,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && T)
     rh: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     aj: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/>',
     sd: '<path d="M3 12h4l2-5 4 10 2-5h6"/>',
+    pv: '<path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/>',
     pde: '<path d="M8 4h8v4a4 4 0 0 1-8 0z"/><path d="M8 6H5c0 2 1.3 3.5 3 4M16 6h3c0 2-1.3 3.5-3 4M12 12v4M9 20h6M10 16h4v4h-4z"/>',
     fin: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M8 6V4h8v2M3 11h18M12 10v3"/>',
     cb: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .9 3 2-1.3 2-3 2c-1.4 0-2.6-.6-3-1.6M12 6.5V8M12 16v1.5"/>',
