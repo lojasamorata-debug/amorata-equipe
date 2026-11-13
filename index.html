@@ -1187,6 +1187,7 @@ function amigavel(m) {
   if (/Failed to fetch|NetworkError|Load failed|network|Sem conex|conexão/i.test(m)) return 'Sem conexão com a internet. Confira o Wi-Fi ou os dados e tente de novo.';
   if (/too many times|invoked too many|Service invoked|quota|Limite excedido|Serviço chamado/i.test(m)) return 'O sistema está muito ocupado agora. Espere um minutinho e tente de novo.';
   if (/Lock|bloqueio|Timeout|timed out|tempo limite/i.test(m)) return 'Demorou mais que o normal. Tente de novo.';
+  if (/FORA_HORARIO/.test(m)) { setTimeout(() => foraHorario(m), 0); return '🌙 Fora do seu horário de trabalho.'; }
   if (/SEM_CELULAR/.test(m)) return 'O cadastro da cliente não tem celular: digite o número.';
   if (tecnico(m)) return 'Algo deu errado aqui. Já registramos para o suporte. Tente de novo.';
   return m;
@@ -1203,6 +1204,7 @@ function rodar(fn, args, ok, erro) {
     prog(-1);
     const m = (e && e.message) || String(e);
     if (/SESSAO_EXPIRADA/.test(m)) { sair('Sua sessão expirou. Entre de novo.'); return; }
+    if (/FORA_HORARIO/.test(m)) { foraHorario(m); return; }
     if (/FORA_DA_VEZ/.test(m)) { ocupado = false; if (erro) try { erro(e); } catch (x) {} toast('A fila mudou agora há pouco. Confira de quem é a vez e toque de novo.'); setTimeout(atualizar, 100); return; }
     if (tecnico(m) || /too many|quota|Lock|Timeout/i.test(m)) logErro(fn, m);
     // consultas automáticas (a fila se atualiza sozinha a cada poucos segundos): uma falha de rede passageira não vira aviso; só avisa se repetir
@@ -1233,7 +1235,30 @@ function sair(msg) {
   document.querySelectorAll('.tc, #gate, #strec, #tour').forEach((x) => x.remove()); try { AV_N = null; } catch (e) {} try { clearInterval(window.__REU_POLL); } catch (e) {}
   $('v-app').classList.add('hide'); $('v-login').classList.remove('hide'); $('lerr').textContent = msg || ''; try { bioBotao(); } catch (e) {}
 }
+// 🌙 fora do expediente (vendedoras, estoque e auxiliares): sai da conta e mostra o horário liberado
+function foraHorario(m) {
+  const tx = String(m || '').replace(/^[\s\S]*FORA_HORARIO:\s*/, '').trim() || 'O app só abre no seu horário de trabalho.';
+  if (S) sair(''); if ($('fora-h')) $('fora-h').remove();
+  const ov = el('div'); ov.id = 'fora-h'; ov.style.cssText = 'position:fixed;inset:0;z-index:9990;background:rgba(30,20,40,.55);display:flex;align-items:center;justify-content:center;padding:20px';
+  const c = el('div', 'card'); c.style.cssText = 'max-width:380px;width:100%;text-align:center;padding:22px';
+  const ok = el('button', 'btn pri big', 'Entendi'); ok.addEventListener('click', () => ov.remove());
+  c.append(el('div', '', '🌙'), el('b', '', 'Fora do horário de trabalho'), el('p', 'sub', tx), ok); c.firstChild.style.fontSize = '42px'; ov.append(c); document.body.append(ov);
+}
+// 🕘 1º acesso do dia: declara que está no horário de trabalho e já registrou o ponto
+function checarDecl() {
+  if (!S || ['VENDEDORA', 'ESTOQUISTA', 'AUXILIAR'].indexOf(S.cargo) < 0 || (typeof T !== 'undefined' && T)) return;
+  google.script.run.withSuccessHandler((r) => { if (!r || !r.pend || !S || $('decl-p')) return;
+    const ov = el('div'); ov.id = 'decl-p'; ov.style.cssText = 'position:fixed;inset:0;z-index:9980;background:rgba(30,20,40,.6);display:flex;align-items:center;justify-content:center;padding:20px';
+    const c = el('div', 'card'); c.style.cssText = 'max-width:400px;width:100%;padding:22px';
+    const lb = el('label'); lb.style.cssText = 'display:flex;gap:10px;align-items:flex-start;margin:14px 0;font-size:15px;line-height:1.4'; const ck = el('input'); ck.type = 'checkbox'; ck.style.cssText = 'width:22px;height:22px;flex:none;margin-top:2px';
+    lb.append(ck, document.createTextNode('Declaro que estou no meu horário de trabalho e que já registrei o meu ponto de entrada.'));
+    const bt = el('button', 'btn pri big', 'Confirmar e entrar'); bt.disabled = true; ck.addEventListener('change', () => { bt.disabled = !ck.checked; });
+    bt.addEventListener('click', () => { bt.disabled = true; bt.textContent = 'Salvando…'; rodar('declPonto', [S.token, navigator.userAgent.slice(0, 180)], () => { ov.remove(); toast('Bom trabalho! 💜'); }, () => { bt.disabled = false; bt.textContent = 'Confirmar e entrar'; }); });
+    c.append(el('b', '', '🕘 ' + (new Date().getHours() < 12 ? 'Bom dia' : new Date().getHours() < 18 ? 'Boa tarde' : 'Boa noite') + ', ' + (r.nome || '') + '!'), lb, bt, el('div', 'sub', 'Fica registrado com a data, a hora e o aparelho.')); ov.append(c); document.body.append(ov);
+  }).withFailureHandler((e) => { const m = (e && e.message) || ''; if (/FORA_HORARIO/.test(m)) foraHorario(m); }).declStatus(S.token);
+}
 function abrir() {
+  setTimeout(checarDecl, 200);
   $('v-login').classList.add('hide'); $('v-app').classList.remove('hide');
   cabecalho(); protecao(true);
   const fazCaminho = S.cargo !== 'ADMIN' && S.cargo !== 'ESTOQUISTA' && !S.trocarSenha && !(typeof T !== 'undefined' && T) && caminhoPendente();
