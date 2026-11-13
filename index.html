@@ -1242,7 +1242,7 @@ function abrir() {
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
   setTimeout(checarAvisos, 2500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 3000); setTimeout(carregarStatus, 4500); setTimeout(() => carregarTreino(), 6000); try { $('rp-card').classList.toggle('hide', S.cargo === 'VENDEDORA' || S.cargo === 'AUXILIAR'); } catch (e) {} setTimeout(carregarCampeas, 3500); setTimeout(carregarEstoqueInfo, 5000); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
   $('t-av').replaceChildren(...avatar(S.foto, S.nome).childNodes); if (!S.foto) $('t-av').textContent = (S.nome || '?').charAt(0);
-  nuvemFoto(); desenharMood(); setTimeout(carregarDesafios, 4000);
+  nuvemFoto(); desenharMood(); setTimeout(carregarDesafios, 4000); setTimeout(checarAtas, 3000);
   const sel = $('sel-loja'); sel.replaceChildren(...S.lojas.map((l) => new Option(l, l)));
   sel.value = loja; $('sel-loja-box').classList.toggle('hide', S.lojas.length < 2);
   prepararFiltros(); botaoAjudaAba(); { let a0 = '', d0 = null; try { a0 = sessionStorage.getItem('amorata_aba') || ''; d0 = JSON.parse(sessionStorage.getItem('amorata_det') || 'null'); } catch (e) {} const ok = a0 && $('tab-' + a0) && !$('tab-' + a0).classList.contains('hide'); mudarAba(ok ? a0 : (chefe() ? 'ini' : 'dia')); if (d0 && typeof window[d0.n] === 'function') setTimeout(() => { try { window[d0.n].apply(null, d0.a || []); } catch (e) {} }, 700); }
@@ -2098,6 +2098,13 @@ function ataFecharUI(r, pg, btn) {
   des(); c.append(an, pg1.el, el('div', 'pv-lb2', 'Assinatura da consultora'), ch, p2box, ok, cx); ov.append(c); document.body.append(ov);
 }
 // 📚 histórico das atas (gerência: da loja / da consultora; consultora: as dela)
+// 📝 ata esperando a assinatura da consultora: aviso fixo na tela inicial (não depende da notificação)
+function checarAtas() {
+  if (!S || chefe() || (typeof T !== 'undefined' && T)) return;
+  google.script.run.withSuccessHandler((r) => { const p = r && r.lista && r.lista.find((a) => a.status === 'AGUARDANDO'); let bx = $('ata-pend'); if (!p) { if (bx) bx.remove(); return; }
+    const pc = $('plano-card'); if (!bx) { bx = el('button', 'pend-lk'); bx.id = 'ata-pend'; bx.style.marginTop = '10px'; if (pc && pc.parentNode) pc.parentNode.insertBefore(bx, pc); else return; }
+    bx.replaceChildren(el('div', '', '📝 Ata da reunião com ' + primeiroNome(p.gerente) + ' esperando a sua assinatura'), el('span', '', 'Assinar ›')); bx.onclick = () => abrirAtas(p.id); }).withFailureHandler(() => {}).ataLista(S.token, '', '');
+}
 function abrirAtas(focoId, lojaSel, usuarioSel) {
   abrirDet('📚 Atas de reunião', (b) => { b.append(el('div', 'sub', 'Carregando…'));
     rodar('ataLista', [S.token, lojaSel || (typeof loja !== 'undefined' ? loja : ''), usuarioSel || ''], (r) => { b.replaceChildren();
@@ -2134,7 +2141,7 @@ function ataAbrirUI(id, btn) {
         const im = await doc.embedPng(pad.img()); pgN.drawImage(im, { x: 48, y: 560, width: 300, height: 100 }); pgN.drawLine({ start: { x: 48, y: 555 }, end: { x: 348, y: 555 }, thickness: 0.8 });
         pgN.drawText(sem(a.nome + ' - assinado eletronicamente em ' + em + ' pelo app Amorata Equipe'), { x: 48, y: 540, size: 10, font: f }); pgN.drawText(sem('Codigo de conferencia da versao anterior: ' + (a.sha || '')), { x: 48, y: 522, size: 8, font: f });
         const out = await doc.save(), b64 = await blobB64(new Blob([out], { type: 'application/pdf' }));
-        rodar('ataAssinar', [S.token, a.id, b64, navigator.userAgent], () => { ov.remove(); toast('✅ Ata assinada!'); abrirAtas(); }, () => { ok.disabled = false; ok.textContent = '✍️ Assinar'; });
+        rodar('ataAssinar', [S.token, a.id, b64, navigator.userAgent], () => { ov.remove(); toast('✅ Ata assinada!'); abrirAtas(); checarAtas(); }, () => { ok.disabled = false; ok.textContent = '✍️ Assinar'; });
       } catch (e) { toast((e && e.message) || 'Não consegui assinar.'); ok.disabled = false; ok.textContent = '✍️ Assinar'; } });
     c.append(ver, pad.el, ac, ok, cx); ov.append(c); document.body.append(ov);
   }, () => { if (btn) { btn.disabled = false; btn.textContent = t0; } });
