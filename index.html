@@ -3690,7 +3690,7 @@ function abrirPreVenda() {
 }
 function pvListaUI(b) {
   b.replaceChildren(); if (chefe() && (S.lojas || []).length > 1) { const sl = el('select'); S.lojas.forEach((l) => { const o = el('option', '', l); o.value = l; if (l === PVD.loja) o.selected = true; sl.append(o); }); sl.addEventListener('change', () => { PVD.loja = sl.value; pvListaUI(b); }); b.append(sl); }
-  const nv = el('button', 'btn pri big', '+ Nova pré-venda'); nv.addEventListener('click', () => { PVD.itens = []; PVD.cliente = null; PVD.usarCash = false; PVD.editId = ''; PVD.editP = null; pvClienteUI(b); }); b.append(nv);
+  const nv = el('button', 'btn pri big', '+ Nova pré-venda'); nv.addEventListener('click', () => { PVD.itens = []; PVD.cliente = null; PVD.usarCash = null; PVD.editId = ''; PVD.editP = null; pvClienteUI(b); }); b.append(nv);
   if (S.cargo === 'ADMIN') { const cf = el('button', 'btn sm', '⚙️ InfiniteTag das lojas'); cf.style.marginTop = '6px'; cf.addEventListener('click', () => pvTagsUI(b)); b.append(cf); }
   const box = el('div'); box.append(el('div', 'sub', 'Carregando as pré-vendas de hoje…')); b.append(box);
   rodar('pvLista', [S.token, PVD.loja, ''], (r) => {
@@ -3750,7 +3750,7 @@ function pvPecasUI(b) {
     const pecas = PVD.itens.reduce((a, i) => a + i.preco * i.qt, 0), n = PVD.itens.reduce((a, i) => a + i.qt, 0);
     // 💜 cashback: soma os liberados hoje cuja compra mínima cabe no valor das peças (sem a entrega); nunca passa do valor das peças
     const cash = PVD.cliente && PVD.cliente.cash, cis = cash && cash.itens ? cash.itens : [], usaveis = cis.filter((i) => (i.minimo || 0) <= pecas), podeCash = Math.min(pecas, Math.round(usaveis.reduce((a, i) => a + i.valor, 0) * 100) / 100);
-    if (!podeCash) PVD.usarCash = false;
+    if (!podeCash) PVD.usarCash = false; else if (PVD.usarCash == null) PVD.usarCash = true; // já vem marcado para usar
     if (cash && cash.agora > 0) { c.append(el('div', 'pv-lb2', '💜 Cashback')); if (podeCash) { const cc = el('div', 'pv-chips'); [[true, 'Usar ' + rs(podeCash)], [false, 'Não usar']].forEach(([k, t]) => { const bt = el('button', 'chip' + (!!PVD.usarCash === k ? ' on' : ''), t); bt.addEventListener('click', () => { PVD.usarCash = k; desCar(); }); cc.append(bt); }); c.append(cc); }
       const falta = cis.filter((i) => (i.minimo || 0) > pecas); if (falta.length) { const m = Math.min(...falta.map((i) => i.minimo)); c.append(el('div', 'sub', '💡 Faltam ' + rs(m - pecas) + ' em peças para liberar mais ' + rs(falta.filter((i) => i.minimo === m).reduce((a, i) => a + i.valor, 0)) + ' de cashback (compra mínima ' + rs(m) + ').')); } }
     const desc = PVD.usarCash ? podeCash : 0, tot = pecas - desc + (PVD.entrega || 0); const tt = el('div', 'pv-tot'); tt.append(el('span', '', n + (n > 1 ? ' peças' : ' peça') + (PVD.entrega ? ' + entrega' : '') + (desc ? ' − cashback' : '')), el('span', '', rs(tot))); c.append(tt);
@@ -3760,8 +3760,8 @@ function pvPecasUI(b) {
     const desPg = () => { pg.replaceChildren(); opPg.forEach(([k, t]) => { const bt = el('button', 'chip' + (k === modo ? ' on' : ''), t); bt.addEventListener('click', () => { modo = PVD.modo = k; desPg(); }); pg.append(bt); });
       dica.textContent = modo === 'comigo' ? 'Depois de gerar, você cobra no seu celular: cartão por aproximação, link de pagamento (Pix ou cartão) ou confirma o Pix recebido.' : 'No caixa: dinheiro, cartão ou Pix.'; rv.classList.toggle('hide', modo === 'comigo'); g.textContent = ed ? '✓ Salvar alterações da ' + PVD.editP.num : modo === 'comigo' ? 'Gerar pré-venda e cobrar' : 'Gerar pré-venda e levar ao caixa'; };
     desPg(); c.append(pg, dica, rv); g.addEventListener('click', () => { g.disabled = true; g.textContent = 'Gerando…';
-      rodar('pvSalvar', [S.token, PVD.loja, { itens: PVD.itens.map((i) => ({ ref: i.ref, cor: i.cor, tam: i.tam, qt: i.qt })), cliente: PVD.cliente, reservar: modo === 'caixa' && ck.checked, modo: modo, canal: PVD.canal, entrega: PVD.entrega || 0, usarCash: !!PVD.usarCash, editId: PVD.editId || '' }], (p) => { if (PVD.editId) toast('Pré-venda alterada ✓' + (p.modo === 'comigo' ? ' · gere o link de novo se for usar' : '')); PVD.itens = []; PVD.cliente = null; PVD.usarCash = false; PVD.editId = ''; PVD.editP = null; PVD.modo = 'caixa'; PVD.canal = 'loja'; PVD.entrega = 0; pvCaixaUI(b, p); }, () => { g.disabled = false; desPg(); }); });
-    c.append(g); if (ed) { const cx = el('button', 'btn big', 'Cancelar alteração'); cx.addEventListener('click', () => { const p0 = PVD.editP; PVD.itens = []; PVD.cliente = null; PVD.usarCash = false; PVD.editId = ''; PVD.editP = null; pvCaixaUI(b, p0); }); c.append(cx); } car.append(c); };
+      rodar('pvSalvar', [S.token, PVD.loja, { itens: PVD.itens.map((i) => ({ ref: i.ref, cor: i.cor, tam: i.tam, qt: i.qt })), cliente: PVD.cliente, reservar: modo === 'caixa' && ck.checked, modo: modo, canal: PVD.canal, entrega: PVD.entrega || 0, usarCash: !!PVD.usarCash, editId: PVD.editId || '' }], (p) => { if (PVD.editId) toast('Pré-venda alterada ✓' + (p.modo === 'comigo' ? ' · gere o link de novo se for usar' : '')); PVD.itens = []; PVD.cliente = null; PVD.usarCash = null; PVD.editId = ''; PVD.editP = null; PVD.modo = 'caixa'; PVD.canal = 'loja'; PVD.entrega = 0; pvCaixaUI(b, p); }, () => { g.disabled = false; desPg(); }); });
+    c.append(g); if (ed) { const cx = el('button', 'btn big', 'Cancelar alteração'); cx.addEventListener('click', () => { const p0 = PVD.editP; PVD.itens = []; PVD.cliente = null; PVD.usarCash = null; PVD.editId = ''; PVD.editP = null; pvCaixaUI(b, p0); }); c.append(cx); } car.append(c); };
   const escolherTam = (m) => { const cores = Object.keys(m.cores); let cor = cores[0]; const c = el('div', 'card'), ch = el('div', 'pv-chips'), tz = el('div', 'pv-chips'); c.append(el('b', '', m.nome), el('div', 'sub', 'ref ' + m.ref + ' · ' + rs(m.preco)), el('div', 'pv-lb2', 'Cor'), ch, el('div', 'pv-lb2', 'Tamanho'), tz);
     const des = () => { ch.replaceChildren(); cores.forEach((k) => { const bt = el('button', 'chip' + (k === cor ? ' on' : ''), k); bt.addEventListener('click', () => { cor = k; des(); }); ch.append(bt); });
       tz.replaceChildren(); Object.keys(m.cores[cor]).forEach((t) => { const q = m.cores[cor][t], bt = el('button', 'chip' + (q > 0 ? '' : ' off'), t + ' · ' + q); bt.addEventListener('click', () => { if (q <= 0 && !confirm('Sem saldo no sistema. Colocar mesmo assim?')) return;
@@ -5012,6 +5012,10 @@ function desenharPlano(r) {
   const b = $('plano-card'); b.replaceChildren(); if (!r || !r.objetivos || !r.objetivos.length) { b.classList.add('hide'); return; } b.classList.remove('hide');
   const ok = r.objetivos.filter((o) => o.ok).length; b.append(el('b', '', '🌱 Meu plano do mês'), el('div', 'sub', ok + ' de ' + r.objetivos.length + ' objetivos atingidos · combinado com a gerência'));
   r.objetivos.forEach((o) => b.append(linhaObj(o, r.tipos)));
+  // 📈 evolução de cada combinado no mês (o mesmo gráfico do relatório da reunião)
+  const gs = r.objetivos.filter((o) => o.serie && o.serie.v && o.serie.v.some((x) => x != null)); if (gs.length) { const bt = el('button', 'btn sm', '📈 Ver minha evolução'), g = el('div', 'hide'); g.style.cssText = 'display:grid;gap:8px;margin-top:8px';
+    const nome = (o) => (r.tipos[o.tipo] || [o.tipo])[0] + ': ' + o.alvo + ((r.tipos[o.tipo] || [])[1] || ''); gs.forEach((o) => g.append(rrGrafObj(o, r.tipos, nome(o))));
+    bt.style.marginTop = '8px'; bt.addEventListener('click', () => { const h = g.classList.toggle('hide'); bt.textContent = h ? '📈 Ver minha evolução' : 'Esconder evolução'; }); b.append(bt, g); }
 }
 let PLA = null;
 function desenharPlanos(r) {
