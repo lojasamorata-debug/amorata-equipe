@@ -3671,7 +3671,7 @@ function abrirPreVenda() {
 }
 function pvListaUI(b) {
   b.replaceChildren(); if (chefe() && (S.lojas || []).length > 1) { const sl = el('select'); S.lojas.forEach((l) => { const o = el('option', '', l); o.value = l; if (l === PVD.loja) o.selected = true; sl.append(o); }); sl.addEventListener('change', () => { PVD.loja = sl.value; pvListaUI(b); }); b.append(sl); }
-  const nv = el('button', 'btn pri big', '+ Nova pré-venda'); nv.addEventListener('click', () => { PVD.itens = []; PVD.cliente = null; PVD.usarCash = false; pvClienteUI(b); }); b.append(nv);
+  const nv = el('button', 'btn pri big', '+ Nova pré-venda'); nv.addEventListener('click', () => { PVD.itens = []; PVD.cliente = null; PVD.usarCash = false; PVD.editId = ''; PVD.editP = null; pvClienteUI(b); }); b.append(nv);
   if (S.cargo === 'ADMIN') { const cf = el('button', 'btn sm', '⚙️ InfiniteTag das lojas'); cf.style.marginTop = '6px'; cf.addEventListener('click', () => pvTagsUI(b)); b.append(cf); }
   const box = el('div'); box.append(el('div', 'sub', 'Carregando as pré-vendas de hoje…')); b.append(box);
   rodar('pvLista', [S.token, PVD.loja, ''], (r) => {
@@ -3713,6 +3713,13 @@ function pvCadastroUI(b, cpf, fone) {
 }
 function cpfOkCli(d) { if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false; let s = 0; for (let i = 0; i < 9; i++) s += +d[i] * (10 - i); if ((s * 10) % 11 % 10 !== +d[9]) return false; s = 0; for (let i = 0; i < 10; i++) s += +d[i] * (11 - i); return (s * 10) % 11 % 10 === +d[10]; }
 // passo 2: peças (busca pelo nome, referência ou câmera) e gerar
+function pvEditarUI(b, p, bt) {
+  const abre = (cash) => { PVD.editId = p.id; PVD.editP = p; PVD.loja = p.loja; PVD.itens = p.itens.map((i) => ({ ref: i.ref, nome: i.nome, cor: i.cor, tam: i.tam, preco: i.preco, qt: i.qt }));
+    PVD.cliente = p.cpf || p.cliente || p.fone ? { cpf: p.cpf || '', nome: p.cliente || '', fone: p.fone || '', nova: false, cash: cash } : null; PVD.entrega = p.entrega || 0; PVD.canal = p.canal || 'loja'; PVD.modo = p.modo || 'caixa'; PVD.usarCash = !!p.cashback; pvPecasUI(b); };
+  const termo = p.cpf || p.fone; if (!termo) { abre(null); return; }
+  if (bt) { bt.disabled = true; bt.textContent = 'Abrindo…'; }
+  google.script.run.withSuccessHandler((r) => abre(r && r.cash)).withFailureHandler(() => abre(null)).pvCliente(S.token, p.loja, termo);
+}
 function pvPecasUI(b) {
   b.replaceChildren(); b.append(el('div', 'pv-pass', 'Passo 2 de 2 · Peças' + (PVD.cliente ? ' · ' + primeiroNome(PVD.cliente.nome) + (PVD.cliente.nova ? ' (nova)' : '') : ' · sem cliente')));
   if (PVD.cliente && PVD.cliente.cash && PVD.cliente.cash.agora > 0) b.append(el('div', 'pv-cash', '💜 ' + primeiroNome(PVD.cliente.nome) + ' tem ' + rs(PVD.cliente.cash.agora) + ' de cashback' + (PVD.cliente.cash.minimo ? ' (resgate a partir de ' + rs(PVD.cliente.cash.minimo) + ')' : '')));
@@ -3730,12 +3737,12 @@ function pvPecasUI(b) {
     const desc = PVD.usarCash ? podeCash : 0, tot = pecas - desc + (PVD.entrega || 0); const tt = el('div', 'pv-tot'); tt.append(el('span', '', n + (n > 1 ? ' peças' : ' peça') + (PVD.entrega ? ' + entrega' : '') + (desc ? ' − cashback' : '')), el('span', '', rs(tot))); c.append(tt);
     c.append(el('div', 'pv-lb2', 'Pagamento')); const pg = el('div', 'pv-chips'), dica = el('div', 'sub'); let modo = PVD.modo || 'caixa'; const opPg = [['caixa', '💵 Vai pagar no caixa'], ['comigo', '📲 Vai pagar comigo']];
     const rv = el('label', 'pv-chk'), ck = el('input'); ck.type = 'checkbox'; rv.append(ck, document.createTextNode(' Reservar as peças por 2 h (a cliente volta depois)'));
-    const g = el('button', 'btn pri big', '');
+    const g = el('button', 'btn pri big', ''), ed = !!PVD.editId;
     const desPg = () => { pg.replaceChildren(); opPg.forEach(([k, t]) => { const bt = el('button', 'chip' + (k === modo ? ' on' : ''), t); bt.addEventListener('click', () => { modo = PVD.modo = k; desPg(); }); pg.append(bt); });
-      dica.textContent = modo === 'comigo' ? 'Depois de gerar, você cobra no seu celular: cartão por aproximação, link de pagamento (Pix ou cartão) ou confirma o Pix recebido.' : 'No caixa: dinheiro, cartão ou Pix.'; rv.classList.toggle('hide', modo === 'comigo'); g.textContent = modo === 'comigo' ? 'Gerar pré-venda e cobrar' : 'Gerar pré-venda e levar ao caixa'; };
+      dica.textContent = modo === 'comigo' ? 'Depois de gerar, você cobra no seu celular: cartão por aproximação, link de pagamento (Pix ou cartão) ou confirma o Pix recebido.' : 'No caixa: dinheiro, cartão ou Pix.'; rv.classList.toggle('hide', modo === 'comigo'); g.textContent = ed ? '✓ Salvar alterações da ' + PVD.editP.num : modo === 'comigo' ? 'Gerar pré-venda e cobrar' : 'Gerar pré-venda e levar ao caixa'; };
     desPg(); c.append(pg, dica, rv); g.addEventListener('click', () => { g.disabled = true; g.textContent = 'Gerando…';
-      rodar('pvSalvar', [S.token, PVD.loja, { itens: PVD.itens.map((i) => ({ ref: i.ref, cor: i.cor, tam: i.tam, qt: i.qt })), cliente: PVD.cliente, reservar: modo === 'caixa' && ck.checked, modo: modo, canal: PVD.canal, entrega: PVD.entrega || 0, usarCash: !!PVD.usarCash }], (p) => { PVD.itens = []; PVD.cliente = null; PVD.usarCash = false; PVD.modo = 'caixa'; PVD.canal = 'loja'; PVD.entrega = 0; pvCaixaUI(b, p); }, () => { g.disabled = false; desPg(); }); });
-    c.append(g); car.append(c); };
+      rodar('pvSalvar', [S.token, PVD.loja, { itens: PVD.itens.map((i) => ({ ref: i.ref, cor: i.cor, tam: i.tam, qt: i.qt })), cliente: PVD.cliente, reservar: modo === 'caixa' && ck.checked, modo: modo, canal: PVD.canal, entrega: PVD.entrega || 0, usarCash: !!PVD.usarCash, editId: PVD.editId || '' }], (p) => { if (PVD.editId) toast('Pré-venda alterada ✓' + (p.modo === 'comigo' ? ' · gere o link de novo se for usar' : '')); PVD.itens = []; PVD.cliente = null; PVD.usarCash = false; PVD.editId = ''; PVD.editP = null; PVD.modo = 'caixa'; PVD.canal = 'loja'; PVD.entrega = 0; pvCaixaUI(b, p); }, () => { g.disabled = false; desPg(); }); });
+    c.append(g); if (ed) { const cx = el('button', 'btn big', 'Cancelar alteração'); cx.addEventListener('click', () => { const p0 = PVD.editP; PVD.itens = []; PVD.cliente = null; PVD.usarCash = false; PVD.editId = ''; PVD.editP = null; pvCaixaUI(b, p0); }); c.append(cx); } car.append(c); };
   const escolherTam = (m) => { const cores = Object.keys(m.cores); let cor = cores[0]; const c = el('div', 'card'), ch = el('div', 'pv-chips'), tz = el('div', 'pv-chips'); c.append(el('b', '', m.nome), el('div', 'sub', 'ref ' + m.ref + ' · ' + rs(m.preco)), el('div', 'pv-lb2', 'Cor'), ch, el('div', 'pv-lb2', 'Tamanho'), tz);
     const des = () => { ch.replaceChildren(); cores.forEach((k) => { const bt = el('button', 'chip' + (k === cor ? ' on' : ''), k); bt.addEventListener('click', () => { cor = k; des(); }); ch.append(bt); });
       tz.replaceChildren(); Object.keys(m.cores[cor]).forEach((t) => { const q = m.cores[cor][t], bt = el('button', 'chip' + (q > 0 ? '' : ' off'), t + ' · ' + q); bt.addEventListener('click', () => { if (q <= 0 && !confirm('Sem saldo no sistema. Colocar mesmo assim?')) return;
@@ -3854,6 +3861,8 @@ function pvCaixaUI(b, p) {
   if (p.cod) { const c = etapa(1, p.canal === 'online' ? 'Vendedora · online' : 'Vendedora'); c.append(codBarras(p.cod, 2, 90), el('div', 'pv-cod', p.cod + ' · ' + primeiroNome(p.vendedora) + (p.canal === 'online' ? ' ON-LINE' : ''))); top.push(c); }
   if (p.cpf) { const c = etapa(p.cod ? 2 : 1, 'Cliente · CPF'); c.append(codBarras(comLoja(p.cpf), 2, 90), el('div', 'pv-cod', (lj ? lj + ' ⇥ ' : '') + (p.cliente ? primeiroNome(p.cliente) + ' · ' : '') + p.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') + (p.nova ? ' · NOVA' : ''))); top.push(c); }
   if (cobrar && p.linkPag) pvVigiar(b, p); else if (!cobrar) clearInterval(pvVigiar.t);
+  // ✏️ a cliente mudou de ideia: volta para as peças (incluir ou tirar) enquanto ainda não pagou
+  if (p.status === 'aberta' || p.status === 'reservada') { const ed = el('button', 'btn big', '✏️ Incluir ou tirar peças'); ed.addEventListener('click', () => pvEditarUI(b, p, ed)); b.append(ed); }
   if (cobrar && p.tk) { const cb = el('div', 'card pv-cobrar'), bw = el('div', 'pv-bts'); cb.append(el('b', '', '📲 Como a cliente vai pagar?'), el('div', 'sub', 'Total ' + rs(p.total) + '. A pré-venda fica paga sozinha no cartão por aproximação e no link.'));
     const tap = el('button', 'btn pri big', '💳 Cartão por aproximação no meu celular'); tap.addEventListener('click', () => pvCobrarTap(b, p));
     const lk = el('button', 'btn big', p.linkPag ? '🔗 Reenviar link de pagamento' : '🔗 Enviar link de pagamento (Pix ou cartão)'); lk.addEventListener('click', () => pvEnviarLink(b, p, lk));
@@ -4144,7 +4153,7 @@ function moodsDoDia() { const d = new Date(), sem = d.getFullYear() * 400 + d.ge
 function desenharMood() {
   ['mood-mu'].forEach((id) => {
     const box = $(id); if (!box) return; box.replaceChildren(); if (!S || T) return;
-    if (S.moodDia === hojeStr()) { if (id === 'mood-fila') linhaRecado(box); return; }
+    if (S.moodDia === hojeStr() || moodPedido()) { if (id === 'mood-fila') linhaRecado(box); return; }
     const c = el('div', 'mood'); c.append(el('b', '', '🌈 ' + primeiroNome(S.nome) + ', qual seu mood de hoje?'));
     const g = el('div', 'moods'); let esc = null;
     const f = el('div', 'envia'); const inp = el('input'); inp.placeholder = id === 'mood-fila' ? 'Recado para a equipe (opcional)' : 'Quer contar mais? (opcional)'; inp.maxLength = 200; const ok = el('button', 'btn sm pri', 'Publicar');
@@ -4169,11 +4178,15 @@ let ONTEM = null, ONTEM_OK = false;
 const REFLEXOES = ['Cada cliente que entra é uma chance de fazer o dia de alguém mais bonito.', 'O sorriso abre a porta; a escuta fecha a venda.', 'Ninguém bate meta sozinha: hoje eu torço por cada uma de vocês.', 'Um dia ruim não define o mês. Bora recomeçar com tudo!', 'Atender bem é deixar a cliente com vontade de voltar.', 'Pequenas vendas somadas viram uma grande meta.', 'Quem planta atenção colhe cliente fiel.', 'Hoje eu escolho ter paciência, alegria e foco.', 'Gratidão pela equipe que faz a loja acontecer.', 'A melhor vitrine é uma equipe feliz.', 'Que hoje a gente venda com o coração e atenda com carinho.', 'Desafio bom é aquele que a gente vence junto.'];
 const DS3 = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 const chaveCaminho = () => 'amorata_cam_' + (S && S.usuario) + '_' + hojeStr();
+// o mood é pedido só no primeiro acesso do dia (respondendo ou não)
+const chaveMood = () => 'amorata_mood_' + (S && S.usuario) + '_' + hojeStr();
+function moodPedido() { try { return !!localStorage.getItem(chaveMood()); } catch (e) { return false; } }
+function marcarMoodPedido() { try { localStorage.setItem(chaveMood(), '1'); } catch (e) {} }
 function caminhoPendente() { try { if (localStorage.getItem(chaveCaminho())) return false; } catch (e) {} return true; }
 function caminho() {
   if ($('caminho')) return;
   const w = el('div', 'tc'); w.id = 'caminho'; document.body.append(w);
-  const passos = ['mood', 'recado', 'cmn', 'dia']; let i = S.moodDia === hojeStr() ? 1 : 0, mood = null;
+  const passos = ['mood', 'recado', 'cmn', 'dia']; let i = S.moodDia === hojeStr() || moodPedido() ? 1 : 0, mood = null; if (!i) marcarMoodPedido();
   const fim = () => { try { localStorage.setItem(chaveCaminho(), '1'); } catch (e) {} w.remove(); mudarAba(chefe() ? 'ini' : 'dia'); mostrarGuia(false); setTimeout(() => { if (CAMP) cardMetaBatida(); else carregarCampeas(); }, 700); if (comemorar.pend) { const p = comemorar.pend; comemorar.pend = null; setTimeout(() => comemorar(p), 600); } };
   const tela = () => {
     w.replaceChildren(); const k = passos[i];
