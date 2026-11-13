@@ -745,6 +745,16 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
 .ct-bx { position:absolute; border:2px dashed; border-radius:6px; background:rgba(255,255,255,.75); font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; box-sizing:border-box; }
 .ct-pn { position:absolute; right:6px; top:6px; font-size:11px; background:rgba(0,0,0,.55); color:#fff; padding:2px 6px; border-radius:6px; }
 .ct-l { display:flex; flex-wrap:wrap; gap:8px; align-items:center; } .ct-l b { flex:1 1 100%; }
+
+/* pré-venda mais leve: botões e textos menores, opções de pagamento em grade */
+#det.pv-leve .btn.big { font-family:inherit; font-size:15px; font-weight:600; padding:12px 14px; line-height:1.25; border-radius:12px; }
+#det.pv-leve .card { padding:12px; margin-bottom:10px; }
+#det.pv-leve .pv-hero { padding:12px 14px; border-radius:16px; } #det.pv-leve .pv-hero .n { font-size:24px; } #det.pv-leve .pv-hero .k { font-size:10px; }
+#det.pv-leve .pv-bts { gap:6px; margin:8px 0; } #det.pv-leve .pv-cobrar .pv-bts { display:grid; grid-template-columns:1fr 1fr; } #det.pv-leve .pv-cobrar .pv-bts .btn.pri { grid-column:1 / -1; } #det.pv-leve .pv-cobrar .pv-bts > .btn:last-child:nth-child(even) { grid-column:1 / -1; }
+#det.pv-leve .pv-cobrar .pv-bts .btn.big { font-size:13.5px; padding:11px 8px; }
+#det.pv-leve .chip { font-size:13px; padding:7px 11px; } #det.pv-leve .pv-lb2 { margin:6px 0 4px; }
+#det.pv-leve .pv-kpi b { font-size:20px; } #det.pv-leve .pv-row { padding:9px 0; } #det.pv-leve .pv-row b { font-size:14.5px; } #det.pv-leve .pv-st { font-size:11.5px; }
+#det.pv-leve .dbody > .btn.big { margin-top:6px; font-size:14px; padding:10px 14px; font-weight:500; } #det.pv-leve .pv-comp .pv-bts { display:grid; grid-template-columns:1fr 1fr; } #det.pv-leve .pv-comp .pv-bts .btn.big { font-size:13.5px; padding:11px 8px; }
 </style>
 </head>
 <body>
@@ -3776,21 +3786,27 @@ function codBarras(v, w, h) {
 }
 function abrirPreVenda() {
   PVD.loja = PVD.loja || (S.loja && S.loja !== 'TODAS' ? S.loja : (S.lojas || [])[0] || '');
-  abrirDet('🛍️ Pré-venda', (b) => pvListaUI(b));
+  abrirDet('🛍️ Pré-venda', (b) => pvListaUI(b)); const d = $('det'); if (d) d.classList.add('pv-leve');
 }
 function pvListaUI(b) {
   b.replaceChildren(); if (chefe() && (S.lojas || []).length > 1) { const sl = el('select'); S.lojas.forEach((l) => { const o = el('option', '', l); o.value = l; if (l === PVD.loja) o.selected = true; sl.append(o); }); sl.addEventListener('change', () => { PVD.loja = sl.value; pvListaUI(b); }); b.append(sl); }
   const nv = el('button', 'btn pri big', '+ Nova pré-venda'); nv.addEventListener('click', () => { PVD.itens = []; PVD.cliente = null; PVD.usarCash = null; PVD.editId = ''; PVD.editP = null; pvClienteUI(b); }); b.append(nv);
   if (S.cargo === 'ADMIN') { const cf = el('button', 'btn sm', '⚙️ InfiniteTag das lojas'); cf.style.marginTop = '6px'; cf.addEventListener('click', () => pvTagsUI(b)); b.append(cf); }
-  const box = el('div'); box.append(el('div', 'sub', 'Carregando as pré-vendas de hoje…')); b.append(box);
-  rodar('pvLista', [S.token, PVD.loja, ''], (r) => {
-    box.replaceChildren(); const k = el('div', 'pv-kpi'); [[r.total, 'pré-vendas'], [r.vendidas, 'viraram venda'], r.aLancar ? [r.aLancar, 'pagas a lançar no USE'] : [r.conversao == null ? '—' : Math.round(r.conversao * 100) + '%', 'conversão']].forEach(([v, t]) => { const d = el('div'); d.append(el('b', '', String(v)), el('span', '', t)); k.append(d); }); box.append(k);
+  const box = el('div'); b.append(box);
+  // abre na hora com a última lista guardada no aparelho e atualiza por trás
+  const ck = 'amorata_pvl_' + (S && S.usuario) + '_' + PVD.loja + '_' + hojeStr(); let jaDesenhou = false;
+  const desenha = (r) => {
+    jaDesenhou = true; box.replaceChildren(); const k = el('div', 'pv-kpi'); [[r.total, 'pré-vendas'], [r.vendidas, 'viraram venda'], r.aLancar ? [r.aLancar, 'pagas a lançar no USE'] : [r.conversao == null ? '—' : Math.round(r.conversao * 100) + '%', 'conversão']].forEach(([v, t]) => { const d = el('div'); d.append(el('b', '', String(v)), el('span', '', t)); k.append(d); }); box.append(k);
     if (!r.lista.length) { box.append(el('div', 'card', 'Nenhuma pré-venda hoje' + (r.chefe ? ' na loja.' : '. Toque em "Nova pré-venda" quando a cliente for ao caixa.'))); return; }
     const c = el('div', 'card'); r.lista.forEach((p) => { const row = el('div', 'pv-row'), tx = el('div'), st = PV_ST[p.status] || [p.status, 'a'];
       tx.append(el('b', '', p.num + ' · ' + primeiroNome(p.vendedora)), el('div', 'sub', p.itens.reduce((a, i) => a + i.qt, 0) + ' peça(s) · ' + rs(p.total) + ' · ' + String(p.criada).slice(11, 16) + (p.cliente ? ' · ' + primeiroNome(p.cliente) : '') + (p.nova ? ' · cliente nova' : '')));
       row.append(tx, el('span', 'pv-st ' + st[1], st[0] + (p.motivo ? ' · ' + p.motivo : ''))); row.addEventListener('click', () => pvCaixaUI(b, p)); c.append(row); }); box.append(c);
-    box.append(el('div', 'sub', 'A pré-venda vira "vendida" sozinha quando as peças aparecem nas vendas do USE (atualiza de hora em hora).'));
-  }, (e) => { box.replaceChildren(el('div', 'card', '⚠️ ' + amigavel((e && e.message) || String(e)))); });
+    box.append(el('div', 'sub', 'A pré-venda vira "vendida" sozinha quando as peças aparecem nas vendas do USE.'));
+  };
+  try { const c0 = JSON.parse(localStorage.getItem(ck) || 'null'); if (c0) desenha(c0); } catch (e) {}
+  if (!jaDesenhou) box.append(el('div', 'sub', 'Carregando as pré-vendas de hoje…'));
+  google.script.run.withSuccessHandler((r) => { if (!b.isConnected || !box.isConnected) return; try { localStorage.setItem(ck, JSON.stringify(r)); } catch (e) {} desenha(r); })
+    .withFailureHandler((e) => { if (!jaDesenhou) box.replaceChildren(el('div', 'card', '⚠️ ' + amigavel((e && e.message) || String(e)))); }).pvLista(S.token, PVD.loja, '');
 }
 // passo 1: cliente (CPF ou celular; se não tiver cadastro, cadastra)
 function pvClienteUI(b) {
@@ -3972,17 +3988,17 @@ function pvCaixaUI(b, p) {
   if (cobrar && p.linkPag) pvVigiar(b, p); else if (!cobrar) clearInterval(pvVigiar.t);
   // ✏️ a cliente mudou de ideia: volta para as peças (incluir ou tirar) enquanto ainda não pagou
   if (p.status === 'aberta' || p.status === 'reservada') { const ed = el('button', 'btn big', '✏️ Incluir ou tirar peças'); ed.addEventListener('click', () => pvEditarUI(b, p, ed)); b.append(ed); }
-  if (cobrar && p.tk) { const cb = el('div', 'card pv-cobrar'), bw = el('div', 'pv-bts'); cb.append(el('b', '', '📲 Como a cliente vai pagar?'), el('div', 'sub', 'Total ' + rs(p.total) + '. A pré-venda fica paga sozinha no cartão por aproximação e no link.'));
-    const tap = el('button', 'btn pri big', '💳 Cartão por aproximação no meu celular'); tap.addEventListener('click', () => pvCobrarTap(b, p));
-    const lk = el('button', 'btn big', p.linkPag ? '🔗 Reenviar link de pagamento' : '🔗 Enviar link de pagamento (Pix ou cartão)'); lk.addEventListener('click', () => pvEnviarLink(b, p, lk));
-    if (p.pix) { const pc = el('button', 'btn big', '💠 Pix copia e cola / QR Code'); pc.addEventListener('click', () => pvPixUI(p, b)); bw.append(pc); }
+  if (cobrar && p.tk) { const cb = el('div', 'card pv-cobrar'), bw = el('div', 'pv-bts'); cb.append(el('b', '', '📲 Como a cliente vai pagar?'), el('div', 'sub', rs(p.total) + ' · cartão e link confirmam sozinhos'));
+    const tap = el('button', 'btn pri big', '💳 Cartão por aproximação'); tap.addEventListener('click', () => pvCobrarTap(b, p));
+    const lk = el('button', 'btn big', p.linkPag ? '🔗 Reenviar link' : '🔗 Link de pagamento'); lk.addEventListener('click', () => pvEnviarLink(b, p, lk));
+    if (p.pix) { const pc = el('button', 'btn big', '💠 Pix / QR Code'); pc.addEventListener('click', () => pvPixUI(p, b)); bw.append(pc); }
     const px = el('button', 'btn big', '✅ Recebi na maquininha da loja'); px.addEventListener('click', () => escolher('Confirmar ' + rs(p.total) + ' na maquininha?', 'Confira se o pagamento foi aprovado na maquininha da loja antes de confirmar.', [['Sim, foi aprovado', 'pri', () => rodar('pvPagoManual', [S.token, p.id, 'Maquininha'], (np) => { toast('Paga ✓'); pvCaixaUI(b, np); })]]));
-    bw.append(tap, lk, px);
+    bw.prepend(tap); bw.append(lk, px);
     if (p.linkPag) { const lp = el('button', 'btn big', '✅ A cliente pagou o link'); lp.addEventListener('click', () => escolher('Confirmar ' + rs(p.total) + ' pago pelo link?', 'Confira no app da InfinitePay da loja se o pagamento aparece aprovado antes de confirmar.', [['Sim, está aprovado', 'pri', () => rodar('pvPagoManual', [S.token, p.id, 'Link InfinitePay'], (np) => { toast('Paga ✓'); pvCaixaUI(b, np); })]])); bw.append(lp); }
     cb.append(bw); b.append(cb); }
   if (p.cashback) b.append(el('div', 'card pv-cash', '💜 Cashback de ' + rs(p.cashback) + ' já descontado do total. Caixa: resgate o cashback da cliente no USE ao lançar a venda.'));
   if (p.pagamento && p.status === 'paga') b.append(el('div', 'card pv-pago', '✅ A cliente já pagou (' + p.pagamento + '). Caixa: lance a venda no USE bipando os códigos abaixo e marque "Lançada no USE".'));
-  if (p.link && p.status !== 'desistiu' && p.status !== 'cancelada') { const cp = el('div', 'card pv-comp'); cp.append(el('b', '', '🧾 Comprovante de troca digital'), el('div', 'sub', 'A cliente leva no celular: peças e prazo de troca (só nesta loja, ' + (p.prazo || 7) + ' dias). A nota fiscal sai quando o caixa lançar no USE.'));
+  if (p.link && p.status !== 'desistiu' && p.status !== 'cancelada') { const cp = el('div', 'card pv-comp'); cp.append(el('b', '', '🧾 Comprovante de troca digital'), el('div', 'sub', 'Peças e prazo de troca (' + (p.prazo || 7) + ' dias, só nesta loja) no celular da cliente.'));
     const bw = el('div', 'pv-bts'); if (p.fone) { const wa = el('button', 'btn pri big', '📲 Enviar pelo WhatsApp'); wa.addEventListener('click', () => { const tx = 'Oi, ' + (p.cliente ? primeiroNome(p.cliente) : 'tudo bem') + '! Obrigada pela compra na Amorata 💜\nAqui está o seu comprovante de troca (' + p.num + '): ' + p.link; abrirWhats(p.fone, tx); }); bw.append(wa); }
     const ver = el('button', 'btn big', 'Ver o comprovante'); ver.addEventListener('click', () => window.open(p.link, '_blank')); bw.append(ver); cp.append(bw); b.append(cp); }
   if (cobrar) { const ds = el('button', 'btn big', 'Cliente desistiu'); ds.addEventListener('click', () => escolher('Por que não fechou?', p.num, ['Achou caro', 'Não tinha o tamanho/cor', 'Vai pensar', 'Desistiu do pagamento', 'Outro'].map((m) => [m, '', () => rodar('pvStatus', [S.token, p.id, 'desistiu', m], () => { toast('Registrado.'); pvListaUI(b); })]))); const vt0 = el('button', 'btn big', '← Pré-vendas de hoje'); vt0.addEventListener('click', () => pvListaUI(b)); b.append(ds, vt0); return; }
