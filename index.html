@@ -2972,7 +2972,7 @@ function abrirEntradas(ref) {
     [de, ate].forEach((x) => x.addEventListener('change', () => { if (de.value && ate.value) { refAt = ''; carregar(); } }));
     sl.addEventListener('change', () => { de.value = ''; ate.value = ''; carregar(); });
     function carregar() { res.replaceChildren(el('div', 'sub', 'Buscando os lançamentos no USE…')); google.script.run.withSuccessHandler((r) => { R = r; M = r.rascunho || {}; desenhar(); }).withFailureHandler((e) => res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || 'erro')))).entradasSemana(S.token, sl.value || '', refAt, de.value, ate.value); }
-    const chave = (m, cor, t) => (m.ref || m.nome) + '|' + cor + '|' + t;
+    const chave = (m, cor, t) => (m.k || m.ref || m.nome) + '|' + cor + '|' + t; // m.k separa modelos diferentes com a mesma referência
     const itens = () => { const o = []; R.modelos.forEach((m) => Object.keys(m.cores).forEach((cor) => Object.keys(m.cores[cor]).forEach((t) => o.push([chave(m, cor, t), m.cores[cor][t]])))); return o; };
     const salvarDepois = () => { clearTimeout(tSalvar); tSalvar = setTimeout(() => google.script.run.withFailureHandler(() => {}).confSalvar(S.token, R.loja, R.de, R.ate, M), 1500); };
     function desenhar() {
