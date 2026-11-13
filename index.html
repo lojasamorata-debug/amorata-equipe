@@ -3841,9 +3841,10 @@ function cpfOkCli(d) { if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
 function pvEditarUI(b, p, bt) {
   const abre = (cash) => { PVD.editId = p.id; PVD.editP = p; PVD.loja = p.loja; PVD.itens = p.itens.map((i) => ({ ref: i.ref, nome: i.nome, cor: i.cor, tam: i.tam, preco: i.preco, qt: i.qt }));
     PVD.cliente = p.cpf || p.cliente || p.fone ? { cpf: p.cpf || '', nome: p.cliente || '', fone: p.fone || '', nova: false, cash: cash } : null; PVD.entrega = p.entrega || 0; PVD.canal = p.canal || 'loja'; PVD.modo = p.modo || 'caixa'; PVD.usarCash = !!p.cashback; pvPecasUI(b); };
-  const termo = p.cpf || p.fone; if (!termo) { abre(null); return; }
-  if (bt) { bt.disabled = true; bt.textContent = 'Abrindo…'; }
-  google.script.run.withSuccessHandler((r) => abre(r && r.cash)).withFailureHandler(() => abre(null)).pvCliente(S.token, p.loja, termo);
+  // abre na hora; o cashback da cliente chega por trás e a tela se atualiza sozinha
+  const cash0 = p.cashback ? { agora: p.cashback, itens: [{ valor: p.cashback, minimo: 0 }] } : null; abre(cash0);
+  const termo = p.cpf || p.fone; if (!termo) return;
+  google.script.run.withSuccessHandler((r) => { if (PVD.editId !== p.id || !PVD.cliente || !b.isConnected) return; PVD.cliente.cash = (r && r.cash) || cash0; pvPecasUI(b); }).withFailureHandler(() => {}).pvCliente(S.token, p.loja, termo);
 }
 function pvPecasUI(b) {
   b.replaceChildren(); b.append(el('div', 'pv-pass', 'Passo 2 de 2 · Peças' + (PVD.cliente ? ' · ' + primeiroNome(PVD.cliente.nome) + (PVD.cliente.nova ? ' (nova)' : '') : ' · sem cliente')));
