@@ -2017,7 +2017,9 @@ function rrPaginas(r) {
   const ob = r.objetivos; if (ob) { const nomeO = (o) => o.tipo === 'livre' ? o.texto : (ob.tipos[o.tipo] || [o.tipo])[0] + ': ' + o.alvo + ((ob.tipos[o.tipo] || [])[1] || '');
     const at = (o) => o.atual == null ? '' : ' (hoje: ' + (o.tipo === 'tkm' ? rrBRL(o.atual) : o.tipo === 'pa' ? rrN1(o.atual) : Math.round(o.atual) + ((ob.tipos[o.tipo] || [])[1] === '%' ? '%' : '')) + ')';
     if (ob.anteriores.length) { p3.append(rrH('h3', '', 'Combinados do mês passado')); const b = rrH('div', 'rr-bx'), u = rrH('ul'); ob.anteriores.forEach((o) => u.append(rrH('li', '', (o.ok ? '✅ Cumprido: ' : '❌ Não cumprido: ') + nomeO(o) + at(o)))); b.append(u); p3.append(b); }
-    p3.append(rrH('h3', '', 'Combinados deste mês')); const b = rrH('div', 'rr-bx'); if (ob.atuais.length) { const u = rrH('ul'); ob.atuais.forEach((o) => u.append(rrH('li', '', (o.ok ? '✅ ' : '⏳ ') + nomeO(o) + at(o)))); b.append(u); } else b.append(rrH('div', '', 'Nenhum combinado anotado ainda.')); p3.append(b); }
+    p3.append(rrH('h3', '', 'Combinados deste mês')); const b = rrH('div', 'rr-bx'); if (ob.atuais.length) { const u = rrH('ul'); ob.atuais.forEach((o) => u.append(rrH('li', '', (o.ok ? '✅ ' : '⏳ ') + nomeO(o) + at(o)))); b.append(u); } else b.append(rrH('div', '', 'Nenhum combinado anotado ainda.')); p3.append(b);
+    // 📈 evolução de cada combinado no mês (atualiza sozinha a cada vez que o relatório é gerado)
+    const gs = ob.atuais.filter((o) => o.serie && o.serie.v && o.serie.v.some((x) => x != null)); if (gs.length) { const g = rrH('div'); g.style.cssText = 'display:grid;grid-template-columns:repeat(' + Math.min(3, gs.length) + ',1fr);gap:8px;margin-top:8px'; gs.forEach((o) => g.append(rrGrafObj(o, ob.tipos, nomeO(o)))); p3.append(g); } }
   if (r.conversas && r.conversas.length) { p3.append(rrH('h3', '', 'Últimas conversas')); const b = rrH('div', 'rr-bx'); r.conversas.forEach((x) => { const d = rrH('div'); d.style.margin = '4px 0'; d.append(rrH('b', '', x.quando + ' · ' + x.por + ': ')); d.append(document.createTextNode(x.texto)); b.append(d); }); p3.append(b); }
   p3.append(rrH('h3', '', 'Anotações da reunião')); for (let i = 0; i < 5; i++) p3.append(rrH('div', 'rr-ln'));
   const as = rrH('div', 'rr-ass'); as.append(rrH('div', '', r.tipo === 'loja' ? 'Gerente' : primeiroNome(r.nome)), rrH('div', '', r.geradoPor)); p3.append(as);
@@ -2061,6 +2063,23 @@ async function rrPDF(r, pg, btn) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
   } catch (e) { toast((e && e.message) || 'Não consegui gerar o PDF.'); }
   btn.disabled = false; btn.textContent = t0;
+}
+// gráfico de um combinado: linha do realizado dia a dia × alvo (taxas) ou ritmo esperado até o fim do mês (acumulados)
+function rrGrafObj(o, tipos, titulo) {
+  const s = o.serie, v = s.v, n = v.length, fim = s.fim || 30, alvo = Number(o.alvo) || 0, W = 300, H = 120, L = 34, R = 8, T = 10, B = 18;
+  const fmt = (x) => x == null ? '–' : o.tipo === 'tkm' ? rrBRL(x) : o.tipo === 'pa' ? x.toFixed(2).replace('.', ',') : Math.round(x) + ((tipos[o.tipo] || [])[1] === '%' ? '%' : '');
+  const ideal = (d) => s.acum ? alvo * d / fim : alvo, vs = v.filter((x) => x != null), maxY = Math.max(alvo * 1.15, ...vs) || 1, minY = s.acum ? 0 : Math.max(0, Math.min(alvo, ...vs) * 0.8);
+  const X = (d) => L + (d - 1) / Math.max(1, fim - 1) * (W - L - R), Y = (y) => T + (1 - (y - minY) / (maxY - minY || 1)) * (H - T - B);
+  let pts = ''; v.forEach((y, i) => { if (y != null) pts += (pts ? ' L' : 'M') + X(i + 1).toFixed(1) + ' ' + Y(y).toFixed(1); });
+  const ult = [...v].reverse().find((x) => x != null), esp = ideal(n), bom = ult != null && ult >= esp, cor = bom ? '#2e7d4f' : '#c0392b';
+  const alvoLn = s.acum ? '<line x1="' + X(1) + '" y1="' + Y(minY) + '" x2="' + X(fim) + '" y2="' + Y(alvo) + '" stroke="#b0578d" stroke-dasharray="4 3" stroke-width="1.5"/>' : '<line x1="' + X(1) + '" y1="' + Y(alvo) + '" x2="' + X(fim) + '" y2="' + Y(alvo) + '" stroke="#b0578d" stroke-dasharray="4 3" stroke-width="1.5"/>';
+  const des = s.desde > 1 && s.desde <= fim ? '<line x1="' + X(s.desde) + '" y1="' + T + '" x2="' + X(s.desde) + '" y2="' + (H - B) + '" stroke="#999" stroke-width="1"/><text x="' + (X(s.desde) + 2) + '" y="' + (T + 8) + '" font-size="8" fill="#888">combinado</text>' : '';
+  const ult1 = n ? '<circle cx="' + X(n) + '" cy="' + Y(ult == null ? minY : ult) + '" r="3.5" fill="' + cor + '"/>' : '';
+  const svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="display:block"><line x1="' + L + '" y1="' + (H - B) + '" x2="' + (W - R) + '" y2="' + (H - B) + '" stroke="#ddd"/>' +
+    '<text x="' + (L - 4) + '" y="' + (Y(alvo) + 3) + '" font-size="8" fill="#b0578d" text-anchor="end">' + fmt(alvo) + '</text><text x="' + L + '" y="' + (H - 5) + '" font-size="8" fill="#888">dia 1</text><text x="' + (W - R) + '" y="' + (H - 5) + '" font-size="8" fill="#888" text-anchor="end">dia ' + fim + '</text>' +
+    alvoLn + des + '<path d="' + pts + '" fill="none" stroke="#5b4a7a" stroke-width="2.2"/>' + ult1 + '</svg>';
+  const c = rrH('div', 'rr-bx'); c.style.cssText = 'padding:8px;margin:0'; c.append(rrH('b', '', titulo)); const g = rrH('div'); g.innerHTML = svg; c.append(g);
+  const st = rrH('div'); st.style.cssText = 'font-size:11px;color:' + cor; st.textContent = 'Hoje: ' + fmt(ult) + (s.acum ? ' · ritmo esperado ' + fmt(esp) : ' · alvo ' + fmt(alvo)) + (bom ? ' ✓ no ritmo' : ' · abaixo'); c.append(st); return c;
 }
 function rrCombinados(r) {
   const ob = r.objetivos || { atuais: [], tipos: {} }, livres = Math.max(0, 3 - ob.atuais.length);
