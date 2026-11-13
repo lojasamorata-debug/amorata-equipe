@@ -2021,8 +2021,12 @@ function rrPaginas(r) {
     // 📈 evolução de cada combinado no mês (atualiza sozinha a cada vez que o relatório é gerado)
     const gs = ob.atuais.filter((o) => o.serie && o.serie.v && o.serie.v.some((x) => x != null)); if (gs.length) { const g = rrH('div'); g.style.cssText = 'display:grid;grid-template-columns:repeat(' + Math.min(3, gs.length) + ',1fr);gap:8px;margin-top:8px'; gs.forEach((o) => g.append(rrGrafObj(o, ob.tipos, nomeO(o)))); p3.append(g); } }
   if (r.conversas && r.conversas.length) { p3.append(rrH('h3', '', 'Últimas conversas')); const b = rrH('div', 'rr-bx'); r.conversas.forEach((x) => { const d = rrH('div'); d.style.margin = '4px 0'; d.append(rrH('b', '', x.quando + ' · ' + x.por + ': ')); d.append(document.createTextNode(x.texto)); b.append(d); }); p3.append(b); }
-  p3.append(rrH('h3', '', 'Anotações da reunião')); for (let i = 0; i < 5; i++) p3.append(rrH('div', 'rr-ln'));
-  const as = rrH('div', 'rr-ass'); as.append(rrH('div', '', r.tipo === 'loja' ? 'Gerente' : primeiroNome(r.nome)), rrH('div', '', r.geradoPor)); p3.append(as);
+  p3.append(rrH('h3', '', 'Anotações da reunião'));
+  if (r.anotacoes) { const b = rrH('div', 'rr-bx'); b.style.whiteSpace = 'pre-wrap'; b.textContent = r.anotacoes; p3.append(b); } else for (let i = 0; i < 5; i++) p3.append(rrH('div', 'rr-ln'));
+  // ✍️ assinaturas digitais (imagem + nome + data/hora) quando a ata é fechada no app
+  const as = rrH('div', 'rr-ass'), cel = (quem, nome) => { const d = rrH('div'); const a = r.assin && r.assin[quem]; if (a && a.img) { const im = document.createElement('img'); im.src = a.img; im.style.cssText = 'display:block;height:56px;margin:-62px auto 6px'; d.append(im); } d.append(document.createTextNode(nome + (a ? ' · assinado em ' + a.em : ''))); return d; };
+  as.append(cel('fun', r.tipo === 'loja' ? 'Gerente' : primeiroNome(r.nome)), cel('ger', r.geradoPor)); if (r.assin) as.style.marginTop = '90px'; p3.append(as);
+  if (r.ataId) p3.append(rrH('div', 'sub', 'Ata nº ' + r.ataId + ' · assinaturas eletrônicas feitas no app Amorata Equipe' + (r.assin && !r.assin.fun ? ' · a consultora assina pelo app dela (página extra no fim)' : '')));
   pgs.push(p3);
   pgs.forEach((g, i) => g.append(rrRod(r, i + 1, pgs.length)));
   return pgs;
@@ -2032,6 +2036,8 @@ function abrirRelReuniao(r) {
   abrirDet('📄 ' + rrNome(r) + ' · ' + r.per.titulo, (b) => {
     const bar = rrH('div', 'rr-bar'), pdf = el('button', 'btn pri', '📤 Baixar / enviar PDF'); bar.append(pdf);
     if (r.podeCombinar) { const cb = el('button', 'btn', '✍️ Anotar combinados'); cb.addEventListener('click', () => rrCombinados(r)); bar.append(cb); }
+    if (r.podeCombinar && r.usuarioAlvo && !r.ataId) { const fa = el('button', 'btn', '📝 Fechar ata e assinar'); fa.addEventListener('click', () => ataFecharUI(r, pg, fa)); bar.append(fa); }
+    if (chefe() && r.usuarioAlvo) { const hi = el('button', 'btn', '📚 Atas assinadas'); hi.addEventListener('click', () => abrirAtas('', r.loja, r.usuarioAlvo)); bar.append(hi); }
     const wrap = rrH('div', 'rr-wrap'), pg = rrH('div', 'rr-pgs'); rrPaginas(r).forEach((x) => pg.append(x)); wrap.append(pg); b.append(bar, wrap);
     const ajusta = () => { const w = wrap.clientWidth || (window.innerWidth - 32), z = Math.min(1, w / 794); pg.style.transform = 'scale(' + z + ')'; wrap.style.height = (pg.scrollHeight * z) + 'px'; };
     requestAnimationFrame(ajusta); if (window.__RR_AJ) window.removeEventListener('resize', window.__RR_AJ); window.__RR_AJ = ajusta; window.addEventListener('resize', ajusta);
@@ -2039,6 +2045,90 @@ function abrirRelReuniao(r) {
   });
 }
 function rrLib(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('Não consegui carregar o gerador de PDF. Confira a internet.')); document.head.append(s); }); }
+async function rrMontarPDF(pg) {
+  if (!window.html2canvas) await rrLib('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  if (!window.jspdf) await rrLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  const tr = pg.style.transform, wr = pg.parentNode, wh = wr.style.height; pg.style.transform = 'none'; wr.style.height = 'auto'; wr.style.overflow = 'visible';
+  try { const pdf = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', compress: true }), W = pdf.internal.pageSize.getWidth(), pags = [...pg.querySelectorAll('.rr-pg')];
+    for (let i = 0; i < pags.length; i++) { const cv = await window.html2canvas(pags[i], { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false }); const h = W * cv.height / cv.width; if (i) pdf.addPage([W, Math.max(h, 841.89)]); else if (h > 841.89 + 1) { pdf.deletePage(1); pdf.addPage([W, h]); } pdf.addImage(cv.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, W, h); }
+    return pdf; } finally { pg.style.transform = tr; wr.style.height = wh; wr.style.overflow = ''; }
+}
+const blobB64 = (b) => new Promise((ok, no) => { const f = new FileReader(); f.onload = () => ok(f.result); f.onerror = no; f.readAsDataURL(b); });
+// quadro para assinar com o dedo
+function padAssinatura(rotulo) {
+  const w = el('div'); w.append(el('div', 'pv-lb2', rotulo)); const cv = el('canvas'); cv.width = 600; cv.height = 200; cv.style.cssText = 'width:100%;height:130px;border:1px dashed #8a7fa6;border-radius:12px;background:#fff;touch-action:none';
+  const g = cv.getContext('2d'); g.lineWidth = 3.2; g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = '#1f1e1d'; let des = false, tracos = 0;
+  const pt = (e) => { const r2 = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return [(t.clientX - r2.left) * cv.width / r2.width, (t.clientY - r2.top) * cv.height / r2.height]; };
+  ['mousedown', 'touchstart'].forEach((ev) => cv.addEventListener(ev, (e) => { e.preventDefault(); des = true; const [x, y] = pt(e); g.beginPath(); g.moveTo(x, y); }, { passive: false }));
+  ['mousemove', 'touchmove'].forEach((ev) => cv.addEventListener(ev, (e) => { if (!des) return; e.preventDefault(); const [x, y] = pt(e); g.lineTo(x, y); g.stroke(); tracos++; }, { passive: false }));
+  ['mouseup', 'mouseleave', 'touchend'].forEach((ev) => cv.addEventListener(ev, () => { des = false; }));
+  const lp = el('button', 'btn sm', 'Limpar'); lp.addEventListener('click', () => { g.clearRect(0, 0, cv.width, cv.height); tracos = 0; }); w.append(cv, lp);
+  return { el: w, ok: () => tracos >= 15, img: () => cv.toDataURL('image/png') };
+}
+const agoraTxt = () => { const d = new Date(), z = (n) => ('0' + n).slice(-2); return z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()); };
+// 📝 gerente fecha a ata: anotações digitadas + assinatura dela + a da consultora (agora, no mesmo aparelho, ou depois, no app dela)
+function ataFecharUI(r, pg, btn) {
+  const ov = el('div', 'tc'); ov.id = 'ata-ov'; ov.style.cssText = 'overflow:auto;padding:16px'; const c = el('div', 'card'); c.style.cssText = 'max-width:560px;margin:0 auto';
+  c.append(el('h2', '', '📝 Fechar a ata da reunião'), el('div', 'sub', rrNome(r) + ' · ' + r.per.titulo));
+  const an = el('textarea'); an.rows = 6; an.placeholder = 'Anotações da reunião (o que foi conversado, combinados, prazos…)'; an.value = r.anotacoes || ''; an.style.cssText = 'width:100%;box-sizing:border-box;margin-top:10px';
+  const pg1 = padAssinatura('✍️ Assinatura da gerência (' + primeiroNome(S.nome) + ')'); let modo = 'agora'; const ch = el('div', 'pv-chips'), p2box = el('div'); let pg2 = null;
+  const des = () => { ch.replaceChildren(); [['agora', '✍️ ' + primeiroNome(r.nome) + ' assina agora aqui'], ['app', '📲 Enviar para ela assinar no app']].forEach(([k, t]) => { const b = el('button', 'chip' + (modo === k ? ' on' : ''), t); b.addEventListener('click', () => { modo = k; des(); }); ch.append(b); });
+    p2box.replaceChildren(); pg2 = null; if (modo === 'agora') { pg2 = padAssinatura('✍️ Assinatura de ' + primeiroNome(r.nome)); p2box.append(pg2.el); } else p2box.append(el('div', 'sub', 'Ela recebe um aviso, lê a ata no app e assina com o dedo. Você acompanha em 📚 Atas assinadas.')); };
+  const ok = el('button', 'btn pri big', 'Gerar ata assinada'), cx = el('button', 'btn big', 'Cancelar'); cx.addEventListener('click', () => ov.remove());
+  ok.addEventListener('click', async () => {
+    if (!pg1.ok()) { toast('Faça a assinatura da gerência no quadro.'); return; } if (pg2 && !pg2.ok()) { toast('Falta a assinatura de ' + primeiroNome(r.nome) + '.'); return; }
+    ok.disabled = true; ok.textContent = 'Gerando a ata…';
+    try { const em = agoraTxt(); r.anotacoes = an.value.trim(); r.assin = { ger: { img: pg1.img(), em: em } }; if (pg2) r.assin.fun = { img: pg2.img(), em: em }; r.ataId = 'pendente';
+      pg.replaceChildren(...rrPaginas(r)); const pdf = await rrMontarPDF(pg), b64 = await blobB64(pdf.output('blob'));
+      const ob = r.objetivos && r.objetivos.atuais ? r.objetivos.atuais.map((o) => o.tipo === 'livre' ? o.texto : (r.objetivos.tipos[o.tipo] || [o.tipo])[0] + ': ' + o.alvo).join(' · ') : '';
+      rodar('ataSalvar', [S.token, { loja: r.loja, usuario: r.usuarioAlvo, periodo: r.per.titulo, anotacoes: r.anotacoes, combinados: ob, pdf: b64, funcAssinou: !!pg2 }], (x) => { r.ataId = x.id; pg.replaceChildren(...rrPaginas(r)); ov.remove(); if (btn) btn.remove();
+        toast(x.status === 'ASSINADA' ? '✅ Ata assinada pelas duas e guardada no histórico.' : '📲 Ata assinada por você e enviada para ' + primeiroNome(r.nome) + ' assinar.'); }, () => { ok.disabled = false; ok.textContent = 'Gerar ata assinada'; });
+    } catch (e) { toast((e && e.message) || 'Não consegui gerar a ata.'); ok.disabled = false; ok.textContent = 'Gerar ata assinada'; }
+  });
+  des(); c.append(an, pg1.el, el('div', 'pv-lb2', 'Assinatura da consultora'), ch, p2box, ok, cx); ov.append(c); document.body.append(ov);
+}
+// 📚 histórico das atas (gerência: da loja / da consultora; consultora: as dela)
+function abrirAtas(focoId, lojaSel, usuarioSel) {
+  abrirDet('📚 Atas de reunião', (b) => { b.append(el('div', 'sub', 'Carregando…'));
+    rodar('ataLista', [S.token, lojaSel || (typeof loja !== 'undefined' ? loja : ''), usuarioSel || ''], (r) => { b.replaceChildren();
+      if (!r.lista.length) { b.append(el('div', 'card', 'Nenhuma ata assinada ainda.')); return; }
+      r.lista.forEach((a) => { const c = el('div', 'card'), st = a.status === 'ASSINADA' ? '✅ assinada pelas duas' : '⏳ aguardando ' + (r.chefe ? primeiroNome(a.nome) : 'a sua assinatura');
+        c.append(el('b', '', (r.chefe ? primeiroNome(a.nome) + ' · ' : '') + a.criado.slice(0, 10) + ' · ' + a.periodo), el('div', 'sub', st + ' · gerência: ' + primeiroNome(a.gerente)));
+        if (a.anotacoes) { const t = el('div', 'sub'); t.style.whiteSpace = 'pre-wrap'; t.textContent = a.anotacoes.length > 160 ? a.anotacoes.slice(0, 160) + '…' : a.anotacoes; c.append(t); }
+        const h = el('details'); h.append(el('summary', '', '🕓 Histórico (' + a.historico.length + ')')); a.historico.forEach((x) => h.append(el('div', 'sub', x.em + ' · ' + x.ev + (x.por ? ' · ' + primeiroNome(x.por) : '')))); h.append(el('div', 'sub', 'Versões do PDF: ' + a.versoes + (a.sha ? ' · código de conferência ' + a.sha.slice(0, 12) : ''))); c.append(h);
+        const bt = el('button', 'btn sm' + (a.status !== 'ASSINADA' && !r.chefe ? ' pri' : ''), a.status !== 'ASSINADA' && !r.chefe ? '✍️ Ler e assinar' : '📄 Abrir PDF'); bt.addEventListener('click', () => ataAbrirUI(a.id, bt)); c.append(bt); b.append(c);
+        if (focoId && a.id === focoId) setTimeout(() => ataAbrirUI(a.id, bt), 300); });
+    });
+  });
+}
+// abre a ata; se for dela e estiver pendente, assina: o PDF ganha uma página com a assinatura (a versão anterior fica guardada)
+function ataAbrirUI(id, btn) {
+  const t0 = btn ? btn.textContent : ''; if (btn) { btn.disabled = true; btn.textContent = 'Abrindo…'; }
+  rodar('ataAbrir', [S.token, id], async (a) => { if (btn) { btn.disabled = false; btn.textContent = t0; }
+    const bin = atob(a.pdf.split(',')[1]), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); const url = URL.createObjectURL(new Blob([u8], { type: 'application/pdf' }));
+    if (!a.podeAssinar) { window.open(url, '_blank'); return; }
+    const ov = el('div', 'tc'); ov.id = 'ata-ov'; ov.style.cssText = 'overflow:auto;padding:16px'; const c = el('div', 'card'); c.style.cssText = 'max-width:560px;margin:0 auto';
+    c.append(el('h2', '', '📝 Ata da reunião'), el('div', 'sub', a.periodo + ' · com ' + primeiroNome(a.gerente) + ' · ' + a.criado));
+    if (a.combinados) c.append(el('div', 'pv-lb2', 'Combinados'), el('div', '', a.combinados));
+    if (a.anotacoes) { const t = el('div'); t.style.whiteSpace = 'pre-wrap'; t.textContent = a.anotacoes; c.append(el('div', 'pv-lb2', 'Anotações'), t); }
+    const ver = el('button', 'btn big', '📄 Ler a ata completa (PDF)'); ver.addEventListener('click', () => window.open(url, '_blank'));
+    const pad = padAssinatura('✍️ Sua assinatura'), ac = el('label', 'pv-chk'), ck = el('input'); ck.type = 'checkbox'; ac.append(ck, document.createTextNode(' Li a ata e estou de acordo com o que foi conversado e combinado.'));
+    const ok = el('button', 'btn pri big', '✍️ Assinar'), cx = el('button', 'btn big', 'Depois'); cx.addEventListener('click', () => ov.remove());
+    ok.addEventListener('click', async () => { if (!ck.checked) { toast('Marque que leu e está de acordo.'); return; } if (!pad.ok()) { toast('Faça sua assinatura no quadro.'); return; }
+      ok.disabled = true; ok.textContent = 'Assinando…';
+      try { if (!window.PDFLib) await rrLib('https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js');
+        const L = window.PDFLib, doc = await L.PDFDocument.load(u8), f = await doc.embedFont(L.StandardFonts.Helvetica), fb = await doc.embedFont(L.StandardFonts.HelveticaBold), pgN = doc.addPage([595.28, 841.89]);
+        const sem = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ''), em = agoraTxt();
+        pgN.drawText('Assinatura da consultora', { x: 48, y: 780, size: 18, font: fb }); pgN.drawText(sem('Ata ' + a.id + ' - ' + a.periodo + ' - reuniao com ' + a.gerente), { x: 48, y: 755, size: 10, font: f });
+        pgN.drawText(sem('Li a ata e estou de acordo com o que foi conversado e combinado.'), { x: 48, y: 720, size: 11, font: f });
+        const im = await doc.embedPng(pad.img()); pgN.drawImage(im, { x: 48, y: 560, width: 300, height: 100 }); pgN.drawLine({ start: { x: 48, y: 555 }, end: { x: 348, y: 555 }, thickness: 0.8 });
+        pgN.drawText(sem(a.nome + ' - assinado eletronicamente em ' + em + ' pelo app Amorata Equipe'), { x: 48, y: 540, size: 10, font: f }); pgN.drawText(sem('Codigo de conferencia da versao anterior: ' + (a.sha || '')), { x: 48, y: 522, size: 8, font: f });
+        const out = await doc.save(), b64 = await blobB64(new Blob([out], { type: 'application/pdf' }));
+        rodar('ataAssinar', [S.token, a.id, b64, navigator.userAgent], () => { ov.remove(); toast('✅ Ata assinada!'); abrirAtas(); }, () => { ok.disabled = false; ok.textContent = '✍️ Assinar'; });
+      } catch (e) { toast((e && e.message) || 'Não consegui assinar.'); ok.disabled = false; ok.textContent = '✍️ Assinar'; } });
+    c.append(ver, pad.el, ac, ok, cx); ov.append(c); document.body.append(ov);
+  }, () => { if (btn) { btn.disabled = false; btn.textContent = t0; } });
+}
 async function rrPDF(r, pg, btn) {
   const t0 = btn.textContent; btn.disabled = true; btn.textContent = 'Gerando PDF…';
   try {
@@ -5012,6 +5102,7 @@ function desenharPlano(r) {
   const b = $('plano-card'); b.replaceChildren(); if (!r || !r.objetivos || !r.objetivos.length) { b.classList.add('hide'); return; } b.classList.remove('hide');
   const ok = r.objetivos.filter((o) => o.ok).length; b.append(el('b', '', '🌱 Meu plano do mês'), el('div', 'sub', ok + ' de ' + r.objetivos.length + ' objetivos atingidos · combinado com a gerência'));
   r.objetivos.forEach((o) => b.append(linhaObj(o, r.tipos)));
+  { const at = el('button', 'btn sm', '📝 Minhas atas de reunião'); at.style.cssText = 'margin-top:8px;margin-right:6px'; at.addEventListener('click', () => abrirAtas()); b.append(at); }
   // 📈 evolução de cada combinado no mês (o mesmo gráfico do relatório da reunião)
   const gs = r.objetivos.filter((o) => o.serie && o.serie.v && o.serie.v.some((x) => x != null)); if (gs.length) { const bt = el('button', 'btn sm', '📈 Ver minha evolução'), g = el('div', 'hide'); g.style.cssText = 'display:grid;gap:8px;margin-top:8px';
     const nome = (o) => (r.tipos[o.tipo] || [o.tipo])[0] + ': ' + o.alvo + ((r.tipos[o.tipo] || [])[1] || ''); gs.forEach((o) => g.append(rrGrafObj(o, r.tipos, nome(o))));
@@ -6662,7 +6753,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'saude') { abrirCheckup(); return; } if (a.tipo === 'recordacao') { abrirPerfil(S.usuario); return; } if (a.tipo === 'produto_quente') { abrirQuentes(); return; } if (a.tipo === 'avaliacao_baixa') { if (chefe()) verResultados(); else mudarAba(casaAba_()); return; } if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { if (S.cargo === 'VENDEDORA') mudarAba('meta'); else if (S.cargo === 'ESTOQUISTA') mudarAba('mural'); else verResultados(); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba(casaAba_()); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'saude') { abrirCheckup(); return; } if (a.tipo === 'recordacao') { abrirPerfil(S.usuario); return; } if (a.tipo === 'produto_quente') { abrirQuentes(); return; } if (a.tipo === 'avaliacao_baixa') { if (chefe()) verResultados(); else mudarAba(casaAba_()); return; } if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { if (S.cargo === 'VENDEDORA') mudarAba('meta'); else if (S.cargo === 'ESTOQUISTA') mudarAba('mural'); else verResultados(); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'ata') { abrirAtas(a.ref || ''); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba(casaAba_()); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide'); blocoNotif(o);
 }));
