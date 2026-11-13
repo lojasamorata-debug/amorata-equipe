@@ -1858,7 +1858,8 @@ function desenhar(e) {
     const x = el('span'); const t = el('span', 'timer', mmss(agora() - p.inicio)); t.dataset.ini = p.inicio; x.append(t);
     if (p.foraDaVez) x.append(el('span', 'badge', 'fora da vez: ' + p.foraDaVez));
     if (nCli(p) > 1) x.append(el('span', 'badge', '👥 ' + nCli(p) + ' clientes'));
-    la.append(linha(p, x, [], p.usuario === eu));
+    const opsAt = S.cargo === 'ADMIN' && p.usuario !== eu ? [(() => { const b = el('button', 'btn sm', 'Retirar'); b.addEventListener('click', () => escolher('Retirar ' + primeiroNome(p.nome) + ' do atendimento?', 'O atendimento aberto é descartado (não conta como venda nem como perda) e ela sai da fila. Fica registrado no histórico.', [['Retirar', 'pri', () => fazer('retirar', p.usuario)]])); return b; })()] : [];
+    la.append(linha(p, x, opsAt, p.usuario === eu));
   });
   // fora
   const lo = $('l-fora'); lo.replaceChildren(); $('n-fora').textContent = e.fora.length || '';
