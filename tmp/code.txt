@@ -6439,10 +6439,3 @@ function pvAbrirPagamento(cod) {
   if (!r) throw new Error('Link de pagamento não encontrado.'); if (r[12] === 'paga' || r[12] === 'vendida') return { pago: true, num: r[2] }; if (r[12] === 'desistiu' || r[12] === 'cancelada') throw new Error('Este link de pagamento foi cancelado.');
   return { url: r[24] };
 }
-
-function zzDebug() {
-  CacheService.getScriptCache().remove('horfila2');
-  const us = usuarios_().filter((x) => x.ativo && CARGOS_EXPED.indexOf(x.cargo) >= 0), linhas = [];
-  us.forEach((u) => { CacheService.getScriptCache().remove('expd_' + u.usuario); try { const J = exped_(u); linhas.push([J.loja, u.cargo, primeiroNomeS_(u.nome), hhmm_(J.ini) + '-' + hhmm_(J.fim), J.fonte, J.folga || ''].join(' | ')); } catch (e) { linhas.push(u.usuario + ' ERRO ' + e.message); } });
-  linhas.sort(); console.log(linhas.join('\n'));
-}
