@@ -3599,16 +3599,22 @@ async function lerCodigoCamera(cbCod) { if (typeof cbCod !== 'function') cbCod =
   x.addEventListener('click', fechar);
   dig.addEventListener('click', () => { fechar(); $('es-q').value = ''; $('es-q').setAttribute('inputmode', 'numeric'); $('es-q').focus(); setTimeout(() => $('es-q').removeAttribute('inputmode'), 4000); toast('Digite os números que estão embaixo das barras'); });
   const FAIXA = [[0.08, 0.36, 0.92, 0.64]], TUDO = [[0.08, 0.36, 0.92, 0.64], [0.02, 0.25, 0.98, 0.75], [0, 0, 1, 1], [0.15, 0.42, 0.85, 0.58]];
-  const tentar = (recortes) => { if (fim || !vd.videoWidth) return null; return zxLer(vd, vd.videoWidth, vd.videoHeight, recortes); };
-  cap.addEventListener('click', () => { const t = tentar(TUDO); if (t) achou(t); else tx.textContent = 'Ainda não deu. Afaste um pouco o celular até ficar nítido, deixe o código reto e com luz — ou digite o número.'; });
+  const tentar = (recortes) => { if (fim || !vd.videoWidth || !window.ZXing) return null; return zxLer(vd, vd.videoWidth, vd.videoHeight, recortes); };
+  // leitor nativo do Android (Chrome): bem mais rápido e firme que o leitor em JavaScript
+  let det = null; try { if ('BarcodeDetector' in window) { const fs = await BarcodeDetector.getSupportedFormats(), q = ['ean_13', 'code_128', 'upc_a', 'ean_8'].filter((f) => fs.indexOf(f) >= 0); if (q.length) det = new BarcodeDetector({ formats: q }); } } catch (e) { det = null; }
+  const nativo = async () => { if (!det || fim || !vd.videoWidth) return null; try { const rs = await det.detect(vd); const r = (rs || []).map((x) => String(x.rawValue || '').trim()).find((x) => x); return r || null; } catch (e) { return null; } };
+  cap.addEventListener('click', async () => { const t = (await nativo()) || tentar(TUDO); if (t) achou(t); else tx.textContent = 'Ainda não deu. Afaste um pouco o celular até ficar nítido, deixe o código reto e com luz — ou digite o número.'; });
   try {
-    await carregarZX(); if (fim) return;
+    if (det) carregarZX().catch(() => {}); else { await carregarZX(); } if (fim) return;
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
     if (fim) { stream.getTracks().forEach((t) => t.stop()); return; }
+    // Android com várias câmeras atrás (ex.: Galaxy A55): o navegador às vezes abre a grande-angular, que não foca de perto — troca para a principal ("camera2 0")
+    try { if (/Android/i.test(navigator.userAgent)) { const ds = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput'), atual = stream.getVideoTracks()[0].label || '', pri = ds.find((d) => /camera2 0\b.*back|\b0, facing back/i.test(d.label));
+      if (pri && pri.label !== atual) { stream.getTracks().forEach((t) => t.stop()); stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: pri.deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }); if (fim) { stream.getTracks().forEach((t) => t.stop()); return; } } } } catch (e) {}
     // zoom de 2x quando a câmera deixa: dá para segurar mais longe (o iPhone não foca muito perto) e o código continua grande
     try { const tr = stream.getVideoTracks()[0], cp = tr.getCapabilities ? tr.getCapabilities() : {}, adv = {}; if (cp.focusMode && cp.focusMode.indexOf('continuous') >= 0) adv.focusMode = 'continuous'; if (cp.zoom && cp.zoom.max >= 2) adv.zoom = Math.min(2, cp.zoom.max); if (Object.keys(adv).length) await tr.applyConstraints({ advanced: [adv] }); } catch (e) {}
     vd.srcObject = stream; await vd.play().catch(() => {});
-    const ciclo = () => { if (fim) return; const t = tentar(FAIXA); if (t) { if (eanOk(t) || t === ult) { achou(t); return; } ult = t; } tm = setTimeout(ciclo, 180); };
+    const ciclo = async () => { if (fim) return; const t = (await nativo()) || tentar(FAIXA); if (fim) return; if (t) { if (eanOk(t) || t === ult) { achou(t); return; } ult = t; } tm = setTimeout(ciclo, det ? 120 : 180); };
     ciclo();
   } catch (e) { tx.textContent = /Permission|NotAllowed/i.test(String(e && (e.name || e.message))) ? '📷 Libere a câmera para o app nas configurações do celular e tente de novo.' : '⚠️ ' + ((e && e.message) || 'Não consegui abrir a câmera.'); }
 }
