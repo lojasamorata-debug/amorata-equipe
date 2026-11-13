@@ -3802,21 +3802,32 @@ function pvListaUI(b) {
   b.replaceChildren(); if (chefe() && (S.lojas || []).length > 1) { const sl = el('select'); S.lojas.forEach((l) => { const o = el('option', '', l); o.value = l; if (l === PVD.loja) o.selected = true; sl.append(o); }); sl.addEventListener('change', () => { PVD.loja = sl.value; pvListaUI(b); }); b.append(sl); }
   const nv = el('button', 'btn pri big', '+ Nova pré-venda'); nv.addEventListener('click', () => { PVD.itens = []; PVD.cliente = null; PVD.usarCash = null; PVD.editId = ''; PVD.editP = null; pvClienteUI(b); }); b.append(nv);
   if (S.cargo === 'ADMIN') { const cf = el('button', 'btn sm', '⚙️ InfiniteTag das lojas'); cf.style.marginTop = '6px'; cf.addEventListener('click', () => pvTagsUI(b)); b.append(cf); }
+  // dia da lista: ← e → para ver outros dias (padrão: hoje)
+  const hj = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10), dia = PVD.dia && PVD.dia < hj ? PVD.dia : hj, mvDia = (n) => { const t = new Date(dia + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); const x = t.toISOString().slice(0, 10); PVD.dia = x >= hj ? '' : x; pvListaUI(b); };
+  const nav = el('div', 'pv-dia'); nav.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 2px';
+  const ant = el('button', 'btn sm', '← Dia anterior'), lb = el('b', '', dia === hj ? 'Hoje' : dia.slice(8, 10) + '/' + dia.slice(5, 7)), prx = el('button', 'btn sm', 'Próximo dia →');
+  ant.addEventListener('click', () => mvDia(-1)); prx.addEventListener('click', () => mvDia(1)); if (dia === hj) prx.style.visibility = 'hidden';
+  nav.append(ant, lb, prx); b.append(nav);
   const box = el('div'); b.append(box);
   // abre na hora com a última lista guardada no aparelho e atualiza por trás
-  const ck = 'amorata_pvl_' + (S && S.usuario) + '_' + PVD.loja + '_' + hojeStr(); let jaDesenhou = false;
+  const ck = 'amorata_pvl_' + (S && S.usuario) + '_' + PVD.loja + '_' + dia; let jaDesenhou = false;
   const desenha = (r) => {
-    jaDesenhou = true; box.replaceChildren(); const k = el('div', 'pv-kpi'); [[r.total, 'pré-vendas'], [r.vendidas, 'viraram venda'], r.aLancar ? [r.aLancar, 'pagas a lançar no USE'] : [r.conversao == null ? '—' : Math.round(r.conversao * 100) + '%', 'conversão']].forEach(([v, t]) => { const d = el('div'); d.append(el('b', '', String(v)), el('span', '', t)); k.append(d); }); box.append(k);
-    if (!r.lista.length) { box.append(el('div', 'card', 'Nenhuma pré-venda hoje' + (r.chefe ? ' na loja.' : '. Toque em "Nova pré-venda" quando a cliente for ao caixa.'))); return; }
+    jaDesenhou = true; box.replaceChildren();
+    // pré-vendas de dias anteriores que ficaram sem fechar
+    if (dia === hj && r.pend && r.pend.length) { const pc = el('div', 'card'); pc.style.borderLeft = '4px solid #e08a00'; pc.append(el('b', '', '⚠️ Pendentes de outros dias (' + r.pend.length + ')'), el('div', 'sub', 'Ficaram aguardando, reservadas ou pagas sem lançar no USE. Toque para resolver.'));
+      r.pend.forEach((p) => { const row = el('div', 'pv-row'), tx = el('div'), st = PV_ST[p.status] || [p.status, 'a']; tx.append(el('b', '', p.num + ' · ' + primeiroNome(p.vendedora)), el('div', 'sub', String(p.criada).slice(8, 10) + '/' + String(p.criada).slice(5, 7) + ' ' + String(p.criada).slice(11, 16) + ' · ' + p.itens.reduce((a, i) => a + i.qt, 0) + ' peça(s) · ' + rs(p.total) + (p.cliente ? ' · ' + primeiroNome(p.cliente) : '')));
+        row.append(tx, el('span', 'pv-st ' + st[1], st[0])); row.addEventListener('click', () => pvCaixaUI(b, p)); pc.append(row); }); box.append(pc); }
+    const k = el('div', 'pv-kpi'); [[r.total, 'pré-vendas'], [r.vendidas, 'viraram venda'], r.aLancar ? [r.aLancar, 'pagas a lançar no USE'] : [r.conversao == null ? '—' : Math.round(r.conversao * 100) + '%', 'conversão']].forEach(([v, t]) => { const d = el('div'); d.append(el('b', '', String(v)), el('span', '', t)); k.append(d); }); box.append(k);
+    if (!r.lista.length) { box.append(el('div', 'card', dia === hj ? 'Nenhuma pré-venda hoje' + (r.chefe ? ' na loja.' : '. Toque em "Nova pré-venda" quando a cliente for ao caixa.') : 'Nenhuma pré-venda neste dia' + (r.chefe ? ' na loja.' : '.'))); return; }
     const c = el('div', 'card'); r.lista.forEach((p) => { const row = el('div', 'pv-row'), tx = el('div'), st = PV_ST[p.status] || [p.status, 'a'];
       tx.append(el('b', '', p.num + ' · ' + primeiroNome(p.vendedora)), el('div', 'sub', p.itens.reduce((a, i) => a + i.qt, 0) + ' peça(s) · ' + rs(p.total) + ' · ' + String(p.criada).slice(11, 16) + (p.cliente ? ' · ' + primeiroNome(p.cliente) : '') + (p.nova ? ' · cliente nova' : '')));
       row.append(tx, el('span', 'pv-st ' + st[1], st[0] + (p.motivo ? ' · ' + p.motivo : ''))); row.addEventListener('click', () => pvCaixaUI(b, p)); c.append(row); }); box.append(c);
     box.append(el('div', 'sub', 'A pré-venda vira "vendida" sozinha quando as peças aparecem nas vendas do USE.'));
   };
   try { const c0 = JSON.parse(localStorage.getItem(ck) || 'null'); if (c0) desenha(c0); } catch (e) {}
-  if (!jaDesenhou) box.append(el('div', 'sub', 'Carregando as pré-vendas de hoje…'));
+  if (!jaDesenhou) box.append(el('div', 'sub', dia === hj ? 'Carregando as pré-vendas de hoje…' : 'Carregando as pré-vendas do dia…'));
   google.script.run.withSuccessHandler((r) => { if (!b.isConnected || !box.isConnected) return; try { localStorage.setItem(ck, JSON.stringify(r)); } catch (e) {} desenha(r); })
-    .withFailureHandler((e) => { if (!jaDesenhou) box.replaceChildren(el('div', 'card', '⚠️ ' + amigavel((e && e.message) || String(e)))); }).pvLista(S.token, PVD.loja, '');
+    .withFailureHandler((e) => { if (!jaDesenhou) box.replaceChildren(el('div', 'card', '⚠️ ' + amigavel((e && e.message) || String(e)))); }).pvLista(S.token, PVD.loja, dia === hj ? '' : dia);
 }
 // passo 1: cliente (CPF ou celular; se não tiver cadastro, cadastra)
 function pvClienteUI(b) {
