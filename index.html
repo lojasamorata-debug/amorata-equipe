@@ -1844,8 +1844,11 @@ function desenhar(e) {
   // ADM pode retirar alguém da fila (ex.: foi embora e esqueceu de sair)
   const retirarBt = (p) => { const b = el('button', 'btn sm', 'Retirar'); b.addEventListener('click', () => escolher('Retirar ' + primeiroNome(p.nome) + ' da fila?', 'Ela sai da fila e precisa entrar de novo quando voltar. Fica registrado no histórico.', [['Retirar da fila', 'pri', () => fazer('retirar', p.usuario)]])); return b; };
   const admRet = (p) => S.cargo === 'ADMIN' && p.usuario !== eu ? [retirarBt(p)] : [];
+  // ADM: sobe/desce na fila e coloca na fila quem está fora
+  const moverBt = (p, dir, ok) => { const b = el('button', 'btn sm', dir < 0 ? '▲' : '▼'); b.title = dir < 0 ? 'Subir na fila' : 'Descer na fila'; b.disabled = !ok; b.addEventListener('click', () => fazer('mover', p.usuario, { dir: dir })); return b; };
+  const colocarBt = (p) => { const b = el('button', 'btn sm', '+ Fila'); b.addEventListener('click', () => escolher('Colocar ' + primeiroNome(p.nome) + ' na fila?', 'Ela entra no fim da fila. Fica registrado no histórico como feito pelo ADM.', [['Colocar na fila', 'pri', () => fazer('entrar', p.usuario)]])); return b; };
   e.fila.forEach((p, i) => {
-    const ops = admRet(p);
+    const ops = S.cargo === 'ADMIN' && p.usuario !== eu ? [moverBt(p, -1, i > 0), moverBt(p, 1, i < e.fila.length - 1), retirarBt(p)] : [];
     lf.append(linha(p, el('span', '', 'esperando ' + espera(agora() - p.desde)), ops, p.usuario === eu));
   });
   // atendimento
@@ -1862,7 +1865,7 @@ function desenhar(e) {
   if (!e.fora.length) lo.append(el('div', 'vazio', 'Todas na fila ou atendendo.'));
   e.fora.forEach((p) => {
     const info = p.motivo ? p.motivo + ' · há ' + espera(agora() - p.desde) : 'ainda não entrou';
-    lo.append(linha(p, el('span', '', info), p.motivo ? admRet(p) : [], p.usuario === eu));
+    lo.append(linha(p, el('span', '', info), S.cargo === 'ADMIN' && p.usuario !== eu ? [colocarBt(p)].concat(p.motivo ? [retirarBt(p)] : []) : [], p.usuario === eu));
   });
   try { aneisStatus(); } catch (x) {}
   // hoje
