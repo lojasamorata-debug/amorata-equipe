@@ -1580,6 +1580,20 @@ const DICAS = [
   'Enquanto espera a vez, arrume a arara e confira as novidades: quem conhece o produto vende melhor.',
   'Peça indicação: "tem alguma amiga que ia amar essa coleção?"',
 ];
+// frases extras para "Experimente falar" (somadas à frase do COACH), escolhidas pelo dia
+const FALAS_EXTRA = {
+  'Só olhando': ['“Essa aqui é a queridinha das clientes essa semana. Quer sentir o tecido?”', '“Se quiser provar alguma, me chama que eu já separo o seu tamanho.”', '“Você procura algo para o dia a dia ou para alguma ocasião especial?”'],
+  'Voltará depois': ['“Quer que eu separe para você até amanhã?”', '“Me passa seu WhatsApp? Te mando a foto e aviso se ficar a última peça.”', '“Ficou com alguma dúvida? Posso te ajudar a decidir agora.”'],
+  'Não tinha o tamanho/cor': ['“Deixa eu ver na outra loja: se tiver, te aviso ainda hoje.”', '“Nesse tamanho tenho essa outra, que tem o mesmo caimento. Quer provar?”', '“Me passa seu WhatsApp que eu te aviso assim que chegar.”'],
+  'Achou caro': ['“Essa você usa no trabalho e no fim de semana, então sai mais em conta do que parece.”', '“E ainda volta cashback para a próxima compra.”', '“Posso parcelar para você no cartão.”'],
+  'Não gostou do modelo': ['“O que você mais gosta de usar? Assim eu acerto no que te mostrar.”', '“Esse tecido é diferente, veste muito bem. Prova para ver?”', '“Separei duas opções num estilo bem diferente, quer ver?”'],
+};
+// dicas para o indicador que ficou abaixo da média (uma por dia, em rodízio)
+const DICAS_IND = {
+  'Peças por venda': { i: '👗', d: ['Desafio do dia: oferecer a peça que completa o look em todo atendimento.', 'Antes de fechar a venda, mostre um acessório que combina com o que ela levou.', 'Monte o look completo no provador: blusa, calça e um acessório.', 'Pergunte: "já tem um sapato ou cinto que combine com essa?"'] },
+  'Ticket médio': { i: '💎', d: ['Apresente primeiro as peças de maior valor e mostre o look completo.', 'Mostre a novidade mais especial da semana logo no começo do atendimento.', 'Sugira o conjunto em vez da peça avulsa.', 'Fale do tecido e do acabamento antes de falar do preço.'] },
+  'Conversão': { i: '🎯', d: ['Leve sempre 2 opções ao provador e convide toda cliente para provar.', 'Convide para provar logo nos primeiros minutos: quem prova compra mais.', 'Antes de deixar a cliente sair, ofereça uma última opção.', 'Pergunte a ocasião e mostre só o que combina com ela.'] },
+};
 const DICA_PERDA = {
   'Só olhando': 'Tudo bem! Da próxima vez, convide para provar uma novidade: quem prova compra mais.',
   'Voltará depois': 'Pegou o WhatsApp dela? Mande uma foto da peça amanhã 😉',
@@ -6409,11 +6423,13 @@ function cardObjetivo(o, y, foco) {
     ind.sort((p, q) => q.ruim - p.ruim);
   }
   // dicas: motivo que mais fez perder ontem + pontos de foco da loja (sem citar ninguém)
+  // as dicas mudam a cada dia (o dia escolhe qual frase de cada lista aparece), para não repetir sempre as mesmas
   const dic = []; const mt = y && y.fila && y.fila.motivo, cc = mt && typeof COACH !== 'undefined' ? COACH[mt] : null;
-  if (cc) { dic.push(['💡', 'Ontem a loja mais perdeu por “' + mt + '”. ' + cc.d[0]]); if (cc.f) dic.push(['🗣️', 'Experimente falar: ' + cc.f]); }
+  const semente = Math.floor(new Date((o.data || new Date().toISOString().slice(0, 10)) + 'T12:00:00Z').getTime() / 864e5) + String(o.loja || '').length, esc = (a, k) => a[(semente + (k || 0)) % a.length];
+  if (cc) { dic.push(['💡', 'Ontem a loja mais perdeu por “' + mt + '”. ' + esc(cc.d)]); const fl = (FALAS_EXTRA[mt] || []).concat(cc.f ? [cc.f] : []); if (fl.length) dic.push(['🗣️', 'Experimente falar: ' + esc(fl, 1)]); }
   (foco || []).filter((x) => ['🤝', '📉', '🚀', '💜', '💡'].indexOf(x[0]) < 0).forEach((x) => dic.push(x));
-  ind.filter((x) => x.ruim).forEach((x) => { if (x.nome === 'Peças por venda') dic.push(['👗', 'Desafio do dia: oferecer a peça que completa o look em todo atendimento.']); if (x.nome === 'Ticket médio') dic.push(['💎', 'Apresente primeiro as peças de maior valor e mostre o look completo.']); if (x.nome === 'Conversão') dic.push(['🎯', 'Leve sempre 2 opções ao provador e convide toda cliente para provar.']); });
-  if (!dic.length) dic.push(['💜', 'Atenda cada cliente como única: sorriso, escuta e o look completo.']);
+  ind.filter((x) => x.ruim).forEach((x) => { const L = DICAS_IND[x.nome]; if (L) dic.push([L.i, esc(L.d, 2)]); });
+  if (dic.length < 3) dic.push(['💜', esc(DICAS, 3)]);
   const D = dic.slice(0, 3), mg = document.createElement('canvas').getContext('2d'); mg.font = '400 13px ' + FC_F;
   const nL = (t) => { let l = '', n = 0; t.split(' ').forEach((p) => { const tt = l ? l + ' ' + p : p; if (mg.measureText(tt).width > 420 && l) { n++; l = p; } else l = tt; }); return n + (l ? 1 : 0); };
   const hDi = D.map(([, t]) => Math.max(58, 22 + nL(t) * 18)), hP = pes.length ? 44 + Math.ceil(pes.length / 2) * 52 + 4 : 0, hI = ind.length ? 44 + 112 + 6 : 0, hD = 44 + hDi.reduce((a, x) => a + x + 8, 0);
