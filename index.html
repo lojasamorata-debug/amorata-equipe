@@ -3234,9 +3234,42 @@ function vezNoDet_(e, naFila, at) {
   tx.append(el('b', '', at ? 'Você está atendendo' : pos ? 'Você é a ' + pos + 'ª da vez' : 'Você está fora da fila'), el('div', 'sm', at ? 'encerre o atendimento na fila quando terminar' : pos === 2 && (e.fila || [])[0] ? primeiroNome(e.fila[0].nome) + ' é a próxima… depois é você' : quem.length ? quem.join(' e ') + ' atendendo agora' : ''));
   fx.append(tx, volta);
 }
+// ---------- peças vendidas no dia (administração) ----------
+const PV2 = { loja: 'TODAS', dia: '', filtro: '' };
+function abrirPecasVendidas() { abrirDet('🛍️ Peças vendidas', (b) => pecasVendidasUI(b)); }
+function pecasVendidasUI(b) {
+  b.replaceChildren(); const hj = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10), dia = PV2.dia && PV2.dia < hj ? PV2.dia : hj;
+  const topo = el('div'); topo.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px';
+  const sl = el('select'); [['TODAS', 'Rede inteira']].concat((S.lojas || []).filter((l) => l !== 'TODAS').map((l) => [l, l])).forEach(([v, t]) => { const o = el('option', '', t); o.value = v; if (v === PV2.loja) o.selected = true; sl.append(o); }); sl.addEventListener('change', () => { PV2.loja = sl.value; PV2.filtro = ''; pecasVendidasUI(b); });
+  const mv = (n) => { const t = new Date(dia + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); const x = t.toISOString().slice(0, 10); PV2.dia = x >= hj ? '' : x; PV2.filtro = ''; pecasVendidasUI(b); };
+  const nav = el('div'); nav.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%';
+  const a = el('button', 'btn sm', '← Dia anterior'), lb = el('b', '', dia === hj ? 'Hoje' : dia.slice(8, 10) + '/' + dia.slice(5, 7)), p = el('button', 'btn sm', 'Próximo dia →'); a.addEventListener('click', () => mv(-1)); p.addEventListener('click', () => mv(1)); if (dia === hj) p.style.visibility = 'hidden';
+  nav.append(a, lb, p); topo.append(sl, nav); b.append(topo);
+  const box = el('div'); box.append(el('div', 'sub', 'Buscando as vendas do dia no USE… (a primeira vez do dia pode levar alguns segundos)')); b.append(box);
+  google.script.run.withSuccessHandler((r) => { if (!box.isConnected) return; box.replaceChildren();
+    const k = el('div', 'pv-kpi'); [[r.pecas, 'peças'], [rs(r.valor), 'vendido'], [r.modelos, 'modelos']].forEach(([v, t]) => { const d = el('div'); d.append(el('b', '', String(v)), el('span', '', t)); k.append(d); }); box.append(k);
+    if (r.loja === 'TODAS') { const ls = Object.keys(r.porLoja || {}).filter((l) => r.porLoja[l].pecas || r.porLoja[l].erro); if (ls.length) { const c = el('div', 'sub'); c.style.margin = '4px 0 8px'; c.textContent = ls.map((l) => l + ': ' + (r.porLoja[l].erro ? 'sem dados' : r.porLoja[l].pecas + ' pç · ' + rs(r.porLoja[l].valor))).join(' · '); box.append(c); } }
+    if (!r.lista.length) { box.append(el('div', 'card', 'Nenhuma peça vendida neste dia.')); return; }
+    const NOMES = { nov_bem: '🆕🔥 Novidades vendendo bem', nov: '🆕 Novidades', parada: '💤 Estavam paradas', campea: '🔥 Campeãs da semana', lenta: '🐢 Saída lenta', esgotou: '⚠️ Esgotaram', baixo: '⚠️ Estoque baixo' };
+    const ch = el('div'); ch.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px';
+    const chip = (key, txt) => { const x = el('button', 'btn sm', txt); if (PV2.filtro === key) { x.style.background = 'var(--pri,#5b4a7a)'; x.style.color = '#fff'; } x.addEventListener('click', () => { PV2.filtro = PV2.filtro === key ? '' : key; desenha(); }); return x; };
+    const desenha = () => { ch.replaceChildren(chip('', 'Todas (' + r.lista.length + ')')); Object.keys(NOMES).filter((x) => r.cont[x]).forEach((x) => ch.append(chip(x, NOMES[x] + ' (' + r.cont[x] + ')')));
+      lst.replaceChildren(); r.lista.filter((x) => !PV2.filtro || x.tags.some((t) => t[0] === PV2.filtro)).forEach((x) => { const c = el('div', 'card'); c.style.cssText = 'padding:10px 12px;margin-bottom:8px';
+        const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:baseline'; h.append(el('b', '', x.nome + ' · ref ' + x.ref), el('b', '', x.q + (x.q > 1 ? ' peças' : ' peça'))); c.append(h);
+        const tg = el('div'); tg.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin:4px 0'; x.tags.forEach((t) => { const s2 = el('span', 'badge', t[1]); tg.append(s2); }); if (x.tags.length) c.append(tg);
+        const linhas = [rs(x.v) + ' vendido', 'semana: ' + x.semana + ' pç', 'estoque agora: ' + x.estoque + (x.entrou30 ? ' · entraram ' + x.entrou30 + ' em 30 dias' : '')];
+        if (r.loja === 'TODAS') linhas.push(Object.keys(x.lojas).map((l) => l + ' ' + x.lojas[l]).join(' · '));
+        if (x.cores.length || x.tams.length) linhas.push([x.cores.join(', '), x.tams.length ? 'tam ' + x.tams.join(', ') : ''].filter(Boolean).join(' · '));
+        linhas.forEach((t) => c.append(el('div', 'sub', t))); lst.append(c); }); };
+    const lst = el('div'); box.append(ch, lst); desenha();
+    box.append(el('div', 'nota', 'Como a peça é classificada: Novidade = entrou na loja nos últimos 30 dias e não vendia antes (vendendo bem = 4 ou mais na semana). Estava parada = nenhuma venda nos 60 dias anteriores. Campeã = 6 ou mais na semana. Saída lenta = até 2 vendas em 60 dias. O estoque é o de agora.'));
+  }).withFailureHandler((e) => { if (box.isConnected) box.replaceChildren(el('div', 'card', '⚠️ ' + amigavel((e && e.message) || String(e)))); }).pecasVendidas(S.token, PV2.loja, dia === hj ? '' : dia);
+}
 function desenharCards() {
   const box = $('i-cards'); if (!box || !INI) return; const r = INI, R = r.rede; box.replaceChildren();
   const card = (cls, dt, dt2, fn) => { const c = el('div', 'dc ' + (cls || '')), t = el('div', 'dt'); const s1 = el('span', '', dt), q = ajudaQ(dt); if (q) s1.append(q); t.append(s1, el('span', '', dt2 || 'ver ›')); c.append(t); if (fn) c.addEventListener('click', fn); box.append(c); return c; };
+  // 🛍️ peças vendidas no dia (administração): abre a lista geral ou por loja
+  if (S.cargo === 'ADMIN') { const pc = card('full', '🛍️ Peças vendidas no dia', 'ver ›', () => abrirPecasVendidas()); pc.append(el('div', 'sm', 'O que saiu hoje (ou em outro dia), na rede ou por loja: novidades vendendo bem, peças que estavam paradas, campeãs e o que está acabando.')); }
   const serieTot = r.serie && r.serie.dias.length ? r.serie.dias.map((_, i) => Object.keys(r.serie.lojas).reduce((a, l) => a + (r.serie.lojas[l][i] || 0), 0)) : [];
   const metaDiaTot = r.serie ? Object.keys(r.serie.metaDia).reduce((a, l) => a + (r.serie.metaDia[l] || 0), 0) : 0;
   // 1. resultado do mês
