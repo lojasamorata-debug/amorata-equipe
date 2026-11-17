@@ -2265,10 +2265,11 @@ const PDE = { mes: '', loja: '', sub: 'mes', sel: null, r: null };
 const pdeMesAtual = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
 const PDE_NOME = { mg: 'Meta geral', on: 'Meta online', iri: 'IRI (cashback)', pa: 'PA (peças por atendimento)', tkm: 'Ticket médio', fg: '🚀 Foguetes (meta do dia)', rg: 'Regularidade online' };
 const pdeFx = (fx, v) => { if (v == null || !isFinite(v)) return 0; let p = null; fx.forEach((f) => { if (v >= f[0] - 1e-9) p = f[1]; }); return p == null ? 0 : p; };
-function pdeVals(c, cfg) { const pct = (x) => x == null ? null : x * 100; return { mg: pct(c.pctRitmo), on: c.metaOn ? pct(c.pctOnRitmo) || 0 : null, iri: c.iri, pa: c.pa, tkm: c.tkm, fg: c.fgDias ? c.fgHit / c.fgDias * 100 : 0, rg: c.fgDias ? c.rgDias / c.fgDias * 100 : 0 }; }
+// arredonda como aparece na tela (regulamento usa faixas em % inteiro, PA com 2 casas e ticket em reais): 119,8% conta como 120%
+function pdeVals(c, cfg) { const r0 = (x) => x == null || !isFinite(x) ? x : Math.round(x), r2 = (x) => x == null || !isFinite(x) ? x : Math.round(x * 100) / 100, pct = (x) => x == null ? null : r0(x * 100); return { mg: pct(c.pctRitmo), on: c.metaOn ? pct(c.pctOnRitmo) || 0 : null, iri: r2(c.iri), pa: r2(c.pa), tkm: r0(c.tkm), fg: c.fgDias ? r0(c.fgHit / c.fgDias * 100) : 0, rg: c.fgDias ? r0(c.rgDias / c.fgDias * 100) : 0 }; }
 function pdeCalc(v, cfg, adv) {
   const F = cfg.faixas, P = cfg.pesos, M = cfg.max, pts = {}; Object.keys(PDE_NOME).forEach((k) => { pts[k] = k === 'mg' ? (v.mg != null && v.mg >= F.mg[0][0] - 1e-9 ? pdeFx(F.mg, v.mg) : 0) : pdeFx(F[k], v[k]); });
-  const des = adv ? 'advertência ativa' : (v.mg == null || v.mg < F.mg[0][0] - 1e-9) ? 'abaixo de ' + F.mg[0][0] + '% da meta' : '';
+  const des = adv ? 'advertência ativa' : (v.mg == null || v.mg < F.mg[0][0] - 1e-9) ? 'abaixo de ' + F.mg[0][0] + '% da meta' : (cfg.paMin && (v.pa == null || v.pa < cfg.paMin - 1e-9)) ? 'PA abaixo de ' + String(cfg.paMin.toFixed(2)).replace('.', ',') : '';
   const fin = (pts.mg + pts.on + pts.iri) / M.fin * P.fin, ef = (pts.pa + pts.tkm) / M.ef * P.ef, ex = (pts.fg + pts.rg) / M.ex * P.ex, t = fin + ef + ex;
   return { pts: pts, fin: fin, ef: ef, ex: ex, t: t, des: des, premio: des ? 0 : pdePremio(t, cfg) };
 }
@@ -2352,7 +2353,7 @@ function pdeSim(b, r, c, V0) {
 }
 function pdeRegras(b, r, resumo) {
   const cfg = r.cfg, c = el('div', 'card'); c.append(el('h3', '', '📜 Regras do PDE'));
-  if (!resumo) { c.append(el('div', 'sm', 'Para participar: ' + cfg.faixas.mg[0][0] + '% da meta do mês e nenhuma advertência ativa. Pilares: Financeiro (meta geral + online + IRI) vale ' + cfg.pesos.fin + ', Eficiência (PA + ticket) vale ' + cfg.pesos.ef + ' e Expansão (foguetes + regularidade online) vale ' + cfg.pesos.ex + '. As faixas valem "a partir de".'));
+  if (!resumo) { c.append(el('div', 'sm', 'Para participar: ' + cfg.faixas.mg[0][0] + '% da meta do mês' + (cfg.paMin ? ', PA mínimo de ' + String(cfg.paMin.toFixed(2)).replace('.', ',') : '') + ' e nenhuma advertência ativa. Pilares: Financeiro (meta geral + online + IRI) vale ' + cfg.pesos.fin + ', Eficiência (PA + ticket) vale ' + cfg.pesos.ef + ' e Expansão (foguetes + regularidade online) vale ' + cfg.pesos.ex + '. As faixas valem "a partir de".'));
     Object.keys(PDE_NOME).forEach((k) => { const d = el('div', 'pde-ind'); d.append(el('span', '', PDE_NOME[k]), el('span', 'sm', cfg.faixas[k].map((f) => (k === 'tkm' ? 'R$' + f[0] : k === 'pa' || k === 'iri' ? String(f[0]).replace('.', ',') : f[0] + '%') + '→' + f[1]).join(' · '))); c.append(d); }); }
   c.append(el('div', 'fin-lb', 'PRÊMIO (' + cfg.pagamento + ')')); cfg.premios.forEach((p, i) => { const nx = cfg.premios[i + 1]; c.append(el('div', 'sm', p[0] + (nx ? ' a ' + (nx[0] - 0.1).toString().replace('.', ',') : ' ou mais') + ' pontos → ' + rs(p[1]))); });
   if (r.admin) { const e = el('button', 'btn sm', '✏️ Editar faixas do prêmio'); e.addEventListener('click', () => { const t = prompt('Pontos mínimos = valor, separados por ponto e vírgula:', cfg.premios.map((p) => p[0] + '=' + p[1]).join('; ')); if (t == null) return; const ps = t.split(';').map((x) => x.split('=').map((y) => +String(y).trim().replace(',', '.'))).filter((x) => x.length === 2); rodar('pdeSalvarPremios', [S.token, ps], (c2) => { r.cfg = c2; toast('Faixas salvas'); pdeDesenhar(b.closest('.dbody') || b); }); }); c.append(e); }
