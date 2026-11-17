@@ -305,6 +305,17 @@ html, body, .wrap, #det { overscroll-behavior-y: contain; }
 #festa .fc .em { font-size:72px; line-height:1; animation:gira 1.2s ease-out; } #festa .fc .mini { font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); margin-top:10px; }
 #festa .fc h3 { font-family:'Source Serif 4',Georgia,serif; font-weight:500; font-size:26px; margin:4px 0 6px; } #festa .fc p { margin:0 0 16px; color:var(--muted); font-size:14px; line-height:1.4; }
 #festa .cf { position:absolute; top:-12px; width:9px; height:14px; border-radius:2px; animation:cai linear forwards; z-index:1; }
+#festa .fc.pde-fc { background:linear-gradient(160deg,#fff8e1 0%,#fff 45%,#f3ecff 100%); border:2px solid #f2b01e; box-shadow:0 0 0 6px rgba(242,176,30,.18), 0 18px 40px rgba(0,0,0,.25); overflow:hidden; }
+#festa .pde-fc::before { content:''; position:absolute; top:-60%; left:-60%; width:220%; height:220%; background:conic-gradient(from 0deg, transparent 0 20deg, rgba(242,176,30,.12) 20deg 40deg, transparent 40deg 60deg, rgba(242,176,30,.12) 60deg 80deg, transparent 80deg 100deg, rgba(242,176,30,.12) 100deg 120deg, transparent 120deg 140deg, rgba(242,176,30,.12) 140deg 160deg, transparent 160deg 180deg, rgba(242,176,30,.12) 180deg 200deg, transparent 200deg 220deg, rgba(242,176,30,.12) 220deg 240deg, transparent 240deg 260deg, rgba(242,176,30,.12) 260deg 280deg, transparent 280deg 300deg, rgba(242,176,30,.12) 300deg 320deg, transparent 320deg 340deg, rgba(242,176,30,.12) 340deg 360deg); animation:pdeRaios 14s linear infinite; z-index:-1; }
+#festa .pde-fc > * { position:relative; }
+#festa .pde-fc .pde-av { width:96px; height:96px; margin:4px auto 6px; border-radius:50%; box-shadow:0 0 0 4px #f2b01e, 0 0 24px rgba(242,176,30,.7); animation:pdePulso 1.6s ease-in-out infinite; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:40px; background:#fff; }
+#festa .pde-fc .pde-av img, #festa .pde-fc .pde-av .av { width:100%; height:100%; object-fit:cover; border-radius:50%; font-size:34px; }
+#festa .pde-fc .pde-val { font-size:40px; font-weight:800; color:#b7791f; letter-spacing:-1px; animation:gira 1s .3s both; }
+#festa .pde-fc .pde-pts { display:inline-block; background:#1f1e1d; color:#ffd36b; border-radius:999px; padding:4px 12px; font-size:13px; font-weight:700; margin:6px 0 10px; }
+.pde-win { display:flex; align-items:center; gap:10px; padding:8px 4px; border-bottom:1px solid var(--line); text-align:left; } .pde-win:last-child { border-bottom:0; }
+.pde-win .av { width:44px; height:44px; flex:none; box-shadow:0 0 0 2px #f2b01e; } .pde-win .tx { flex:1; min-width:0; } .pde-win .tx b { display:block; } .pde-win .tx span { font-size:12px; color:var(--muted); }
+.pde-win button { flex:none; }
+@keyframes pdeRaios { to { transform:rotate(360deg); } } @keyframes pdePulso { 0%,100% { transform:scale(1); } 50% { transform:scale(1.06); } }
 @keyframes pop { 0% { transform:scale(.6); opacity:0; } 100% { transform:scale(1); opacity:1; } } @keyframes gira { 0% { transform:scale(.3) rotate(-30deg); } 60% { transform:scale(1.2) rotate(8deg); } 100% { transform:scale(1) rotate(0); } }
 .pv-kpi{display:flex;gap:8px;margin:10px 0}.pv-kpi div{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}.pv-kpi b{display:block;font-size:20px}.pv-kpi span{font-size:11px;color:var(--muted)}
 .pv-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}.pv-row:last-child{border:0}
@@ -2306,8 +2317,12 @@ function pdeDesenhar(b) {
   if (lista.length > 1) { const c3 = el('div', 'card'); c3.append(el('h3', '', 'Onde a equipe mais perde pontos'));
     const perda = Object.keys(PDE_NOME).filter((x) => x !== 'mg').map((x) => { const mx = Math.max(...r.cfg.faixas[x].map((f) => f[1])), w = x === 'mg' || x === 'on' || x === 'iri' ? r.cfg.pesos.fin / r.cfg.max.fin : x === 'pa' || x === 'tkm' ? r.cfg.pesos.ef / r.cfg.max.ef : r.cfg.pesos.ex / r.cfg.max.ex; return { x: x, p: lista.reduce((a, y) => a + (mx - y.k.pts[x]) * w, 0) / lista.length }; }).sort((a, b2) => b2.p - a.p).slice(0, 3);
     perda.forEach((p) => { const d = el('div', 'pde-ind'); d.append(el('span', '', PDE_NOME[p.x]), el('b', '', '−' + n1p(p.p) + ' pts em média')); c3.append(d); }); b.append(c3); }
+  if (r.encerrado && r.admin && PDE.loja === 'TODAS') { const c4 = el('div', 'card'), pb = el('button', 'btn pri big', '📣 Divulgar premiadas de ' + mesNomePde(PDE.mes)); c4.append(el('h3', '', 'Divulgar no app'), el('div', 'sm', 'As premiadas recebem um card animado (com compartilhar) e um aviso; gerentes e ADM recebem a lista para parabenizar.'), pb);
+    pb.addEventListener('click', () => { if (!confirm('Divulgar as premiadas do PDE de ' + mesNomePde(PDE.mes) + ' para as premiadas, gerentes e ADM?')) return; pb.disabled = true; toast('Divulgando…'); rodar('pdePublicar', [S.token, PDE.mes], (x) => { toast(x.lista.length + ' premiada(s) divulgada(s) 🎉'); google.script.run.withSuccessHandler((v) => { PDEV = v; if (v) cardPde(true); }).pdeVencedoras(S.token); }, () => { pb.disabled = false; }); }); b.append(c4); }
+  if (PDEV && PDEV.mes === PDE.mes) { const v = el('button', 'btn big', '🏆 Ver premiadas e parabenizar'); v.addEventListener('click', cardPdeLista); b.append(v); }
   pdeRegras(b, r, true);
 }
+const mesNomePde = (m) => ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+m.slice(5, 7) - 1];
 function pdeDetalhe(b, r, c) {
   if (r.chefe) { const v = el('button', 'btn sm', '‹ Voltar ao ranking'); v.addEventListener('click', () => { PDE.sel = null; pdeDesenhar(b); }); b.append(v); }
   const seg = el('div', 'seg pde-seg'); [['mes', 'Mês'], ['sim', 'Simular'], ['regras', 'Regras']].forEach(([k, t]) => { const x = el('button', PDE.sub === k ? 'on' : '', t); x.addEventListener('click', () => { PDE.sub = k; pdeDesenhar(b); }); seg.append(x); }); b.append(seg);
@@ -4183,7 +4198,7 @@ setInterval(() => { if (!document.hidden) checarFoguetes(); }, 10 * 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checarFoguetes(); });
 // campeãs do dia: fotos flutuando na tela de todas (some ao fechar, volta no dia seguinte)
 let CAMP = null;
-function carregarCampeas() { if (!S || telaLoja()) return; checarFoguetes(); google.script.run.withSuccessHandler((r) => { CAMP = r; bolhaCampeas(); cardMetaBatida(); }).withFailureHandler(() => {}).campeasDia(S.token); }
+function carregarCampeas() { if (!S || telaLoja()) return; checarFoguetes(); carregarPdeVenc(); google.script.run.withSuccessHandler((r) => { CAMP = r; bolhaCampeas(); cardMetaBatida(); }).withFailureHandler(() => {}).campeasDia(S.token); }
 // card de comemoração (igual ao da medalha) para quem bateu a meta do dia — uma vez por dia
 function cardMetaBatida() {
   if (!CAMP || !CAMP.lista) return; if ($('festa') || $('caminho')) { clearTimeout(cardMetaBatida.t); cardMetaBatida.t = setTimeout(cardMetaBatida, 4000); return; } const eu = CAMP.lista.find((p) => p.eu); if (!eu) return;
@@ -4216,6 +4231,47 @@ function listaCampeas() {
     p.eu ? '🏆 Você! ' + (p.parabens ? p.parabens + ' colega(s) te parabenizaram 💜' : 'Parabéns!') : p.jaDei ? '✅ Você parabenizou ' + p.nome + ' · ' + p.loja + pb(p) : !p.usuario ? '💜 ' + p.nome + ' · ' + p.loja : '👏 Parabenizar ' + p.nome + ' · ' + p.loja + pb(p),
     p.eu || p.jaDei || !p.usuario ? '' : 'pri',
     () => { if (p.eu || p.jaDei || !p.usuario) { fechar(); return; } fechar(); google.script.run.withSuccessHandler((r) => { p.jaDei = true; p.parabens = (r && r.parabens) || p.parabens + 1; toast('👏 ' + p.nome + ' vai saber que você parabenizou!'); listaCampeas(); }).withFailureHandler((e) => toast((e && e.message) || 'Não deu agora.')).parabenizarCampea(S.token, p.usuario, CAMP.d); }]));
+}
+// 🏆 PDE: card animado para as premiadas do mês (e para gerentes/ADMIN, com parabéns) — uma vez por mês publicado
+let PDEV = null;
+function carregarPdeVenc() { if (!S || telaLoja()) return; google.script.run.withSuccessHandler((r) => { PDEV = r; cardPde(); }).withFailureHandler(() => {}).pdeVencedoras(S.token); }
+function confete(f, n) { const cores = ['#f2b01e', '#ffd36b', '#5b4a7a', '#e8738a', '#1e7a46', '#7fb3e6']; for (let i = 0; i < (n || 60); i++) { const c = el('i', 'cf'); c.style.left = Math.random() * 100 + '%'; c.style.background = cores[i % cores.length]; c.style.animationDuration = 2 + Math.random() * 3 + 's'; c.style.animationDelay = Math.random() * 1.2 + 's'; f.append(c); } }
+function cardPde(forcar) {
+  if (!PDEV || !PDEV.lista) return; if (!forcar && ($('festa') || $('caminho'))) { clearTimeout(cardPde.t); cardPde.t = setTimeout(cardPde, 4000); return; }
+  const eu = PDEV.lista.find((p) => p.eu); if (!eu && !PDEV.chefe) return;
+  const k = 'pdeCard_' + PDEV.mes + '_' + S.usuario; if (!forcar) { try { if (localStorage.getItem(k)) return; localStorage.setItem(k, '1'); } catch (e) { return; } }
+  const ant = $('festa'); if (ant) ant.remove();
+  try { navigator.vibrate && navigator.vibrate([120, 60, 120, 60, 500]); } catch (x) {}
+  const f = el('div'); f.id = 'festa'; confete(f, 70); const fc = el('div', 'fc pde-fc'), M = PDEV.nomeMes, MM = M.charAt(0).toUpperCase() + M.slice(1);
+  const sai = () => f.remove(); f.addEventListener('click', (ev) => { if (ev.target === f) sai(); });
+  const bts = el('div'); bts.style.cssText = 'display:flex;flex-direction:column;gap:8px';
+  if (eu) {
+    const av = el('div', 'pde-av'); if (eu.foto) { const im = el('img'); im.src = eu.foto; im.alt = ''; im.onerror = () => { av.textContent = '🏆'; }; av.append(im); } else av.textContent = '🏆';
+    fc.append(el('div', 'em', '🏆'), el('div', 'mini', 'PDE · ' + MM), av, el('h3', '', 'Você ganhou o PDE, ' + primeiroNome(S.nome) + '!'),
+      el('div', 'pde-val', rs(eu.premio)), el('div', 'pde-pts', '⭐ ' + n1p(eu.pontos) + ' pontos · meta ' + eu.meta + '%'),
+      el('p', '', 'Seu desempenho extraordinário em ' + M + ' virou prêmio! Pagamento ' + (PDEV.pagamento || 'dia 15') + '. ' + (eu.parabens ? '👏 ' + eu.parabens + ' pessoa(s) já te parabenizaram.' : 'A equipe vai poder te parabenizar 💜')));
+    const ok = el('button', 'btn pri big', 'Obrigada! 💜'), sh = el('button', 'btn big', '📣 Compartilhar'), ver = el('button', 'btn sm', 'Ver todas as premiadas'); ver.style.cssText = 'margin:2px auto 0;border:0;background:none;color:var(--muted)';
+    ok.addEventListener('click', sai);
+    sh.addEventListener('click', () => { sai(); abrirCompartilhar({ emoji: '🏆', mini: 'PDE · ' + MM, titulo: 'Ganhei o PDE de ' + M + '!', sub: n1p(eu.pontos) + ' pontos · ' + eu.meta + '% da meta', tipo: 'meta', texto: '🏆 ' + primeiroNome(S.nome) + ' ganhou o PDE de ' + M + '! ' + n1p(eu.pontos) + ' pontos 🎉' }); });
+    ver.addEventListener('click', () => { sai(); cardPdeLista(); }); bts.append(ok, sh, ver);
+  } else {
+    fc.append(el('div', 'em', '🏆'), el('div', 'mini', 'PDE · ' + MM), el('h3', '', PDEV.lista.length ? (PDEV.lista.length === 1 ? '1 consultora premiada!' : PDEV.lista.length + ' consultoras premiadas!') : 'Ninguém premiado em ' + M),
+      el('p', '', PDEV.lista.length ? 'Parabenize quem fez um mês extraordinário 👏 (ela recebe um aviso)' : 'Ninguém chegou aos 80 pontos com a meta batida.'));
+    const lw = el('div'); pdeWins(lw); fc.append(lw); const ok = el('button', 'btn pri big', 'Fechar'); ok.addEventListener('click', sai); bts.append(ok);
+  }
+  fc.append(bts); f.append(fc); document.body.append(f);
+}
+function pdeWins(box) {
+  box.replaceChildren(); PDEV.lista.forEach((p) => { const w = el('div', 'pde-win'), tx = el('div', 'tx'); tx.append(el('b', '', (p.eu ? '⭐ ' : '') + p.nome + ' · ' + p.loja), el('span', '', n1p(p.pontos) + ' pts · ' + rs(p.premio) + (p.parabens ? ' · 👏 ' + p.parabens : '')));
+    w.append(avatar(p.foto, p.nome), tx);
+    if (!p.eu && p.usuario) { const bt = el('button', 'btn sm' + (p.jaDei ? '' : ' pri'), p.jaDei ? '✅' : '👏'); bt.title = 'Parabenizar'; bt.addEventListener('click', () => { if (p.jaDei) return; bt.disabled = true; google.script.run.withSuccessHandler((r) => { p.jaDei = true; p.parabens = (r && r.parabens) || p.parabens + 1; toast('👏 ' + p.nome + ' vai saber que você parabenizou!'); pdeWins(box); }).withFailureHandler((e) => { bt.disabled = false; toast((e && e.message) || 'Não deu agora.'); }).pdeParabenizar(S.token, p.usuario); }); w.append(bt); }
+    box.append(w); });
+}
+function cardPdeLista() {
+  if (!PDEV) return; const ant = $('festa'); if (ant) ant.remove(); const f = el('div'); f.id = 'festa'; confete(f, 30); const fc = el('div', 'fc pde-fc'), M = PDEV.nomeMes;
+  fc.append(el('div', 'mini', '🏆 Premiadas do PDE · ' + M), el('div', 'sm', 'Toque em 👏 para parabenizar'));
+  const lw = el('div'); pdeWins(lw); const ok = el('button', 'btn pri big', 'Fechar'); ok.style.marginTop = '10px'; const sai = () => f.remove(); ok.addEventListener('click', sai); f.addEventListener('click', (ev) => { if (ev.target === f) sai(); });
+  fc.append(lw, ok); f.append(fc); document.body.append(f);
 }
 // bolinha flutuante: avisa que tem status novo sem mandar notificação
 let ST_OCULTOS = {};
