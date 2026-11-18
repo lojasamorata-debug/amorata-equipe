@@ -863,6 +863,7 @@ html.dark .ct-pg { background:var(--panel) !important }
 .bnc-bt { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; } .bnc-bt button { border:0; border-radius:999px; padding:7px 12px; font:inherit; font-size:13px; font-weight:700; background:var(--accent); color:#fff; cursor:pointer; } html.dark .bnc-bt button { color:#141317; }
 .cli-fila { text-align:left; margin:12px 0 4px; border:1px solid var(--line); border-radius:16px; overflow:hidden; } .cli-frow { display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--line); } .cli-frow:last-child { border-bottom:0; } .cli-frow > div { flex:1; } .cli-frow.eu { background:var(--accentbg); } .cli-frow .btn { width:auto !important; margin:0 !important; padding:9px 16px; }
 .cli-cash { font-size:18px; }
+.al-row { padding:9px 0; border-bottom:1px solid var(--line); } .al-row:last-child { border-bottom:0; } .cv-l { display:block; margin:10px 0; } .cv-l span { display:block; font-size:13px; color:var(--muted); margin-bottom:4px; } .cv-l input { width:100%; box-sizing:border-box; padding:11px; border:1px solid var(--line); border-radius:12px; font:inherit; background:var(--panel); color:var(--fg); }
 </style>
 </head>
 <body>
@@ -2620,18 +2621,18 @@ function abrirContrato(rh) {
 // gerente/admin: "Meus resultados" abre os cards do Início (fora dele, o Início mostra só o menu)
 function verResultados() { mudarAba('ini'); document.body.classList.add('ini-res'); rolarTopo_(); }
 $('i-res-v').addEventListener('click', () => mudarAba('ini'));
-const MENU_TXT = { cli: 'Conhecer a cliente', apar: 'Aparência', avat: 'Meu avatar e recados', pv: 'Pré-venda', pde: 'PDE · premiação', fin: 'Financeiro', sd: 'Check-up do app', aj: 'Ajuda e conta', cb: 'Cashback', res: 'Resultados e relatórios', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
+const MENU_TXT = { alr: 'Alertas', forn: 'Fornecedores', cv: 'Custo × venda', sac: 'Sacolas', cli: 'Conhecer a cliente', apar: 'Aparência', avat: 'Meu avatar e recados', pv: 'Pré-venda', pde: 'PDE · premiação', fin: 'Financeiro', sd: 'Check-up do app', aj: 'Ajuda e conta', cb: 'Cashback', res: 'Resultados e relatórios', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
 const NAV_TXT = { ini: 'Agora', dia: 'Agora', fila: 'Fila', meta: 'Metas', mural: 'Mural', est: 'Estoque', gest: 'Gestão', rh: 'Meu RH' };
 const casaAba_ = () => (chefe() ? 'ini' : S && S.cargo === 'AUXILIAR' ? 'fila' : 'dia');
-function abaVisivel_(k) { if (k === 'cli') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0; if (k === 'apar') return !!S; if (k === 'avat') return !!S && (S.cargo === 'ADMIN' || S.cargo === 'GERENTE'); if (k === 'pv') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0 && (S.cargo !== 'ADMIN' || (S.lojas || []).length > 0); if (k === 'pde') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0; if (k === 'sd' || k === 'fin') return !!S && S.cargo === 'ADMIN'; if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
-function irAba_(k) { if (k === 'cli') { conhecerCliente(S.cargo === 'ADMIN'); return; } if (k === 'apar') { abrirAparencia(); return; } if (k === 'avat') { abrirMeuAvatar(); return; } if (k === 'pv') { abrirPreVenda(); return; } if (k === 'pde') { abrirPde(); return; } if (k === 'sd') { abrirCheckup(); return; } if (k === 'fin') { abrirFinanceiro(); return; } if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
+function abaVisivel_(k) { if (k === 'alr' || k === 'forn' || k === 'cv') return !!S && S.cargo === 'ADMIN'; if (k === 'sac') return !!S && (S.cargo === 'ADMIN' || S.cargo === 'GERENTE'); if (k === 'cli') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0; if (k === 'apar') return !!S; if (k === 'avat') return !!S && (S.cargo === 'ADMIN' || S.cargo === 'GERENTE'); if (k === 'pv') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0 && (S.cargo !== 'ADMIN' || (S.lojas || []).length > 0); if (k === 'pde') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0; if (k === 'sd' || k === 'fin') return !!S && S.cargo === 'ADMIN'; if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
+function irAba_(k) { if (k === 'alr') { abrirAlertas(); return; } if (k === 'forn') { abrirFornecedores(); return; } if (k === 'cv') { abrirCustoVenda(); return; } if (k === 'sac') { abrirSacolas(); return; } if (k === 'cli') { conhecerCliente(S.cargo === 'ADMIN'); return; } if (k === 'apar') { abrirAparencia(); return; } if (k === 'avat') { abrirMeuAvatar(); return; } if (k === 'pv') { abrirPreVenda(); return; } if (k === 'pde') { abrirPde(); return; } if (k === 'sd') { abrirCheckup(); return; } if (k === 'fin') { abrirFinanceiro(); return; } if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
 function menuSub_(k) {
   const rhN = (typeof RH !== 'undefined' && RH && RH.novos) || 0;
   if (k === 'rh') return rhN ? [rhN + (rhN === 1 ? ' novo para ver' : ' novos para ver'), 'al', rhN] : ['holerite, ponto, férias', ''];
   if (k === 'fila') { if (E && E.fila && S) { const p = chefe() ? null : E.fila.find((x) => x.usuario === S.usuario); if (p && p.pos) return [p.pos === 1 ? 'é a sua vez!' : 'você é a ' + p.pos + 'ª da vez', p.pos === 1 ? 'ok' : '']; return [E.fila.length ? E.fila.length + ' na fila' : 'ninguém na fila', '']; } return ['quem atende agora', '']; }
   if (k === 'res') { const R = typeof INI !== 'undefined' && INI && INI.rede; if (R && R.meta && R.pct != null) return [pc(R.pct) + ' da meta' + (R.fechaPct != null && R.fechaPct < 1 ? ' · no ritmo ' + pc(R.fechaPct) : ''), R.pct >= 1 ? 'ok' : (R.fechaPct != null && R.fechaPct < 1 ? 'al' : '')]; return ['vendas, metas e equipe', '']; }
   if (k === 'meta') { if (MH && MH.batida) return ['meta do mês batida!', 'ok']; if (MH && !MH.loja && MH.pct != null) return [pc(MH.pct) + ' da meta do mês', '']; return ['metas do mês', '']; }
-  const fixo = { cli: [S && S.cargo === 'ADMIN' ? '🧪 testar o atendimento com histórico' : 'histórico e o que oferecer', ''], apar: ['modo escuro e letra maior', ''], avat: ['seu boneco nos avisos da equipe', ''], pv: ['montar a compra e levar ao caixa', ''], pde: [chefe() ? 'pontos e prêmios da equipe' : 'seus pontos e prêmio do mês', ''], fin: ['DRE, despesas, extratos e recebíveis', ''], sd: ['saúde do sistema: limites, rotinas e Drive', ''], aj: ['tour, senha, notificações e sair', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
+  const fixo = { alr: ['desconto fora do padrão, cancelamentos e trocas', ''], forn: ['quem vende mais rápido e quem dá troca', ''], cv: ['quanto cada consultora custa e traz', ''], sac: ['estoque de sacolas e aviso de reposição', ''], cli: [S && S.cargo === 'ADMIN' ? '🧪 testar o atendimento com histórico' : 'histórico e o que oferecer', ''], apar: ['modo escuro e letra maior', ''], avat: ['seu boneco nos avisos da equipe', ''], pv: ['montar a compra e levar ao caixa', ''], pde: [chefe() ? 'pontos e prêmios da equipe' : 'seus pontos e prêmio do mês', ''], fin: ['DRE, despesas, extratos e recebíveis', ''], sd: ['saúde do sistema: limites, rotinas e Drive', ''], aj: ['tour, senha, notificações e sair', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
   return fixo[k] || ['', ''];
 }
 // 🩺 check-up do app (ADMIN): roda agora e mostra o que está bem e o que precisa de atenção
@@ -2660,7 +2661,7 @@ function desenharMenu() {
   if (chefe()) { const v = $('v-ini'), ag = $('agora'); if (ag && ag.parentNode !== v) v.prepend(ag); if (ag) { if (ag.nextElementSibling !== m) ag.after(m); } else if (m.parentNode !== v || v.firstElementChild !== m) v.prepend(m); }
   else { const ag = $('agora'), vd = $('v-dia'); if (ag && ag.parentNode !== vd) vd.prepend(ag); const ref = $('eu-meta'); if (ref && ref.parentNode && m.previousElementSibling !== ref) ref.after(m); }
   try { desenharAgora(); segDuplo_(); } catch (e) {}
-  const ks = ['res', 'dia', 'ini', 'fila', 'cli', 'pv', 'cb', 'meta', 'pde', 'est', 'mural', 'apr', 'gest', 'fin', 'prod', 'rel', 'rh', 'avat', 'apar', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k) && !(chefe() && (k === 'rel' || (k === 'prod' && abaVisivel_('est')))));
+  const ks = ['res', 'dia', 'ini', 'fila', 'cli', 'pv', 'cb', 'meta', 'pde', 'est', 'mural', 'apr', 'gest', 'alr', 'forn', 'cv', 'sac', 'fin', 'prod', 'rel', 'rh', 'avat', 'apar', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k) && !(chefe() && (k === 'rel' || (k === 'prod' && abaVisivel_('est')))));
   m.replaceChildren(...ks.map((k) => {
     const [sub, cls, n] = menuSub_(k), b = el('button', 'mt'); b.type = 'button'; b.id = 'mt-' + k;
     const ic = el('span', 'mi'); ic.append(icoSvg(k)); const tx = el('span'); tx.append(el('b', '', MENU_TXT[k])); const sm = el('small', cls, sub); tx.append(sm);
@@ -4094,7 +4095,7 @@ function pvPecasUI(b) {
       dica.textContent = modo === 'comigo' ? 'Depois de gerar, você cobra no seu celular: cartão por aproximação, link de pagamento (Pix ou cartão) ou confirma o Pix recebido.' : 'No caixa: dinheiro, cartão ou Pix.'; rv.classList.toggle('hide', modo === 'comigo'); g.textContent = ed ? '✓ Salvar alterações da ' + PVD.editP.num : modo === 'comigo' ? 'Gerar pré-venda e cobrar' : 'Gerar pré-venda e levar ao caixa'; };
     desPg(); c.append(pg, dica, rv); g.addEventListener('click', () => { g.disabled = true; g.textContent = 'Gerando…';
       rodar('pvSalvar', [S.token, PVD.loja, { itens: PVD.itens.map((i) => ({ ref: i.ref, cor: i.cor, tam: i.tam, qt: i.qt })), cliente: PVD.cliente, reservar: modo === 'caixa' && ck.checked, modo: modo, canal: PVD.canal, entrega: PVD.entrega || 0, usarCash: !!PVD.usarCash, editId: PVD.editId || '' }], (p) => { if (PVD.editId) toast('Pré-venda alterada ✓' + (p.modo === 'comigo' ? ' · gere o link de novo se for usar' : '')); PVD.itens = []; PVD.cliente = null; PVD.usarCash = null; PVD.editId = ''; PVD.editP = null; PVD.modo = 'caixa'; PVD.canal = 'loja'; PVD.entrega = 0; pvCaixaUI(b, p); }, () => { g.disabled = false; desPg(); }); });
-    c.append(g); if (ed) { const cx = el('button', 'btn big', 'Cancelar alteração'); cx.addEventListener('click', () => { const p0 = PVD.editP; PVD.itens = []; PVD.cliente = null; PVD.usarCash = null; PVD.editId = ''; PVD.editP = null; pvCaixaUI(b, p0); }); c.append(cx); } car.append(c); };
+    c.append(g); if (ed) { const cx = el('button', 'btn big', 'Cancelar alteração'); cx.addEventListener('click', () => { const p0 = PVD.editP; PVD.itens = []; PVD.cliente = null; PVD.usarCash = null; PVD.editId = ''; PVD.editP = null; pvCaixaUI(b, p0); }); c.append(cx); } car.append(c); try { pvCombina(car, PVD.loja, PVD.itens); } catch (e) {} };
   const escolherTam = (m) => { const cores = Object.keys(m.cores); let cor = cores[0]; const c = el('div', 'card'), ch = el('div', 'pv-chips'), tz = el('div', 'pv-chips'); c.append(el('b', '', m.nome), el('div', 'sub', 'ref ' + m.ref + ' · ' + rs(m.preco)), el('div', 'pv-lb2', 'Cor'), ch, el('div', 'pv-lb2', 'Tamanho'), tz);
     const des = () => { ch.replaceChildren(); cores.forEach((k) => { const bt = el('button', 'chip' + (k === cor ? ' on' : ''), k); bt.addEventListener('click', () => { cor = k; des(); }); ch.append(bt); });
       tz.replaceChildren(); Object.keys(m.cores[cor]).forEach((t) => { const q = m.cores[cor][t], bt = el('button', 'chip' + (q > 0 ? '' : ' off'), t + ' · ' + q); bt.addEventListener('click', () => { if (q <= 0 && !confirm('Sem saldo no sistema. Colocar mesmo assim?')) return;
@@ -4488,6 +4489,72 @@ function conhecerCliente(teste) {
       if (eu) { const b2 = el('button', 'btn pri', 'Atender'); b2.type = 'button'; b2.addEventListener('click', () => { try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} regAviso_('✅ Pronto!', true); toast('Bom atendimento! Sorriso e o nome da cliente 😊'); setTimeout(inicio, 700); }); r.append(b2); } fl.append(r); });
     const x = el('button', 'btn sm cli-nao', 'Fechar'); x.type = 'button'; x.addEventListener('click', sai); sh.append(fl, x);
   }
+}
+// ---------- 🚨 Alertas (ADMIN): furo de ontem + peças com muita troca ----------
+function abrirAlertas() {
+  let dia = '';
+  abrirDet('🚨 Alertas', (b) => { const carrega = () => { b.replaceChildren(el('div', 'sub', 'Carregando…'));
+    rodar('alertasVer', [S.token, dia], (r) => { dia = r.dia; b.replaceChildren();
+      const nav = el('div', 'chips'); [[-1, '‹ Dia anterior'], [1, 'Próximo dia ›']].forEach(([k, t]) => { const x = el('button', '', t); x.type = 'button'; const nd = (() => { const d = new Date(dia + 'T12:00:00'); d.setDate(d.getDate() + k); return d.toISOString().slice(0, 10); })(); if (k > 0 && nd >= r.hoje) x.disabled = true; x.addEventListener('click', () => { dia = nd; carrega(); }); nav.append(x); }); b.append(nav);
+      const c1 = el('div', 'card'); c1.append(el('h3', '', '🚨 Fora do padrão em ' + isoBR(dia)), el('div', 'sub', 'Desconto acima do normal da loja (sempre comparado com os últimos 30 dias), vendas canceladas e trocas grandes numa venda só.'));
+      if (!r.furo || !r.furo.length) c1.append(el('div', 'vazio', '✅ Nada fora do padrão.'));
+      else r.furo.forEach((x) => { const d = el('div', 'al-row'), t = el('div'); t.append(el('b', '', ({ desconto: '💸 ', cancelada: '❌ ', troca: '🔄 ' })[x.tipo] + x.loja + ' · ' + tcN(x.quem)), el('div', 'sub', x.txt + ' · venda ' + x.venda + ' · ' + rs(x.valor))); d.append(t); c1.append(d); });
+      b.append(c1);
+      const c2 = el('div', 'card'); c2.append(el('h3', '', '🔄 Peças com mais troca · 60 dias'), el('div', 'sub', 'Devoluções nas vendas do USE. Taxa = trocas ÷ peças vendidas da mesma referência. ⚠️ a partir de 3 trocas e 15%.'));
+      const tb = el('table', 'pde-t'), hd = el('tr'); ['Peça', 'Vend.', 'Trocas', 'Taxa'].forEach((h, i) => hd.append(el('th', i ? 'r' : '', h))); tb.append(hd);
+      (r.trocas || []).slice(0, 25).forEach((o) => { const tr = el('tr'), td = el('td'); td.append(el('b', '', (o.trocas >= 3 && o.taxa >= 0.15 ? '⚠️ ' : '') + tcN(o.nome)), el('div', 'sub', 'ref ' + o.ref + ' · ' + o.lojas.join(', ') + (Object.keys(o.tams || {}).length ? ' · tam ' + Object.keys(o.tams).map((t) => t + '×' + o.tams[t]).join(' ') : ''))); tr.append(td, el('td', 'r', String(o.vend)), el('td', 'r', String(o.trocas)), el('td', 'r', Math.round(o.taxa * 100) + '%')); tb.append(tr); });
+      c2.append(tb); b.append(c2);
+    }, (e) => b.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e)))); }; carrega(); });
+}
+// ---------- 🏭 Ranking de fornecedores (ADMIN) ----------
+function abrirFornecedores() {
+  let dias = 120;
+  abrirDet('🏭 Ranking de fornecedores', (b) => { const carrega = () => { b.replaceChildren(el('div', 'sub', 'Calculando (a primeira vez pode levar até 1 minuto)…'));
+    rodar('rankingFornecedores', [S.token, dias], (r) => { b.replaceChildren(); const ch = el('div', 'chips'); [60, 90, 120, 180].forEach((d) => { const x = el('button', d === dias ? 'on' : '', d + ' dias'); x.type = 'button'; x.addEventListener('click', () => { dias = d; carrega(); }); ch.append(x); }); b.append(ch);
+      const c = el('div', 'card'); c.append(el('div', 'sub', 'Peças que entraram de cada fornecedor de ' + isoBR(r.de) + ' a ' + isoBR(r.ate) + ': quanto já vendeu (giro), em quantos dias (mediana) e quanto voltou em troca.'));
+      const tb = el('table', 'pde-t'), hd = el('tr'); ['Fornecedor', 'Entrou', 'Giro', 'Dias', 'Troca'].forEach((h, i) => hd.append(el('th', i ? 'r' : '', h))); tb.append(hd);
+      r.lista.forEach((o, i) => { const tr = el('tr'), td = el('td'); td.append(el('b', '', (i < 3 ? ['🥇 ', '🥈 ', '🥉 '][i] : '') + tcN(o.fornecedor)), el('div', 'sub', o.modelos + ' modelo(s) · vendeu ' + o.vendeu + ' · ' + rs(o.valor)));
+        const g = el('td', 'r'); g.append(el('span', 'tag ' + (o.giro >= 0.6 ? 't4' : o.giro >= 0.35 ? 't2' : 't0'), Math.round(o.giro * 100) + '%')); tr.append(td, el('td', 'r', String(o.entrou)), g, el('td', 'r', o.diasMed != null ? String(o.diasMed) : '—'), el('td', 'r', Math.round(o.taxaTroca * 100) + '%')); tb.append(tr); });
+      c.append(tb, el('div', 'sub', '🟢 giro 60%+ · 🟡 35–59% · 🔴 abaixo de 35%. ' + r.obs)); b.append(c);
+    }, (e) => b.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e)))); }; carrega(); });
+}
+// ---------- 💼 Custo × venda por consultora (ADMIN) ----------
+function abrirCustoVenda() {
+  const d0 = new Date(); let mes = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0');
+  abrirDet('💼 Custo × venda', (b) => { const carrega = () => { b.replaceChildren(el('div', 'sub', 'Calculando…'));
+    rodar('custoVenda', [S.token, mes], (r) => { b.replaceChildren(); const ml = (m) => ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][+m.slice(5, 7) - 1] + '/' + m.slice(2, 4), mv = (k) => { const y = +mes.slice(0, 4), m = +mes.slice(5, 7) + k; const d = new Date(y, m - 1, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+      const ch = el('div', 'chips'); [[mv(-1), '‹ ' + ml(mv(-1))], [mes, ml(mes) + (r.parcial ? ' · parcial' : '')], [mv(1), ml(mv(1)) + ' ›']].forEach(([m, t], i) => { const x = el('button', i === 1 ? 'on' : '', t); x.type = 'button'; if (i === 2 && r.parcial) x.disabled = true; x.addEventListener('click', () => { if (m === mes) return; mes = m; carrega(); }); ch.append(x); }); b.append(ch);
+      const sem = r.lista.filter((x) => x.semCusto).length; if (sem) b.append(el('div', 'aviso-meta', '✏️ ' + sem + ' consultora(s) sem salário cadastrado: toque no nome para preencher.'));
+      const c = el('div', 'card'), tb = el('table', 'pde-t'), hd = el('tr'); ['Consultora', 'Venda', 'Margem', 'Custo', 'Resultado'].forEach((h, i) => hd.append(el('th', i ? 'r' : '', h))); tb.append(hd);
+      r.lista.forEach((o) => { const tr = el('tr'), td = el('td'); td.append(el('b', '', o.nome), el('div', 'sub', o.loja + (o.vezes != null ? ' · se paga ' + String(o.vezes).replace('.', ',') + '×' : ''))); const rs0 = el('td', 'r'); rs0.append(el('span', 'tag ' + (o.semCusto ? 't0' : o.resultado >= 0 ? 't4' : 't0'), o.semCusto ? '✏️' : rs(o.resultado)));
+        tr.append(td, el('td', 'r', rs(o.venda)), el('td', 'r', rs(o.margem)), el('td', 'r', o.semCusto ? '—' : rs(o.custo)), rs0); tr.style.cursor = 'pointer'; tr.addEventListener('click', () => editar(o)); tb.append(tr); });
+      c.append(tb, el('div', 'sub', 'Custo = salário + encargos + comissão + prêmio PDE + extras. ' + r.obs)); b.append(c);
+    }, (e) => b.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e)))); };
+    const editar = (o) => { const f = el('div', 'card'); f.append(el('h3', '', '✏️ ' + o.nome + ' · ' + o.loja), el('div', 'sub', 'Valores mensais. Os encargos (27,3%) são calculados sozinhos.'));
+      const campo = (t, v, ph) => { const l = el('label', 'cv-l'), i = el('input'); i.inputMode = 'decimal'; i.value = v ? String(v).replace('.', ',') : ''; i.placeholder = ph; l.append(el('span', '', t), i); f.append(l); return i; };
+      const s = campo('Salário base (R$)', o.salario, 'ex.: 1.700'), cm = campo('Comissão (% da venda)', o.comissaoPct, 'ex.: 1,5'), ex = campo('Outros por mês (R$): vale-transporte, alimentação…', o.extras, 'ex.: 300');
+      const ok = el('button', 'btn pri big', 'Salvar'), vt = el('button', 'btn big', 'Voltar'); ok.type = vt.type = 'button'; const num = (i) => String(i.value).replace(/\./g, '').replace(',', '.');
+      ok.addEventListener('click', () => rodar('custoVendaSalvar', [S.token, o.usuario, { salario: num(s), comissao: num(cm), extras: num(ex) }], () => { toast('Salvo ✓'); carrega(); })); vt.addEventListener('click', carrega); f.append(ok, vt); b.replaceChildren(f); };
+    carrega(); });
+}
+// ---------- 🛍️ Sacolas (gerente e ADMIN) ----------
+function abrirSacolas() {
+  abrirDet('🛍️ Sacolas', (b) => { const carrega = () => { b.replaceChildren(el('div', 'sub', 'Carregando…'));
+    rodar('sacolas', [S.token], (r) => { b.replaceChildren(el('div', 'sub', 'O app desconta 1 sacola por venda desde a última contagem e avisa quando faltar 10 dias ou menos.'));
+      r.lojas.forEach((e) => { const c = el('div', 'card'); c.append(el('h3', '', (e.alerta ? '⚠️ ' : '🛍️ ') + e.loja));
+        if (e.erro) c.append(el('div', 'aviso-meta', e.erro)); else if (e.semContagem) c.append(el('div', 'sub', 'Ainda sem contagem. Conte as sacolas e lance abaixo para começar.'));
+        else { const kp = el('div', 'cli-kp'); [[String(e.saldo), 'no estoque (estimado)'], [e.dura != null ? e.dura + ' dias' : '—', 'devem durar'], [String(e.porDia).replace('.', ','), 'por dia']].forEach(([v, t]) => { const d = el('div'); d.append(el('b', '', v), el('span', '', t)); kp.append(d); }); c.append(kp, el('div', 'sub', 'Contagem de ' + isoBR(e.contadaEm) + ': ' + e.contagem + (e.chegou ? ' · chegaram ' + e.chegou : '') + ' · usadas ' + e.usadas)); }
+        const g = el('div', 'ap-g'); g.style.gridTemplateColumns = '1fr 1fr'; [['contagem', '🔢 Contei agora'], ['chegou', '📦 Chegaram']].forEach(([t, nm]) => { const x = el('button', 'btn', nm); x.type = 'button'; x.addEventListener('click', () => { const q = prompt(t === 'contagem' ? 'Quantas sacolas tem agora na ' + e.loja + '?' : 'Quantas sacolas chegaram na ' + e.loja + '?'); if (q == null || !String(q).trim()) return; rodar('sacolasLancar', [S.token, e.loja, t, String(q).replace(/\D/g, '')], () => { toast('Lançado ✓'); carrega(); }); }); g.append(x); }); c.append(g); b.append(c); });
+    }, (e) => b.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e)))); }; carrega(); });
+}
+// 👗 pré-venda: "combina com" (quem levou estas peças também levou…)
+function pvCombina(box, loja, itens) {
+  const refs = [...new Set(itens.map((i) => i.ref))]; if (!refs.length) return; const k = loja + '|' + refs.slice().sort().join('.');
+  const mostra = (r) => { if (!r || !r.length || !box.isConnected) return; const c = el('div', 'card pv-cmb'); c.append(el('div', 'pv-lb2', '💡 Combina (quem levou essas peças também levou)'));
+    r.forEach((x) => { const row = el('div', 'pv-row'), tx = el('div'); tx.append(el('b', '', tcN(x.nome)), el('div', 'sub', 'ref ' + x.ref + ' · ' + x.saldo + ' na loja')); row.append(tx, el('b', '', rs(x.preco))); row.style.cursor = 'pointer'; row.addEventListener('click', () => { const i = document.querySelector('#det input[type=search], #det .pv-busca input, #det input'); if (i) { i.value = x.ref; i.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })); window.scrollTo(0, 0); } }); c.append(row); });
+    box.append(c); };
+  if (pvCombina.c && pvCombina.c[k]) { mostra(pvCombina.c[k]); return; }
+  google.script.run.withSuccessHandler((r) => { (pvCombina.c = pvCombina.c || {})[k] = r; mostra(r); }).withFailureHandler(() => {}).combinadas(S.token, loja, refs);
 }
 // 🏆 PDE: card animado para as premiadas do mês (e para gerentes/ADMIN, com parabéns) — uma vez por mês publicado
 let PDEV = null;
@@ -7576,6 +7643,10 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && T)
     pv: '<path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/>',
     pde: '<path d="M8 4h8v4a4 4 0 0 1-8 0z"/><path d="M8 6H5c0 2 1.3 3.5 3 4M16 6h3c0 2-1.3 3.5-3 4M12 12v4M9 20h6M10 16h4v4h-4z"/>',
     fin: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M8 6V4h8v2M3 11h18M12 10v3"/>',
+    alr: '<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>',
+    forn: '<path d="M3 21V9l6 3V9l6 3V5l6 3v13z"/>',
+    cv: '<path d="M4 20h16M6 16l4-5 3 3 5-7"/><circle cx="18" cy="7" r="1.5"/>',
+    sac: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
     cli: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
     apar: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/>',
     avat: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.2-7 8-7s7 2.5 8 7"/><path d="M15 3.5l2-1.5M19 6l2-.5"/>',
