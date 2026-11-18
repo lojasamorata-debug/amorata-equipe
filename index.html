@@ -861,6 +861,8 @@ html.dark .ct-pg { background:var(--panel) !important }
 .bnc-q { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--accent); margin-bottom:2px; } .bnc-w.ouro .bnc-q { color:#b7791f; } .bnc-w.rosa .bnc-q { color:#c2415b; }
 .bnc-x { position:absolute; top:4px; right:6px; border:0; background:none; font-size:20px; color:var(--muted); cursor:pointer; }
 .bnc-bt { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; } .bnc-bt button { border:0; border-radius:999px; padding:7px 12px; font:inherit; font-size:13px; font-weight:700; background:var(--accent); color:#fff; cursor:pointer; } html.dark .bnc-bt button { color:#141317; }
+.cli-fila { text-align:left; margin:12px 0 4px; border:1px solid var(--line); border-radius:16px; overflow:hidden; } .cli-frow { display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--line); } .cli-frow:last-child { border-bottom:0; } .cli-frow > div { flex:1; } .cli-frow.eu { background:var(--accentbg); } .cli-frow .btn { width:auto !important; margin:0 !important; padding:9px 16px; }
+.cli-cash { font-size:18px; }
 </style>
 </head>
 <body>
@@ -4464,14 +4466,28 @@ function conhecerCliente(teste) {
       else if (f.ultima) top.append(el('div', 'sub', '🗓️ Última compra ' + isoBR(f.ultima)));
       sh.append(top);
       if (f.sugestoes.length) { const s = el('div', 'cli-card'); s.append(el('div', 'cli-lb', '💡 Para oferecer hoje')); f.sugestoes.forEach((x) => { const r2 = el('div', 'cli-it'), t2 = el('div'); t2.append(el('b', '', tcN(x.nome)), el('div', 'sub', x.det)); r2.append(t2, el('span', 'cli-tag' + (x.tipo === 'novidade' ? ' ok' : ''), x.tipo)); s.append(r2); }); sh.append(s); }
-      if (f.cash && f.cash.agora > 0) { const s = el('div', 'cli-card'); s.append(el('div', 'cli-lb', '💰 Cashback')); const l = el('div'); l.append(el('b', '', rs(f.cash.agora))); const v1 = (f.cash.itens || [])[0]; if (v1 && v1.valeAte) l.append(el('span', 'cli-tag wn', 'vence ' + isoBR(v1.valeAte).slice(0, 5))); s.append(l); if (v1 && v1.minimo) s.append(el('div', 'sub', 'Usa numa compra a partir de ' + rs(v1.minimo))); sh.append(s); }
+      { const s = el('div', 'cli-card'); s.append(el('div', 'cli-lb', '💰 Cashback'));
+        if (f.cash && (f.cash.agora > 0 || f.cash.depois > 0)) { const l = el('div'); l.append(el('b', 'cli-cash', rs(f.cash.agora) + (f.cash.agora > 0 ? ' para usar hoje' : ''))); const v1 = (f.cash.itens || []).find((i) => !i.liberaEm); if (v1 && v1.valeAte) l.append(el('span', 'cli-tag wn', 'vence ' + isoBR(v1.valeAte).slice(0, 5))); s.append(l);
+          if (v1 && v1.minimo) s.append(el('div', 'sub', 'Usa numa compra a partir de ' + rs(v1.minimo)));
+          if (f.cash.depois > 0) { const v2 = f.cash.itens.find((i) => i.liberaEm); s.append(el('div', 'sub', '⏳ + ' + rs(f.cash.depois) + ' liberando' + (v2 ? ' em ' + isoBR(v2.liberaEm).slice(0, 5) : ''))); }
+          if (f.cash.agora > 0) s.append(el('div', 'sub', '💡 Lembre a cliente: ela tem cashback para usar nesta compra!')); }
+        else s.append(el('div', 'sub', 'Sem cashback disponível agora.'));
+        sh.append(s); }
       if (f.categorias.length || f.tamanhos.length) { const s = el('div', 'cli-card'); s.append(el('div', 'cli-lb', '👗 O que ela gosta')); const tg = el('div'); f.categorias.forEach((x) => tg.append(el('span', 'cli-tag', x.n + ' (' + x.q + ')'))); f.tamanhos.forEach((x) => tg.append(el('span', 'cli-tag ok', 'Tam ' + x.n))); f.cores.forEach((x) => tg.append(el('span', 'cli-tag', x.n.charAt(0) + x.n.slice(1).toLowerCase()))); s.append(tg); if (f.trocas) s.append(el('div', 'sub', '🔄 ' + f.trocas + ' troca(s) nos últimos 12 meses')); sh.append(s); }
       if (f.ultimas.length) { const s = el('div', 'cli-card'); s.append(el('div', 'cli-lb', '🧾 Últimas compras')); f.ultimas.slice(0, 5).forEach((c2) => { const r2 = el('div', 'cli-it'), t2 = el('div'); t2.append(el('div', '', isoBR(c2.d).slice(0, 5) + ' · ' + (c2.itens.map(tcN).join(' + ') || 'troca')), el('div', 'sub', [c2.vend, c2.loja, rs(c2.total), c2.troca ? '🔄 troca' : ''].filter(Boolean).join(' · '))); r2.append(t2); s.append(r2); }); sh.append(s); }
       if (!f.indice) sh.append(el('div', 'aviso-meta', '⏳ O histórico de compras ainda está sendo montado (12 meses). Em algumas horas fica completo.'));
       const ok = el('button', 'btn pri big', teste ? 'Fechar teste' : 'Começar atendimento 💜'), out = el('button', 'btn sm cli-nao', '‹ Buscar outra cliente'); ok.type = out.type = 'button'; ok.addEventListener('click', sai); out.addEventListener('click', inicio); sh.append(ok, out); sh.scrollTop = 0;
     }).withFailureHandler((e) => { sh.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e))); const v = el('button', 'btn big', '‹ Voltar'); v.addEventListener('click', inicio); sh.append(v); }).clienteFicha(S.token, lojaCliAt(), { loja: c.loja, codigo: c.codigo, cpf: c.cpf, fone: c.fone, nome: c.nome });
   };
-  inicio();
+  if (teste) simFila(); else inicio();
+  // 🧪 simulação da fila (só ADMIN): mostra como fica para a vendedora quando ela toca em Atender
+  function simFila() {
+    sh.replaceChildren(); sh.classList.remove('ficha'); const nm = primeiroNome(S.nome);
+    sh.append(el('div', 'cli-em', '🧪'), el('h3', '', 'Simulação da fila'), el('div', 'sub', 'É assim que a vendedora vê. Toque em Atender, como se fosse a sua vez. Nada é registrado.'));
+    const fl = el('div', 'cli-fila'); [[nm + ' (você)', '1ª da vez', true], ['Marcela', '2ª da vez', false], ['Vitória', '3ª da vez', false]].forEach(([n, p, eu]) => { const r = el('div', 'cli-frow' + (eu ? ' eu' : '')); r.append(el('span', 'cli-ini', n.charAt(0)), (() => { const d = el('div'); d.append(el('b', '', n), el('div', 'sub', p)); return d; })());
+      if (eu) { const b2 = el('button', 'btn pri', 'Atender'); b2.type = 'button'; b2.addEventListener('click', () => { try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} regAviso_('✅ Pronto!', true); toast('Bom atendimento! Sorriso e o nome da cliente 😊'); setTimeout(inicio, 700); }); r.append(b2); } fl.append(r); });
+    const x = el('button', 'btn sm cli-nao', 'Fechar'); x.type = 'button'; x.addEventListener('click', sai); sh.append(fl, x);
+  }
 }
 // 🏆 PDE: card animado para as premiadas do mês (e para gerentes/ADMIN, com parabéns) — uma vez por mês publicado
 let PDEV = null;
