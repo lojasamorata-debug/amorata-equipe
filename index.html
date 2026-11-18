@@ -2674,7 +2674,7 @@ function desenharMenu() {
   if (chefe()) { const v = $('v-ini'), ag = $('agora'); if (ag && ag.parentNode !== v) v.prepend(ag); if (ag) { if (ag.nextElementSibling !== m) ag.after(m); } else if (m.parentNode !== v || v.firstElementChild !== m) v.prepend(m); }
   else { const ag = $('agora'), vd = $('v-dia'); if (ag && ag.parentNode !== vd) vd.prepend(ag); const ref = $('eu-meta'); if (ref && ref.parentNode && m.previousElementSibling !== ref) ref.after(m); }
   try { desenharAgora(); segDuplo_(); } catch (e) {}
-  const ks = ['res', 'dia', 'ini', 'fila', 'cli', 'pv', 'cb', 'meta', 'pde', 'est', 'mural', 'apr', 'gest', 'aud', 'alr', 'forn', 'cv', 'sac', 'fin', 'prod', 'rel', 'rh', 'avat', 'apar', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k) && !(chefe() && (k === 'rel' || (k === 'prod' && abaVisivel_('est')))));
+  const ks = ['res', 'dia', 'ini', 'fila', 'cli', 'pv', 'cb', 'meta', 'pde', 'est', 'mural', 'apr', 'gest', 'aud', 'forn', 'cv', 'sac', 'fin', 'prod', 'rel', 'rh', 'avat', 'apar', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k) && !(chefe() && (k === 'rel' || (k === 'prod' && abaVisivel_('est')))));
   m.replaceChildren(...ks.map((k) => {
     const [sub, cls, n] = menuSub_(k), b = el('button', 'mt'); b.type = 'button'; b.id = 'mt-' + k;
     const ic = el('span', 'mi'); ic.append(icoSvg(k)); const tx = el('span'); tx.append(el('b', '', MENU_TXT[k])); const sm = el('small', cls, sub); tx.append(sm);
@@ -4632,7 +4632,7 @@ function hubsDoCargo_() {
   return { nav: [['casa', 'Hoje', 'ini'], ['resultados', 'Resultados', 'rel'], ['equipe', 'Equipe', 'gest'], ['controle', 'Controle', 'sd'], ['mural', 'Mural', 'mural']],
     hubs: { resultados: { t: 'Resultados', s: 'rede e lojas', g: [['Vendas', ['res', 'rel', 'prod', 'est']], ['Compras', ['forn']]] },
       equipe: { t: 'Equipe', s: 'pessoas e comunicação', g: [['Pessoas', ['gest', 'meta', 'pde', 'filas']], ['Comunicação e testes', ['avat', 'cli', 'pv', 'cb']]] },
-      controle: { t: 'Controle', s: 'dinheiro e riscos', g: [['Riscos', ['aud', 'alr', 'sac']], ['Dinheiro', ['fin', 'cv', 'sd']]] } } };
+      controle: { t: 'Controle', s: 'dinheiro e riscos', g: [['Riscos', ['aud', 'sac']], ['Dinheiro', ['fin', 'cv', 'sd']]] } } };
 }
 function abrirHub(k) {
   const H = hubsDoCargo_(); if (!H) return;
