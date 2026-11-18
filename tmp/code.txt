@@ -2700,7 +2700,7 @@ function cliDe_(v) {
   const cod = c.codigo != null ? c.codigo : v.codigoCliente != null ? v.codigoCliente : v.clienteCodigo != null ? v.clienteCodigo : (typeof v.cliente !== 'object' && v.cliente != null ? v.cliente : '');
   const nome = String(c.nome || c.razaoSocial || v.nomeCliente || v.clienteNome || '').trim() + (c.sobrenome ? ' ' + String(c.sobrenome).trim() : '');
   const cpf = String(c.cpfCnpj || c.cpf || v.cpfCnpj || v.cpfCliente || v.clienteCpfCnpj || '').replace(/\D/g, '');
-  return { cod: String(cod == null ? '' : cod).trim(), nome: nome.trim(), cpf: cpf };
+  return { loja: String(c.loja != null && c.loja !== '' ? c.loja : (v.loja || '')), cod: String(cod == null ? '' : cod).trim(), nome: nome.trim(), cpf: cpf };
 }
 function cliComprasTalvez_() { // de hora em hora: completa o índice (até 12 meses para trás) e acrescenta os dias novos
   // sem LockService (não pode travar a fila das lojas): marca na propriedade que está rodando
@@ -2723,7 +2723,7 @@ function cliComprasAtualizar_(orcamentoMs) {
         const it = r.json.itens || []; tot = r.json.totalItens || it.length; lidos += it.length; if (!it.length) break;
         it.forEach((v) => { if (Number(v.excluido) === 1 || String(v.loja) !== String(n)) return; const c = cliDe_(v); if (!c.cod || c.cod === '0') return;
           const d = String(v.emissao || '').slice(0, 10);
-          (v.itens || []).forEach((p) => { rows.push([String(n), "'" + d, String(v.codigo || ''), n + '-' + c.cod, c.nome, c.cpf ? "'" + c.cpf : '', String(p.codigo || ''), String(p.referencia || ''), String(p.descricao || '').trim(),
+          (v.itens || []).forEach((p) => { rows.push([String(n), "'" + d, String(v.codigo || ''), (c.loja || n) + '-' + c.cod, c.nome, c.cpf ? "'" + c.cpf : '', String(p.codigo || ''), String(p.referencia || ''), String(p.descricao || '').trim(),
             [...new Set((p.cores || []).map((x) => String(x.descricao || '').trim()).filter(Boolean))].join('-'), String(p.tamanho || ''), Number(p.qtde) || 0, Math.round((Number(p.valorLiquido) || 0) * 100) / 100, String((p.vendedor || {}).nome || '').trim()]); }); });
         pag++; } while (lidos < tot && pag <= 60);
       if (rows.length) { sh.getRange(sh.getLastRow() + 1, 1, rows.length, H_CC.length).setValues(rows); novas += rows.length; }
