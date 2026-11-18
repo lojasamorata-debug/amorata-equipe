@@ -1168,6 +1168,7 @@ html.dark .ct-pg { background:var(--panel) !important }
 
     <div id="v-est" class="hide">
       <div class="card hide" id="en-card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>📦 Entradas de mercadoria</b><div class="sub">O que chegou na loja na semana, por nota e por modelo.</div></div><button class="btn pri" id="en-abrir">Abrir</button></div></div>
+      <div class="card" id="pd-card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>🏷️ Promoções e peças com defeito</b><div class="sub">Peças liberadas para vender com desconto.</div></div><button class="btn pri" id="pd-abrir">Abrir</button></div></div>
       <div class="card" id="rp-card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>🔄 Reposição das peças vendidas</b><div class="sub" id="rp-sub">Veja o que foi vendido e precisa voltar para a arara.</div></div><button class="btn pri" id="rp-abrir">Abrir</button></div></div>
       <div id="es-busca" style="display:flex;gap:8px;margin-top:12px"><input id="es-q" type="search" placeholder="🔎 Nome, referência ou código de barras" autocomplete="off" style="flex:1;width:100%"><button class="btn" id="es-cam" title="Ler código de barras com a câmera" style="flex:none;font-size:18px">📷</button><select id="es-loja" class="hide" style="width:auto"></select></div>
       <label class="sub" id="es-zl" style="display:flex;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="es-zero" style="width:auto"> mostrar também o que está zerado</label>
@@ -1628,6 +1629,7 @@ function carregarPendencias() {
         const pb = el('div', 'pb'); [[true, 'Aprovar', 'ok'], [false, 'Recusar', 'bad']].forEach(([k, t, c]) => { const q = el('span', 'btn ' + c, t); q.addEventListener('click', (ev) => { ev.stopPropagation(); pendClique(x, q, 'decidirTroca', [S.token, p.id, k], k ? 'Troca aprovada. A escala já foi ajustada.' : 'Troca recusada'); }); pb.append(q); });
         x.append(pb); b.append(x); return;
       }
+      if (p.tipo === 'pdesc') { const x = el('button', ''); x.append(el('div', '', '🩹 ' + p.texto), el('span', '', 'Aprovar ›')); x.addEventListener('click', () => abrirDescontos(p.id)); b.append(x); return; }
       if (p.tipo === 'auditoria') { const x = el('button', p.grave ? 'grave' : ''); x.append(el('div', '', '🕵️ ' + (S.lojas.length > 1 && S.cargo !== 'ADMIN' ? p.loja + ': ' : '') + p.texto), el('span', '', S.cargo === 'ADMIN' ? 'Decidir ›' : 'Responder ›')); x.addEventListener('click', () => abrirAuditoria(p.id)); b.append(x); return; }
       if (p.tipo === 'ritmo') { const x = el('button', ''); x.append(el('div', '', '⏱️ ' + (S.lojas.length > 1 ? p.loja + ': ' : '') + p.texto), el('span', '', 'Ver ›')); x.addEventListener('click', () => { verResultados(); setTimeout(() => $('i-ritmo-box').scrollIntoView({ behavior: 'smooth' }), 300); }); b.append(x); return; }
       if (p.tipo === 'check') { const x = el('button', ''); x.append(el('div', '', '✅ ' + (S.lojas.length > 1 ? p.loja + ': ' : '') + p.texto), el('span', '', 'Ver ›')); x.addEventListener('click', () => { if (S.lojas.length > 1) { loja = p.loja; $('sel-loja').value = loja; salvar(); atualizar(); } CK_T = 'ABERTURA'; mudarAba(casaAba_()); carregarCk(); $('ck').open = true; $('ck').scrollIntoView({ behavior: 'smooth' }); }); b.append(x); return; }
@@ -3205,6 +3207,100 @@ function abrirEntradas(ref) {
     carregar();
   });
 }
+
+// ---------- 🏷️ promoções (ADM) e peças com defeito (gerente envia com foto, ADM aprova) ----------
+const PD = { r: null, aba: 'promo' };
+const dmPd_ = (x) => x ? String(x).split('-').reverse().slice(0, 2).join('/') : '';
+function abrirDescontos(foco) {
+  abrirDet('🏷️ Promoções e defeitos', (b) => {
+    b.append(el('div', 'sub', 'Carregando…'));
+    rodar('pecasDesc', [S.token], (r) => { PD.r = r; if (foco && r.defeitos.some((x) => x.id === foco)) PD.aba = 'def'; desenharPd_(b, foco); }, () => { b.replaceChildren(el('div', 'sub', 'Não consegui carregar agora. Tente de novo.')); });
+  });
+}
+function desenharPd_(b, foco) {
+  const r = PD.r; b.replaceChildren();
+  b.append(el('div', 'sub', 'Desconto só vale para peça em promoção ou com defeito aprovado. A auditoria confere cada venda com esta lista.'));
+  const acoes = el('div'); acoes.style.cssText = 'display:grid;gap:8px';
+  if (r.adm) { const nb = el('button', 'btn pri', '➕ Nova promoção'); nb.addEventListener('click', () => formPromo_(b)); acoes.append(nb); }
+  if (r.podeEnviar) { const db = el('button', 'btn' + (r.adm ? '' : ' pri'), '🩹 Enviar peça com defeito'); db.addEventListener('click', () => formDefeito_(b)); acoes.append(db); }
+  if (acoes.childNodes.length) b.append(acoes);
+  const pend = r.defeitos.filter((x) => x.status === 'pendente').length;
+  const sg = el('div', 'seg2'); sg.style.display = 'flex'; [['promo', '🏷️ Promoções (' + r.promos.filter((x) => x.status === 'ativa').length + ')'], ['def', '🩹 Defeitos' + (pend ? ' · ' + pend + ' p/ aprovar' : '')]].forEach(([k, t]) => { const x = el('button', 'btn' + (PD.aba === k ? ' pri' : ''), t); x.addEventListener('click', () => { PD.aba = k; desenharPd_(b); }); sg.append(x); }); b.append(sg);
+  const lista = el('div'); lista.style.cssText = 'display:grid;gap:10px'; b.append(lista);
+  if (PD.aba === 'promo') {
+    if (!r.promos.length) lista.append(el('div', 'sub', 'Nenhuma promoção ativa agora.'));
+    r.promos.forEach((x) => { const c = el('div', 'card'); c.style.margin = '0';
+      const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:flex-start'; h.append(el('b', '', (x.nome || 'Ref ' + x.ref) + (x.cor ? ' · ' + x.cor : '') + (x.tam ? ' · ' + x.tam : '')), el('b', '', 'até ' + x.desconto + '%')); c.append(h);
+      c.append(el('div', 'sub', 'Ref ' + x.ref + ' · ' + (x.lojas === 'TODAS' ? 'todas as lojas' : x.lojas.replace(/,/g, ', ')) + ' · ' + (x.fim ? 'de ' + dmPd_(x.inicio) + ' até ' + dmPd_(x.fim) : 'desde ' + dmPd_(x.inicio) + ', sem data para acabar') + ' · ' + x.statusTxt));
+      if (x.obs) c.append(el('div', 'sub', '📝 ' + x.obs));
+      if (r.adm && x.status === 'ativa') { const e = el('button', 'btn', 'Encerrar promoção'); e.style.cssText = 'width:100%;margin-top:8px'; e.addEventListener('click', () => { if (!confirm('Encerrar a promoção de ' + (x.nome || x.ref) + '? A partir de hoje o desconto nessa peça volta a ser conferido.')) return; rodar('pdEncerrar', [S.token, x.id], (rr) => { PD.r = rr; toast('Promoção encerrada'); desenharPd_(b); }); }); c.append(e); }
+      lista.append(c); });
+  } else {
+    if (!r.defeitos.length) lista.append(el('div', 'sub', 'Nenhuma peça com defeito registrada.'));
+    r.defeitos.slice().sort((a, z) => (a.status === 'pendente' ? 0 : 1) - (z.status === 'pendente' ? 0 : 1)).forEach((x) => { const c = el('div', 'card'); c.style.margin = '0'; if (x.id === foco) c.style.outline = '2px solid var(--accent)';
+      const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:flex-start'; h.append(el('b', '', (x.nome || 'Ref ' + x.ref) + (x.cor ? ' · ' + x.cor : '') + (x.tam ? ' · ' + x.tam : '')), el('span', 'sub', x.statusTxt + (x.status === 'aprovado' || x.status === 'vendido' ? ' ' + x.desconto + '%' : ''))); c.append(h);
+      c.append(el('div', 'sub', 'Ref ' + x.ref + ' · ' + x.lojas + ' · enviada por ' + x.quem + ' em ' + x.quando + (x.venda ? ' · vendida na venda ' + x.venda : '')));
+      if (x.foto) { const im = el('img'); im.src = x.foto; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; im.alt = 'Foto do defeito'; im.style.cssText = 'width:100%;max-height:260px;object-fit:cover;border-radius:12px;margin-top:8px;cursor:zoom-in'; im.addEventListener('click', () => window.open(x.foto.replace(/sz=w\d+/, 'sz=w1600'), '_blank')); c.append(im); }
+      c.append(el('div', '', '🩹 ' + x.defeito)); if (x.sugestao) c.append(el('div', 'sub', 'Desconto sugerido: ' + x.sugestao + '%')); if (x.obs) c.append(el('div', 'sub', '📝 ' + x.obs));
+      if (r.adm && x.status === 'pendente') { const ln = el('div'); ln.style.cssText = 'display:flex;gap:8px;margin-top:10px;align-items:center'; const inp = el('input'); inp.type = 'number'; inp.inputMode = 'numeric'; inp.min = 1; inp.max = 90; inp.placeholder = '% desc.'; inp.value = x.sugestao || ''; inp.style.cssText = 'width:90px;flex:none';
+        const ob = el('input'); ob.placeholder = 'Observação (opcional)'; ob.style.cssText = 'flex:1;min-width:0'; ln.append(inp, ob); c.append(ln);
+        const bt = el('div'); bt.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px'; const ap = el('button', 'btn pri', '✅ Aprovar'), rc = el('button', 'btn', '❌ Recusar');
+        ap.addEventListener('click', () => { const v = Number(inp.value); if (!(v > 0 && v <= 90)) { toast('Defina o desconto (1 a 90%).'); inp.focus(); return; } ap.disabled = true; rodar('pdDefeitoDecidir', [S.token, x.id, true, v, ob.value], (rr) => { PD.r = rr; toast('Aprovada com ' + v + '% ✓'); desenharPd_(b); try { carregarPendencias(); } catch (e) {} }, () => { ap.disabled = false; }); });
+        rc.addEventListener('click', () => { if (!confirm('Recusar o desconto dessa peça?')) return; rodar('pdDefeitoDecidir', [S.token, x.id, false, 0, ob.value], (rr) => { PD.r = rr; toast('Recusada'); desenharPd_(b); try { carregarPendencias(); } catch (e) {} }); });
+        bt.append(ap, rc); c.append(bt); }
+      lista.append(c); });
+  }
+}
+// busca de peça no estoque (reaproveita a busca do Estoque)
+function buscaPecaPd_(cx, loja, aoEscolher) {
+  const ln = el('div'); ln.style.cssText = 'display:flex;gap:8px'; const q = el('input'); q.type = 'search'; q.placeholder = '🔎 Nome, referência ou código'; q.style.cssText = 'flex:1;min-width:0'; const go = el('button', 'btn', 'Buscar'); ln.append(q, go);
+  const res = el('div'); res.style.cssText = 'display:grid;gap:6px;margin-top:8px'; cx.append(ln, res);
+  const busca = () => { const t = q.value.trim(); if (t.length < 2) { toast('Digite pelo menos 2 letras.'); return; } res.replaceChildren(el('div', 'sub', 'Buscando…'));
+    rodar('estoqueBuscar', [S.token, t, loja || '', true, 0], (r) => { res.replaceChildren(); if (!r.itens.length) { res.append(el('div', 'sub', 'Nada encontrado.')); return; }
+      r.itens.slice(0, 20).forEach((m) => { const x = el('button', 'btn'); x.type = 'button'; x.style.cssText = 'text-align:left;width:100%'; x.append(el('b', '', m.nome), el('div', 'sub', 'Ref ' + m.ref + ' · ' + rs(m.preco) + ' · ' + m.total + ' na loja')); x.addEventListener('click', () => aoEscolher(m, x)); res.append(x); }); }); };
+  go.addEventListener('click', busca); q.addEventListener('keydown', (e) => { if (e.key === 'Enter') busca(); }); setTimeout(() => q.focus(), 50);
+}
+function formPromo_(b) {
+  const r = PD.r, sel = [], st = { lojas: LOJAS_TODAS.slice() }; b.replaceChildren(); const volta = el('button', 'btn', '‹ Voltar'); volta.addEventListener('click', () => desenharPd_(b)); b.append(volta, el('h2', '', '🏷️ Nova promoção'));
+  b.append(el('div', 'sub', '1. Escolha as peças (pode escolher várias). A promoção vale para todas as cores e tamanhos da referência.'));
+  const chips = el('div'); chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:6px 0';
+  const pinta = () => { chips.replaceChildren(...sel.map((m, i) => { const c = el('button', 'btn', '✕ ' + m.nome + ' (ref ' + m.ref + ')'); c.style.fontSize = '13px'; c.addEventListener('click', () => { sel.splice(i, 1); pinta(); }); return c; })); if (!sel.length) chips.append(el('div', 'sub', 'Nenhuma peça escolhida ainda.')); };
+  const bx = el('div'); b.append(chips, bx); pinta();
+  buscaPecaPd_(bx, '', (m) => { if (!sel.some((x) => x.ref === m.ref && x.nome === m.nome)) sel.push({ ref: m.ref, nome: m.nome }); pinta(); });
+  b.append(el('div', 'sub', '2. Desconto e período'));
+  const g = el('div'); g.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px'; const pc = el('input'); pc.type = 'number'; pc.inputMode = 'numeric'; pc.placeholder = '%'; const di = el('input'); di.type = 'date'; di.value = r.hoje; const df = el('input'); df.type = 'date';
+  const lb = (t, i) => { const d = el('label', 'sub'); d.style.display = 'grid'; d.append(document.createTextNode(t), i); return d; }; g.append(lb('Desconto (%)', pc), lb('Começa', di), lb('Termina', df)); b.append(g);
+  b.append(el('div', 'sub', '3. Lojas'));
+  const lj = el('div'); lj.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px'; LOJAS_TODAS.forEach((l) => { const x = el('button', 'btn pri', l); x.addEventListener('click', () => { const i = st.lojas.indexOf(l); if (i >= 0) st.lojas.splice(i, 1); else st.lojas.push(l); x.className = 'btn' + (st.lojas.indexOf(l) >= 0 ? ' pri' : ''); }); lj.append(x); }); b.append(lj);
+  const ob = el('textarea'); ob.placeholder = 'Recado para as gerentes (opcional)'; ob.style.cssText = 'width:100%;margin-top:10px;min-height:60px'; b.append(ob);
+  const sv = el('button', 'btn pri', 'Salvar e avisar as gerentes'); sv.style.cssText = 'width:100%;margin-top:10px';
+  sv.addEventListener('click', () => { if (!sel.length) { toast('Escolha pelo menos uma peça.'); return; } if (!(Number(pc.value) > 0)) { toast('Informe o desconto.'); pc.focus(); return; } if (!st.lojas.length) { toast('Escolha pelo menos uma loja.'); return; }
+    sv.disabled = true; rodar('pdPromoSalvar', [S.token, { refs: sel, desconto: Number(pc.value), inicio: di.value, fim: df.value, lojas: st.lojas, obs: ob.value }], (rr) => { PD.r = rr; PD.aba = 'promo'; toast('Promoção salva e gerentes avisadas ✓'); desenharPd_(b); }, () => { sv.disabled = false; }); });
+  b.append(sv);
+}
+function formDefeito_(b) {
+  const r = PD.r, st = { m: null, cor: '', tam: '', foto: '', loja: r.minhaLoja !== 'TODAS' ? r.minhaLoja : '' }; b.replaceChildren(); const volta = el('button', 'btn', '‹ Voltar'); volta.addEventListener('click', () => desenharPd_(b)); b.append(volta, el('h2', '', '🩹 Peça com defeito'));
+  b.append(el('div', 'sub', 'A administração aprova e define o desconto. Só depois de aprovada a peça pode sair com desconto.'));
+  if (!st.loja) { const sl = el('select'); sl.append(new Option('Escolha a loja…', '')); LOJAS_TODAS.forEach((l) => sl.append(new Option(l, l))); sl.addEventListener('change', () => { st.loja = sl.value; }); b.append(sl); }
+  const pec = el('div'), det = el('div'); b.append(pec, det);
+  const pintaPeca = () => { pec.replaceChildren(); det.replaceChildren(); if (!st.m) { pec.append(el('div', 'sub', '1. Qual é a peça?')); buscaPecaPd_(pec, st.loja, (m) => { st.m = m; st.cor = ''; st.tam = ''; pintaPeca(); }); return; }
+    const t = el('div', 'card'); t.style.margin = '6px 0'; const tr = el('button', 'btn', 'Trocar'); tr.style.float = 'right'; tr.addEventListener('click', () => { st.m = null; pintaPeca(); }); t.append(tr, el('b', '', st.m.nome), el('div', 'sub', 'Ref ' + st.m.ref + ' · ' + rs(st.m.preco))); pec.append(t);
+    const cores = Object.keys(st.m.cores || {}); det.append(el('div', 'sub', '2. Cor e tamanho'));
+    const cc = el('div'); cc.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px'; const tt = el('div'); tt.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:6px';
+    const pintaTam = () => { tt.replaceChildren(); if (!st.cor) return; Object.keys(st.m.cores[st.cor] || {}).forEach((z) => { const x = el('button', 'btn' + (st.tam === z ? ' pri' : ''), z); x.addEventListener('click', () => { st.tam = z; pintaTam(); }); tt.append(x); }); };
+    cores.forEach((c) => { const x = el('button', 'btn' + (st.cor === c ? ' pri' : ''), c); x.addEventListener('click', () => { st.cor = c; st.tam = ''; [...cc.children].forEach((y) => { y.className = 'btn' + (y === x ? ' pri' : ''); }); pintaTam(); }); cc.append(x); });
+    if (cores.length === 1) { st.cor = cores[0]; cc.firstChild.className = 'btn pri'; const ts = Object.keys(st.m.cores[st.cor] || {}); if (ts.length === 1) st.tam = ts[0]; } det.append(cc, tt); pintaTam();
+    det.append(el('div', 'sub', '3. Foto do defeito (obrigatória)'));
+    const fi = el('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.capture = 'environment'; fi.className = 'hide'; const fb = el('button', 'btn', '📷 Tirar foto do defeito'); fb.style.width = '100%'; const pv = el('img'); pv.className = 'hide'; pv.style.cssText = 'width:100%;max-height:260px;object-fit:cover;border-radius:12px;margin-top:8px';
+    fb.addEventListener('click', () => fi.click()); fi.addEventListener('change', async () => { const f = fi.files[0]; if (!f) return; try { st.foto = await comprimir(f, 1200, 0.8, false); pv.src = st.foto; pv.classList.remove('hide'); fb.textContent = '📷 Trocar a foto'; } catch (x) { toast(x.message); } }); det.append(fi, fb, pv);
+    det.append(el('div', 'sub', '4. Qual é o defeito?')); const tx = el('textarea'); tx.placeholder = 'Ex.: furo pequeno na manga esquerda, mancha na barra…'; tx.style.cssText = 'width:100%;min-height:70px'; det.append(tx);
+    const sg = el('input'); sg.type = 'number'; sg.inputMode = 'numeric'; sg.placeholder = 'Desconto que você sugere (%) · opcional'; sg.style.cssText = 'width:100%;margin-top:8px'; det.append(sg);
+    const ok = el('button', 'btn pri', 'Enviar para a administração aprovar'); ok.style.cssText = 'width:100%;margin-top:10px';
+    ok.addEventListener('click', () => { if (!st.loja) { toast('Escolha a loja.'); return; } if (cores.length && !st.cor) { toast('Escolha a cor.'); return; } if (st.cor && Object.keys(st.m.cores[st.cor] || {}).length && !st.tam) { toast('Escolha o tamanho.'); return; } if (!st.foto) { toast('A foto do defeito é obrigatória.'); return; } if (tx.value.trim().length < 4) { toast('Descreva o defeito.'); tx.focus(); return; }
+      ok.disabled = true; ok.textContent = 'Enviando…'; rodar('pdDefeitoEnviar', [S.token, { ref: st.m.ref, nome: st.m.nome, cor: st.cor === '—' ? '' : st.cor, tam: st.tam, foto: st.foto, defeito: tx.value.trim(), sugestao: Number(sg.value) || 0, loja: st.loja }], (rr) => { PD.r = rr; PD.aba = 'def'; toast('Enviada ✓ A administração vai aprovar e definir o desconto.'); desenharPd_(b); }, () => { ok.disabled = false; ok.textContent = 'Enviar para a administração aprovar'; }); });
+    det.append(ok); };
+  pintaPeca();
+}
 function abrirDet(titulo, montar) {
   const w = el('div', 'tc'); w.id = 'det'; const movidos = [];
   const mover = (id) => { const n = $(id); if (!n) return null; movidos.push([n, n.parentNode, n.nextSibling]); n.classList.remove('hide'); return n; };
@@ -4622,19 +4718,19 @@ async function audPDF(r) {
 // ---------- 🧭 nova organização: 5 casas por cargo, "Precisa de você" no Hoje, configurações na foto e busca ----------
 const HUB = { k: '' };
 const novoNav_ = () => !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0;
-const HUB_X = { anotar: ['Anotar cliente', 'lista de desejos e retorno', 'mural', () => anotarCliente('', '', 3)], estq: ['Estoque', 'tem na loja? e nas outras?', 'est', () => abrirEstoqueFila()], filas: ['Filas ao vivo', 'todas as lojas', 'fila', () => irAba_('fila')] };
+const HUB_X = { pdesc: ['Promoções e defeitos', 'peças liberadas para desconto', 'cb', () => abrirDescontos()], anotar: ['Anotar cliente', 'lista de desejos e retorno', 'mural', () => anotarCliente('', '', 3)], estq: ['Estoque', 'tem na loja? e nas outras?', 'est', () => abrirEstoqueFila()], filas: ['Filas ao vivo', 'todas as lojas', 'fila', () => irAba_('fila')] };
 function hubsDoCargo_() {
   if (!S) return null;
   if (S.cargo === 'VENDEDORA') return { nav: [['casa', 'Hoje', 'ini'], ['fila', 'Fila', 'fila'], ['vender', 'Vender', 'pv'], ['eu', 'Eu', 'pde'], ['mural', 'Mural', 'mural']],
-    hubs: { vender: { t: 'Vender', s: 'tudo da venda num lugar', g: [['Atendimento', ['cli', 'pv', 'estq', 'cb', 'anotar']]] }, eu: { t: 'Eu', s: 'meu desempenho', g: [['Meu mês', ['meta', 'pde', 'apr']], ['Meu RH', ['rh']]] } } };
+    hubs: { vender: { t: 'Vender', s: 'tudo da venda num lugar', g: [['Atendimento', ['cli', 'pv', 'estq', 'cb', 'anotar', 'pdesc']]] }, eu: { t: 'Eu', s: 'meu desempenho', g: [['Meu mês', ['meta', 'pde', 'apr']], ['Meu RH', ['rh']]] } } };
   if (S.cargo === 'GERENTE') return { nav: [['casa', 'Hoje', 'ini'], ['fila', 'Fila', 'fila'], ['vender', 'Vender', 'pv'], ['equipe', 'Equipe', 'gest'], ['resultados', 'Resultados', 'rel']],
-    hubs: { vender: { t: 'Vender', s: 'igual ao das consultoras', g: [['Atendimento', ['cli', 'pv', 'estq', 'cb', 'anotar']]] },
+    hubs: { vender: { t: 'Vender', s: 'igual ao das consultoras', g: [['Atendimento', ['cli', 'pv', 'estq', 'cb', 'anotar']], ['Descontos', ['pdesc']]] },
       equipe: { t: 'Equipe', s: 'quem, quando e como', g: [['Organizar', ['gest', 'meta', 'avat', 'mural']], ['Acompanhar', ['pde', 'aud', 'sac', 'rh']]] },
       resultados: { t: 'Resultados', s: 'números da loja', g: [['Ver', ['res', 'rel', 'prod', 'est']]] } } };
   return { nav: [['casa', 'Hoje', 'ini'], ['resultados', 'Resultados', 'rel'], ['equipe', 'Equipe', 'gest'], ['controle', 'Controle', 'sd'], ['mural', 'Mural', 'mural']],
     hubs: { resultados: { t: 'Resultados', s: 'rede e lojas', g: [['Vendas', ['res', 'rel', 'prod', 'est']], ['Compras', ['forn']]] },
       equipe: { t: 'Equipe', s: 'pessoas e comunicação', g: [['Pessoas', ['gest', 'meta', 'pde', 'filas']], ['Comunicação e testes', ['avat', 'cli', 'pv', 'cb']]] },
-      controle: { t: 'Controle', s: 'dinheiro e riscos', g: [['Riscos', ['aud', 'sac']], ['Dinheiro', ['fin', 'cv', 'sd']]] } } };
+      controle: { t: 'Controle', s: 'dinheiro e riscos', g: [['Riscos', ['aud', 'pdesc', 'sac']], ['Dinheiro', ['fin', 'cv', 'sd']]] } } };
 }
 function abrirHub(k) {
   const H = hubsDoCargo_(); if (!H) return;
@@ -6930,7 +7026,7 @@ $('ds-off').addEventListener('click', () => rodar('dsDesligar', [S.token], (r) =
 $('ds-testar').addEventListener('click', () => { $('ds-res').textContent = 'Testando…'; rodar('dsTestar', [S.token], (r) => { const b = $('ds-res'); b.replaceChildren(el('div', r.ok ? 'motiva' : 'aviso-meta', r.msg)); if (r.amostra) { const pre = el('div', 'sub', 'Resposta: ' + r.amostra); pre.style.wordBreak = 'break-all'; b.append(pre); } carregarDS(); }, () => { $('ds-res').textContent = ''; }); });
 $('fc-loja').addEventListener('click', () => fechamento($('g-loja').value, $('fc-data').value));
 $('fc-rede').addEventListener('click', () => fechamento('TODAS', $('fc-data').value));
-$('rp-abrir').addEventListener('click', () => abrirReposicao());
+$('rp-abrir').addEventListener('click', () => abrirReposicao()); $('pd-abrir').addEventListener('click', () => abrirDescontos());
 $('en-abrir').addEventListener('click', () => abrirEntradas(''));
 $('tab-est').addEventListener('click', () => { $('en-card').classList.toggle('hide', !(chefe() || S.cargo === 'ESTOQUISTA')); });
 $('tab-est').addEventListener('click', () => { $('rp-card').classList.toggle('hide', !!S && (S.cargo === 'VENDEDORA' || S.cargo === 'AUXILIAR')); if (!chefe()) return; const box = $('rp-prog'); if (!box) { const d = el('div'); d.id = 'rp-prog'; $('rp-card').after(d); } const b2 = $('rp-prog'); b2.replaceChildren(); cardReposicao(b2); });
@@ -7443,7 +7539,7 @@ $('b-sino').addEventListener('click', () => rodar('avisos', [S.token], (lst) => 
   $('sh-t').textContent = 'Avisos'; $('sh-s').textContent = lst.length ? 'Toque para abrir' : '';
   const o = $('sh-o'); o.replaceChildren();
   if (!lst.length) o.append(el('div', 'vazio', 'Nenhum aviso por enquanto.'));
-  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'auditoria') { abrirAuditoria(a.ref || ''); return; } if (a.tipo === 'furo' || a.tipo === 'trocas') { abrirAuditoria(); return; } if (a.tipo === 'sacolas') { abrirSacolas(); return; } if (a.tipo === 'saude') { abrirCheckup(); return; } if (a.tipo === 'recordacao') { abrirPerfil(S.usuario); return; } if (a.tipo === 'produto_quente') { abrirQuentes(); return; } if (a.tipo === 'avaliacao_baixa') { if (chefe()) verResultados(); else mudarAba(casaAba_()); return; } if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { if (S.cargo === 'VENDEDORA') mudarAba('meta'); else if (S.cargo === 'ESTOQUISTA') mudarAba('mural'); else verResultados(); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'ata') { abrirAtas(a.ref || ''); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba(casaAba_()); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
+  lst.forEach((a) => { const d = el('div', 'aviso' + (a.lido ? '' : ' novo')); d.append(document.createTextNode(a.texto), el('span', '', a.quando)); d.addEventListener('click', () => { fechar(); if (a.tipo === 'auditoria') { abrirAuditoria(a.ref || ''); return; } if (a.tipo === 'pdesc') { abrirDescontos(a.ref || ''); return; } if (a.tipo === 'furo' || a.tipo === 'trocas') { abrirAuditoria(); return; } if (a.tipo === 'sacolas') { abrirSacolas(); return; } if (a.tipo === 'saude') { abrirCheckup(); return; } if (a.tipo === 'recordacao') { abrirPerfil(S.usuario); return; } if (a.tipo === 'produto_quente') { abrirQuentes(); return; } if (a.tipo === 'avaliacao_baixa') { if (chefe()) verResultados(); else mudarAba(casaAba_()); return; } if (a.tipo === 'reuniao' || a.tipo === 'plano' || a.tipo === 'resumo') { mudarAba(chefe() ? 'ini' : 'dia'); return; } if (a.tipo === 'premio') { if (S.cargo === 'ADMIN') { mudarAba('gest'); setTimeout(() => abaGest('pre'), 50); } else { if (S.cargo === 'VENDEDORA') mudarAba('meta'); else if (S.cargo === 'ESTOQUISTA') mudarAba('mural'); else verResultados(); setTimeout(() => $('m-pre-box').scrollIntoView({ behavior: 'smooth' }), 400); } return; } if (a.tipo === 'rh') { abrirMeuRH(); return; } if (a.tipo === 'ata') { abrirAtas(a.ref || ''); return; } if (a.tipo === 'bh' && chefe()) { mudarAba('gest'); setTimeout(() => abaGest('bh'), 50); return; } if (a.tipo === 'saida') { mudarAba('fila'); return; } if (a.tipo === 'entradas') { mudarAba('est'); setTimeout(() => abrirEntradas(a.ref || ''), 300); return; } if (a.tipo === 'repo') { mudarAba('est'); setTimeout(() => abrirReposicao(true), 300); return; } if (a.tipo === 'conferencia' && chefe()) { mudarAba('ini'); setTimeout(abrirConferencia, 600); return; } if (a.tipo === 'tarefa') { mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { const ck = $('ck'); if (ck) { ck.open = true; ck.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 400); return; } if (a.tipo === 'fechamento') { const lj = (S.lojas && S.lojas[0]) || S.loja; fechamento(lj, a.ref || ''); return; } if (a.tipo === 'rhadm') { RH_SEL = a.ref || ''; mudarAba('gest'); setTimeout(() => abaGest('rh'), 50); return; } if (a.tipo === 'lembrete') { try { localStorage.removeItem('amorata_push_x'); } catch (e) {} exigirApp(false); mudarAba(chefe() ? 'ini' : 'dia'); setTimeout(() => { desenharPush(); const pc = $('push-card'); if (pc) pc.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); return; } if (a.tipo === 'desejo') { mudarAba(casaAba_()); setTimeout(() => { $('cart').open = true; $('cart').scrollIntoView({ behavior: 'smooth' }); }, 300); return; } mudarAba('mural'); if (a.tipo === 'recado') { abaMural('rec'); abrirConversa(a.ref); } else { if (a.ref && /mencao|comentario|conquista|curtida/.test(a.tipo)) { MU_FOCO = a.ref; $('mu-loja').value = 'TODAS'; } abaMural('mural'); } }); o.append(d); });
   const c = el('button', 'btn big', 'Fechar'); c.addEventListener('click', fechar); o.append(c);
   $('sheet').classList.remove('hide'); blocoNotif(o);
 }));
