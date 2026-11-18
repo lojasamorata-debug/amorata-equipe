@@ -18,6 +18,8 @@
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 body { margin:0; background:var(--bg); color:var(--fg); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size:15px; }
 .wrap { max-width:640px; margin:0 auto; padding:14px 14px 90px; }
+/* iPhone (app instalado / iOS 26): o topo (foto e sininho) não fica atrás do relógio e da faixa embaçada da barra de status */
+.wrap { padding-top:calc(14px + env(safe-area-inset-top, 0px)); } @media (display-mode: standalone) { .wrap { padding-top:calc(22px + env(safe-area-inset-top, 0px)); } }
 .ptr { position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 6px); transform:translate(-50%,-50px); opacity:0; z-index:200; display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line); border-radius:999px; padding:8px 14px 8px 10px; box-shadow:0 4px 14px rgba(0,0,0,.15); font-size:13px; font-weight:600; color:var(--accent); pointer-events:none; transition:opacity .15s; } .ptr .ic { font-size:20px; display:inline-block; line-height:1; } .ptr.pronto { background:var(--accent); color:#fff; } .ptr.girando .ic { animation:ptrgira .8s linear infinite; } @keyframes ptrgira { to { transform:rotate(360deg); } }
 h1 { font-family:"Source Serif 4", Georgia, serif; font-weight:400; font-size:24px; margin:0; }
 h2 { font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:22px 0 8px; display:flex; justify-content:space-between; }
@@ -766,6 +768,99 @@ body.logado:not(.aux) #b-atu, body.logado:not(.aux) #b-sair { display:none !impo
 #det.pv-leve .chip { font-size:13px; padding:7px 11px; } #det.pv-leve .pv-lb2 { margin:6px 0 4px; }
 #det.pv-leve .pv-kpi b { font-size:20px; } #det.pv-leve .pv-row { padding:9px 0; } #det.pv-leve .pv-row b { font-size:14.5px; } #det.pv-leve .pv-st { font-size:11.5px; }
 #det.pv-leve .dbody > .btn.big { margin-top:6px; font-size:14px; padding:10px 14px; font-weight:500; } #det.pv-leve .pv-comp .pv-bts { display:grid; grid-template-columns:1fr 1fr; } #det.pv-leve .pv-comp .pv-bts .btn.big { font-size:13.5px; padding:11px 8px; }
+
+/* ---------- 🌙 modo escuro e letra maior (Aparência, por aparelho) ---------- */
+html.dark { color-scheme:dark; }
+html.dark:root, html.dark { --bg:#141317; --panel:#1f1d24; --fg:#ece9f2; --muted:#a39fae; --line:#34313c; --ok:#5cc58b; --okbg:#1b2f24; --warn:#f0a94a; --warnbg:#33281a; --bad:#ff8a80; --accent:#b9a5e0; --accentbg:#2c2638; }
+html.dark body { background:var(--bg); color:var(--fg); }
+html.dark input, html.dark select, html.dark textarea { background:#18161c !important; color:var(--fg) !important; border-color:var(--line) !important; }
+html.dark .btn.pri, html.dark button.pri { color:#141317 !important; }
+html.dark img { opacity:.95; }
+html.dark .ptr { background:var(--panel) !important }
+html.dark select, html.dark input { background:var(--panel) !important }
+html.dark .aviso-meta { background:var(--warnbg) !important }
+html.dark .nuvem { background:var(--panel) !important }
+html.dark .nuvem:before { background:var(--panel) !important }
+html.dark .tc .mg button { background:var(--panel) !important }
+html.dark .tc textarea { background:var(--panel) !important }
+html.dark .tc .avis button { background:var(--panel) !important }
+html.dark .tc .rpres button { background:var(--panel) !important }
+html.dark .pend-lk { background:var(--warnbg) !important }
+html.dark .tr-foco .st span.on { background:var(--panel) !important }
+html.dark .tr-foco .go { background:var(--panel) !important }
+html.dark .tr-d { background:var(--warnbg) !important }
+html.dark .pde-bar b { background:var(--panel) !important }
+html.dark .tag.t4 { background:var(--warnbg) !important }
+html.dark .bp-refc { background:var(--warnbg) !important }
+html.dark .ag-hero .go { background:var(--panel) !important }
+html.dark #det { background:var(--panel) !important }
+html.dark .pre-it.ok { background:var(--warnbg) !important }
+html.dark .moods button { background:var(--panel) !important }
+html.dark .medc { background:var(--warnbg) !important }
+html.dark .medchip { background:var(--warnbg) !important }
+html.dark #festa .pde-fc .pde-av { background:var(--panel) !important }
+html.dark .pv-st.a { background:var(--warnbg) !important }
+html.dark .pv-bc { background:var(--panel) !important }
+html.dark .pv-nova { background:var(--warnbg) !important }
+html.dark #fog .estr { background:var(--panel) !important }
+html.dark .q-op { background:var(--panel) !important }
+html.dark .dsem button { background:var(--panel) !important }
+html.dark .chip-dia { background:var(--warnbg) !important }
+html.dark .chips button { background:var(--panel) !important }
+html.dark .seg button { background:var(--panel) !important }
+html.dark .pend button { background:var(--warnbg) !important }
+html.dark .pend { background:var(--warnbg) !important }
+html.dark .cmn { background:var(--warnbg) !important }
+html.dark .esc-d div.fe { background:var(--warnbg) !important }
+html.dark .qop { background:var(--panel) !important }
+html.dark .cart-it.atr { background:var(--warnbg) !important }
+html.dark #rede-fila .rf.alerta { background:var(--warnbg) !important }
+html.dark #rhv .bar button { background:var(--panel) !important }
+html.dark #rhv canvas, html.dark #rhv img { background:var(--panel) !important }
+html.dark #stv .stbars i b { background:var(--panel) !important }
+html.dark .av-dest .av-n { color:var(--fg) !important }
+html.dark .rr-pg { background:var(--panel) !important; color:var(--fg) !important }
+html.dark .rr-no { background:var(--panel) !important }
+html.dark .rr-tb th { border-color:var(--line) !important }
+html.dark .rr-bx { border-color:var(--line) !important }
+html.dark .rr-kp div { border-color:var(--line) !important }
+html.dark .ct-pg { background:var(--panel) !important }
+/* ---------- 🎨 aparência · 💜 conhecer a cliente · 🧑‍💼 boneco ---------- */
+.ap-lb { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:14px 0 6px; }
+.ap-g { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; } .ap-g .btn { margin:0; padding:10px 4px; }
+.ap-cores { display:flex; flex-wrap:wrap; gap:8px; } .ap-cor { width:32px; height:32px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px var(--line); cursor:pointer; } .ap-cor.on { box-shadow:0 0 0 3px var(--accent); }
+.ap-ta, .ap-sel { width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:12px; padding:10px; font:inherit; margin:8px 0; background:var(--panel); color:var(--fg); }
+#cli-ov { position:fixed; inset:0; z-index:8500; background:rgba(31,30,29,.55); display:flex; align-items:flex-end; justify-content:center; }
+.cli-sh { background:var(--panel); width:100%; max-width:480px; max-height:92vh; overflow:auto; border-radius:22px 22px 0 0; padding:20px 16px calc(18px + env(safe-area-inset-bottom)); text-align:center; animation:cliSobe .3s ease-out; }
+.cli-sh.ficha { text-align:left; background:var(--bg); }
+@keyframes cliSobe { from { transform:translateY(40px); opacity:0; } to { transform:none; opacity:1; } }
+.cli-em { font-size:44px; line-height:1; } .cli-sh h3 { margin:6px 0 2px; font-size:19px; }
+.cli-inp { width:100%; box-sizing:border-box; padding:13px; border-radius:12px; border:1px solid var(--line); font:inherit; margin:12px 0 6px; background:var(--bg); color:var(--fg); }
+.cli-res { text-align:left; } .cli-row { display:flex; align-items:center; gap:10px; width:100%; border:0; border-bottom:1px solid var(--line); background:none; padding:9px 2px; font:inherit; color:var(--fg); text-align:left; cursor:pointer; }
+.cli-row > div { flex:1; min-width:0; } .cli-ini { width:38px; height:38px; border-radius:50%; background:var(--accentbg); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; flex:none; } .cli-ini.g { width:54px; height:54px; font-size:19px; }
+.cli-vip { background:#f2b01e; color:#1f1e1d; font-size:11px; font-weight:800; border-radius:999px; padding:3px 8px; flex:none; }
+.cli-sh .btn { width:100%; margin-top:8px; } .cli-nao { border:0 !important; background:none !important; color:var(--muted) !important; }
+.cli-card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:13px; margin-bottom:10px; }
+.cli-card.vip { background:linear-gradient(135deg,#fff3d1,#f3ecff); border:1.5px solid #f2b01e; } html.dark .cli-card.vip { background:linear-gradient(135deg,#3a2f14,#2c2638) !important; }
+.cli-hd { display:flex; gap:12px; align-items:center; } .cli-nome { font-family:"Source Serif 4", Georgia, serif; font-weight:400; font-size:23px; margin:0; text-transform:none; letter-spacing:0; color:var(--fg); display:block; }
+.cli-kp { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0 8px; } .cli-kp div { background:var(--bg); border-radius:12px; padding:8px 4px; text-align:center; } .cli-kp b { display:block; font-size:17px; } .cli-kp span { font-size:12px; color:var(--muted); }
+.cli-lb { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:6px; }
+.cli-it { display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); } .cli-it:last-child { border-bottom:0; } .cli-it > div { flex:1; min-width:0; }
+.cli-tag { display:inline-block; font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--accentbg); color:var(--accent); margin:2px 4px 2px 0; } .cli-tag.ok { background:var(--okbg); color:var(--ok); } .cli-tag.wn { background:var(--warnbg); color:var(--warn); margin-left:6px; }
+.bnc-w { position:fixed; left:10px; right:10px; bottom:calc(74px + env(safe-area-inset-bottom)); z-index:8400; display:flex; align-items:flex-end; gap:2px; max-width:460px; animation:bncSobe .5s cubic-bezier(.2,1.5,.4,1); pointer-events:none; }
+.bnc-w > * { pointer-events:auto; } .bnc-w.sai { animation:bncDesce .35s ease-in forwards; }
+@keyframes bncSobe { from { transform:translateY(120%); opacity:0; } to { transform:none; opacity:1; } } @keyframes bncDesce { to { transform:translateY(120%); opacity:0; } }
+.bnc-av { width:78px; height:92px; flex:none; } .bnc-av svg { width:100%; height:100%; overflow:visible; } .bnc-av.grande { width:130px; height:152px; margin:0 auto; }
+.bnc-av.foto { width:74px; height:74px; border-radius:50%; overflow:hidden; border:4px solid #fff; box-shadow:0 0 0 3px var(--accent), 0 6px 14px rgba(0,0,0,.25); margin-bottom:8px; animation:bncBalanca 2.4s ease-in-out infinite; } .bnc-av.foto img { width:100%; height:100%; object-fit:cover; } .bnc-av.foto.grande { width:120px; height:120px; }
+.bnc-mao { transform-origin:96px 108px; animation:bncAceno 1.2s ease-in-out 3; } .bnc-olhos { transform-origin:60px 56px; animation:bncPisca 4s infinite; }
+@keyframes bncAceno { 0%,100% { transform:rotate(0); } 25% { transform:rotate(-14deg); } 75% { transform:rotate(10deg); } } @keyframes bncPisca { 0%,46%,50%,100% { transform:scaleY(1); } 48% { transform:scaleY(.1); } }
+@keyframes bncBalanca { 0%,100% { transform:rotate(-4deg); } 50% { transform:rotate(4deg); } }
+.bnc-bal { position:relative; flex:1; background:var(--panel); color:var(--fg); border:2px solid var(--accent); border-radius:18px 18px 18px 4px; padding:11px 30px 11px 13px; box-shadow:0 10px 26px rgba(0,0,0,.2); margin-bottom:34px; font-size:15px; line-height:1.35; }
+.bnc-bal:before { content:''; position:absolute; left:-11px; bottom:10px; border:10px solid transparent; border-right-color:inherit; border-left:0; }
+.bnc-w.ouro .bnc-bal { border-color:#f2b01e; } .bnc-w.rosa .bnc-bal { border-color:#e8738a; }
+.bnc-q { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--accent); margin-bottom:2px; } .bnc-w.ouro .bnc-q { color:#b7791f; } .bnc-w.rosa .bnc-q { color:#c2415b; }
+.bnc-x { position:absolute; top:4px; right:6px; border:0; background:none; font-size:20px; color:var(--muted); cursor:pointer; }
+.bnc-bt { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; } .bnc-bt button { border:0; border-radius:999px; padding:7px 12px; font:inherit; font-size:13px; font-weight:700; background:var(--accent); color:#fff; cursor:pointer; } html.dark .bnc-bt button { color:#141317; }
 </style>
 </head>
 <body>
@@ -1572,7 +1667,7 @@ function fazer(tipo, alvo, dados, msg) {
   const fim = marcarCarregando(); ocupado = true; fechar(); document.body.classList.add('ocupado');
   try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} regAviso_(REG_TXT[tipo] || 'Registrando…');
   const solta = () => { fim(); ocupado = false; document.body.classList.remove('ocupado'); };
-  rodar('acao', [S.token, loja, tipo, alvo, dados || {}], (e) => { solta(); desenhar(e); if (tipo === 'atender') { document.body.classList.add('recem'); setTimeout(() => document.body.classList.remove('recem'), 3000); }
+  rodar('acao', [S.token, loja, tipo, alvo, dados || {}], (e) => { solta(); desenhar(e); if (tipo === 'atender') { document.body.classList.add('recem'); setTimeout(() => document.body.classList.remove('recem'), 3000); if (alvo === S.usuario && !(e && e.repetido) && !telaLoja()) setTimeout(() => conhecerCliente(false), 700); }
     if (e && e.repetido) { regAviso_('✅ Já estava registrado', true); return; } regAviso_('✅ Pronto!', true);
     if (msg && alvo === S.usuario) { const t = typeof msg === 'function' ? msg(e) : msg; if (t) toast(t); } }, (er) => { solta(); regFim_(); if (typeof er !== 'undefined') {} });
 }
@@ -2523,18 +2618,18 @@ function abrirContrato(rh) {
 // gerente/admin: "Meus resultados" abre os cards do Início (fora dele, o Início mostra só o menu)
 function verResultados() { mudarAba('ini'); document.body.classList.add('ini-res'); rolarTopo_(); }
 $('i-res-v').addEventListener('click', () => mudarAba('ini'));
-const MENU_TXT = { pv: 'Pré-venda', pde: 'PDE · premiação', fin: 'Financeiro', sd: 'Check-up do app', aj: 'Ajuda e conta', cb: 'Cashback', res: 'Resultados e relatórios', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
+const MENU_TXT = { cli: 'Conhecer a cliente', apar: 'Aparência', avat: 'Meu avatar e recados', pv: 'Pré-venda', pde: 'PDE · premiação', fin: 'Financeiro', sd: 'Check-up do app', aj: 'Ajuda e conta', cb: 'Cashback', res: 'Resultados e relatórios', dia: 'Meu dia', fila: 'Fila da vez', meta: 'Metas', mural: 'Mural', est: 'Estoque', apr: 'Aprender', gest: 'Gestão', prod: 'Produtos', rel: 'Relatórios', rh: 'Meu RH', ini: 'Início' };
 const NAV_TXT = { ini: 'Agora', dia: 'Agora', fila: 'Fila', meta: 'Metas', mural: 'Mural', est: 'Estoque', gest: 'Gestão', rh: 'Meu RH' };
 const casaAba_ = () => (chefe() ? 'ini' : S && S.cargo === 'AUXILIAR' ? 'fila' : 'dia');
-function abaVisivel_(k) { if (k === 'pv') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0 && (S.cargo !== 'ADMIN' || (S.lojas || []).length > 0); if (k === 'pde') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0; if (k === 'sd' || k === 'fin') return !!S && S.cargo === 'ADMIN'; if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
-function irAba_(k) { if (k === 'pv') { abrirPreVenda(); return; } if (k === 'pde') { abrirPde(); return; } if (k === 'sd') { abrirCheckup(); return; } if (k === 'fin') { abrirFinanceiro(); return; } if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
+function abaVisivel_(k) { if (k === 'cli') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0; if (k === 'apar') return !!S; if (k === 'avat') return !!S && (S.cargo === 'ADMIN' || S.cargo === 'GERENTE'); if (k === 'pv') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0 && (S.cargo !== 'ADMIN' || (S.lojas || []).length > 0); if (k === 'pde') return !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0; if (k === 'sd' || k === 'fin') return !!S && S.cargo === 'ADMIN'; if (k === 'aj') return !!S && window.matchMedia('(max-width:1099px)').matches; if (k === 'cb') return !!S && S.cargo !== 'ESTOQUISTA'; if (k === 'res') return chefe(); if (k === 'rh') { const b = $('b-rh'); return !!b && !b.classList.contains('hide'); } const t = $('tab-' + k); return !!t && !t.classList.contains('hide') && getComputedStyle(t).display !== 'none'; }
+function irAba_(k) { if (k === 'cli') { conhecerCliente(S.cargo === 'ADMIN'); return; } if (k === 'apar') { abrirAparencia(); return; } if (k === 'avat') { abrirMeuAvatar(); return; } if (k === 'pv') { abrirPreVenda(); return; } if (k === 'pde') { abrirPde(); return; } if (k === 'sd') { abrirCheckup(); return; } if (k === 'fin') { abrirFinanceiro(); return; } if (k === 'aj') { $('b-ajuda').click(); return; } if (k === 'cb') { abrirCashback(); return; } if (k === 'res') { verResultados(); return; } if (k === 'rh') { $('b-rh').click(); return; } const t = $('tab-' + k); if (t) t.click(); }
 function menuSub_(k) {
   const rhN = (typeof RH !== 'undefined' && RH && RH.novos) || 0;
   if (k === 'rh') return rhN ? [rhN + (rhN === 1 ? ' novo para ver' : ' novos para ver'), 'al', rhN] : ['holerite, ponto, férias', ''];
   if (k === 'fila') { if (E && E.fila && S) { const p = chefe() ? null : E.fila.find((x) => x.usuario === S.usuario); if (p && p.pos) return [p.pos === 1 ? 'é a sua vez!' : 'você é a ' + p.pos + 'ª da vez', p.pos === 1 ? 'ok' : '']; return [E.fila.length ? E.fila.length + ' na fila' : 'ninguém na fila', '']; } return ['quem atende agora', '']; }
   if (k === 'res') { const R = typeof INI !== 'undefined' && INI && INI.rede; if (R && R.meta && R.pct != null) return [pc(R.pct) + ' da meta' + (R.fechaPct != null && R.fechaPct < 1 ? ' · no ritmo ' + pc(R.fechaPct) : ''), R.pct >= 1 ? 'ok' : (R.fechaPct != null && R.fechaPct < 1 ? 'al' : '')]; return ['vendas, metas e equipe', '']; }
   if (k === 'meta') { if (MH && MH.batida) return ['meta do mês batida!', 'ok']; if (MH && !MH.loja && MH.pct != null) return [pc(MH.pct) + ' da meta do mês', '']; return ['metas do mês', '']; }
-  const fixo = { pv: ['montar a compra e levar ao caixa', ''], pde: [chefe() ? 'pontos e prêmios da equipe' : 'seus pontos e prêmio do mês', ''], fin: ['DRE, despesas, extratos e recebíveis', ''], sd: ['saúde do sistema: limites, rotinas e Drive', ''], aj: ['tour, senha, notificações e sair', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
+  const fixo = { cli: [S && S.cargo === 'ADMIN' ? '🧪 testar o atendimento com histórico' : 'histórico e o que oferecer', ''], apar: ['modo escuro e letra maior', ''], avat: ['seu boneco nos avisos da equipe', ''], pv: ['montar a compra e levar ao caixa', ''], pde: [chefe() ? 'pontos e prêmios da equipe' : 'seus pontos e prêmio do mês', ''], fin: ['DRE, despesas, extratos e recebíveis', ''], sd: ['saúde do sistema: limites, rotinas e Drive', ''], aj: ['tour, senha, notificações e sair', ''], cb: ['consultar saldo da cliente', ''], dia: ['tarefas, clientes e escala', ''], mural: ['recados da equipe', ''], est: [chefe() || S.cargo === 'ESTOQUISTA' ? 'peças, reposição e entradas' : 'consultar peças', ''], apr: ['treinamentos', ''], gest: ['equipe, escala e folgas', ''], prod: ['coleção e preços', ''], rel: ['vendas e desempenho', ''], ini: ['resumo da loja', ''] };
   return fixo[k] || ['', ''];
 }
 // 🩺 check-up do app (ADMIN): roda agora e mostra o que está bem e o que precisa de atenção
@@ -2563,7 +2658,7 @@ function desenharMenu() {
   if (chefe()) { const v = $('v-ini'), ag = $('agora'); if (ag && ag.parentNode !== v) v.prepend(ag); if (ag) { if (ag.nextElementSibling !== m) ag.after(m); } else if (m.parentNode !== v || v.firstElementChild !== m) v.prepend(m); }
   else { const ag = $('agora'), vd = $('v-dia'); if (ag && ag.parentNode !== vd) vd.prepend(ag); const ref = $('eu-meta'); if (ref && ref.parentNode && m.previousElementSibling !== ref) ref.after(m); }
   try { desenharAgora(); segDuplo_(); } catch (e) {}
-  const ks = ['res', 'dia', 'ini', 'fila', 'pv', 'cb', 'meta', 'pde', 'est', 'mural', 'apr', 'gest', 'fin', 'prod', 'rel', 'rh', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k) && !(chefe() && (k === 'rel' || (k === 'prod' && abaVisivel_('est')))));
+  const ks = ['res', 'dia', 'ini', 'fila', 'cli', 'pv', 'cb', 'meta', 'pde', 'est', 'mural', 'apr', 'gest', 'fin', 'prod', 'rel', 'rh', 'avat', 'apar', 'sd', 'aj'].filter((k) => k !== casa && abaVisivel_(k) && !(chefe() && (k === 'rel' || (k === 'prod' && abaVisivel_('est')))));
   m.replaceChildren(...ks.map((k) => {
     const [sub, cls, n] = menuSub_(k), b = el('button', 'mt'); b.type = 'button'; b.id = 'mt-' + k;
     const ic = el('span', 'mi'); ic.append(icoSvg(k)); const tx = el('span'); tx.append(el('b', '', MENU_TXT[k])); const sm = el('small', cls, sub); tx.append(sm);
@@ -3217,7 +3312,7 @@ function desenharFerrFila_(naFilaOuDentro) {
   const box = $('fila-ferr'); if (!box) return;
   const mostra = S && !chefe() && S.cargo !== 'AUXILIAR' && S.cargo !== 'ESTOQUISTA' && !telaLoja();
   box.classList.toggle('hide', !mostra); if (!mostra) return; if (!box.childElementCount) {
-  const itens = [['🔎', 'Estoque', () => !$('tab-est').classList.contains('hide'), abrirEstoqueFila], ['💳', 'Cashback', () => abaVisivel_('cb'), abrirCashback], ['📲', 'Anotar cliente', () => true, () => anotarCliente('', '', 3)], ['🎯', 'Minha meta', () => true, abrirMetaFila]];
+  const itens = [['💜', 'Cliente', () => true, () => conhecerCliente(false)], ['🔎', 'Estoque', () => !$('tab-est').classList.contains('hide'), abrirEstoqueFila], ['💳', 'Cashback', () => abaVisivel_('cb'), abrirCashback], ['📲', 'Anotar cliente', () => true, () => anotarCliente('', '', 3)], ['🎯', 'Minha meta', () => true, abrirMetaFila]];
   itens.forEach(([ic, nm, ok, fn]) => { const b = el('button', 'ff'); b.type = 'button'; b.append(el('i', '', ic), document.createTextNode(nm)); b.dataset.ok = ''; b.addEventListener('click', fn); b._ok = ok; box.append(b); }); }
   [...box.children].forEach((b) => b.classList.toggle('hide', !b._ok()));
 }
@@ -4198,7 +4293,7 @@ setInterval(() => { if (!document.hidden) checarFoguetes(); }, 10 * 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checarFoguetes(); });
 // campeãs do dia: fotos flutuando na tela de todas (some ao fechar, volta no dia seguinte)
 let CAMP = null;
-function carregarCampeas() { if (!S || telaLoja()) return; checarFoguetes(); carregarPdeVenc(); google.script.run.withSuccessHandler((r) => { CAMP = r; bolhaCampeas(); cardMetaBatida(); }).withFailureHandler(() => {}).campeasDia(S.token); }
+function carregarCampeas() { if (!S || telaLoja()) return; checarFoguetes(); carregarPdeVenc(); setTimeout(carregarBoneco, 2500); google.script.run.withSuccessHandler((r) => { CAMP = r; bolhaCampeas(); cardMetaBatida(); }).withFailureHandler(() => {}).campeasDia(S.token); }
 // card de comemoração (igual ao da medalha) para quem bateu a meta do dia — uma vez por dia
 function cardMetaBatida() {
   if (!CAMP || !CAMP.lista) return; if ($('festa') || $('caminho')) { clearTimeout(cardMetaBatida.t); cardMetaBatida.t = setTimeout(cardMetaBatida, 4000); return; } const eu = CAMP.lista.find((p) => p.eu); if (!eu) return;
@@ -4231,6 +4326,152 @@ function listaCampeas() {
     p.eu ? '🏆 Você! ' + (p.parabens ? p.parabens + ' colega(s) te parabenizaram 💜' : 'Parabéns!') : p.jaDei ? '✅ Você parabenizou ' + p.nome + ' · ' + p.loja + pb(p) : !p.usuario ? '💜 ' + p.nome + ' · ' + p.loja : '👏 Parabenizar ' + p.nome + ' · ' + p.loja + pb(p),
     p.eu || p.jaDei || !p.usuario ? '' : 'pri',
     () => { if (p.eu || p.jaDei || !p.usuario) { fechar(); return; } fechar(); google.script.run.withSuccessHandler((r) => { p.jaDei = true; p.parabens = (r && r.parabens) || p.parabens + 1; toast('👏 ' + p.nome + ' vai saber que você parabenizou!'); listaCampeas(); }).withFailureHandler((e) => toast((e && e.message) || 'Não deu agora.')).parabenizarCampea(S.token, p.usuario, CAMP.d); }]));
+}
+// ---------- 🎨 Aparência: tema (claro/escuro/automático) e tamanho da letra — vale só para este aparelho ----------
+const APAR = (() => { let t = 'claro', f = 'n'; try { t = localStorage.getItem('apTema') || 'claro'; f = localStorage.getItem('apFonte') || 'n'; } catch (e) {} return { tema: t, fonte: f }; })();
+function aplicarAparencia() {
+  let dk = APAR.tema === 'escuro'; try { if (APAR.tema === 'auto') dk = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+  document.documentElement.classList.toggle('dark', dk);
+  document.body.style.zoom = { n: '', g: '1.12', m: '1.25' }[APAR.fonte] || '';
+  try { const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', dk ? '#141317' : '#f7f6f3'); } catch (e) {}
+}
+try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (APAR.tema === 'auto') aplicarAparencia(); }); } catch (e) {}
+aplicarAparencia();
+function abrirAparencia() {
+  abrirDet('🎨 Aparência', (b) => {
+    const desenha = () => {
+      b.replaceChildren(); const c = el('div', 'card'); c.append(el('div', 'sub', 'Vale só para este celular.'), el('div', 'ap-lb', 'Tema'));
+      const g1 = el('div', 'ap-g'); [['claro', '☀️ Claro'], ['escuro', '🌙 Escuro'], ['auto', '📱 Automático']].forEach(([k, t]) => { const x = el('button', 'btn' + (APAR.tema === k ? ' pri' : ''), t); x.type = 'button'; x.addEventListener('click', () => { APAR.tema = k; try { localStorage.setItem('apTema', k); } catch (e) {} aplicarAparencia(); desenha(); }); g1.append(x); });
+      const g2 = el('div', 'ap-g'); [['n', 'A Normal', '14px'], ['g', 'A Grande', '17px'], ['m', 'A Maior', '20px']].forEach(([k, t, fs]) => { const x = el('button', 'btn' + (APAR.fonte === k ? ' pri' : ''), t); x.type = 'button'; x.style.fontSize = fs; x.addEventListener('click', () => { APAR.fonte = k; try { localStorage.setItem('apFonte', k); } catch (e) {} aplicarAparencia(); desenha(); }); g2.append(x); });
+      c.append(g1, el('div', 'ap-lb', 'Tamanho da letra'), g2, el('div', 'sub', 'Prévia: "Hoje você vendeu R$ 1.240 · faltam R$ 380 para a meta do dia 🚀"')); b.append(c);
+    }; desenha();
+  });
+}
+// ---------- 🧑‍💼 boneco (avatar) do chefe e das gerentes ----------
+function avatarSVG(o) {
+  o = o || {}; const P = { clara: ['#f6d2b5', '#ecbd9c'], media: ['#e2ae86', '#d39a71'], morena: ['#b97c55', '#a66b46'], negra: ['#7b4a2e', '#6a3e26'] }[o.pele] || ['#f6d2b5', '#ecbd9c'];
+  const hx = (c, d) => /^#[0-9a-f]{6}$/i.test(String(c || '')) ? c : d, hc = hx(o.cabeloCor, '#5a3f2b'), bc = hx(o.barbaCor, hc), roupa = hx(o.roupa, '#5b4a7a');
+  const cab = ({
+    topete: '<path d="M29 52 C25 30 36 14 58 12 C70 9 86 13 92 24 C96 32 94 44 91 52 C89 42 84 36 78 34 C70 26 52 30 40 34 C35 38 31 45 29 52 Z" fill="' + hc + '"/><path d="M44 22 C56 8 82 10 90 22 C80 16 64 16 52 26 Z" fill="' + hc + '" opacity=".85"/>',
+    curto: '<path d="M30 50 C28 26 44 16 62 17 C80 17 93 28 90 50 C86 38 78 33 70 33 C60 37 46 36 38 32 C34 38 32 44 30 50 Z" fill="' + hc + '"/>',
+    longo: '<path d="M26 92 C18 60 24 22 60 16 C96 22 102 60 94 92 C90 72 90 52 86 42 C76 32 50 30 34 42 C30 52 30 72 26 92 Z" fill="' + hc + '"/>',
+    coque: '<circle cx="60" cy="12" r="11" fill="' + hc + '"/><path d="M30 50 C28 26 44 18 60 18 C78 18 92 28 90 50 C84 36 72 30 60 30 C48 30 36 36 30 50 Z" fill="' + hc + '"/>',
+    careca: '<path d="M34 40 C40 26 80 26 86 40" stroke="' + hc + '" stroke-width="2" fill="none" opacity=".3"/>',
+    cacheado: '<g fill="' + hc + '"><circle cx="34" cy="40" r="10"/><circle cx="44" cy="26" r="11"/><circle cx="60" cy="20" r="12"/><circle cx="76" cy="26" r="11"/><circle cx="86" cy="40" r="10"/><circle cx="30" cy="56" r="8"/><circle cx="90" cy="56" r="8"/></g>',
+  })[o.cabelo] || '';
+  const barba = o.barba === 'cheia' ? '<path d="M31 58 C32 86 46 94 60 94 C74 94 88 86 89 58 C86 70 80 76 72 74 C66 70 54 70 48 74 C40 76 34 70 31 58 Z" fill="' + bc + '"/>' : o.barba === 'cavanhaque' ? '<path d="M50 74 C54 70 66 70 70 74 C68 86 52 86 50 74 Z" fill="' + bc + '"/>' : '';
+  const oc = o.oculos ? '<g fill="none" stroke="#4b4b50"><path d="M35 50 H56 M64 50 H85" stroke-width="3.4"/><path d="M35 50 V57 Q35 63 41 63 H51 Q56 63 56 57 V50" stroke-width="1.2" opacity=".55"/><path d="M64 50 V57 Q64 63 70 63 H80 Q85 63 85 57 V50" stroke-width="1.2" opacity=".55"/><path d="M56 51 Q60 48 64 51" stroke-width="2"/><path d="M35 50 L30 49 M85 50 L90 49" stroke-width="2.2"/></g>' : '';
+  const boca = '<path d="' + (o.barba === 'cheia' ? 'M51 77 Q60 84 69 77' : 'M49 72 Q60 81 71 72') + '" stroke="' + (o.batom ? '#c2415b' : '#7a3b3b') + '" stroke-width="' + (o.batom ? 4 : 3) + '" fill="#fff" stroke-linecap="round"/>';
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" class="bnc-svg"><ellipse cx="60" cy="135" rx="34" ry="5" fill="rgba(0,0,0,.12)"/>'
+    + '<path d="M20 134 C20 106 38 96 60 96 C82 96 100 106 100 134 Z" fill="' + roupa + '"/><path d="M48 96 Q60 106 72 96" stroke="rgba(0,0,0,.25)" stroke-width="4" fill="none"/>'
+    + '<g class="bnc-mao"><path d="M94 112 C104 102 108 90 106 78" stroke="' + roupa + '" stroke-width="12" stroke-linecap="round" fill="none"/><circle cx="106" cy="73" r="8.5" fill="' + P[0] + '"/></g>'
+    + '<rect x="51" y="80" width="18" height="18" rx="6" fill="' + P[1] + '"/>' + (o.cabelo === 'longo' ? cab : '')
+    + '<ellipse cx="60" cy="56" rx="30" ry="33" fill="' + P[0] + '"/><ellipse cx="30" cy="60" rx="5" ry="7" fill="' + P[1] + '"/><ellipse cx="90" cy="60" rx="5" ry="7" fill="' + P[1] + '"/>'
+    + (o.cabelo !== 'longo' ? cab : '') + barba
+    + '<g class="bnc-olhos"><ellipse cx="46" cy="56" rx="3.6" ry="4.4" fill="#2a2420"/><ellipse cx="74" cy="56" rx="3.6" ry="4.4" fill="#2a2420"/><circle cx="47.3" cy="54.4" r="1.3" fill="#fff"/><circle cx="75.3" cy="54.4" r="1.3" fill="#fff"/></g>'
+    + '<path d="M39 45 Q46 41 53 44" stroke="' + hc + '" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M67 44 Q74 41 81 45" stroke="' + hc + '" stroke-width="3" fill="none" stroke-linecap="round"/>'
+    + '<path d="M58 60 Q60 67 63 66" stroke="' + P[1] + '" stroke-width="2.4" fill="none" stroke-linecap="round"/>' + boca
+    + (o.barba ? '' : '<ellipse cx="38" cy="68" rx="5" ry="3" fill="#f29a9a" opacity=".5"/><ellipse cx="82" cy="68" rx="5" ry="3" fill="#f29a9a" opacity=".5"/>') + oc + '</svg>';
+}
+function avatarEl(av, cls) {
+  const d = el('div', 'bnc-av ' + (cls || ''));
+  if (av && av.tipo === 'foto' && av.foto) { d.classList.add('foto'); const im = el('img'); im.src = av.foto; im.alt = ''; d.append(im); }
+  else d.innerHTML = avatarSVG(av || {});
+  return d;
+}
+const negrito = (box, t) => { String(t || '').split('**').forEach((p, i) => { if (!p) return; box.append(i % 2 ? el('b', '', p) : document.createTextNode(p)); }); return box; };
+// fila de falas do boneco (recados + bom dia/foguete): no máximo 3 por dia por aparelho
+let BNC = null, BNC_Q = [];
+function carregarBoneco() { if (!S || telaLoja() || S.cargo === 'ESTOQUISTA') return; google.script.run.withSuccessHandler((r) => { BNC = r; if (!r || !r.itens) return; let vis = {}; try { vis = JSON.parse(localStorage.getItem('bncVistos') || '{}'); } catch (e) {} BNC_Q = r.itens.filter((x) => !vis[x.id]); falarBoneco(); }).withFailureHandler(() => {}).bonecoFila(S.token); }
+function falarBoneco() {
+  if (!BNC_Q.length || $('bnc')) return; if ($('festa') || $('caminho') || $('cli-ov') || !$('det') === false) { clearTimeout(falarBoneco.t); falarBoneco.t = setTimeout(falarBoneco, 5000); return; }
+  let cnt = { d: '', n: 0 }; try { cnt = JSON.parse(localStorage.getItem('bncDia') || '{}'); } catch (e) {} if (cnt.d !== BNC.hoje) cnt = { d: BNC.hoje, n: 0 };
+  const it = BNC_Q.shift(); if (cnt.n >= 3 && it.tipo !== 'recado') { BNC_Q = BNC_Q.filter((x) => x.tipo === 'recado'); if (!BNC_Q.length) return; return falarBoneco(); }
+  cnt.n++; try { localStorage.setItem('bncDia', JSON.stringify(cnt)); const vis = JSON.parse(localStorage.getItem('bncVistos') || '{}'); vis[it.id] = BNC.hoje; Object.keys(vis).forEach((k) => { if (vis[k] < BNC.hoje && Object.keys(vis).length > 60) delete vis[k]; }); localStorage.setItem('bncVistos', JSON.stringify(vis)); } catch (e) {}
+  const w = el('div', 'bnc-w ' + (it.cor || 'roxo')); w.id = 'bnc'; const av = avatarEl(it.av); const bal = el('div', 'bnc-bal'), x = el('button', 'bnc-x', '×'); x.type = 'button';
+  const q = el('div', 'bnc-q', it.titulo || (it.de ? it.de + ' diz' : '')), tx = el('div', 'bnc-tx'); bal.append(x, q, tx); w.append(av, bal); document.body.append(w);
+  try { navigator.vibrate && navigator.vibrate(30); } catch (e) {}
+  const sai = () => { w.classList.add('sai'); setTimeout(() => { w.remove(); setTimeout(falarBoneco, 800); }, 350); }; x.addEventListener('click', sai);
+  // efeito de digitação
+  const alvo = el('div'); negrito(alvo, it.texto); const txt = alvo.textContent; let k = 0; tx.textContent = '';
+  const fim = () => { tx.replaceChildren(); negrito(tx, it.texto); if (it.bt && it.bt.length) { const bt = el('div', 'bnc-bt'); it.bt.forEach(([t, acao]) => { const b2 = el('button', '', t); b2.type = 'button'; b2.addEventListener('click', () => { sai(); if (acao === 'pde') abrirPde(); }); bt.append(b2); }); bal.append(bt); } };
+  const tic = setInterval(() => { k += 2; tx.textContent = txt.slice(0, k); if (k >= txt.length) { clearInterval(tic); fim(); } }, 22);
+  w.addEventListener('click', (ev) => { if (ev.target === w || ev.target === av || av.contains(ev.target)) { clearInterval(tic); fim(); } });
+  setTimeout(() => { if (document.body.contains(w) && !w.matches(':hover')) sai(); }, 16000);
+}
+// 🧑‍💼 Meu avatar (gerente/ADMIN) + mandar recado pelo boneco
+function abrirMeuAvatar() {
+  abrirDet('🧑‍💼 Meu avatar', (b) => {
+    b.append(el('div', 'sub', 'Carregando…'));
+    rodar('meuAvatar', [S.token], (r) => {
+      const A = Object.assign({ tipo: 'boneco', pele: 'clara', cabelo: 'curto', cabeloCor: '#5a3f2b', barba: '', oculos: false, batom: false, roupa: '#5b4a7a' }, r.avatar || {}); b.replaceChildren();
+      const pv = el('div', 'card'); pv.style.textAlign = 'center'; const pvb = el('div'); pv.append(pvb, el('div', 'sub', 'É assim que você aparece nos avisos para a equipe. Ele acena e pisca.'));
+      const ed = el('div', 'card'); const atual = () => { pvb.replaceChildren(avatarEl(A.tipo === 'foto' ? { tipo: 'foto', foto: (S.foto || '') } : A, 'grande')); };
+      const linha = (t, ops, k, rot) => { ed.append(el('div', 'ap-lb', t)); const g = el('div', 'ap-g'); ops.forEach((v) => { const x = el('button', 'btn' + (A[k] === v ? ' pri' : ''), rot ? rot(v) : v); x.type = 'button'; x.addEventListener('click', () => { A[k] = v; monta(); }); g.append(x); }); ed.append(g); };
+      const cores = (t, lista, k) => { ed.append(el('div', 'ap-lb', t)); const g = el('div', 'ap-cores'); lista.forEach((c) => { const x = el('button', 'ap-cor' + (A[k] === c ? ' on' : '')); x.type = 'button'; x.style.background = c; x.addEventListener('click', () => { A[k] = c; monta(); }); g.append(x); }); ed.append(g); };
+      const monta = () => { ed.replaceChildren(); atual();
+        linha('Tipo', ['boneco', 'foto'], 'tipo', (v) => v === 'boneco' ? '🎨 Boneco' : '📷 Minha foto');
+        if (A.tipo === 'foto') { ed.append(el('div', 'sub', r.temFoto ? 'Usa a foto do seu perfil, com moldura e animação.' : 'Coloque uma foto no seu perfil primeiro (toque na sua foto no topo).')); }
+        else { linha('Cabelo', ['curto', 'longo', 'coque', 'cacheado', 'topete', 'careca'], 'cabelo', (v) => v.charAt(0).toUpperCase() + v.slice(1));
+          cores('Cor do cabelo', ['#1d1512', '#3b2a20', '#5a3f2b', '#6b4a2f', '#c79a5b', '#e8c27a', '#9b2f2f', '#9e9e9e'], 'cabeloCor');
+          linha('Pele', ['clara', 'media', 'morena', 'negra'], 'pele', (v) => ({ clara: 'Clara', media: 'Média', morena: 'Morena', negra: 'Negra' })[v]);
+          linha('Rosto', ['', 'cheia', 'cavanhaque'], 'barba', (v) => ({ '': 'Sem barba', cheia: '🧔 Barba', cavanhaque: 'Cavanhaque' })[v]);
+          ed.append(el('div', 'ap-lb', 'Detalhes')); const g = el('div', 'ap-g'); [['oculos', '👓 Óculos'], ['batom', '💋 Batom']].forEach(([k, t]) => { const x = el('button', 'btn' + (A[k] ? ' pri' : ''), t); x.type = 'button'; x.addEventListener('click', () => { A[k] = !A[k]; monta(); }); g.append(x); }); ed.append(g);
+          cores('Roupa', ['#5b4a7a', '#1e7a46', '#e8738a', '#1f1e1d', '#4a3f3a', '#f2b01e', '#7fb3e6', '#ffffff'], 'roupa'); }
+        const sv = el('button', 'btn pri big', 'Salvar meu avatar'); sv.type = 'button'; sv.style.marginTop = '12px'; sv.addEventListener('click', () => rodar('salvarAvatar', [S.token, A], () => toast('Avatar salvo 💜'))); ed.append(sv); };
+      monta(); b.append(pv, ed);
+      // recado pelo boneco
+      const rc = el('div', 'card'); rc.append(el('h3', '', '💬 Mandar recado pelo boneco'), el('div', 'sub', 'Aparece com o seu avatar na tela das vendedoras (por 2 dias).'));
+      const ta = el('textarea'); ta.rows = 3; ta.maxLength = 240; ta.placeholder = 'Ex.: Hoje tem Black, bora! 🔥'; ta.className = 'ap-ta';
+      const sel = el('select'); sel.className = 'ap-sel'; (S.cargo === 'ADMIN' ? [['todas', '', 'Todas as lojas']] : []).concat((S.lojas || []).map((l) => ['loja', l, l])).forEach(([t, v, n]) => { const o = el('option', '', n); o.value = t + '|' + v; sel.append(o); });
+      const env = el('button', 'btn pri big', 'Enviar recado'); env.type = 'button'; env.addEventListener('click', () => { const [t, v] = sel.value.split('|'); if (ta.value.trim().length < 2) { toast('Escreva o recado.'); return; } rodar('bonecoRecado', [S.token, t, v, ta.value.trim()], () => { ta.value = ''; toast('Recado enviado 💬'); }); });
+      rc.append(ta, sel, env); b.append(rc);
+    }, (e) => { b.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e))); });
+  });
+}
+// ---------- 💜 Vamos conhecer essa cliente? (ao tocar em Atender) ----------
+const tcN = (t) => String(t || '').toLowerCase().replace(/(^|[\s(-])\S/g, (m) => m.toUpperCase()).replace(/\b(De|Da|Do|Das|Dos|E)\b/g, (m) => m.toLowerCase());
+const lojaCliAt = () => (typeof loja !== 'undefined' && loja && loja !== 'TODAS' ? loja : (S.lojas || [])[0] || '');
+function conhecerCliente(teste) {
+  const ant = $('cli-ov'); if (ant) ant.remove(); const ov = el('div'); ov.id = 'cli-ov'; const sh = el('div', 'cli-sh'); ov.append(sh); document.body.append(ov);
+  const sai = () => ov.remove();
+  const inicio = () => {
+    sh.replaceChildren(); sh.classList.remove('ficha');
+    const inp = el('input'); inp.placeholder = 'Nome, celular ou CPF'; inp.autocomplete = 'off'; inp.className = 'cli-inp';
+    const res = el('div', 'cli-res'), bus = el('button', 'btn pri big', '🔍 Buscar'), nova = el('button', 'btn big', '✨ Cliente nova'), nao = el('button', 'btn sm cli-nao', 'Agora não');
+    [bus, nova, nao].forEach((x) => { x.type = 'button'; });
+    sh.append(el('div', 'cli-em', '💜'), el('h3', '', 'Vamos conhecer melhor essa cliente?'), el('div', 'sub', teste ? '🧪 Modo teste: nada é registrado na fila.' : 'Com o histórico dela você acerta na oferta e vende mais.'), inp, res, bus, nova, nao);
+    const buscar = () => { const t = inp.value.trim(); if (t.replace(/\D/g, '').length < 8 && t.replace(/[^a-zA-ZÀ-ú]/g, '').length < 3) { toast('Digite pelo menos 3 letras do nome, o celular ou o CPF.'); return; } bus.disabled = true; res.replaceChildren(el('div', 'sub', 'Buscando…'));
+      google.script.run.withSuccessHandler((r) => { bus.disabled = false; res.replaceChildren(); if (!r.clientes.length) { res.append(el('div', 'sub', 'Nenhuma cliente encontrada. Confira ou cadastre como cliente nova.')); return; }
+        r.clientes.forEach((c) => { const row = el('button', 'cli-row'); row.type = 'button'; const ini = (c.nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('') || '?').toUpperCase(); const tx = el('div'); tx.append(el('b', '', tcN(c.nome)), el('div', 'sub', [c.lojaNome, c.fone].filter(Boolean).join(' · ')));
+          row.append(el('span', 'cli-ini', ini), tx); if (c.vip) row.append(el('span', 'cli-vip', '⭐ VIP')); row.addEventListener('click', () => ficha(c)); res.append(row); });
+        if (r.total > r.clientes.length) res.append(el('div', 'sub', 'Mostrando ' + r.clientes.length + ' de ' + r.total + ': digite mais do nome para filtrar.'));
+      }).withFailureHandler((e) => { bus.disabled = false; res.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e))); }).clienteBuscar(S.token, lojaCliAt(), t); };
+    bus.addEventListener('click', buscar); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') buscar(); });
+    nova.addEventListener('click', () => { sai(); toast('✨ Cliente nova: faça o cadastro no USE (ou na pré-venda) para o histórico dela começar.'); try { google.script.run.withFailureHandler(() => {}).clientePulou(S.token, lojaCliAt()); } catch (e) {} });
+    nao.addEventListener('click', () => { sai(); try { google.script.run.withFailureHandler(() => {}).clientePulou(S.token, lojaCliAt()); } catch (e) {} });
+    setTimeout(() => inp.focus(), 80);
+  };
+  const ficha = (c) => {
+    sh.replaceChildren(el('div', 'cli-em', '💜'), el('div', 'sub', 'Abrindo o histórico de ' + tcN(c.nome) + '…'));
+    google.script.run.withSuccessHandler((f) => { sh.classList.add('ficha'); sh.replaceChildren();
+      const rs2 = (v) => 'R$ ' + (v >= 1000 ? (v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' mil' : Math.round(v).toLocaleString('pt-BR'));
+      const top = el('div', 'cli-card' + (f.vip ? ' vip' : '')); const ini = (f.nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('') || '?').toUpperCase();
+      const hd = el('div', 'cli-hd'), ht = el('div'); ht.append(el('div', 'sub', (f.vip ? '⭐ Cliente VIP · ' : '') + (f.lojaCad ? 'cadastro ' + f.lojaCad : '')), el('h2', 'cli-nome', tcN(f.nome)), el('div', 'sub', (f.desde ? 'Cliente desde ' + isoBR(f.desde).slice(3) : 'Sem compras nos últimos 12 meses') + (f.vendedoras[0] ? ' · atendida por ' + f.vendedoras[0].n + ' (' + f.vendedoras[0].q + '×)' : '')));
+      hd.append(el('span', 'cli-ini g', ini), ht); top.append(hd);
+      const kp = el('div', 'cli-kp'); [[String(f.compras), 'compras'], [rs2(f.total), '12 meses'], [f.ticket ? rs2(f.ticket) : '—', 'ticket']].forEach(([v, t]) => { const d = el('div'); d.append(el('b', '', v), el('span', '', t)); kp.append(d); }); top.append(kp);
+      if (f.freq) top.append(el('div', 'sub', '🗓️ Compra a cada ~' + f.freq + ' dias' + (f.diasSem != null ? ' · última há ' + f.diasSem + ' dia(s)' + (f.diasSem > f.freq * 1.5 ? ' · ⏰ está sumida!' : '') : '')));
+      else if (f.ultima) top.append(el('div', 'sub', '🗓️ Última compra ' + isoBR(f.ultima)));
+      sh.append(top);
+      if (f.sugestoes.length) { const s = el('div', 'cli-card'); s.append(el('div', 'cli-lb', '💡 Para oferecer hoje')); f.sugestoes.forEach((x) => { const r2 = el('div', 'cli-it'), t2 = el('div'); t2.append(el('b', '', tcN(x.nome)), el('div', 'sub', x.det)); r2.append(t2, el('span', 'cli-tag' + (x.tipo === 'novidade' ? ' ok' : ''), x.tipo)); s.append(r2); }); sh.append(s); }
+      if (f.cash && f.cash.agora > 0) { const s = el('div', 'cli-card'); s.append(el('div', 'cli-lb', '💰 Cashback')); const l = el('div'); l.append(el('b', '', rs(f.cash.agora))); const v1 = (f.cash.itens || [])[0]; if (v1 && v1.valeAte) l.append(el('span', 'cli-tag wn', 'vence ' + isoBR(v1.valeAte).slice(0, 5))); s.append(l); if (v1 && v1.minimo) s.append(el('div', 'sub', 'Usa numa compra a partir de ' + rs(v1.minimo))); sh.append(s); }
+      if (f.categorias.length || f.tamanhos.length) { const s = el('div', 'cli-card'); s.append(el('div', 'cli-lb', '👗 O que ela gosta')); const tg = el('div'); f.categorias.forEach((x) => tg.append(el('span', 'cli-tag', x.n + ' (' + x.q + ')'))); f.tamanhos.forEach((x) => tg.append(el('span', 'cli-tag ok', 'Tam ' + x.n))); f.cores.forEach((x) => tg.append(el('span', 'cli-tag', x.n.charAt(0) + x.n.slice(1).toLowerCase()))); s.append(tg); if (f.trocas) s.append(el('div', 'sub', '🔄 ' + f.trocas + ' troca(s) nos últimos 12 meses')); sh.append(s); }
+      if (f.ultimas.length) { const s = el('div', 'cli-card'); s.append(el('div', 'cli-lb', '🧾 Últimas compras')); f.ultimas.slice(0, 5).forEach((c2) => { const r2 = el('div', 'cli-it'), t2 = el('div'); t2.append(el('div', '', isoBR(c2.d).slice(0, 5) + ' · ' + (c2.itens.map(tcN).join(' + ') || 'troca')), el('div', 'sub', [c2.vend, c2.loja, rs(c2.total), c2.troca ? '🔄 troca' : ''].filter(Boolean).join(' · '))); r2.append(t2); s.append(r2); }); sh.append(s); }
+      if (!f.indice) sh.append(el('div', 'aviso-meta', '⏳ O histórico de compras ainda está sendo montado (12 meses). Em algumas horas fica completo.'));
+      const ok = el('button', 'btn pri big', teste ? 'Fechar teste' : 'Começar atendimento 💜'), out = el('button', 'btn sm cli-nao', '‹ Buscar outra cliente'); ok.type = out.type = 'button'; ok.addEventListener('click', sai); out.addEventListener('click', inicio); sh.append(ok, out); sh.scrollTop = 0;
+    }).withFailureHandler((e) => { sh.replaceChildren(el('div', 'aviso-meta', '⚠️ ' + ((e && e.message) || e))); const v = el('button', 'btn big', '‹ Voltar'); v.addEventListener('click', inicio); sh.append(v); }).clienteFicha(S.token, lojaCliAt(), { loja: c.loja, codigo: c.codigo, cpf: c.cpf, fone: c.fone, nome: c.nome });
+  };
+  inicio();
 }
 // 🏆 PDE: card animado para as premiadas do mês (e para gerentes/ADMIN, com parabéns) — uma vez por mês publicado
 let PDEV = null;
@@ -7319,6 +7560,9 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && T)
     pv: '<path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/>',
     pde: '<path d="M8 4h8v4a4 4 0 0 1-8 0z"/><path d="M8 6H5c0 2 1.3 3.5 3 4M16 6h3c0 2-1.3 3.5-3 4M12 12v4M9 20h6M10 16h4v4h-4z"/>',
     fin: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M8 6V4h8v2M3 11h18M12 10v3"/>',
+    cli: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+    apar: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/>',
+    avat: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.2-7 8-7s7 2.5 8 7"/><path d="M15 3.5l2-1.5M19 6l2-.5"/>',
     cb: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .9 3 2-1.3 2-3 2c-1.4 0-2.6-.6-3-1.6M12 6.5V8M12 16v1.5"/>',
   };
   const svg = (k) => { const d = document.createElement('span'); d.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + (I[k] || I.ini) + '</svg>'; return d.firstChild; };
