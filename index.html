@@ -1385,7 +1385,7 @@ function abrir() {
   cabecalho(); protecao(true);
   const fazCaminho = S.cargo !== 'ADMIN' && S.cargo !== 'ESTOQUISTA' && !S.trocarSenha && !(typeof T !== 'undefined' && T) && caminhoPendente();
   if (S.trocarSenha) setTimeout(() => trocarSenhaUI(SENHA_TMP, true), 300); else { if (!fazCaminho) mostrarGuia(false); setTimeout(() => exigirTermo(() => exigirApp(false)), 500); }
-  if (fazCaminho) { ONTEM = null; ONTEM_OK = false; cardMetaLoja.pedida = cardMetaLoja.ok = false; cardMetaLoja.m = null; google.script.run.withSuccessHandler((o) => { ONTEM = o; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); }).withFailureHandler(() => { ONTEM = { semDados: true }; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
+  if (fazCaminho) iniciarCaminho_();
   MED = null; const tm = $('t-med'); if (tm) tm.remove(); setTimeout(() => checarMedalhas(), 4000);
   setTimeout(checarAvisos, 2500); if (S.cargo !== 'ADMIN') setTimeout(carregarRHBadge, 3000); setTimeout(carregarStatus, 4500); setTimeout(() => carregarTreino(), 6000); try { $('rp-card').classList.toggle('hide', S.cargo === 'VENDEDORA' || S.cargo === 'AUXILIAR'); } catch (e) {} setTimeout(carregarCampeas, 3500); setTimeout(carregarEstoqueInfo, 5000); clearInterval(window.__stT); window.__stT = setInterval(() => { if (!document.hidden && S) carregarStatus(); }, 120000);
   $('t-av').replaceChildren(...avatar(S.foto, S.nome).childNodes); if (!S.foto) $('t-av').textContent = (S.nome || '?').charAt(0);
@@ -4972,6 +4972,12 @@ const chaveCaminho = () => 'amorata_cam_' + (S && S.usuario) + '_' + hojeStr();
 const chaveMood = () => 'amorata_mood_' + (S && S.usuario) + '_' + hojeStr();
 function moodPedido() { try { return !!localStorage.getItem(chaveMood()); } catch (e) { return false; } }
 function marcarMoodPedido() { try { localStorage.setItem(chaveMood(), '1'); } catch (e) {} }
+// abre o caminho do dia (mood → recado → comunicados → resumo de ontem e meta de hoje)
+function iniciarCaminho_() { ONTEM = null; ONTEM_OK = false; cardMetaLoja.pedida = cardMetaLoja.ok = false; cardMetaLoja.m = null; google.script.run.withSuccessHandler((o) => { ONTEM = o; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); }).withFailureHandler(() => { ONTEM = { semDados: true }; ONTEM_OK = true; if (caminho.redesenhar) caminho.redesenhar(); })[S.cargo === 'GERENTE' ? 'lojaOntem' : 'meuOntem'](S.token); caminho(); }
+// o celular costuma "acordar" o app de ontem sem recarregar: na volta, se é um dia novo, abre o caminho do dia (Jonatan, 18/11)
+function caminhoNaVolta_() { try { if (!S || !S.token || S.cargo === 'ADMIN' || S.cargo === 'ESTOQUISTA' || S.trocarSenha || (typeof T !== 'undefined' && T) || $('caminho') || $('v-app').classList.contains('hide') || !caminhoPendente()) return; MH = null; iniciarCaminho_(); } catch (e) {} }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(caminhoNaVolta_, 400); });
+window.addEventListener('pageshow', () => setTimeout(caminhoNaVolta_, 400));
 function caminhoPendente() { try { if (localStorage.getItem(chaveCaminho())) return false; } catch (e) {} return true; }
 function caminho() {
   if ($('caminho')) return;
