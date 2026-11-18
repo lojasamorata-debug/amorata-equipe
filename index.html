@@ -3225,9 +3225,11 @@ function desenharPd_(b, foco) {
   if (r.podeEnviar) { const db = el('button', 'btn' + (r.adm ? '' : ' pri'), '🩹 Enviar peça com defeito'); db.addEventListener('click', () => formDefeito_(b)); acoes.append(db); }
   if (acoes.childNodes.length) b.append(acoes);
   const pend = r.defeitos.filter((x) => x.status === 'pendente').length;
-  const sg = el('div', 'seg2'); sg.style.display = 'flex'; [['promo', '🏷️ Promoções (' + r.promos.filter((x) => x.status === 'ativa').length + ')'], ['def', '🩹 Defeitos' + (pend ? ' · ' + pend + ' p/ aprovar' : '')]].forEach(([k, t]) => { const x = el('button', 'btn' + (PD.aba === k ? ' pri' : ''), t); x.addEventListener('click', () => { PD.aba = k; desenharPd_(b); }); sg.append(x); }); b.append(sg);
+  const sg = el('div', 'seg2'); sg.style.display = 'flex'; [['promo', '🏷️ Promoções (' + r.promos.filter((x) => x.status === 'ativa').length + ')'], ['def', '🩹 Defeitos' + (pend ? ' · ' + pend + ' p/ aprovar' : '')]].concat(r.adm || r.podeEnviar ? [['log', '📜 Dossiê']] : []).forEach(([k, t]) => { const x = el('button', 'btn' + (PD.aba === k ? ' pri' : ''), t); x.addEventListener('click', () => { PD.aba = k; desenharPd_(b); }); sg.append(x); }); b.append(sg);
   const lista = el('div'); lista.style.cssText = 'display:grid;gap:10px'; b.append(lista);
+  if (PD.aba === 'log') { dossiePd_(lista); return; }
   if (PD.aba === 'promo') {
+    if (r.promos.some((x) => x.status === 'ativa')) { const pp = el('button', 'btn', '📄 PDF das promoções para mandar no WhatsApp'); pp.style.width = '100%'; pp.addEventListener('click', () => gerarPdfPd_('promos', '', '', pp)); lista.append(pp); }
     if (!r.promos.length) lista.append(el('div', 'sub', 'Nenhuma promoção ativa agora.'));
     r.promos.forEach((x) => { const c = el('div', 'card'); c.style.margin = '0';
       const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:flex-start'; h.append(el('b', '', (x.nome || 'Ref ' + x.ref) + (x.cor ? ' · ' + x.cor : '') + (x.tam ? ' · ' + x.tam : '')), el('b', '', 'até ' + x.desconto + '%')); c.append(h);
@@ -3250,6 +3252,34 @@ function desenharPd_(b, foco) {
         bt.append(ap, rc); c.append(bt); }
       lista.append(c); });
   }
+}
+
+// gera o PDF no servidor e abre o compartilhar do celular (WhatsApp, grupos…); no computador, baixa o arquivo
+function gerarPdfPd_(qual, mes, loja, bt) {
+  const t0 = bt.textContent; bt.disabled = true; bt.textContent = 'Gerando PDF…';
+  rodar('pdPdf', [S.token, qual, mes || '', loja || ''], async (r) => { bt.disabled = false; bt.textContent = t0;
+    const bin = atob(r.b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    const f = new File([u8], r.nome, { type: 'application/pdf' });
+    try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: r.nome.replace(/\.pdf$/, '') }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = r.nome; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000); toast('PDF baixado ✓'); }, () => { bt.disabled = false; bt.textContent = t0; });
+}
+// 📜 dossiê: tudo que foi lançado, em ordem, com quem fez e quando
+function dossiePd_(cx) {
+  const r = PD.r; PD.mes = PD.mes || r.hoje.slice(0, 7); const f = el('div'); f.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+  const m = el('input'); m.type = 'month'; m.value = PD.mes; m.style.cssText = 'flex:1;min-width:140px'; f.append(m);
+  let lj = null; if (r.adm) { lj = el('select'); lj.style.cssText = 'flex:1;min-width:140px'; [['', 'Todas as lojas']].concat(LOJAS_TODAS.map((l) => [l, l])).forEach(([v, t]) => lj.append(new Option(t, v))); lj.value = PD.loja || ''; f.append(lj); }
+  const pr = el('button', 'btn', '📄 PDF p/ WhatsApp'); f.append(pr); const lst = el('div'); lst.style.cssText = 'display:grid;gap:8px;margin-top:10px'; cx.append(f, lst);
+  const carrega = () => { PD.mes = m.value; PD.loja = lj ? lj.value : ''; lst.replaceChildren(el('div', 'sub', 'Carregando…'));
+    rodar('pdDossie', [S.token, PD.mes, PD.loja], (d) => { lst.replaceChildren(); if (!d.itens.length) { lst.append(el('div', 'sub', 'Nada lançado nesse mês.')); return; }
+      lst.append(el('div', 'sub', d.itens.length + ' registros · do mais antigo para o mais novo'));
+      d.itens.forEach((x) => { const c = el('div', 'card'); c.style.cssText = 'margin:0;padding:10px 12px';
+        const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px'; h.append(el('b', '', x.acao), el('span', 'sub', x.quando)); c.append(h);
+        c.append(el('div', '', [x.peca, x.ref ? 'ref ' + x.ref : ''].filter(Boolean).join(' · ')), el('div', 'sub', x.loja + ' · ' + (x.cod === 'divergencia' ? 'vendedora: ' : x.cod === 'defeito_vendido' ? '' : 'por ') + (x.cod === 'defeito_vendido' ? 'conferido pelo sistema' : x.quem)));
+        if (x.detalhe) c.append(el('div', 'sub', x.detalhe));
+        if (x.foto) { const im = el('img'); im.src = x.foto; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; im.style.cssText = 'width:120px;height:90px;object-fit:cover;border-radius:8px;margin-top:6px'; c.append(im); }
+        lst.append(c); }); }, () => { lst.replaceChildren(el('div', 'sub', 'Não consegui carregar agora.')); }); };
+  m.addEventListener('change', carrega); if (lj) lj.addEventListener('change', carrega); carrega();
+  pr.addEventListener('click', () => gerarPdfPd_('dossie', PD.mes, PD.loja, pr));
 }
 // busca de peça no estoque (reaproveita a busca do Estoque)
 function buscaPecaPd_(cx, loja, aoEscolher) {
