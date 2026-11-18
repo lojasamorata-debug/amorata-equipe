@@ -4567,7 +4567,7 @@ function abrirAuditoria(abrirId) {
       if (c.decidido_em) tl.append(el('div', 'sub', '• ' + c.decidido_em + ' · ' + (c.decisao === 'procedente' ? '⚠️ procedente' : '✅ justificado') + (c.obs ? ': ' + c.obs : '')));
       b.append(tl);
       const ac = el('div', 'card'), ta = el('textarea'); ta.rows = 3; ta.className = 'ap-ta';
-      const btn = (t, cls, fn) => { const x = el('button', 'btn big' + (cls ? ' ' + cls : ''), t); x.type = 'button'; x.addEventListener('click', fn); ac.append(x); return x; };
+      const btn = (t, cls, fn) => { const x = el('button', 'btn' + (cls ? ' ' + cls : ''), t); x.type = 'button'; x.style.cssText = 'width:100%;margin-top:8px'; x.addEventListener('click', fn); ac.append(x); return x; };
       if (AUD.r.admin) {
         if (c.status === 'aberto' || c.status === 'aguardando') { ac.append(el('div', 'cli-lb', c.status === 'aberto' ? 'Pedir explicação à gerente' : 'Cobrar a gerente de novo')); ta.placeholder = 'Mensagem para a gerente (opcional)'; ac.append(ta); btn('🟡 Pedir explicação à gerente da ' + c.loja, 'pri', () => rodar('audPedir', [S.token, c.id, ta.value.trim()], () => { toast('Pedido enviado à gerente 🕵️'); carrega(); })); }
         if (c.status !== 'justificado' && c.status !== 'procedente') { ac.append(el('div', 'cli-lb', 'Sua decisão')); const ob = el('textarea'); ob.rows = 2; ob.className = 'ap-ta'; ob.placeholder = 'Observação (opcional)'; ac.append(ob);
