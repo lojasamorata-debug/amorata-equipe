@@ -875,6 +875,7 @@ html.dark .ct-pg { background:var(--panel) !important }
 #v-hub .hub-c b { font-size:14px; } #v-hub .hub-c small { font-size:12px; color:var(--muted); line-height:1.3; } #v-hub .hub-c small.ok { color:var(--ok); } #v-hub .hub-c small.al { color:var(--bad); }
 #v-hub .hub-c .mn { position:absolute; top:10px; right:10px; }
 @media (max-width:1099px) { #menu.menu-novo { display:none !important; } body.logado #bnav.cinco { grid-template-columns:repeat(5,minmax(0,1fr)); } }
+.aud-dia { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; margin:4px 0 10px; } .aud-dia .btn { flex:none; margin:0 !important; } .aud-dia input[type=date] { width:auto !important; flex:1; min-width:0; max-width:170px; margin:0 !important; height:36px; border:1px solid var(--line); border-radius:10px; padding:0 8px; font:inherit; font-size:14px; background:var(--panel); color:var(--fg); }
 </style>
 </head>
 <body>
@@ -4551,7 +4552,7 @@ function furoDetalheUI(x, dia) {
 // ---------- 🕵️ Auditoria: casos dos alertas (a gerente explica, o ADMIN decide) ----------
 const AUDT = { desconto: '💸 Desconto fora do padrão', cancelada: '❌ Venda cancelada', troca: '🔄 Troca grande', cativa: '👯 Desconto repetido p/ mesma cliente', funcionaria: '🪪 Compra de funcionária', cancel_dinheiro: '💵 Cancelou venda em dinheiro', credito: '🎟️ Crédito da loja alto', abaixo_custo: '📉 Abaixo do custo', horario: '🌙 Fora do horário', cashback: '💜 Cashback acima do normal', dinheiro: '💵 Muito pagamento em dinheiro' };
 const AUDS = { aberto: ['🔴 Aberto', 'a-ab'], aguardando: ['🟡 Aguardando a gerente', 'a-ag'], analise: ['🔵 Em análise', 'a-an'], justificado: ['✅ Justificado', 'a-ok'], procedente: ['⚠️ Procedente', 'a-pr'] };
-const AUD = { mes: '', filtro: 'pend', r: null };
+const AUD = { mes: '', filtro: 'pend', r: null, dia: '' };
 function abrirAuditoria(abrirId) {
   const d0 = new Date(); AUD.mes = AUD.mes || d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0');
   abrirDet('🕵️ Auditoria', (b) => { const carrega = () => { b.replaceChildren(el('div', 'sub', 'Carregando…'));
@@ -4559,13 +4560,23 @@ function abrirAuditoria(abrirId) {
     const desenha = () => { const r = AUD.r; b.replaceChildren();
       const ml = (m) => ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][+m.slice(5, 7) - 1] + '/' + m.slice(2, 4), mv = (k) => { const dd = new Date(+AUD.mes.slice(0, 4), +AUD.mes.slice(5, 7) - 1 + k, 1); return dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0'); };
       const ch = el('div', 'chips'); [[mv(-1), '‹ ' + ml(mv(-1))], [AUD.mes, ml(AUD.mes)], [mv(1), ml(mv(1)) + ' ›']].forEach(([m, t], i) => { const x = el('button', i === 1 ? 'on' : '', t); x.type = 'button'; if (i === 2 && m > r.hoje.slice(0, 7)) x.disabled = true; x.addEventListener('click', () => { if (m === AUD.mes) return; AUD.mes = m; carrega(); }); ch.append(x); }); b.append(ch);
+      // 📅 consultar um dia
+      const dd = el('div', 'aud-dia'), hojeIso = r.hoje, ont = (() => { const t = new Date(hojeIso + 'T12:00:00'); t.setDate(t.getDate() - 1); return t.toISOString().slice(0, 10); })();
+      const mvD = (k) => { const t = new Date((AUD.dia || ont) + 'T12:00:00'); t.setDate(t.getDate() + k); const nd = t.toISOString().slice(0, 10); if (nd > hojeIso) return; AUD.dia = nd; AUD.filtro = 'todos'; if (nd.slice(0, 7) !== AUD.mes) { AUD.mes = nd.slice(0, 7); carrega(); } else desenha(); };
+      const bA = el('button', 'btn sm', '‹'), bP = el('button', 'btn sm', '›'), inp = el('input'); [bA, bP].forEach((x) => { x.type = 'button'; }); inp.type = 'date'; inp.max = hojeIso; inp.value = AUD.dia || ''; inp.setAttribute('aria-label', 'Escolher o dia');
+      bA.addEventListener('click', () => mvD(-1)); bP.addEventListener('click', () => mvD(1)); if (AUD.dia && AUD.dia >= hojeIso) bP.disabled = true;
+      inp.addEventListener('change', () => { if (!inp.value) return; AUD.dia = inp.value; AUD.filtro = 'todos'; if (inp.value.slice(0, 7) !== AUD.mes) { AUD.mes = inp.value.slice(0, 7); carrega(); } else desenha(); });
+      const tudo = el('button', 'btn sm' + (AUD.dia ? '' : ' pri'), 'Mês todo'); tudo.type = 'button'; tudo.addEventListener('click', () => { AUD.dia = ''; desenha(); });
+      dd.append(el('span', 'sub', '📅 Dia:'), bA, inp, bP, tudo); b.append(dd);
+      if (r.admin && AUD.dia) { const an = el('button', 'btn', '🔄 Analisar as vendas de ' + isoBR(AUD.dia).slice(0, 5)); an.type = 'button'; an.style.cssText = 'width:100%;margin:0 0 10px'; an.title = 'Busca os alertas deste dia no USE e abre os casos que faltarem';
+        an.addEventListener('click', () => { an.disabled = true; an.textContent = 'Analisando o dia no USE…'; rodar('alertasVer', [S.token, AUD.dia], () => { toast('Dia analisado ✓'); carrega(); }, () => { an.disabled = false; }); }); b.append(an); }
       if (r.admin) { const P = r.painel, c = el('div', 'card'), kp = el('div', 'cli-kp'); [[String(P.casos), 'casos no mês'], [String(P.abertos), 'em aberto'], [P.horasResposta != null ? P.horasResposta + ' h' : '—', 'p/ a gerente responder']].forEach(([v, t]) => { const d = el('div'); d.append(el('b', '', v), el('span', '', t)); kp.append(d); }); c.append(kp);
         if (P.somaDesc) c.append(el('div', 'sub', '💸 Desconto fora do padrão no mês: ' + rs(P.somaDesc)));
         if (P.pessoas.length) { c.append(el('div', 'cli-lb', '🎯 Placar de risco (padrão que se repete)')); P.pessoas.forEach((p) => { const r2 = el('div', 'cli-it'), t2 = el('div'); t2.append(el('b', '', tcN(p.nome)), el('div', 'sub', p.loja + ' · ' + p.casos + ' caso(s)' + (p.procedentes ? ' · ' + p.procedentes + ' procedente(s)' : ''))); r2.append(t2, el('span', 'cli-tag' + (p.risco >= 8 ? ' a-pr' : p.risco >= 4 ? ' wn' : ''), 'risco ' + p.risco)); c.append(r2); }); }
         const pdf = el('button', 'btn', '📄 Relatório do mês (PDF)'); pdf.style.cssText = 'width:100%;margin-top:10px'; pdf.type = 'button'; pdf.addEventListener('click', () => audPDF(r)); c.append(pdf); b.append(c); }
       const fl = el('div', 'chips'); [['pend', 'Pendentes'], ['aguardando', '🟡 Gerente'], ['analise', '🔵 Analisar'], ['dec', 'Decididos'], ['todos', 'Todos']].forEach(([k, t]) => { const x = el('button', AUD.filtro === k ? 'on' : '', t); x.type = 'button'; x.addEventListener('click', () => { AUD.filtro = k; desenha(); }); fl.append(x); }); b.append(fl);
-      const ls = r.casos.filter((c) => AUD.filtro === 'todos' || (AUD.filtro === 'pend' ? ['aberto', 'aguardando', 'analise'].indexOf(c.status) >= 0 : AUD.filtro === 'dec' ? ['justificado', 'procedente'].indexOf(c.status) >= 0 : c.status === AUD.filtro));
-      const lc = el('div', 'card'); if (!ls.length) lc.append(el('div', 'vazio', r.admin ? '✅ Nenhum caso aqui.' : '✅ Nenhuma explicação pendente.'));
+      const ls = r.casos.filter((c) => !AUD.dia || c.dia === AUD.dia).filter((c) => AUD.filtro === 'todos' || (AUD.filtro === 'pend' ? ['aberto', 'aguardando', 'analise'].indexOf(c.status) >= 0 : AUD.filtro === 'dec' ? ['justificado', 'procedente'].indexOf(c.status) >= 0 : c.status === AUD.filtro));
+      const lc = el('div', 'card'); if (AUD.dia) lc.append(el('div', 'cli-lb', 'Casos de ' + isoBR(AUD.dia))); if (!ls.length) lc.append(el('div', 'vazio', AUD.dia ? (r.admin ? 'Nenhum caso neste dia. Toque em 🔄 Analisar para conferir as vendas dele.' : 'Nenhuma explicação pedida neste dia.') : r.admin ? '✅ Nenhum caso aqui.' : '✅ Nenhuma explicação pendente.'));
       ls.forEach((c) => { const row = el('button', 'al-row al-bt'), t = el('div'); row.type = 'button'; t.append(el('b', '', (AUDT[c.tipo] || c.tipo) + ' · ' + c.loja), el('div', 'sub', tcN(c.quem) + ' · ' + isoBR(c.dia).slice(0, 5) + ' · ' + c.txt)); row.append(t, el('span', 'a-pill ' + (AUDS[c.status] || ['', ''])[1], (AUDS[c.status] || [c.status])[0])); row.addEventListener('click', () => caso(c)); lc.append(row); });
       b.append(lc, el('div', 'sub', r.admin ? 'Os casos são criados sozinhos todo dia de manhã, a partir dos alertas. Um caso isolado quase sempre tem explicação; o que importa é o padrão que se repete.' : 'A administração pediu sua explicação sobre estes casos. Toque para responder.'));
     };
