@@ -2713,6 +2713,7 @@ function cliDe_(v) {
 }
 function cliComprasTalvez_() { // de hora em hora: completa o índice (até 12 meses para trás) e acrescenta os dias novos
   // sem LockService (não pode travar a fila das lojas): marca na propriedade que está rodando
+  const hrC = +Utilities.formatDate(new Date(), 'America/Rio_Branco', 'H'); if (hrC >= 7 && hrC < 23) return 'só de madrugada'; // não disputa a planilha com as lojas abertas (Jonatan, 19/11)
   const pp = PropertiesService.getScriptProperties(), r0 = +pp.getProperty('CC_RODANDO') || 0; if (Date.now() - r0 < 420000) return 'rodando';
   pp.setProperty('CC_RODANDO', String(Date.now())); try { return cliComprasAtualizar_(150000); } finally { pp.deleteProperty('CC_RODANDO'); }
 }
@@ -2962,7 +2963,7 @@ function furoDia_(d) {
 // roda 1x por dia (de manhã, pelo dsSincronizar): avisa o ADMIN do furo de ontem e das peças com muita troca
 function alertasDiarios_() {
   const pp = PropertiesService.getScriptProperties(), hoje = Utilities.formatDate(new Date(), 'America/Rio_Branco', 'yyyy-MM-dd'), hr = +Utilities.formatDate(new Date(), 'America/Rio_Branco', 'H');
-  if (pp.getProperty('ALERTAS_EM') === hoje || hr < 7 || hr > 11) return; pp.setProperty('ALERTAS_EM', hoje);
+  if (pp.getProperty('ALERTAS_EM') === hoje || hr < 4 || hr > 11) return; // de madrugada (a partir das 4h), antes das lojas abrirem pp.setProperty('ALERTAS_EM', hoje);
   const adms = usuarios_().filter((x) => x.ativo && x.cargo === 'ADMIN').map((x) => x.usuario), ontem = somaDia_(hoje, -1);
   try { const f = furoDia_(ontem); pp.setProperty('FURO_' + ontem, JSON.stringify(f).slice(0, 8500)); try { audCriar_(ontem, f); } catch (e) { console.log('aud: ' + e.message); } if (f.length) adms.forEach((a) => avisar_(a, 'furo', '🚨 Alerta de furo · ' + ontem.slice(8, 10) + '/' + ontem.slice(5, 7) + ': ' + f.slice(0, 3).map((x) => x.loja + ' · ' + primeiroNomeS_(x.quem) + ': ' + x.txt).join(' | ') + (f.length > 3 ? ' (+' + (f.length - 3) + ')' : '') + '. Veja em 🕵️ Auditoria.', ontem, '')); } catch (e) { console.log('furo: ' + e.message); }
   try { if (new Date().getDay() === 1) { const t = trocasPorPeca_(60).filter((o) => o.trocas >= 3 && o.taxa >= 0.15).slice(0, 5); if (t.length) adms.forEach((a) => avisar_(a, 'trocas', '🔄 Peças com muita troca (60 dias): ' + t.map((o) => o.nome + ' ' + o.trocas + '× (' + Math.round(o.taxa * 100) + '%)').join(' · ') + '. Veja em Gestão › Alertas.', hoje, '')); } } catch (e) { console.log('trocas: ' + e.message); }
