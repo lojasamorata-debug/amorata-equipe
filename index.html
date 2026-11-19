@@ -3331,6 +3331,113 @@ function formDefeito_(b) {
     det.append(ok); };
   pintaPeca();
 }
+
+// ---------- 👗 Looks prontos e 📦 Chegou mercadoria (piloto) ----------
+const LK = { loja: '', r: null };
+const lojaPil_ = () => LK.loja || (S.loja && S.loja !== 'TODAS' ? S.loja : LOJAS_TODAS[0]);
+function seletorLojaPil_(b, recarrega) { if (S.cargo !== 'ADMIN') return; const sl = el('select'); sl.style.cssText = 'width:100%;margin-bottom:8px'; LOJAS_TODAS.forEach((l) => sl.append(new Option('🏬 ' + l, l))); sl.value = lojaPil_(); sl.addEventListener('change', () => { LK.loja = sl.value; recarrega(); }); b.append(sl); }
+const brl_ = (v) => 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+// cartão (foto + faixa com as peças) desenhado no celular, para mandar como uma imagem só
+async function cartaoLook_(look, loja) {
+  const img = await new Promise((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.referrerPolicy = 'no-referrer'; i.onload = () => res(i); i.onerror = () => rej(new Error('Não consegui abrir a foto do look.')); i.src = look.fotoLocal || look.foto; });
+  const W = 1080, H1 = 1240, pad = 64, linhaH = 64, H2 = pad + 80 + look.pecas.length * linhaH + 110 + 60, c = document.createElement('canvas'); c.width = W; c.height = H1 + H2; const g = c.getContext('2d');
+  const s = Math.max(W / img.width, H1 / img.height), sw = W / s, sh = H1 / s; g.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, W, H1);
+  g.fillStyle = 'rgba(255,255,255,.88)'; const tg = 'LOOK SEPARADO PRA VOCÊ'; g.font = '600 30px Arial'; const tw = g.measureText(tg).width; g.beginPath(); g.roundRect(40, 40, tw + 48, 60, 30); g.fill(); g.fillStyle = '#5b4a7a'; g.fillText(tg, 64, 81);
+  g.fillStyle = '#faf7f3'; g.fillRect(0, H1, W, H2); let y = H1 + pad + 40; g.fillStyle = '#5b4a7a'; g.font = '52px Georgia'; g.fillText(look.nome, pad, y); y += 40;
+  g.font = '34px Arial'; let tot = 0; look.pecas.forEach((p) => { y += linhaH; g.fillStyle = '#2b2a28'; g.textAlign = 'left'; let n = (p.nome + (p.cor ? ' · ' + p.cor.toLowerCase() : '')); n = n.charAt(0) + n.slice(1).toLowerCase(); while (g.measureText(n).width > W - pad * 2 - 230 && n.length > 8) n = n.slice(0, -2); g.fillText(n, pad, y); g.font = 'bold 34px Arial'; g.textAlign = 'right'; g.fillText(brl_(p.preco), W - pad, y); g.font = '34px Arial'; tot += p.preco;
+    g.strokeStyle = '#e5ddd2'; g.setLineDash([6, 6]); g.beginPath(); g.moveTo(pad, y + 22); g.lineTo(W - pad, y + 22); g.stroke(); g.setLineDash([]); });
+  y += 80; g.font = 'bold 38px Arial'; g.fillStyle = '#2b2a28'; g.textAlign = 'left'; g.fillText('Look completo', pad, y); g.textAlign = 'right'; g.fillText(brl_(tot), W - pad, y);
+  y += 56; g.textAlign = 'left'; g.font = '28px Arial'; g.fillStyle = '#8b7d70'; g.fillText('Amorata ' + loja, pad, y);
+  return await new Promise((res) => c.toBlob((b) => res(new File([b], (look.nome || 'look').replace(/[^\w\- ]+/g, '') + '.jpg', { type: 'image/jpeg' })), 'image/jpeg', 0.88));
+}
+// manda a imagem + texto: no celular abre o compartilhar (WhatsApp); o texto vai copiado para colar na legenda se o WhatsApp não puxar
+async function mandarImagemWhats_(file, texto, fone) {
+  try { await navigator.clipboard.writeText(texto); } catch (e) {}
+  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text: texto }); toast('Se a mensagem não apareceu junto, é só colar na legenda (já copiei) 📋'); return true; } } catch (e) { if (e && e.name === 'AbortError') return false; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+  if (fone) abrirWhats(fone, texto); toast('Imagem baixada. Anexe no WhatsApp; o texto já está copiado 📋'); return true;
+}
+function abrirLooks() { abrirDet('👗 Looks prontos', (b) => galeriaLooks_(b)); }
+function galeriaLooks_(b, foco) {
+  b.replaceChildren(el('div', 'sub', 'Carregando…'));
+  rodar('looksListar', [S.token, lojaPil_()], (r) => { LK.r = r; LK.loja = r.loja; b.replaceChildren(); seletorLojaPil_(b, () => galeriaLooks_(b));
+    b.append(el('div', 'sub', '🧪 Piloto. Monte o look com foto, mande para a cliente como um cartão e ele fica salvo para a equipe reaproveitar.'));
+    const nv = el('button', 'btn pri', '➕ Montar novo look'); nv.style.cssText = 'width:100%;margin:8px 0'; nv.addEventListener('click', () => montarLook_(b, null)); b.append(nv);
+    if (!r.looks.length) { b.append(el('div', 'sub', 'Nenhum look montado nessa loja ainda.')); return; }
+    const tags = [...new Set(r.looks.flatMap((x) => x.tags))]; let filtro = '';
+    const fl = el('div'); fl.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 10px'; const g = el('div'); g.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px';
+    const pinta = () => { g.replaceChildren(); r.looks.filter((x) => !filtro || x.tags.indexOf(filtro) >= 0).forEach((x) => { const c = el('button', 'card'); c.style.cssText = 'margin:0;padding:0;overflow:hidden;text-align:left;border:1px solid var(--line, #e4e1da);cursor:pointer;background:var(--card, #fff)'; const im = el('img'); im.src = x.fotoP; im.referrerPolicy = 'no-referrer'; im.loading = 'lazy'; im.alt = x.nome; im.style.cssText = 'width:100%;height:170px;object-fit:cover;display:block'; const t = el('div'); t.style.padding = '8px 10px'; t.append(el('b', '', x.nome), el('div', 'sub', 'por ' + x.quem + ' · ' + brl_(x.pecas.reduce((a, p) => a + p.preco, 0))), el('div', 'sub', x.envios ? '💬 enviado ' + x.envios + 'x' : 'ainda não enviado')); c.append(im, t); c.addEventListener('click', () => verLook_(b, x)); g.append(c); }); };
+    if (tags.length) [''].concat(tags).forEach((t) => { const x = el('button', 'btn' + (t === filtro ? ' pri' : ''), t || 'Todos'); x.style.cssText = 'font-size:13px;padding:6px 10px'; x.addEventListener('click', () => { filtro = t; [...fl.children].forEach((y) => { y.className = 'btn' + (y === x ? ' pri' : ''); }); pinta(); }); fl.append(x); });
+    b.append(fl, g); pinta(); if (foco) { const x = r.looks.find((y) => y.id === foco); if (x) verLook_(b, x); } });
+}
+function verLook_(b, x) {
+  b.replaceChildren(); const vt = el('button', 'btn', '‹ Looks'); vt.addEventListener('click', () => galeriaLooks_(b)); b.append(vt);
+  const im = el('img'); im.src = x.foto; im.referrerPolicy = 'no-referrer'; im.alt = x.nome; im.style.cssText = 'width:100%;max-height:380px;object-fit:cover;border-radius:14px;margin:8px 0'; b.append(im, el('h2', '', x.nome), el('div', 'sub', 'por ' + x.quem + ' em ' + x.quando + (x.envios ? ' · enviado ' + x.envios + 'x' : '')));
+  x.pecas.forEach((p) => { const c = el('div', 'card'); c.style.cssText = 'margin:6px 0;padding:10px 12px'; const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px'; h.append(el('b', '', p.nome), el('b', '', brl_(p.preco))); c.append(h, el('div', 'sub', 'Ref ' + p.ref + (p.cor ? ' · ' + p.cor : '') + (p.tams ? ' · tamanhos: ' + p.tams : ''))); b.append(c); });
+  const en = el('button', 'btn pri', '💬 Enviar para uma cliente'); en.style.cssText = 'width:100%;margin-top:8px'; en.addEventListener('click', () => enviarLook_(b, x)); b.append(en);
+  if (x.meu || S.cargo === 'ADMIN' || S.cargo === 'GERENTE') { const ap = el('button', 'btn', '🗑️ Apagar look'); ap.style.cssText = 'width:100%;margin-top:8px'; ap.addEventListener('click', () => { if (!confirm('Apagar o look "' + x.nome + '"?')) return; rodar('lookApagar', [S.token, x.id], () => { toast('Look apagado'); galeriaLooks_(b); }); }); b.append(ap); }
+}
+function montarLook_(b) {
+  const st = { foto: '', pecas: [], tags: [] }; b.replaceChildren(); const vt = el('button', 'btn', '‹ Looks'); vt.addEventListener('click', () => galeriaLooks_(b)); b.append(vt, el('h2', '', '👗 Novo look'));
+  const fi = el('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.className = 'hide'; const pv = el('img'); pv.className = 'hide'; pv.style.cssText = 'width:100%;max-height:380px;object-fit:cover;border-radius:14px;margin:8px 0'; const fb = el('button', 'btn pri', '📷 Foto do look (manequim ou provador)'); fb.style.width = '100%';
+  fb.addEventListener('click', () => fi.click()); fi.addEventListener('change', async () => { const f = fi.files[0]; if (!f) return; try { st.foto = await comprimir(f, 1400, 0.85, false); pv.src = st.foto; pv.classList.remove('hide'); fb.textContent = '📷 Trocar a foto'; fb.className = 'btn'; } catch (e) { toast(e.message); } }); b.append(fi, fb, pv);
+  b.append(el('div', 'sub', 'Peças do look')); const lst = el('div'); const tot = el('div'); tot.style.cssText = 'display:flex;justify-content:space-between;margin:8px 2px;font-weight:700'; b.append(lst);
+  const pinta = () => { lst.replaceChildren(); st.pecas.forEach((p, i) => { const c = el('div', 'card'); c.style.cssText = 'margin:6px 0;padding:10px 12px'; const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:center'; const x = el('button', 'btn', '✕'); x.style.cssText = 'padding:4px 10px'; x.addEventListener('click', () => { st.pecas.splice(i, 1); pinta(); }); h.append(el('b', '', p.nome), el('span', '', brl_(p.preco)), x); c.append(h, el('div', 'sub', 'Ref ' + p.ref + (p.cor ? ' · ' + p.cor : '') + ' · tem: ' + p.tams)); lst.append(c); }); if (!st.pecas.length) lst.append(el('div', 'sub', 'Nenhuma peça ainda.')); tot.replaceChildren(el('span', '', 'Look completo'), el('span', '', brl_(st.pecas.reduce((a, p) => a + p.preco, 0)))); };
+  const bx = el('div'); bx.style.marginTop = '6px'; b.append(bx, tot); pinta();
+  buscaPecaPd_(bx, lojaPil_(), (m) => { const cores = Object.keys(m.cores || {}); const add = (cor) => { const tams = Object.keys((m.cores || {})[cor] || {}).filter((t) => m.cores[cor][t] > 0); st.pecas.push({ ref: m.ref, nome: m.nome.replace(/^\d+\s+/, ''), cor: cor === '—' ? '' : cor, preco: m.preco, tams: tams.join(' · ') }); pinta(); toast('Peça adicionada'); };
+    if (cores.length <= 1) add(cores[0] || ''); else escolher(m.nome, 'Qual cor vai no look?', cores.map((c) => [c, '', () => { fechar(); add(c); }])); });
+  const nm = el('input'); nm.placeholder = 'Nome do look (ex.: Look trabalho chique)'; nm.style.cssText = 'width:100%;margin-top:10px'; b.append(nm);
+  const tg = el('div'); tg.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:8px 0'; ['Trabalho', 'Festa', 'Casual', 'Praia', 'Plus size', 'Básico'].forEach((t) => { const x = el('button', 'btn', t); x.style.cssText = 'font-size:13px;padding:6px 10px'; x.addEventListener('click', () => { const i = st.tags.indexOf(t); if (i >= 0) st.tags.splice(i, 1); else st.tags.push(t); x.className = 'btn' + (st.tags.indexOf(t) >= 0 ? ' pri' : ''); }); tg.append(x); }); b.append(tg);
+  const sv = el('button', 'btn pri', 'Salvar look'); sv.style.width = '100%'; b.append(sv);
+  sv.addEventListener('click', () => { if (!st.foto) { toast('Tire a foto do look.'); return; } if (!st.pecas.length) { toast('Adicione as peças do look.'); return; } sv.disabled = true; sv.textContent = 'Salvando…';
+    rodar('lookSalvar', [S.token, { loja: lojaPil_(), nome: nm.value, tags: st.tags, foto: st.foto, pecas: st.pecas }], (r) => { toast('Look salvo ✓'); LK.r = r; const x = r.looks.find((y) => y.id === r.novo); if (x) { x.fotoLocal = st.foto; verLook_(b, x); } else galeriaLooks_(b); }, () => { sv.disabled = false; sv.textContent = 'Salvar look'; }); });
+}
+function enviarLook_(b, x) {
+  b.replaceChildren(); const vt = el('button', 'btn', '‹ Voltar'); vt.addEventListener('click', () => verLook_(b, x)); b.append(vt, el('h2', '', '💬 Enviar "' + x.nome + '"'));
+  const st = { cli: null }; b.append(el('div', 'sub', 'Para quem? (nome, CPF ou telefone)'));
+  const ln = el('div'); ln.style.cssText = 'display:flex;gap:8px'; const q = el('input'); q.type = 'search'; q.style.cssText = 'flex:1;min-width:0'; const go = el('button', 'btn', 'Buscar'); ln.append(q, go); const res = el('div'); res.style.cssText = 'display:grid;gap:6px;margin:8px 0'; b.append(ln, res);
+  const tx = el('textarea'); tx.style.cssText = 'width:100%;min-height:150px';
+  const msg = (n) => 'Oi' + (n ? ', ' + primeiroNome(n) : '') + '! Aqui é ' + (LK.r && LK.r.nomeEu || '') + ', da Amorata ' + lojaPil_() + ' 😊\nSeparei esse look pensando em você!\n\n' + x.pecas.map((p) => '• ' + p.nome.charAt(0) + p.nome.slice(1).toLowerCase() + (p.cor ? ' ' + p.cor.toLowerCase() : '') + ' – ' + brl_(p.preco)).join('\n') + '\n\nQuer que eu separe pra você? 💜';
+  tx.value = msg('');
+  const busca = () => { const t = q.value.trim(); if (t.length < 3) { toast('Digite pelo menos 3 letras.'); return; } res.replaceChildren(el('div', 'sub', 'Buscando…'));
+    rodar('clienteBuscar', [S.token, lojaPil_(), t], (r) => { res.replaceChildren(); const cs = (r && (r.clientes || r.itens || r)) || []; if (!cs.length) { res.append(el('div', 'sub', 'Nenhuma cliente encontrada. Dá para enviar sem escolher.')); return; }
+      cs.slice(0, 8).forEach((c) => { const k = el('button', 'btn'); k.style.cssText = 'text-align:left;width:100%'; k.append(el('b', '', c.nome), el('div', 'sub', (c.fone ? '📱 ' + c.fone : 'sem celular no cadastro') + (c.cpf ? ' · CPF ' + String(c.cpf).slice(0, 3) + '…' : ''))); k.addEventListener('click', () => { st.cli = c; [...res.children].forEach((y) => { y.className = 'btn' + (y === k ? ' pri' : ''); y.querySelectorAll('.sub').forEach((z) => { z.style.color = y === k ? 'inherit' : ''; }); }); tx.value = msg(c.nome); }); res.append(k); }); }); };
+  go.addEventListener('click', busca); q.addEventListener('keydown', (e) => { if (e.key === 'Enter') busca(); });
+  b.append(el('div', 'sub', 'Mensagem (pode editar)'), tx);
+  const pv = el('img'); pv.style.cssText = 'width:100%;border-radius:12px;margin:8px 0;display:none'; b.append(pv);
+  const vr = el('button', 'btn', '👀 Ver o cartão que vai'); vr.style.width = '100%'; vr.addEventListener('click', async () => { try { vr.disabled = true; const f = await cartaoLook_(x, lojaPil_()); pv.src = URL.createObjectURL(f); pv.style.display = 'block'; } catch (e) { toast(e.message); } vr.disabled = false; }); b.append(vr);
+  const en = el('button', 'btn pri', '💬 Mandar no WhatsApp'); en.style.cssText = 'width:100%;margin-top:8px'; b.append(en);
+  en.addEventListener('click', async () => { en.disabled = true; try { const f = await cartaoLook_(x, lojaPil_()); const ok = await mandarImagemWhats_(f, tx.value, st.cli && st.cli.fone); if (ok) rodar('lookEnviado', [S.token, x.id, { nome: st.cli ? st.cli.nome : '', cli: st.cli ? st.cli.loja + '-' + st.cli.codigo : '' }], () => {}); } catch (e) { toast(e.message); } en.disabled = false; });
+  setTimeout(() => q.focus(), 50);
+}
+// 📦 Chegou mercadoria
+function abrirChegou() { abrirDet('📦 Chegou mercadoria', (b) => desenharChegou_(b)); }
+function desenharChegou_(b) {
+  LK.dias = LK.dias || 3; b.replaceChildren(el('div', 'sub', 'Vendo o que chegou e cruzando com as clientes… (pode levar alguns segundos)'));
+  rodar('chegouMercadoria', [S.token, lojaPil_(), LK.dias], (r) => { LK.ch = r; LK.loja = r.loja; b.replaceChildren(); seletorLojaPil_(b, () => desenharChegou_(b));
+    const dd = el('div'); dd.style.cssText = 'display:flex;gap:6px;margin-bottom:8px'; [[1, 'Hoje e ontem'], [3, '3 dias'], [7, '7 dias']].forEach(([d, t]) => { const x = el('button', 'btn' + (LK.dias === d ? ' pri' : ''), t); x.style.cssText = 'flex:1;font-size:13px'; x.addEventListener('click', () => { LK.dias = d; desenharChegou_(b); }); dd.append(x); }); b.append(dd);
+    const av = el('div', 'card'); av.style.cssText = 'margin:0 0 10px;background:var(--accent);color:#fff'; av.append(el('b', '', r.novidades.length ? '📦 ' + r.pecas + ' peças novas em ' + r.novidades.length + ' modelos' : '📦 Nada novo chegou nesse período'), el('div', '', r.novidades.length ? r.totalClientes + ' clientes compram essas categorias no tamanho que chegou' : 'Tente um período maior.')); b.append(av);
+    if (!r.novidades.length) return;
+    const nv = el('details'); nv.append(el('summary', '', 'Ver as novidades (' + r.novidades.length + ')')); r.novidades.forEach((o) => { const c = el('div', 'card'); c.style.cssText = 'margin:6px 0;padding:10px 12px'; const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px'; h.append(el('b', '', o.nome), el('b', '', o.preco ? brl_(o.preco) : '')); c.append(h, el('div', 'sub', o.cat + ' · ' + o.qt + ' peças · ' + o.tams.join(' · ') + (o.cores.length ? ' · ' + o.cores.slice(0, 3).join(', ').toLowerCase() : '') + ' · ' + o.origem + ' ' + o.data.slice(8, 10) + '/' + o.data.slice(5, 7))); nv.append(c); }); b.append(nv);
+    const cats = {}; r.clientes.forEach((c) => c.cats.forEach((k) => { cats[k] = (cats[k] || 0) + 1; })); let filtro = '';
+    b.append(el('div', 'sub', 'Clientes para avisar (' + r.totalClientes + (r.totalClientes > r.clientes.length ? ', mostrando ' + r.clientes.length : '') + ')'));
+    const fl = el('div'); fl.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px'; const lst = el('div');
+    const pinta = () => { lst.replaceChildren(); r.clientes.filter((c) => !filtro || c.cats.indexOf(filtro) >= 0).forEach((c) => { const k = el('div', 'card'); k.style.cssText = 'margin:0 0 8px;padding:10px 12px' + (c.avisada ? ';opacity:.6' : '');
+      const h = el('div'); h.style.cssText = 'display:flex;justify-content:space-between;gap:8px'; h.append(el('b', '', c.nome), el('span', 'sub', c.vend ? 'cliente da ' + c.vend : '')); k.append(h, el('div', 'sub', 'compra ' + c.cats.join(', ').toLowerCase() + (c.tams.length ? ' · veste ' + c.tams.join(' / ') : '') + ' · última compra ' + c.ult.slice(8, 10) + '/' + c.ult.slice(5, 7)), el('div', '', '✨ ' + c.por));
+      const bt = el('div'); bt.style.cssText = 'display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px';
+      const wa = el('button', c.avisada ? 'btn' : 'btn pri', c.avisada ? '✅ Avisada ' + c.avisada : '💬 Avisar no WhatsApp'), pl = el('button', 'btn', 'Pular');
+      wa.addEventListener('click', () => avisarChegou_(c, k, wa)); pl.addEventListener('click', () => { k.remove(); }); bt.append(wa, pl); k.append(bt); lst.append(k); }); };
+    [''].concat(Object.keys(cats).sort((a, b2) => cats[b2] - cats[a]).slice(0, 6)).forEach((t) => { const x = el('button', 'btn' + (t === filtro ? ' pri' : ''), t ? t + ' (' + cats[t] + ')' : 'Todas'); x.style.cssText = 'font-size:13px;padding:6px 10px'; x.addEventListener('click', () => { filtro = t; [...fl.children].forEach((y) => { y.className = 'btn' + (y === x ? ' pri' : ''); }); pinta(); }); fl.append(x); });
+    b.append(fl, lst); pinta(); }, () => { b.replaceChildren(el('div', 'sub', 'Não consegui ver as entradas agora. Tente de novo em instantes.')); });
+}
+function avisarChegou_(c, card, bt) {
+  const r = LK.ch, pecas = r.novidades.filter((o) => c.refs.indexOf(o.ref) >= 0).slice(0, 3);
+  const nomes = pecas.map((o) => { const t = c.tams.find((x) => o.tams.indexOf(x) >= 0); return o.nome.charAt(0) + o.nome.slice(1).toLowerCase() + (t ? ' (tem ' + t + ')' : ''); });
+  const tx = 'Oi, ' + primeiroNome(c.nome) + '! Aqui é ' + r.nomeEu + ', da Amorata ' + r.loja + ' 😊\nChegou novidade aqui na loja e lembrei de você!\n\n' + nomes.map((n) => '• ' + n).join('\n') + '\n\nQuer que eu te mande fotos ou separe pra você provar? 💜';
+  escolher(c.nome, 'Mensagem pronta (você ainda pode editar no WhatsApp):\n\n' + tx, [['💬 Abrir no WhatsApp', 'pri', () => { fechar(); bt.disabled = true; bt.textContent = 'Buscando o celular…';
+    rodar('clienteFoneCpf', [S.token, r.loja, c.cpf], (fone) => { bt.disabled = false; if (!fone) { bt.textContent = '💬 Avisar no WhatsApp'; try { navigator.clipboard.writeText(tx); } catch (e) {} toast('Ela não tem celular no cadastro. Copiei a mensagem 📋'); return; }
+      abrirWhats(fone, tx); rodar('chegouAvisada', [S.token, r.loja, c.cli, c.nome, c.refs], () => {}); bt.className = 'btn'; bt.textContent = '✅ Avisada agora'; card.style.opacity = '.6'; }, () => { bt.disabled = false; bt.textContent = '💬 Avisar no WhatsApp'; }); }], ['📋 Só copiar a mensagem', '', () => { fechar(); try { navigator.clipboard.writeText(tx); toast('Mensagem copiada 📋'); } catch (e) { toast('Não consegui copiar.'); } }]]);
+}
 function abrirDet(titulo, montar) {
   const w = el('div', 'tc'); w.id = 'det'; const movidos = [];
   const mover = (id) => { const n = $(id); if (!n) return null; movidos.push([n, n.parentNode, n.nextSibling]); n.classList.remove('hide'); return n; };
@@ -4748,13 +4855,13 @@ async function audPDF(r) {
 // ---------- 🧭 nova organização: 5 casas por cargo, "Precisa de você" no Hoje, configurações na foto e busca ----------
 const HUB = { k: '' };
 const novoNav_ = () => !!S && ['VENDEDORA', 'GERENTE', 'ADMIN'].indexOf(S.cargo) >= 0;
-const HUB_X = { pdesc: ['Promoções e defeitos', 'peças liberadas para desconto', 'cb', () => abrirDescontos()], anotar: ['Anotar cliente', 'lista de desejos e retorno', 'mural', () => anotarCliente('', '', 3)], estq: ['Estoque', 'tem na loja? e nas outras?', 'est', () => abrirEstoqueFila()], filas: ['Filas ao vivo', 'todas as lojas', 'fila', () => irAba_('fila')] };
+const HUB_X = { looks: ['Looks prontos 🧪', 'monte e mande looks para a cliente', 'cb', () => abrirLooks()], chegou: ['Chegou mercadoria 🧪', 'novidades e clientes para avisar', 'cb', () => abrirChegou()], pdesc: ['Promoções e defeitos', 'peças liberadas para desconto', 'cb', () => abrirDescontos()], anotar: ['Anotar cliente', 'lista de desejos e retorno', 'mural', () => anotarCliente('', '', 3)], estq: ['Estoque', 'tem na loja? e nas outras?', 'est', () => abrirEstoqueFila()], filas: ['Filas ao vivo', 'todas as lojas', 'fila', () => irAba_('fila')] };
 function hubsDoCargo_() {
   if (!S) return null;
   if (S.cargo === 'VENDEDORA') return { nav: [['casa', 'Hoje', 'ini'], ['fila', 'Fila', 'fila'], ['vender', 'Vender', 'pv'], ['eu', 'Eu', 'pde'], ['mural', 'Mural', 'mural']],
     hubs: { vender: { t: 'Vender', s: 'tudo da venda num lugar', g: [['Atendimento', ['cli', 'pv', 'estq', 'cb', 'anotar', 'pdesc']]] }, eu: { t: 'Eu', s: 'meu desempenho', g: [['Meu mês', ['meta', 'pde', 'apr']], ['Meu RH', ['rh']]] } } };
   if (S.cargo === 'GERENTE') return { nav: [['casa', 'Hoje', 'ini'], ['fila', 'Fila', 'fila'], ['vender', 'Vender', 'pv'], ['equipe', 'Equipe', 'gest'], ['resultados', 'Resultados', 'rel']],
-    hubs: { vender: { t: 'Vender', s: 'igual ao das consultoras', g: [['Atendimento', ['cli', 'pv', 'estq', 'cb', 'anotar']], ['Descontos', ['pdesc']]] },
+    hubs: { vender: { t: 'Vender', s: 'igual ao das consultoras', g: [['Atendimento', ['cli', 'pv', 'estq', 'cb', 'anotar']], ['Descontos', ['pdesc']], ['Piloto (só você vê)', ['looks', 'chegou']]] },
       equipe: { t: 'Equipe', s: 'quem, quando e como', g: [['Organizar', ['gest', 'meta', 'avat', 'mural']], ['Acompanhar', ['pde', 'aud', 'sac', 'rh']]] },
       resultados: { t: 'Resultados', s: 'números da loja', g: [['Ver', ['res', 'rel', 'prod', 'est']]] } } };
   return { nav: [['casa', 'Hoje', 'ini'], ['resultados', 'Resultados', 'rel'], ['equipe', 'Equipe', 'gest'], ['controle', 'Controle', 'sd'], ['mural', 'Mural', 'mural']],
