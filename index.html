@@ -3644,6 +3644,7 @@ function desenharCards() {
     mv('i-res'); b.append($('i-res')); [ 'm-lojas-box', 'i-nota'].forEach((id) => { const n = mv(id); if (n) b.append(n); });
   }));
   const hr = el('div', 'hero'), tx = el('div', 'tx'); tx.append(el('div', 'big', rs(R.vendido)), el('div', 'sm', 'de ' + rs(R.meta) + ' · faltam ' + rs(Math.max(0, (R.meta || 0) - (R.vendido || 0)))));
+  if (R.metaPlan) tx.append(el('div', 'sm', '🎯 meta = objetivo do dia (o mesmo do cartão da manhã) · planejado para hoje: ' + rs(R.metaPlan)));
   if (R.fechaPct != null && !r.encerrado) tx.append(el('span', 'pill ' + k, (R.fechaPct >= 1 ? '🚀 ' : k === 'r' ? '⚠️ ' : '') + 'no ritmo fecha em ' + pc(R.fechaPct)));
   if (R.comp) tx.append(el('div', 'sm', (R.comp.var >= 0 ? '▲ ' : '▼ ') + PCT.format(Math.abs(R.comp.var)) + ' vs mesmo período do mês passado'));
   hr.append(ring(R.pct, 92, COR[k]), tx); h.append(hr); if (serieTot.length > 1) { const m = barrasDia(r.serie.dias, serieTot, metaDiaTot, 46); m.style.marginTop = '10px'; h.append(m); }
