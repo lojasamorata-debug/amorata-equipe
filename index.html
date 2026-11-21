@@ -4364,16 +4364,20 @@ function pvPecasUI(b) {
 // 💳 cobrança por aproximação no celular (InfiniteTap da InfinitePay): abre o app da InfinitePay com o valor e o código da pré-venda;
 // ao terminar, a InfinitePay abre a página de volta do app, que marca a pré-venda como paga (NSU e autorização)
 function pvCobrarTap(b, p) {
-  const v = Math.round(p.total * 100), ops = [['Débito', 'pri', () => ir('debit', 1, v)], ['Crédito à vista', '', () => ir('credit', 1, v)]];
-  [2, 3, 4, 5, 6].forEach((n) => { if (v / n >= 100) ops.push(['Crédito ' + n + 'x de ' + rs(p.total / n), '', () => ir('credit', n, v)]); });
+  const v = Math.round(p.total * 100), ops = [['Débito', 'pri', () => ir('debit', 1, v)], ['Crédito à vista', '', () => ir('credit', 1, v)]], A = p.acr;
+  // 💳 Black: de A.min a A.max vezes a cliente paga +A.pct% (o valor cobrado já vai com o acréscimo)
+  if (A) { const tA = pvTotAcr_(p), vA = Math.round(tA * 100); for (let n = A.min; n <= A.max; n++) if (vA / n >= 100) ops.push(['Crédito ' + n + 'x de ' + rs(tA / n) + ' (total ' + rs(tA) + ' · +' + A.pct + '%)', '', () => ir('credit', n, vA)]); }
+  else [2, 3, 4, 5, 6].forEach((n) => { if (v / n >= 100) ops.push(['Crédito ' + n + 'x de ' + rs(p.total / n), '', () => ir('credit', n, v)]); });
   if (S.cargo === 'ADMIN') ops.push(['🧪 Teste: R$ 1,00 no crédito', '', () => ir('credit', 1, 100)], ['🧪 Teste: R$ 1,00 no débito', '', () => ir('debit', 1, 100)]);
   function ir(met, n, cent) {
-    const q = { amount: cent, payment_method: met, order_id: p.tk, result_url: p.tapVolta, app_client_referrer: 'amorata-equipe' }; if (met === 'credit') q.installments = n; if (/iPhone|iPad|iPod/.test(navigator.userAgent)) q.af_force_deeplink = 'true';
+    const q = { amount: cent, payment_method: met, order_id: p.tk, result_url: n > 1 ? String(p.tapVolta).replace(/tap=1$/, 'tap=p' + n) : p.tapVolta, app_client_referrer: 'amorata-equipe' }; if (met === 'credit') q.installments = n; if (/iPhone|iPad|iPod/.test(navigator.userAgent)) q.af_force_deeplink = 'true';
     const url = 'infinitepaydash://infinitetap-app?' + Object.keys(q).map((k) => k + '=' + encodeURIComponent(q[k])).join('&');
     toast('Abrindo a InfinitePay…'); pvCobrarTap.esperando = { id: p.id, b: b, t: Date.now() }; window.location.href = url;
     setTimeout(() => { if (!document.hidden && pvCobrarTap.esperando && Date.now() - pvCobrarTap.esperando.t < 4000) toast('Não abriu? Confira se o app da InfinitePay está instalado e logado na conta da loja.'); }, 2500);
   }
-  escolher('Cobrar ' + rs(p.total) + ' · ' + p.num, 'A cliente aproxima o cartão no seu celular. Ao terminar, a pré-venda fica paga sozinha.', ops);
+  escolher('Cobrar ' + rs(p.total) + ' · ' + p.num, 'A cliente aproxima o cartão no seu celular. Ao terminar, a pré-venda fica paga sozinha.' + (A ? ' Black: parcelado de ' + A.min + 'x a ' + A.max + 'x tem acréscimo de ' + A.pct + '%.' : ''), ops);
+}
+function pvTotAcr_(p) { return p.acr ? Math.round(p.total * (100 + p.acr.pct)) / 100 : p.total;
 }
 // voltou da InfinitePay: confere se a pré-venda já ficou paga
 // abre o WhatsApp direto no app (no app instalado no iPhone, o wa.me abria uma tela em branco do navegador)
@@ -4436,9 +4440,14 @@ function pvEnviarLink(b, p, bt) {
   // sem celular na pré-venda: com CPF, o servidor puxa do cadastro do USE; só pergunta se o cadastro também não tiver
   const pedir = () => { const f = prompt('Celular da cliente com DDD (o link vai direto para o WhatsApp dela):', ''); if (f == null) return false; const n = String(f).replace(/\D/g, ''); if (n.length < 10 || n.length > 13) { toast('Celular inválido: coloque o DDD e o número.'); return false; } p.fone = fone = n; return true; };
   if (fone.length < 10 && !p.cpf && !pedir()) return;
+  if (p.acr) { escolher('Link de pagamento · ' + p.num, 'Black: no parcelado (' + p.acr.min + 'x a ' + p.acr.max + 'x) a cliente paga +' + p.acr.pct + '%. Combine com ela antes de mandar.', [['À vista · ' + rs(p.total) + ' (Pix, débito ou crédito 1x)', 'pri', () => { fechar(); pvGerarLink_(b, p, bt, fone, false); }], ['Parcelado até ' + p.acr.max + 'x · ' + rs(pvTotAcr_(p)) + ' (+' + p.acr.pct + '%)', '', () => { fechar(); pvGerarLink_(b, p, bt, fone, true); }]]); return; }
+  pvGerarLink_(b, p, bt, fone, false);
+}
+function pvGerarLink_(b, p, bt, fone, parcelado) {
   const t0 = bt.textContent; bt.disabled = true; bt.textContent = 'Gerando o link…';
-  rodar('pvLinkPagamento', [S.token, p.id, fone], (r) => { bt.disabled = false; bt.textContent = '🔗 Reenviar link de pagamento'; p.linkPag = r.url; pvCobrarTap.esperando = { id: p.id, b: b, t: Date.now() };
-    const tx = 'Oi, ' + (r.cliente ? primeiroNome(r.cliente) : 'tudo bem') + '! Segue o link para pagamento da sua compra na Amorata (' + r.num + ' · ' + rs(Number(String(r.total).replace(',', '.'))) + '): ' + r.url + '\nPode pagar no Pix ou no cartão' + (r.semJuros ? ' em até ' + r.semJuros + 'x sem juros' : '') + ' 💜';
+  rodar('pvLinkPagamento', [S.token, p.id, fone, !!parcelado], (r) => { p.acrescimo = r.acrescimo || 0; bt.disabled = false; bt.textContent = '🔗 Reenviar link de pagamento'; p.linkPag = r.url; pvCobrarTap.esperando = { id: p.id, b: b, t: Date.now() };
+    const tot = Number(String(r.total).replace(',', '.')) + (Number(r.acrescimo) || 0);
+    const tx = 'Oi, ' + (r.cliente ? primeiroNome(r.cliente) : 'tudo bem') + '! Segue o link para pagamento da sua compra na Amorata (' + r.num + ' · ' + rs(tot) + (r.acrescimo ? ', já com o acréscimo do parcelamento' : '') + '): ' + r.url + (r.acrescimo ? '\nPode parcelar no cartão' + (r.semJuros > 0 ? ' em até ' + r.semJuros + 'x' : '') : '\nPode pagar no Pix ou no cartão' + (r.semJuros ? ' em até ' + r.semJuros + 'x sem juros' : '')) + ' 💜';
     fone = String(r.fone || fone).replace(/\D/g, '');
     pvVigiar(b, p);
     if (fone.length >= 10) { abrirWhats(fone, tx); return; }
@@ -4477,14 +4486,22 @@ function pvCaixaUI(b, p) {
   if (cobrar && p.linkPag) pvVigiar(b, p); else if (!cobrar) clearInterval(pvVigiar.t);
   // ✏️ a cliente mudou de ideia: volta para as peças (incluir ou tirar) enquanto ainda não pagou
   if (p.status === 'aberta' || p.status === 'reservada') { const ed = el('button', 'btn big', '✏️ Incluir ou tirar peças'); ed.addEventListener('click', () => pvEditarUI(b, p, ed)); b.append(ed); }
-  if (cobrar && p.tk) { const cb = el('div', 'card pv-cobrar'), bw = el('div', 'pv-bts'); cb.append(el('b', '', '📲 Como a cliente vai pagar?'), el('div', 'sub', rs(p.total) + ' · cartão e link confirmam sozinhos'));
+  if (cobrar && p.tk) { const cb = el('div', 'card pv-cobrar'), bw = el('div', 'pv-bts'); cb.append(el('b', '', '📲 Como a cliente vai pagar?'), el('div', 'sub', rs(p.total) + ' · cartão e link confirmam sozinhos')); if (p.acr) cb.append(el('div', 'card pv-nova', '🖤 Black: parcelado de ' + p.acr.min + 'x a ' + p.acr.max + 'x tem acréscimo de ' + p.acr.pct + '% → ' + rs(pvTotAcr_(p)) + '. À vista continua ' + rs(p.total) + '.'));
     const tap = el('button', 'btn pri big', '💳 Cartão por aproximação'); tap.addEventListener('click', () => pvCobrarTap(b, p));
     const lk = el('button', 'btn big', p.linkPag ? '🔗 Reenviar link' : '🔗 Link de pagamento'); lk.addEventListener('click', () => pvEnviarLink(b, p, lk));
     if (p.pix) { const pc = el('button', 'btn big', '💠 Pix / QR Code'); pc.addEventListener('click', () => pvPixUI(p, b)); bw.append(pc); }
-    const px = el('button', 'btn big', '✅ Recebi na maquininha da loja'); px.addEventListener('click', () => escolher('Confirmar ' + rs(p.total) + ' na maquininha?', 'Confira se o pagamento foi aprovado na maquininha da loja antes de confirmar.', [['Sim, foi aprovado', 'pri', () => rodar('pvPagoManual', [S.token, p.id, 'Maquininha'], (np) => { toast('Paga ✓'); pvCaixaUI(b, np); })]]));
+    const maq = (n) => fechar() || rodar('pvPagoManual', [S.token, p.id, 'Maquininha', n], (np) => { toast('Paga ✓'); pvCaixaUI(b, np); });
+    const px = el('button', 'btn big', '✅ Recebi na maquininha da loja'); px.addEventListener('click', () => {
+      if (!p.acr) { escolher('Confirmar ' + rs(p.total) + ' na maquininha?', 'Confira se o pagamento foi aprovado na maquininha da loja antes de confirmar.', [['Sim, foi aprovado', 'pri', () => maq(1)]]); return; }
+      // 💳 Black: parcelado na maquininha também tem acréscimo; a vendedora escolhe como passou e o app mostra o valor certo
+      const tA = pvTotAcr_(p), ops = [['À vista (débito, crédito 1x ou Pix) · ' + rs(p.total), 'pri', () => { fechar(); escolher('Confirmar ' + rs(p.total) + ' à vista?', 'Confira se o pagamento foi aprovado na maquininha antes de confirmar.', [['Sim, foi aprovado', 'pri', () => maq(1)]]); }]];
+      for (let n = p.acr.min; n <= p.acr.max; n++) ops.push([n + 'x de ' + rs(tA / n) + ' · total ' + rs(tA), '', () => { fechar(); escolher('Confirmar ' + n + 'x de ' + rs(tA / n) + '?', 'Passe ' + rs(tA) + ' na maquininha (' + rs(p.total) + ' + ' + p.acr.pct + '% do parcelamento) e confirme quando aprovar.', [['Sim, passei ' + rs(tA) + ' e aprovou', 'pri', () => maq(n)]]); }]);
+      escolher('Como passou na maquininha?', 'Black: parcelado de ' + p.acr.min + 'x a ' + p.acr.max + 'x tem acréscimo de ' + p.acr.pct + '%.', ops); });
     bw.prepend(tap); bw.append(lk, px);
     if (p.linkPag) { const lp = el('button', 'btn big', '✅ A cliente pagou o link'); lp.addEventListener('click', () => escolher('Confirmar ' + rs(p.total) + ' pago pelo link?', 'Confira no app da InfinitePay da loja se o pagamento aparece aprovado antes de confirmar.', [['Sim, está aprovado', 'pri', () => rodar('pvPagoManual', [S.token, p.id, 'Link InfinitePay'], (np) => { toast('Paga ✓'); pvCaixaUI(b, np); })]])); bw.append(lp); }
     cb.append(bw); b.append(cb); }
+  if (!cobrar && p.acr && !(p.acrescimo > 0) && (p.status === 'aberta' || p.status === 'reservada')) b.append(el('div', 'card pv-nova', '🖤 Black · caixa: se a cliente parcelar de ' + p.acr.min + 'x a ' + p.acr.max + 'x, passe ' + rs(pvTotAcr_(p)) + ' (+' + p.acr.pct + '%: ' + rs(pvTotAcr_(p) - p.total) + '). À vista: ' + rs(p.total) + '.'));
+  if (p.acrescimo > 0 && p.status !== 'desistiu' && p.status !== 'cancelada') b.append(el('div', 'card pv-nova', '💳 Parcelado com acréscimo: a cliente pagou ' + rs(p.total + p.acrescimo) + ' (' + rs(p.total) + ' + ' + rs(p.acrescimo) + '). Caixa: lance o acréscimo de ' + rs(p.acrescimo) + ' na venda do USE.'));
   if (p.cashback) b.append(el('div', 'card pv-cash', '💜 Cashback de ' + rs(p.cashback) + ' já descontado do total. Caixa: resgate o cashback da cliente no USE ao lançar a venda.'));
   if (p.pagamento && p.status === 'paga') b.append(el('div', 'card pv-pago', '✅ A cliente já pagou (' + p.pagamento + '). Caixa: lance a venda no USE bipando os códigos abaixo e marque "Lançada no USE".'));
   if (p.link && p.status !== 'desistiu' && p.status !== 'cancelada') { const cp = el('div', 'card pv-comp'); cp.append(el('b', '', '🧾 Comprovante de troca digital'), el('div', 'sub', 'Peças e prazo de troca (' + (p.prazo || 7) + ' dias, só nesta loja) no celular da cliente.'));
