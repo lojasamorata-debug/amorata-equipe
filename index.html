@@ -4491,12 +4491,13 @@ function pvCaixaUI(b, p) {
     const lk = el('button', 'btn big', p.linkPag ? '🔗 Reenviar link' : '🔗 Link de pagamento'); lk.addEventListener('click', () => pvEnviarLink(b, p, lk));
     if (p.pix) { const pc = el('button', 'btn big', '💠 Pix / QR Code'); pc.addEventListener('click', () => pvPixUI(p, b)); bw.append(pc); }
     const maq = (n) => fechar() || rodar('pvPagoManual', [S.token, p.id, 'Maquininha', n], (np) => { toast('Paga ✓'); pvCaixaUI(b, np); });
-    const px = el('button', 'btn big', '✅ Recebi na maquininha da loja'); px.addEventListener('click', () => {
+    const px = el('button', 'btn big', p.acr ? '💳 Cobrar na maquininha da loja' : '✅ Recebi na maquininha da loja'); px.addEventListener('click', () => {
       if (!p.acr) { escolher('Confirmar ' + rs(p.total) + ' na maquininha?', 'Confira se o pagamento foi aprovado na maquininha da loja antes de confirmar.', [['Sim, foi aprovado', 'pri', () => maq(1)]]); return; }
       // 💳 Black: parcelado na maquininha também tem acréscimo; a vendedora escolhe como passou e o app mostra o valor certo
-      const tA = pvTotAcr_(p), ops = [['À vista (débito, crédito 1x ou Pix) · ' + rs(p.total), 'pri', () => { fechar(); escolher('Confirmar ' + rs(p.total) + ' à vista?', 'Confira se o pagamento foi aprovado na maquininha antes de confirmar.', [['Sim, foi aprovado', 'pri', () => maq(1)]]); }]];
-      for (let n = p.acr.min; n <= p.acr.max; n++) ops.push([n + 'x de ' + rs(tA / n) + ' · total ' + rs(tA), '', () => { fechar(); escolher('Confirmar ' + n + 'x de ' + rs(tA / n) + '?', 'Passe ' + rs(tA) + ' na maquininha (' + rs(p.total) + ' + ' + p.acr.pct + '% do parcelamento) e confirme quando aprovar.', [['Sim, passei ' + rs(tA) + ' e aprovou', 'pri', () => maq(n)]]); }]);
-      escolher('Como passou na maquininha?', 'Black: parcelado de ' + p.acr.min + 'x a ' + p.acr.max + 'x tem acréscimo de ' + p.acr.pct + '%.', ops); });
+      // 1) como a cliente vai pagar → 2) "Cobre R$ X" (o valor certo para digitar na maquininha) → 3) aprovado
+      const tA = pvTotAcr_(p), ops = [['À vista (débito, crédito 1x ou Pix) · ' + rs(p.total), 'pri', () => { fechar(); escolher('Cobre ' + rs(p.total), 'Digite ' + rs(p.total) + ' na maquininha (débito, crédito à vista ou Pix).\nQuando aprovar, toque abaixo.', [['✅ Aprovado na maquininha', 'pri', () => maq(1)]]); }]];
+      for (let n = p.acr.min; n <= p.acr.max; n++) ops.push([n + 'x de ' + rs(tA / n) + ' · total ' + rs(tA), '', () => { fechar(); escolher('Cobre ' + rs(tA) + ' em ' + n + 'x', 'Digite ' + rs(tA) + ' na maquininha, crédito parcelado em ' + n + 'x (' + n + 'x de ' + rs(tA / n) + ').\nJá inclui ' + rs(tA - p.total) + ' de acréscimo (' + p.acr.pct + '%). Quando aprovar, toque abaixo.', [['✅ Aprovado na maquininha', 'pri', () => maq(n)]]); }]);
+      escolher('Como a cliente vai pagar?', 'Black: parcelado de ' + p.acr.min + 'x a ' + p.acr.max + 'x tem acréscimo de ' + p.acr.pct + '%. À vista: ' + rs(p.total) + '.', ops); });
     bw.prepend(tap); bw.append(lk, px);
     if (p.linkPag) { const lp = el('button', 'btn big', '✅ A cliente pagou o link'); lp.addEventListener('click', () => escolher('Confirmar ' + rs(p.total) + ' pago pelo link?', 'Confira no app da InfinitePay da loja se o pagamento aparece aprovado antes de confirmar.', [['Sim, está aprovado', 'pri', () => rodar('pvPagoManual', [S.token, p.id, 'Link InfinitePay'], (np) => { toast('Paga ✓'); pvCaixaUI(b, np); })]])); bw.append(lp); }
     cb.append(bw); b.append(cb); }
