@@ -4440,7 +4440,7 @@ function pvEnviarLink(b, p, bt) {
   // sem celular na pré-venda: com CPF, o servidor puxa do cadastro do USE; só pergunta se o cadastro também não tiver
   const pedir = () => { const f = prompt('Celular da cliente com DDD (o link vai direto para o WhatsApp dela):', ''); if (f == null) return false; const n = String(f).replace(/\D/g, ''); if (n.length < 10 || n.length > 13) { toast('Celular inválido: coloque o DDD e o número.'); return false; } p.fone = fone = n; return true; };
   if (fone.length < 10 && !p.cpf && !pedir()) return;
-  if (p.acr) { escolher('Link de pagamento · ' + p.num, 'Black: no parcelado (' + p.acr.min + 'x a ' + p.acr.max + 'x) a cliente paga +' + p.acr.pct + '%. Combine com ela antes de mandar.', [['À vista · ' + rs(p.total) + ' (Pix, débito ou crédito 1x)', 'pri', () => { fechar(); pvGerarLink_(b, p, bt, fone, false); }], ['Parcelado até ' + p.acr.max + 'x · ' + rs(pvTotAcr_(p)) + ' (+' + p.acr.pct + '%)', '', () => { fechar(); pvGerarLink_(b, p, bt, fone, true); }]]); return; }
+  if (p.acr) { escolher('Link de pagamento · ' + p.num, 'Black: no parcelado (' + p.acr.min + 'x a ' + (p.acr.maxLink || p.acr.max) + 'x) a cliente paga +' + p.acr.pct + '%. Combine com ela antes de mandar.', [['À vista · ' + rs(p.total) + ' (Pix, débito ou crédito 1x)', 'pri', () => { fechar(); pvGerarLink_(b, p, bt, fone, false); }], ['Parcelado até ' + (p.acr.maxLink || p.acr.max) + 'x · ' + rs(pvTotAcr_(p)) + ' (+' + p.acr.pct + '%)', '', () => { fechar(); pvGerarLink_(b, p, bt, fone, true); }]]); return; }
   pvGerarLink_(b, p, bt, fone, false);
 }
 function pvGerarLink_(b, p, bt, fone, parcelado) {
