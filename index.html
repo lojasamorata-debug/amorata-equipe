@@ -4447,7 +4447,7 @@ function pvGerarLink_(b, p, bt, fone, parcelado) {
   const t0 = bt.textContent; bt.disabled = true; bt.textContent = 'Gerando o link…';
   rodar('pvLinkPagamento', [S.token, p.id, fone, !!parcelado], (r) => { p.acrescimo = r.acrescimo || 0; bt.disabled = false; bt.textContent = '🔗 Reenviar link de pagamento'; p.linkPag = r.url; pvCobrarTap.esperando = { id: p.id, b: b, t: Date.now() };
     const tot = Number(String(r.total).replace(',', '.')) + (Number(r.acrescimo) || 0);
-    const tx = 'Oi, ' + (r.cliente ? primeiroNome(r.cliente) : 'tudo bem') + '! Segue o link para pagamento da sua compra na Amorata (' + r.num + ' · ' + rs(tot) + (r.acrescimo ? ', já com o acréscimo do parcelamento' : '') + '): ' + r.url + (r.acrescimo ? '\nPode parcelar no cartão' + (r.semJuros > 0 ? ' em até ' + r.semJuros + 'x' : '') : '\nPode pagar no Pix ou no cartão' + (r.semJuros ? ' em até ' + r.semJuros + 'x sem juros' : '')) + ' 💜';
+    const tx = 'Oi, ' + (r.cliente ? primeiroNome(r.cliente) : 'tudo bem') + '! Segue o link para pagamento da sua compra na Amorata (' + r.num + ' · ' + rs(tot) + (r.acrescimo ? ', já com o acréscimo do parcelamento' : '') + '): ' + r.url + (r.acrescimo ? '\nPode parcelar no cartão' + (r.semJuros > 0 ? ' em até ' + r.semJuros + 'x' : '') : (r.semJuros === 1 ? '\nPode pagar no Pix ou no cartão à vista' : '\nPode pagar no Pix ou no cartão' + (r.semJuros > 1 ? ' em até ' + r.semJuros + 'x sem juros' : ''))) + ' 💜';
     fone = String(r.fone || fone).replace(/\D/g, '');
     pvVigiar(b, p);
     if (fone.length >= 10) { abrirWhats(fone, tx); return; }
