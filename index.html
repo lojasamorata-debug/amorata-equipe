@@ -1321,6 +1321,17 @@ let ERR_N = 0;
 function logErro(onde, msg) { if (!S && !T && /'(token|cargo|usuario|lojas)'|\.(token|cargo|usuario|lojas)\b/.test(String(msg))) return; /* resposta que chegou depois de sair da conta: não é erro de verdade */ if (ERR_N++ > 8) return; try { google.script.run.withSuccessHandler(() => {}).withFailureHandler(() => {}).registrarErro({ onde: onde, msg: String(msg).slice(0, 500), usuario: (S && S.usuario) || (T && 'tablet ' + T.loja) || '', versao: VERSAO, ua: navigator.userAgent, url: HOSPEDADO ? location.href : 'google' }); } catch (e) {} }
 window.addEventListener('error', (ev) => logErro('js', (ev.message || '') + ' @' + (ev.lineno || '') + ':' + (ev.colno || '')));
 window.addEventListener('unhandledrejection', (ev) => logErro('promise', (ev.reason && (ev.reason.message || ev.reason)) || ''));
+// 🩺 "o app fecha do nada": batimento a cada 5 s; se na abertura o último batimento foi há pouco e a tela estava visível,
+// o sistema matou o app com ele aberto (falta de memória). Se estava em segundo plano, foi o iPhone/Android que descartou.
+(function () {
+  const K = 'amorata_hb', t0 = Date.now(); let prev = null; try { prev = JSON.parse(localStorage.getItem(K) || 'null'); } catch (e) {}
+  if (prev && prev.t) { const dt = Date.now() - prev.t, info = ' · tela ' + (prev.a || '?') + ' · aberto há ' + Math.round((prev.up || 0) / 60000) + ' min · ' + (prev.n || 0) + ' elementos' + (prev.m ? ' · memória ' + prev.m + ' MB' : '');
+    if (!prev.h && dt < 20000) setTimeout(() => logErro('fechou-aberto', 'O app reiniciou com a tela aberta' + info), 8000);
+    else if (prev.h && dt < 10 * 60000) setTimeout(() => logErro('fechou-fundo', 'O sistema fechou o app em segundo plano após ' + Math.round(dt / 1000) + ' s' + info), 8000); }
+  const bate = (h) => { try { const sh = document.querySelector('#sheet:not(.hide) h2, .sheet:not(.hide) h2'); localStorage.setItem(K, JSON.stringify({ t: Date.now(), h: h ? 1 : 0, a: (typeof aba !== 'undefined' ? aba : '') + (sh ? ' › ' + sh.textContent.slice(0, 40) : ''), up: Date.now() - t0, n: document.getElementsByTagName('*').length, m: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 0 })); } catch (e) {} };
+  setInterval(() => { if (!document.hidden) bate(0); }, 5000); bate(0);
+  document.addEventListener('visibilitychange', () => bate(document.hidden)); window.addEventListener('pagehide', () => bate(1));
+})();
 let FALHAS_BG = 0, TICK_AG = 0; const PEND_EL = document.getElementById('pend');
 function rodar(fn, args, ok, erro) {
   prog(1);
