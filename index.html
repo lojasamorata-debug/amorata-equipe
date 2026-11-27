@@ -5860,7 +5860,8 @@ async function situacaoApp() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'ok'; // celular antigo sem suporte: não trava
   if (Notification.permission === 'denied') return 'bloqueado';
   if (Notification.permission !== 'granted') return 'ativar';
-  try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); if (!sub) return 'ativar'; } catch (e) { return 'ok'; }
+  // iPhone que já tentou e a Apple recusou a inscrição: não trava a entrada (a dica fica no sininho), como no Android
+  try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); if (!sub) return pushFalhou() ? 'ok' : 'ativar'; } catch (e) { return 'ok'; }
   return 'ok';
 }
 // assina o push; se o serviço do Google recusar ("push service error"), tenta de novo e, persistindo, marca o aparelho
@@ -5943,7 +5944,7 @@ async function exigirApp(tourDepois) {
   } else {
     b2.append(el('div', 'sub', 'Toque no botão e escolha Permitir.'));
     const v = el('button', 'btn pri big', '🔔 Ativar notificações'); v.style.marginTop = '8px';
-    v.addEventListener('click', async () => { v.disabled = true; v.textContent = 'Ativando…'; try { await assinarPush(); toast('Notificações ativadas 🔔'); } catch (e) { if (e.message !== 'bloqueado') toast(e.message || 'Não consegui ativar.'); } exigirApp(); }); b2.append(v);
+    v.addEventListener('click', async () => { v.disabled = true; v.textContent = 'Ativando…'; try { await assinarPush(); toast('Notificações ativadas 🔔'); } catch (e) { if (e.message === 'falha_servico') toast('Este celular não aceitou as notificações agora. Pode seguir usando o app — a dica está no sininho 🔔.'); else if (e.message !== 'bloqueado') toast(e.message || 'Não consegui ativar.'); } exigirApp(); }); b2.append(v);
   }
   const rodape = el('div', 'sub', 'Precisa de ajuda? Chame a sua gerente.'); rodape.style.cssText = 'text-align:center;margin-top:12px'; c.append(rodape);
   const sairB = el('button', 'btn sm', 'Sair'); sairB.style.cssText = 'display:block;margin:10px auto 0'; sairB.addEventListener('click', () => { const gg = $('gate'); if (gg) gg.remove(); sair(''); }); c.append(sairB);
